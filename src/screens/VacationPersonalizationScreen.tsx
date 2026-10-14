@@ -106,7 +106,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
       {currentStep <= 3 && (
         <div className="w-full mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#705836]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8b6339]">
               {currentStep === 1 && 'YOUR TRIP'}
               {currentStep === 2 && 'YOUR INTERESTS'}
               {currentStep === 3 && 'YOUR PREFERENCES'}
@@ -117,7 +117,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           </div>
           <div className="w-full h-1 bg-[#e6e2d9] rounded-full overflow-hidden flex">
             <div
-              className="h-full bg-[#7f5700] rounded-full transition-all duration-300"
+              className="h-full bg-[#a67d52] rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / 3) * 100}%` }}
             />
           </div>
@@ -131,7 +131,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
         <div className="space-y-6 animate-in fade-in duration-200">
           {/* Header & Subtitle */}
           <div>
-            <h1 className="font-serif text-[26px] text-[#564121] leading-tight font-medium">
+            <h1 className="font-serif text-[26px] text-[#754d24] leading-tight font-medium">
               Personalize Your Stay
             </h1>
             <p className="text-[13px] text-[#7f756a] mt-1.5 leading-relaxed">
@@ -141,7 +141,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
           {/* Question */}
           <div className="pt-2">
-            <label className="text-[14px] font-medium text-[#564121] block mb-3">
+            <label className="text-[14px] font-medium text-[#754d24] block mb-3">
               What brings you to Tulum?
             </label>
 
@@ -155,15 +155,15 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                     onClick={() => setSelectedPurpose(purpose)}
                     className={`py-3 px-3.5 rounded-xl text-left border transition-all flex items-center justify-between text-[13px] ${
                       isSelected
-                        ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                        : 'bg-white text-[#564121] border-[#e6e2d9] hover:bg-[#fcfaf5]'
+                        ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                        : 'bg-white text-[#754d24] border-[#e6e2d9] hover:bg-[#fcfaf5]'
                     }`}
                   >
                     <span className="font-medium truncate">{purpose}</span>
                     <span
                       className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ml-1.5 ${
                         isSelected
-                          ? 'bg-[#febe4f] text-[#564121] font-bold'
+                          ? 'bg-[#c49a6c] text-[#754d24] font-bold'
                           : 'border border-[#d1c5b8]'
                       }`}
                     >
@@ -178,7 +178,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           {/* Conditional Occasion Field */}
           {isOccasionSpecial && (
             <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              <label className="text-[12px] font-medium text-[#564121] block mb-1.5">
+              <label className="text-[12px] font-medium text-[#754d24] block mb-1.5">
                 Tell us about the occasion
               </label>
               <input
@@ -186,7 +186,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                 value={occasionDetails}
                 onChange={e => setOccasionDetails(e.target.value)}
                 placeholder="4th Wedding Anniversary"
-                className="w-full bg-white border border-[#d1c5b8] rounded-xl px-4 py-3 text-[13px] text-[#564121] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#7f5700] shadow-2xs"
+                className="w-full bg-white border border-[#d1c5b8] rounded-xl px-4 py-3 text-[13px] text-[#754d24] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#a67d52] shadow-2xs"
               />
             </div>
           )}
@@ -195,7 +195,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           <div className="pt-6">
             <button
               onClick={() => setCurrentStep(2)}
-              className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
             >
               <span>CONTINUE</span>
               <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -213,7 +213,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
       {currentStep === 2 && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div>
-            <h1 className="font-serif text-[26px] text-[#564121] leading-tight font-medium">
+            <h1 className="font-serif text-[26px] text-[#754d24] leading-tight font-medium">
               What would you love to experience?
             </h1>
             <p className="text-[13px] text-[#7f756a] mt-1.5 leading-relaxed">
@@ -232,14 +232,14 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                   onClick={() => toggleInterest(item.label)}
                   className={`p-3 rounded-xl text-left border transition-all flex items-center justify-between min-h-[58px] ${
                     isSelected
-                      ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                      : 'bg-white text-[#564121] border-[#e6e2d9] hover:bg-[#fcfaf5]'
+                      ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                      : 'bg-white text-[#754d24] border-[#e6e2d9] hover:bg-[#fcfaf5]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-1">
                     <span
                       className={`material-symbols-outlined text-[19px] shrink-0 ${
-                        isSelected ? 'text-[#febe4f]' : 'text-[#7f5700]'
+                        isSelected ? 'text-[#c49a6c]' : 'text-[#a67d52]'
                       }`}
                     >
                       {item.icon}
@@ -252,7 +252,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                   <span
                     className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] shrink-0 ${
                       isSelected
-                        ? 'bg-[#febe4f] text-[#564121] font-bold'
+                        ? 'bg-[#c49a6c] text-[#754d24] font-bold'
                         : 'border border-[#d1c5b8]'
                     }`}
                   >
@@ -267,7 +267,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           <div className="pt-6 space-y-3">
             <button
               onClick={() => setCurrentStep(3)}
-              className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
             >
               <span>CONTINUE</span>
               <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -275,7 +275,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
             <button
               onClick={() => setCurrentStep(1)}
-              className="w-full py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#705836] hover:text-[#564121] transition-colors"
+              className="w-full py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#8b6339] hover:text-[#754d24] transition-colors"
             >
               ← Back to Trip
             </button>
@@ -293,7 +293,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
       {currentStep === 3 && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div>
-            <h1 className="font-serif text-[26px] text-[#564121] leading-tight font-medium">
+            <h1 className="font-serif text-[26px] text-[#754d24] leading-tight font-medium">
               Your Preferences
             </h1>
             <p className="text-[13px] text-[#7f756a] mt-1.5 leading-relaxed">
@@ -304,7 +304,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           <div className="space-y-5 pt-1">
             {/* 1. Dietary preferences */}
             <div>
-              <label className="text-[12px] font-medium text-[#564121] block mb-2">
+              <label className="text-[12px] font-medium text-[#754d24] block mb-2">
                 Dietary preferences
               </label>
               <div className="flex flex-wrap gap-2">
@@ -317,8 +317,8 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                       onClick={() => setDietary(opt)}
                       className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
                         isSelected
-                          ? 'bg-[#564121] text-white border-[#564121]'
-                          : 'bg-white text-[#564121] border-[#e6e2d9] hover:bg-[#fcfaf5]'
+                          ? 'bg-[#754d24] text-white border-[#754d24]'
+                          : 'bg-white text-[#754d24] border-[#e6e2d9] hover:bg-[#fcfaf5]'
                       }`}
                     >
                       {opt}
@@ -330,7 +330,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
             {/* 2. Allergies */}
             <div>
-              <label className="text-[12px] font-medium text-[#564121] block mb-1.5">
+              <label className="text-[12px] font-medium text-[#754d24] block mb-1.5">
                 Allergies
               </label>
               <input
@@ -338,13 +338,13 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                 value={allergies}
                 onChange={e => setAllergies(e.target.value)}
                 placeholder="e.g. Shellfish, tree nuts, or none"
-                className="w-full bg-white border border-[#d1c5b8] rounded-xl px-4 py-2.5 text-[13px] text-[#564121] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#7f5700] shadow-2xs"
+                className="w-full bg-white border border-[#d1c5b8] rounded-xl px-4 py-2.5 text-[13px] text-[#754d24] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#a67d52] shadow-2xs"
               />
             </div>
 
             {/* 3. Villa preferences */}
             <div className="p-4 rounded-xl bg-white border border-[#e6e2d9] space-y-3.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#705836] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#8b6339] block">
                 Villa Preferences
               </span>
 
@@ -363,8 +363,8 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                         onClick={() => setVillaScent(scent)}
                         className={`py-1.5 px-2.5 rounded-lg text-[11px] text-left border transition-colors ${
                           isSelected
-                            ? 'bg-[#fbf6ed] border-[#7f5700] text-[#7f5700] font-semibold'
-                            : 'bg-[#faf8f4] border-[#e6e2d9] text-[#564121]'
+                            ? 'bg-[#f7f3ea] border-[#a67d52] text-[#a67d52] font-semibold'
+                            : 'bg-[#faf8f4] border-[#e6e2d9] text-[#754d24]'
                         }`}
                       >
                         {scent}
@@ -389,8 +389,8 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                         onClick={() => setPillowType(pillow)}
                         className={`py-1 px-2.5 rounded-lg text-[11px] border transition-colors ${
                           isSelected
-                            ? 'bg-[#fbf6ed] border-[#7f5700] text-[#7f5700] font-semibold'
-                            : 'bg-[#faf8f4] border-[#e6e2d9] text-[#564121]'
+                            ? 'bg-[#f7f3ea] border-[#a67d52] text-[#a67d52] font-semibold'
+                            : 'bg-[#faf8f4] border-[#e6e2d9] text-[#754d24]'
                         }`}
                       >
                         {pillow}
@@ -403,7 +403,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
             {/* 4. Preferred concierge communication */}
             <div>
-              <label className="text-[12px] font-medium text-[#564121] block mb-2">
+              <label className="text-[12px] font-medium text-[#754d24] block mb-2">
                 Preferred concierge communication
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -416,7 +416,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
                       onClick={() => setCommChannel(channel)}
                       className={`py-2.5 px-3 rounded-xl text-[11px] font-semibold uppercase tracking-wider transition-all border ${
                         isSelected
-                          ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
+                          ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
                           : 'bg-white text-[#7f756a] border-[#e6e2d9] hover:bg-[#fcfaf5]'
                       }`}
                     >
@@ -432,7 +432,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           <div className="pt-6 space-y-3">
             <button
               onClick={handleSave}
-              className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
             >
               <span>SAVE MY PREFERENCES</span>
               <span className="material-symbols-outlined text-[15px]">check</span>
@@ -440,7 +440,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
             <button
               onClick={() => setCurrentStep(2)}
-              className="w-full py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#705836] hover:text-[#564121] transition-colors"
+              className="w-full py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#8b6339] hover:text-[#754d24] transition-colors"
             >
               ← Back to Interests
             </button>
@@ -457,15 +457,15 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
       {/* ======================================================== */}
       {currentStep === 4 && (
         <div className="my-auto py-10 space-y-7 text-center animate-in fade-in duration-300">
-          <div className="w-14 h-14 rounded-full bg-[#fbf6ed] border border-[#f0e3cc] text-[#7f5700] mx-auto flex items-center justify-center shadow-xs">
+          <div className="w-14 h-14 rounded-full bg-[#f7f3ea] border border-[#e6dccc] text-[#a67d52] mx-auto flex items-center justify-center shadow-xs">
             <span className="material-symbols-outlined text-[28px]">check</span>
           </div>
 
           <div className="space-y-2.5 px-2">
-            <h1 className="font-serif text-[28px] text-[#564121] font-medium leading-tight">
+            <h1 className="font-serif text-[28px] text-[#754d24] font-medium leading-tight">
               Your stay is taking shape.
             </h1>
-            <p className="text-[14px] text-[#705836] leading-relaxed max-w-xs mx-auto">
+            <p className="text-[14px] text-[#8b6339] leading-relaxed max-w-xs mx-auto">
               Your Kachava concierge will use these preferences to personalize your experience.
             </p>
           </div>
@@ -474,30 +474,30 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
           <div className="bg-white border border-[#e6e2d9] rounded-2xl p-4 text-left shadow-xs space-y-2 text-xs">
             <div className="flex justify-between py-1 border-b border-[#f1ede5]">
               <span className="text-[#7f756a]">Occasion</span>
-              <span className="font-medium text-[#564121]">
+              <span className="font-medium text-[#754d24]">
                 {selectedPurpose} {occasionDetails ? `(${occasionDetails})` : ''}
               </span>
             </div>
             <div className="flex justify-between py-1 border-b border-[#f1ede5]">
               <span className="text-[#7f756a]">Interests</span>
-              <span className="font-medium text-[#564121]">
+              <span className="font-medium text-[#754d24]">
                 {selectedInterests.length} selected
               </span>
             </div>
             <div className="flex justify-between py-1 border-b border-[#f1ede5]">
               <span className="text-[#7f756a]">Dietary</span>
-              <span className="font-medium text-[#564121]">{dietary}</span>
+              <span className="font-medium text-[#754d24]">{dietary}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#7f756a]">Communication</span>
-              <span className="font-medium text-[#564121]">{commChannel}</span>
+              <span className="font-medium text-[#754d24]">{commChannel}</span>
             </div>
           </div>
 
           <div className="pt-2 space-y-3">
             <button
               onClick={() => onNavigate('included')}
-              className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
             >
               <span>REVIEW MY STAY</span>
               <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -505,7 +505,7 @@ export const VacationPersonalizationScreen: React.FC<VacationPersonalizationProp
 
             <button
               onClick={() => setCurrentStep(1)}
-              className="text-[12px] text-[#7f5700] hover:underline font-medium"
+              className="text-[12px] text-[#a67d52] hover:underline font-medium"
             >
               Edit Preferences
             </button>

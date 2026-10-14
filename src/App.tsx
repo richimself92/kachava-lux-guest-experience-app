@@ -117,7 +117,7 @@ export default function App() {
             title="Prototype screen navigator (temporary evaluator tool)"
             aria-label="Open prototype screens drawer"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#febe4f] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c49a6c] animate-pulse" />
             <span className="tracking-wide">prototype screens</span>
           </button>
         </aside>

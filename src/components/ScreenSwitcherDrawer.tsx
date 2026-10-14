@@ -14,7 +14,7 @@ const SCREENS_LIST: { id: ScreenId; title: string; subtitle: string; icon: strin
   { id: 'personalize', title: '3. Personalize Vacation (Step 1 of 3)', subtitle: 'Intent tags, interests & dietary profile', icon: 'tune', category: 'Arrival & Logistics' },
   { id: 'included', title: '4. Included in Your Stay', subtitle: 'All-inclusive privileges, breakfast, yacht & chef', icon: 'stars', category: 'Sanctuary Privileges' },
   { id: 'explore', title: '5. Explore Kachava Lux', subtitle: 'Curated guest expeditions, cenote & golf', icon: 'explore', category: 'Sanctuary Privileges' },
-  { id: 'yacht', title: '6. Private Yacht Voyage (Booking)', subtitle: '44ft Leopard catamaran charter & schedule', icon: 'sailing', category: 'Experiences' },
+  { id: 'yacht', title: '6. Kachava Caribe · Galeon 470 Sky', subtitle: 'Private yacht experience, Beach Mode & booking', icon: 'sailing', category: 'Experiences' },
   { id: 'dining', title: '7. In-Villa & Sanctuary Dining', subtitle: 'Chef Mateo 5-course degustation & table setup', icon: 'restaurant', category: 'Experiences' },
   { id: 'stock-villa', title: '8. Stock My Villa (Artisanal Larder)', subtitle: 'Tropical fruits, cold-pressed elixirs & bar kit', icon: 'kitchen', category: 'Experiences' },
   { id: 'concierge', title: '9. Dedicated Concierge & Majordomo', subtitle: 'Eduardo, 4 live service trackers & chime', icon: 'support_agent', category: 'Majordomo Care' },
@@ -38,15 +38,15 @@ export const ScreenSwitcherDrawer: React.FC<ScreenSwitcherDrawerProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-[#e6e2d9] flex items-center justify-between bg-[#f7f3ea]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#7f5700]"></span>
+            <span className="w-2 h-2 rounded-full bg-[#a67d52]"></span>
             <div>
-              <h3 className="font-headline-sm text-[18px] text-[#564121]">App Screens</h3>
+              <h3 className="font-headline-sm text-[18px] text-[#754d24]">App Screens</h3>
               <p className="text-[11px] text-[#7f756a] uppercase tracking-wider font-semibold">12 Prototype Screens</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#ece8df] flex items-center justify-center text-[#564121] hover:bg-[#e6e2d9] transition-colors"
+            className="w-8 h-8 rounded-full bg-[#ece8df] flex items-center justify-center text-[#754d24] hover:bg-[#e6e2d9] transition-colors"
             aria-label="Close"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -71,22 +71,22 @@ export const ScreenSwitcherDrawer: React.FC<ScreenSwitcherDrawerProps> = ({
                   }}
                   className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 border ${
                     isActive 
-                      ? 'bg-[#564121] text-white border-[#564121] shadow-md' 
+                      ? 'bg-[#754d24] text-white border-[#754d24] shadow-md' 
                       : 'bg-white hover:bg-[#f7f3ea] text-[#1c1c16] border-[#e6e2d9]'
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                    isActive ? 'bg-[#705836] text-[#ffddb2]' : 'bg-[#f1ede5] text-[#7f5700]'
+                    isActive ? 'bg-[#8b6339] text-[#f7e8d0]' : 'bg-[#f1ede5] text-[#a67d52]'
                   }`}>
                     <span className="material-symbols-outlined text-[20px]">{screen.icon}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className={`text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-[#564121]'}`}>
+                      <span className={`text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-[#754d24]'}`}>
                         {screen.title}
                       </span>
                       {isActive && (
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#7f5700] text-white shrink-0 ml-1">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#a67d52] text-white shrink-0 ml-1">
                           Active
                         </span>
                       )}
@@ -106,7 +106,7 @@ export const ScreenSwitcherDrawer: React.FC<ScreenSwitcherDrawerProps> = ({
           <span>Villa 102 · Kachava Lux</span>
           <button 
             onClick={onClose} 
-            className="px-4 py-1.5 rounded-md bg-[#564121] text-white text-xs font-semibold uppercase tracking-wider"
+            className="px-4 py-1.5 rounded-md bg-[#754d24] text-white text-xs font-semibold uppercase tracking-wider"
           >
             Close
           </button>

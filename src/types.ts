@@ -75,3 +75,44 @@ export interface ServiceRequest {
   photoUrl?: string;
   isCompleted?: boolean;
 }
+
+export interface YachtCharterPackage {
+  id: 'half-day' | 'extended' | 'full-day' | 'custom';
+  title: string;
+  tagline: string;
+  durationHours: number;
+  durationLabel: string;
+  valuationUSD: number;
+  isIncludedWithStay: boolean;
+  priceLabel: string;
+  description: string;
+  highlights: string[];
+  suggestedPaths: string;
+  idealFor: string;
+}
+
+export interface NavigableDestination {
+  id: 'isla-mujeres' | 'isla-contoy' | 'miami';
+  title: string;
+  region: string;
+  badge: string;
+  image: string;
+  subtitle: string;
+  description: string;
+  highlights: string[];
+  duration: string;
+}
+
+export interface YachtVesselSpecs {
+  model: string;
+  tagline: string;
+  overallLength: string;
+  beam: string;
+  beachModeBeam: string;
+  capacity: string;
+  accommodations: string;
+  engines: string;
+  refinement: string;
+  marinaHome: string;
+}
+

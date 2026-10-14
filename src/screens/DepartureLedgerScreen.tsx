@@ -32,21 +32,21 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
       
       {/* Toast */}
       {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
           {toast}
         </div>
       )}
 
       {/* Header Info */}
       <div className="px-5 pt-3 pb-2 flex flex-col gap-1.5">
-        <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#7f5700] font-bold">
+        <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#a67d52] font-bold">
           Villa 102 · Unhurried Departure
         </span>
         <span className="text-[12px] text-[#7f756a]">
           Sunday, Nov 16 · AA 172 to MIA
         </span>
 
-        <h1 className="font-headline-lg text-[#564121] tracking-tight leading-tight mt-1">
+        <h1 className="font-headline-lg text-[#754d24] tracking-tight leading-tight mt-1">
           A Peaceful Departure, {GUEST_INFO.name.split(' ')[0]}
         </h1>
 
@@ -59,14 +59,14 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
       <div className="px-5 pt-3">
         <div className="p-4 rounded-2xl bg-white border border-[#e6e2d9] shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#f1ede5] text-[#564121] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#f1ede5] text-[#754d24] flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-[20px]">flight_takeoff</span>
             </div>
             <div>
               <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f756a] block">
                 American Airlines · AA 172
               </span>
-              <span className="text-[15px] font-bold text-[#564121]">
+              <span className="text-[15px] font-bold text-[#754d24]">
                 CUN → MIA
               </span>
             </div>
@@ -83,7 +83,7 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
 
       {/* Departure Timeline */}
       <div className="px-5 pt-6">
-        <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block mb-3">
+        <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block mb-3">
           Seamless Departure Itinerary
         </span>
 
@@ -91,15 +91,15 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
           
           {/* 11:30 AM */}
           <div className="flex items-start gap-3.5 relative z-10">
-            <div className="w-6 h-6 rounded-full bg-[#ffdead] text-[#7f5700] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
+            <div className="w-6 h-6 rounded-full bg-[#ffdead] text-[#a67d52] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
               ●
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[12px] font-bold text-[#564121]">11:30 AM</span>
+                <span className="text-[12px] font-bold text-[#754d24]">11:30 AM</span>
                 <span className="text-[10px] text-[#7f756a] uppercase">Scheduled</span>
               </div>
-              <h4 className="text-[13px] font-semibold text-[#564121]">
+              <h4 className="text-[13px] font-semibold text-[#754d24]">
                 In-Villa Farewell Brunch &amp; Fresh Coconuts
               </h4>
               <p className="text-[11px] text-[#4e453c] mt-0.5">
@@ -110,15 +110,15 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
 
           {/* 12:45 PM */}
           <div className="flex items-start gap-3.5 relative z-10">
-            <div className="w-6 h-6 rounded-full bg-[#ffdead] text-[#7f5700] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
+            <div className="w-6 h-6 rounded-full bg-[#ffdead] text-[#a67d52] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
               ●
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[12px] font-bold text-[#564121]">12:45 PM</span>
+                <span className="text-[12px] font-bold text-[#754d24]">12:45 PM</span>
                 <span className="text-[10px] text-[#7f756a] uppercase">Confirmed</span>
               </div>
-              <h4 className="text-[13px] font-semibold text-[#564121]">
+              <h4 className="text-[13px] font-semibold text-[#754d24]">
                 Discreet Luggage Retrieval
               </h4>
               <p className="text-[11px] text-[#4e453c] mt-0.5">
@@ -129,15 +129,15 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
 
           {/* 1:00 PM */}
           <div className="flex items-start gap-3.5 relative z-10">
-            <div className="w-6 h-6 rounded-full bg-[#564121] text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
+            <div className="w-6 h-6 rounded-full bg-[#754d24] text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
               ●
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[12px] font-bold text-[#564121]">1:00 PM</span>
-                <span className="text-[10px] text-[#7f5700] font-bold uppercase">Chauffeur Ready</span>
+                <span className="text-[12px] font-bold text-[#754d24]">1:00 PM</span>
+                <span className="text-[10px] text-[#a67d52] font-bold uppercase">Chauffeur Ready</span>
               </div>
-              <h4 className="text-[13px] font-semibold text-[#564121]">
+              <h4 className="text-[13px] font-semibold text-[#754d24]">
                 Private Mercedes-Benz EQS at Villa Portico
               </h4>
               <p className="text-[11px] text-[#4e453c] mt-0.5">
@@ -152,8 +152,8 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
               ●
             </div>
             <div>
-              <span className="text-[12px] font-bold text-[#564121]">1:15 PM</span>
-              <h4 className="text-[13px] font-semibold text-[#564121]">
+              <span className="text-[12px] font-bold text-[#754d24]">1:15 PM</span>
+              <h4 className="text-[13px] font-semibold text-[#754d24]">
                 Scenic Sanctuary Transit to CUN Airport
               </h4>
               <p className="text-[11px] text-[#4e453c] mt-0.5">
@@ -168,8 +168,8 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
               ●
             </div>
             <div>
-              <span className="text-[12px] font-bold text-[#564121]">2:25 PM</span>
-              <h4 className="text-[13px] font-semibold text-[#564121]">
+              <span className="text-[12px] font-bold text-[#754d24]">2:25 PM</span>
+              <h4 className="text-[13px] font-semibold text-[#754d24]">
                 Curbside Skycap Escort · Terminal 3
               </h4>
               <p className="text-[11px] text-[#4e453c] mt-0.5">
@@ -185,9 +185,9 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             setToast('Late checkout request (up to 2:00 PM) dispatched to Eduardo.');
             setTimeout(() => setToast(null), 3000);
           }}
-          className="mt-4 w-full py-2.5 rounded-xl bg-white border border-[#e6e2d9] text-[#564121] text-xs font-semibold uppercase font-label-md hover:bg-[#f7f3ea] flex items-center justify-center gap-1.5"
+          className="mt-4 w-full py-2.5 rounded-xl bg-white border border-[#e6e2d9] text-[#754d24] text-xs font-semibold uppercase font-label-md hover:bg-[#f7f3ea] flex items-center justify-center gap-1.5"
         >
-          <span className="material-symbols-outlined text-[16px] text-[#7f5700]">schedule</span>
+          <span className="material-symbols-outlined text-[16px] text-[#a67d52]">schedule</span>
           <span>Request Custom Timing / Late Check-Out</span>
         </button>
       </div>
@@ -199,7 +199,7 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f756a] font-bold">
               Door-To-Terminal Transfer
             </span>
-            <span className="px-2 py-0.5 rounded bg-white text-[#7f5700] font-label-sm text-[8px] font-bold uppercase">
+            <span className="px-2 py-0.5 rounded bg-white text-[#a67d52] font-label-sm text-[8px] font-bold uppercase">
               Fleet #04
             </span>
           </div>
@@ -211,16 +211,16 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
               className="w-12 h-12 rounded-full object-cover shadow-xs"
             />
             <div>
-              <h3 className="font-headline-sm text-[16px] text-[#564121]">Carlos M.</h3>
+              <h3 className="font-headline-sm text-[16px] text-[#754d24]">Carlos M.</h3>
               <p className="text-[11px] text-[#7f756a]">Private Chauffeur · 7-Year Sanctuary Veteran</p>
-              <span className="text-[10px] text-[#7f5700] font-semibold">★ Dedicated Sanctuary Care</span>
+              <span className="text-[10px] text-[#a67d52] font-semibold">★ Dedicated Sanctuary Care</span>
             </div>
           </div>
 
           <div className="p-3 bg-white rounded-xl space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-[#564121]">Mercedes-Benz EQS SUV</span>
-              <span className="font-label-sm text-[8px] text-[#7f5700] uppercase font-bold">Whisper Electric</span>
+              <span className="font-bold text-[#754d24]">Mercedes-Benz EQS SUV</span>
+              <span className="font-label-sm text-[8px] text-[#a67d52] uppercase font-bold">Whisper Electric</span>
             </div>
             <div className="grid grid-cols-2 gap-1 text-[11px] text-[#4e453c]">
               <span>🌡 Pre-cooled 71°F</span>
@@ -233,16 +233,16 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
           <div className="grid grid-cols-2 gap-2 pt-1">
             <a
               href="tel:+529841020000"
-              className="py-2 rounded-lg bg-white border border-[#d1c5b8] text-center text-xs font-semibold text-[#564121] flex items-center justify-center gap-1.5"
+              className="py-2 rounded-lg bg-white border border-[#d1c5b8] text-center text-xs font-semibold text-[#754d24] flex items-center justify-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[15px] text-[#7f5700]">call</span>
+              <span className="material-symbols-outlined text-[15px] text-[#a67d52]">call</span>
               <span>Call Carlos</span>
             </a>
             <button
               onClick={() => onNavigate('concierge')}
-              className="py-2 rounded-lg bg-white border border-[#d1c5b8] text-center text-xs font-semibold text-[#564121] flex items-center justify-center gap-1.5"
+              className="py-2 rounded-lg bg-white border border-[#d1c5b8] text-center text-xs font-semibold text-[#754d24] flex items-center justify-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[15px] text-[#7f5700]">support_agent</span>
+              <span className="material-symbols-outlined text-[15px] text-[#a67d52]">support_agent</span>
               <span>Majordomo Desk</span>
             </button>
           </div>
@@ -253,9 +253,9 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
       <div className="px-5 pt-4">
         <div className="p-4 rounded-2xl bg-white border border-[#e6e2d9] space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#564121]">
-              <span className="material-symbols-outlined text-[#7f5700] text-[20px]">luggage</span>
-              <h3 className="font-headline-sm text-[16px] text-[#564121]">Effortless Luggage Care</h3>
+            <div className="flex items-center gap-2 text-[#754d24]">
+              <span className="material-symbols-outlined text-[#a67d52] text-[20px]">luggage</span>
+              <h3 className="font-headline-sm text-[16px] text-[#754d24]">Effortless Luggage Care</h3>
             </div>
             <span className="text-[11px] text-[#7f756a] font-bold">12:45 PM</span>
           </div>
@@ -264,12 +264,12 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             Simply leave your packed cases inside the Villa 102 vestibule. Eduardo will attach hand-stamped leather destination tags and place them directly into Carlos’s vehicle.
           </p>
 
-          <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center justify-between text-xs text-[#564121]">
+          <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center justify-between text-xs text-[#754d24]">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#7f5700] text-[16px]">check</span>
+              <span className="material-symbols-outlined text-[#a67d52] text-[16px]">check</span>
               <span>Artisanal Packing Assistance (Garment tissue wrap &amp; cedar sachet)</span>
             </div>
-            <span className="font-label-sm text-[8px] uppercase font-bold text-[#7f5700]">Included</span>
+            <span className="font-label-sm text-[8px] uppercase font-bold text-[#a67d52]">Included</span>
           </div>
         </div>
       </div>
@@ -279,10 +279,10 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
         <div className="p-5 rounded-2xl bg-white border border-[#e6e2d9] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block">
+              <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block">
                 Discreet Settle
               </span>
-              <h3 className="font-headline-sm text-[19px] text-[#564121]">
+              <h3 className="font-headline-sm text-[19px] text-[#754d24]">
                 Villa 102 Final Ledger
               </h3>
             </div>
@@ -298,12 +298,12 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             {/* 1 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">In-Villa Degustation by Chef Mateo</span>
+                <span className="font-semibold text-[#754d24] block">In-Villa Degustation by Chef Mateo</span>
                 <span className="text-[10px] text-[#7f756a]">Nov 14 · Private 5-course garden dinner</span>
-                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#7f5700] text-[8px] uppercase font-bold mt-0.5">Stay Privilege</span>
+                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#a67d52] text-[8px] uppercase font-bold mt-0.5">Stay Privilege</span>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[#564121] block">$0.00 USD</span>
+                <span className="font-bold text-[#754d24] block">$0.00 USD</span>
                 <span className="text-[10px] text-[#7f756a] line-through">$420.00</span>
               </div>
             </div>
@@ -311,77 +311,77 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             {/* 2 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">Kachava Private Yacht Voyage</span>
-                <span className="text-[10px] text-[#7f756a]">Nov 14 · 4-Hour Sunset Catamaran</span>
-                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#7f5700] text-[8px] uppercase font-bold mt-0.5">Stay Privilege</span>
+                <span className="font-semibold text-[#754d24] block">Kachava Caribe · Galeon 470 Sky Cruise</span>
+                <span className="text-[10px] text-[#7f756a]">Nov 14 · 4-Hour Half-Day Experience</span>
+                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#a67d52] text-[8px] uppercase font-bold mt-0.5">Stay Privilege</span>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[#564121] block">$0.00 USD</span>
-                <span className="text-[10px] text-[#7f756a] line-through">$1,250.00</span>
+                <span className="font-bold text-[#754d24] block">$0.00 USD</span>
+                <span className="text-[10px] text-[#7f756a] line-through">$2,000.00</span>
               </div>
             </div>
 
             {/* 3 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">Daily Organic Artisanal Breakfast</span>
+                <span className="font-semibold text-[#754d24] block">Daily Organic Artisanal Breakfast</span>
                 <span className="text-[10px] text-[#7f756a]">Nov 11–Nov 16 · In-suite service</span>
-                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#7f5700] text-[8px] uppercase font-bold mt-0.5">Villa Entitlement</span>
+                <span className="inline-block px-1.5 py-0.2 rounded bg-[#f1ede5] text-[#a67d52] text-[8px] uppercase font-bold mt-0.5">Villa Entitlement</span>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[#564121] block">$0.00 USD</span>
+                <span className="font-bold text-[#754d24] block">$0.00 USD</span>
               </div>
             </div>
 
             {/* 4 */}
             <div className="flex items-start justify-between border-t border-[#f1ede5] pt-2">
               <div>
-                <span className="font-semibold text-[#564121] block">Subterranean Cenote Dos Ojos Dive</span>
+                <span className="font-semibold text-[#754d24] block">Subterranean Cenote Dos Ojos Dive</span>
                 <span className="text-[10px] text-[#7f756a]">Private guide, gear &amp; cavern certification (2 guests)</span>
               </div>
-              <span className="font-bold text-[#564121]">$760.00 USD</span>
+              <span className="font-bold text-[#754d24]">$760.00 USD</span>
             </div>
 
             {/* 5 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">Stock My Villa Curated Larder</span>
+                <span className="font-semibold text-[#754d24] block">Stock My Villa Curated Larder</span>
                 <span className="text-[10px] text-[#7f756a]">Cold-pressed botanical elixirs &amp; cacao provisions</span>
               </div>
-              <span className="font-bold text-[#564121]">$128.00 USD</span>
+              <span className="font-bold text-[#754d24]">$128.00 USD</span>
             </div>
 
             {/* 6 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">Organic Sun &amp; Ocean Recovery Kit</span>
+                <span className="font-semibold text-[#754d24] block">Organic Sun &amp; Ocean Recovery Kit</span>
                 <span className="text-[10px] text-[#7f756a]">Artisanal aloe, chukum body mist &amp; SPF 50</span>
               </div>
-              <span className="font-bold text-[#564121]">$65.00 USD</span>
+              <span className="font-bold text-[#754d24]">$65.00 USD</span>
             </div>
 
             {/* 7 */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="font-semibold text-[#564121] block">Sanctuary Ecological Biosphere Levy</span>
+                <span className="font-semibold text-[#754d24] block">Sanctuary Ecological Biosphere Levy</span>
                 <span className="text-[10px] text-[#7f756a]">Direct coral reef &amp; cenote conservation grant</span>
               </div>
-              <span className="font-bold text-[#564121]">$32.00 USD</span>
+              <span className="font-bold text-[#754d24]">$32.00 USD</span>
             </div>
 
             {/* Total */}
             <div className="pt-3 border-t border-[#d1c5b8] flex items-baseline justify-between">
               <div>
-                <span className="font-label-md text-[11px] uppercase font-bold text-[#564121] block">
+                <span className="font-label-md text-[11px] uppercase font-bold text-[#754d24] block">
                   Final Settled Total
                 </span>
                 <span className="text-[11px] text-[#7f756a]">{GUEST_INFO.folioCard}</span>
               </div>
               <div className="text-right">
-                <span className="font-headline-sm text-[22px] text-[#564121] block leading-none">
+                <span className="font-headline-sm text-[22px] text-[#754d24] block leading-none">
                   $985.00
                 </span>
-                <span className="text-[10px] text-[#7f5700] font-semibold uppercase">Pre-authorized</span>
+                <span className="text-[10px] text-[#a67d52] font-semibold uppercase">Pre-authorized</span>
               </div>
             </div>
           </div>
@@ -390,14 +390,14 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
           <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#f1ede5]">
             <button
               onClick={handleDownloadFolio}
-              className="py-2.5 px-2 rounded-xl bg-[#f1ede5] text-[#564121] font-label-md text-[9px] uppercase font-bold flex items-center justify-center gap-1 hover:bg-[#ece8df]"
+              className="py-2.5 px-2 rounded-xl bg-[#f1ede5] text-[#754d24] font-label-md text-[9px] uppercase font-bold flex items-center justify-center gap-1 hover:bg-[#ece8df]"
             >
               <span className="material-symbols-outlined text-[15px]">download</span>
               <span>Download PDF Folio</span>
             </button>
             <button
               onClick={() => onNavigate('concierge')}
-              className="py-2.5 px-2 rounded-xl bg-[#f1ede5] text-[#564121] font-label-md text-[9px] uppercase font-bold flex items-center justify-center gap-1 hover:bg-[#ece8df]"
+              className="py-2.5 px-2 rounded-xl bg-[#f1ede5] text-[#754d24] font-label-md text-[9px] uppercase font-bold flex items-center justify-center gap-1 hover:bg-[#ece8df]"
             >
               <span className="material-symbols-outlined text-[15px]">help</span>
               <span>Folio Inquiry</span>
@@ -410,15 +410,15 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
       <div className="px-5 pt-6">
         <div className="p-5 rounded-2xl bg-[#f7f3ea] border border-[#e6e2d9] space-y-3">
           <div className="flex items-center justify-between">
-            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold">
+            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold">
               Sanctuary Memento
             </span>
-            <span className="px-2 py-0.5 rounded bg-white text-[#7f5700] font-label-sm text-[8px] font-bold">
+            <span className="px-2 py-0.5 rounded bg-white text-[#a67d52] font-label-sm text-[8px] font-bold">
               18 Moments
             </span>
           </div>
 
-          <h3 className="font-headline-sm text-[18px] text-[#564121]">
+          <h3 className="font-headline-sm text-[18px] text-[#754d24]">
             Your Curated Tulum Keepsake
           </h3>
 
@@ -432,18 +432,18 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
           </div>
 
           <div className="p-3 bg-white rounded-xl flex items-center gap-3 text-xs">
-            <span className="material-symbols-outlined text-[#7f5700] text-[20px]">card_giftcard</span>
+            <span className="material-symbols-outlined text-[#a67d52] text-[20px]">card_giftcard</span>
             <div>
-              <span className="font-bold text-[#564121] block">Amber &amp; Copal Sacred Diffuser</span>
+              <span className="font-bold text-[#754d24] block">Amber &amp; Copal Sacred Diffuser</span>
               <p className="text-[11px] text-[#7f756a]">Placed in Carlos’s vehicle for your return home.</p>
             </div>
           </div>
 
           <button
             onClick={handleDownloadGallery}
-            className="w-full py-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#564121] font-label-md text-[10px] uppercase font-bold flex items-center justify-center gap-1.5 hover:bg-[#ece8df]"
+            className="w-full py-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#754d24] font-label-md text-[10px] uppercase font-bold flex items-center justify-center gap-1.5 hover:bg-[#ece8df]"
           >
-            <span className="material-symbols-outlined text-[16px] text-[#7f5700]">photo_library</span>
+            <span className="material-symbols-outlined text-[16px] text-[#a67d52]">photo_library</span>
             <span>Download Sanctuary Gallery (18 Photos)</span>
           </button>
         </div>
@@ -454,7 +454,7 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
         <p className="font-body-sm text-[12px] text-[#7f756a] italic leading-relaxed max-w-xs mx-auto">
           “May the quiet memory of the jungle breeze and cenote stillness follow you across every horizon.”
         </p>
-        <span className="font-label-sm text-[9px] text-[#7f5700] uppercase tracking-wider block mt-1 font-bold">
+        <span className="font-label-sm text-[9px] text-[#a67d52] uppercase tracking-wider block mt-1 font-bold">
           — Eduardo &amp; The Kachava Care Team
         </span>
       </div>
@@ -466,10 +466,10 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             <span className="font-label-sm text-[8px] uppercase tracking-wider text-[#7f756a] block">
               Departure Confirmed
             </span>
-            <span className="font-headline-sm text-[18px] text-[#564121] leading-none block">
+            <span className="font-headline-sm text-[18px] text-[#754d24] leading-none block">
               1:00 PM
             </span>
-            <span className="text-[10px] text-[#7f5700] truncate max-w-[130px] block">
+            <span className="text-[10px] text-[#a67d52] truncate max-w-[130px] block">
               Villa key stays live...
             </span>
           </div>
@@ -478,8 +478,8 @@ export const DepartureLedgerScreen: React.FC<DepartureLedgerScreenProps> = ({ on
             onClick={handleCompleteCheckOut}
             className={`flex-1 py-3.5 px-4 rounded-xl font-label-md text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-sm ${
               isCheckedOut
-                ? 'bg-[#7f5700] text-white'
-                : 'bg-[#564121] hover:bg-[#705836] text-white'
+                ? 'bg-[#a67d52] text-white'
+                : 'bg-[#754d24] hover:bg-[#8b6339] text-white'
             }`}
           >
             <span>{isCheckedOut ? '✓ Check-Out Completed' : 'Complete Check-Out'}</span>

@@ -98,18 +98,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
     <div className="flex flex-col w-full pb-32 pt-2 px-5 max-w-md mx-auto">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
-          <span className="material-symbols-outlined text-[16px] text-[#febe4f] shrink-0">check_circle</span>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
+          <span className="material-symbols-outlined text-[16px] text-[#c49a6c] shrink-0">check_circle</span>
           <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
       {/* HEADER: Profile */}
       <div className="pt-2 pb-4">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7f5700] block mb-1">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a67d52] block mb-1">
           SANCTUARY RESIDENCY
         </span>
-        <h1 className="font-serif text-[28px] text-[#564121] font-normal tracking-tight">
+        <h1 className="font-serif text-[28px] text-[#754d24] font-normal tracking-tight">
           Profile
         </h1>
       </div>
@@ -122,7 +122,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => handleOpenEdit('guest')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             Edit
           </button>
@@ -139,7 +139,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex-1 min-w-0">
-            <h2 className="font-serif text-[20px] font-medium text-[#564121] leading-tight">
+            <h2 className="font-serif text-[20px] font-medium text-[#754d24] leading-tight">
               {guestName}
             </h2>
             <p className="text-[13px] text-[#5e5449] mt-0.5">
@@ -147,8 +147,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
             </p>
 
             <div className="flex items-center gap-1.5 mt-2.5">
-              <span className="material-symbols-outlined text-[14px] text-[#7f5700]">favorite</span>
-              <span className="text-[11px] font-medium text-[#7f5700] bg-[#fbf6ed] border border-[#f0e3cc] px-2.5 py-0.5 rounded-full">
+              <span className="material-symbols-outlined text-[14px] text-[#a67d52]">favorite</span>
+              <span className="text-[11px] font-medium text-[#a67d52] bg-[#f7f3ea] border border-[#e6dccc] px-2.5 py-0.5 rounded-full">
                 {celebration}
               </span>
             </div>
@@ -164,7 +164,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => onNavigate('home')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline flex items-center gap-0.5"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline flex items-center gap-0.5"
           >
             <span>Home Overview</span>
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>
@@ -174,21 +174,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
         <div className="pt-3.5 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[#7f756a]">Residence</span>
-            <span className="font-serif text-[16px] font-medium text-[#564121]">
+            <span className="font-serif text-[16px] font-medium text-[#754d24]">
               Villa 102
             </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[#7f756a]">Dates</span>
-            <span className="text-[13px] font-medium text-[#564121]">
+            <span className="text-[13px] font-medium text-[#754d24]">
               November 12–16, 2026
             </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[#7f756a]">Stay Length &amp; Party</span>
-            <span className="text-[13px] text-[#564121]">
+            <span className="text-[13px] text-[#754d24]">
               4 nights · 2 guests
             </span>
           </div>
@@ -203,7 +203,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => onNavigate('personalize')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             Onboarding Flow
           </button>
@@ -213,7 +213,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           <span className="text-[11px] text-[#7f756a] block mb-1">
             Villa Aromatherapy &amp; Comfort
           </span>
-          <p className="text-[13px] font-medium text-[#564121]">
+          <p className="text-[13px] font-medium text-[#754d24]">
             Copal &amp; Amber · Goose Down Pillows
           </p>
         </div>
@@ -226,7 +226,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
             {interests.map((item) => (
               <span
                 key={item}
-                className="text-[11px] text-[#564121] bg-[#f7f3ea] border border-[#e6e2d9] px-2.5 py-0.5 rounded-full font-medium"
+                className="text-[11px] text-[#754d24] bg-[#f7f3ea] border border-[#e6e2d9] px-2.5 py-0.5 rounded-full font-medium"
               >
                 {item}
               </span>
@@ -243,7 +243,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => handleOpenEdit('preferences')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             Edit
           </button>
@@ -253,7 +253,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           <span className="text-[11px] text-[#7f756a] block mb-0.5">
             Dietary Regimen
           </span>
-          <p className="text-[13px] font-medium text-[#564121]">
+          <p className="text-[13px] font-medium text-[#754d24]">
             {dietaryProfile}
           </p>
         </div>
@@ -263,7 +263,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
             <span className="material-symbols-outlined text-[14px]">warning</span>
             Allergy Caution
           </span>
-          <p className="text-[13px] font-medium text-[#564121]">
+          <p className="text-[13px] font-medium text-[#754d24]">
             {allergies}
           </p>
         </div>
@@ -277,7 +277,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => handleOpenEdit('preferences')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             Change
           </button>
@@ -289,7 +289,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
               <span className="material-symbols-outlined text-[20px]">chat</span>
             </div>
             <div>
-              <span className="text-[13px] font-medium text-[#564121] block">
+              <span className="text-[13px] font-medium text-[#754d24] block">
                 {preferredCommunication}
               </span>
               <span className="text-[11px] text-[#7f756a]">
@@ -299,7 +299,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </div>
           <button
             onClick={() => onNavigate('concierge')}
-            className="text-[11px] font-semibold text-[#7f5700] hover:underline"
+            className="text-[11px] font-semibold text-[#a67d52] hover:underline"
           >
             Open Chat
           </button>
@@ -314,7 +314,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           </span>
           <button
             onClick={() => handleOpenEdit('payment')}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             Manage
           </button>
@@ -322,11 +322,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
         <div className="pt-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#f7f3ea] border border-[#e6e2d9] flex items-center justify-center text-[#564121]">
+            <div className="w-10 h-10 rounded-full bg-[#f7f3ea] border border-[#e6e2d9] flex items-center justify-center text-[#754d24]">
               <span className="material-symbols-outlined text-[20px]">credit_card</span>
             </div>
             <div>
-              <span className="text-[13px] font-medium text-[#564121] block">
+              <span className="text-[13px] font-medium text-[#754d24] block">
                 {paymentMethod}
               </span>
               <span className="text-[11px] text-[#7f756a]">
@@ -350,15 +350,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
         <div className="pt-3 space-y-2 text-xs">
           <div className="flex items-center justify-between py-1.5 border-b border-[#f1ede5]">
-            <span className="text-[#564121]">Guest Data Confidentiality</span>
+            <span className="text-[#754d24]">Guest Data Confidentiality</span>
             <span className="text-[#3b6d41] font-semibold">Strict Encrypted</span>
           </div>
           <div className="flex items-center justify-between py-1.5 border-b border-[#f1ede5]">
-            <span className="text-[#564121]">Digital Key &amp; Proximity</span>
-            <span className="text-[#7f5700] font-semibold">Enabled (Villa 102)</span>
+            <span className="text-[#754d24]">Digital Key &amp; Proximity</span>
+            <span className="text-[#a67d52] font-semibold">Enabled (Villa 102)</span>
           </div>
           <div className="flex items-center justify-between py-1.5">
-            <span className="text-[#564121]">Data Retention Period</span>
+            <span className="text-[#754d24]">Data Retention Period</span>
             <span className="text-[#7f756a]">Post-Departure Purge</span>
           </div>
         </div>
@@ -366,7 +366,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
         <div className="pt-3 text-center">
           <button
             onClick={() => setIsPrivacyModalOpen(true)}
-            className="text-[11px] text-[#7f5700] hover:underline font-medium"
+            className="text-[11px] text-[#a67d52] hover:underline font-medium"
           >
             Review Full Sanctuary Privacy Policy
           </button>
@@ -377,7 +377,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
       <div className="space-y-3 pt-1 pb-4">
         <button
           onClick={() => onNavigate('concierge')}
-          className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-sm"
+          className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-sm"
         >
           <span className="material-symbols-outlined text-[17px]">support_agent</span>
           <span>Contact Concierge</span>
@@ -386,7 +386,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
         <div className="text-center pt-2">
           <button
             onClick={() => setIsPrivacyModalOpen(true)}
-            className="text-[12px] text-[#7f756a] hover:text-[#564121] underline transition-colors"
+            className="text-[12px] text-[#7f756a] hover:text-[#754d24] underline transition-colors"
           >
             Privacy &amp; Guest Data
           </button>
@@ -399,10 +399,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           <div className="w-full max-w-md bg-[#fdf9f0] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#d1c5b8] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-[#e6e2d9]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                   Residency Preferences
                 </span>
-                <h3 className="font-serif text-[20px] text-[#564121] font-medium mt-0.5">
+                <h3 className="font-serif text-[20px] text-[#754d24] font-medium mt-0.5">
                   {editSection === 'guest' && 'Edit Guest Details'}
                   {editSection === 'preferences' && 'Edit Stay Preferences'}
                   {editSection === 'payment' && 'Manage Payment Method'}
@@ -410,7 +410,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#564121] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#754d24] transition-colors"
                 aria-label="Close"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -428,7 +428,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                       type="text"
                       value={tempGuestName}
                       onChange={(e) => setTempGuestName(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                       required
                     />
                   </div>
@@ -441,7 +441,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                       type="text"
                       value={tempPartnerName}
                       onChange={(e) => setTempPartnerName(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                       required
                     />
                   </div>
@@ -454,7 +454,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                       type="text"
                       value={tempCelebration}
                       onChange={(e) => setTempCelebration(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     />
                   </div>
                 </>
@@ -470,7 +470,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                       type="text"
                       value={tempDietary}
                       onChange={(e) => setTempDietary(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                       required
                     />
                   </div>
@@ -502,8 +502,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                             onClick={() => toggleInterest(interest)}
                             className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
                               isSelected
-                                ? 'bg-[#564121] text-white'
-                                : 'bg-white text-[#564121] border border-[#d1c5b8]'
+                                ? 'bg-[#754d24] text-white'
+                                : 'bg-white text-[#754d24] border border-[#d1c5b8]'
                             }`}
                           >
                             {interest} {isSelected ? '✓' : '+'}
@@ -520,7 +520,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                     <select
                       value={tempCommunication}
                       onChange={(e) => setTempCommunication(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="In-Villa Chime">In-Villa Chime</option>
@@ -541,7 +541,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                       type="text"
                       value={tempPayment}
                       onChange={(e) => setTempPayment(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                      className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                       required
                     />
                     <p className="text-[11px] text-[#7f756a] mt-1.5 leading-relaxed">
@@ -555,13 +555,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 py-3 rounded-xl bg-[#ece8df] text-[#564121] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#dfd9cd] transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#ece8df] text-[#754d24] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#dfd9cd] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-xl bg-[#564121] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#6c532d] shadow-sm transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#754d24] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#603917] shadow-sm transition-colors"
                 >
                   Save Changes
                 </button>
@@ -577,16 +577,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
           <div className="w-full max-w-md bg-[#fdf9f0] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#d1c5b8] max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-[#e6e2d9]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                   Guest Confidentiality
                 </span>
-                <h3 className="font-serif text-[20px] text-[#564121] font-medium mt-0.5">
+                <h3 className="font-serif text-[20px] text-[#754d24] font-medium mt-0.5">
                   Privacy &amp; Guest Data
                 </h3>
               </div>
               <button
                 onClick={() => setIsPrivacyModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#564121] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#754d24] transition-colors"
                 aria-label="Close"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -595,7 +595,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
             <div className="space-y-4 pt-4 text-[12px] text-[#4e453c] leading-relaxed">
               <div className="p-3.5 rounded-xl bg-white border border-[#e6e2d9]">
-                <h4 className="font-semibold text-[#564121] text-[13px] mb-1">
+                <h4 className="font-semibold text-[#754d24] text-[13px] mb-1">
                   Absolute Discretion Guarantee
                 </h4>
                 <p>
@@ -604,7 +604,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
               </div>
 
               <div className="p-3.5 rounded-xl bg-white border border-[#e6e2d9]">
-                <h4 className="font-semibold text-[#564121] text-[13px] mb-1">
+                <h4 className="font-semibold text-[#754d24] text-[13px] mb-1">
                   Encrypted Residency Folio
                 </h4>
                 <p>
@@ -613,7 +613,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
               </div>
 
               <div className="p-3.5 rounded-xl bg-white border border-[#e6e2d9]">
-                <h4 className="font-semibold text-[#564121] text-[13px] mb-1">
+                <h4 className="font-semibold text-[#754d24] text-[13px] mb-1">
                   Data Retention &amp; Post-Departure
                 </h4>
                 <p>
@@ -623,7 +623,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate }) => {
 
               <button
                 onClick={() => setIsPrivacyModalOpen(false)}
-                className="w-full py-3 rounded-xl bg-[#564121] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#6c532d] shadow-sm transition-colors mt-2"
+                className="w-full py-3 rounded-xl bg-[#754d24] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#603917] shadow-sm transition-colors mt-2"
               >
                 Close
               </button>

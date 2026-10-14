@@ -26,7 +26,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#fdf9f0]/95 backdrop-blur-xl border-t border-[#705836]/15 shadow-[0_-4px_24px_rgba(112,88,54,0.06)] pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#fdf9f0]/95 backdrop-blur-xl border-t border-[#8b6339]/15 shadow-[0_-4px_24px_rgba(112,88,54,0.06)] pb-safe">
       <div className="max-w-md mx-auto h-16 px-3 grid grid-cols-4 items-center">
         {navItems.map((item) => {
           const isActive = activeTab === item.tab;
@@ -35,7 +35,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
               key={item.tab}
               onClick={() => onNavigate(item.screenTarget)}
               className={`flex flex-col items-center justify-center py-1 transition-all ${
-                isActive ? 'text-[#564121]' : 'text-[#7f756a] hover:text-[#564121]'
+                isActive ? 'text-[#754d24]' : 'text-[#7f756a] hover:text-[#754d24]'
               }`}
             >
               <div className="relative flex items-center justify-center">
@@ -48,11 +48,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentScreen, onNavigate 
                   {item.icon}
                 </span>
                 {item.hasDot && (
-                  <span className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-[#febe4f] ring-2 ring-[#fdf9f0]" />
+                  <span className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-[#c49a6c] ring-2 ring-[#fdf9f0]" />
                 )}
               </div>
               <span className={`text-[10px] tracking-widest uppercase mt-0.5 ${
-                isActive ? 'font-bold text-[#564121]' : 'font-medium text-[#7f756a]'
+                isActive ? 'font-bold text-[#754d24]' : 'font-medium text-[#7f756a]'
               }`}>
                 {item.label}
               </span>

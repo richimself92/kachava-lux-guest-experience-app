@@ -135,8 +135,8 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
     <div className="flex flex-col w-full pb-32 pt-2 px-5 max-w-md mx-auto">
       {/* Toast Feedback */}
       {toastMsg && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-5 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
-          <span className="material-symbols-outlined text-[16px] text-[#febe4f] shrink-0">check_circle</span>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-5 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
+          <span className="material-symbols-outlined text-[16px] text-[#c49a6c] shrink-0">check_circle</span>
           <span className="truncate">{toastMsg}</span>
         </div>
       )}
@@ -145,7 +145,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
       {/* 1. HEADER                                                */}
       {/* ======================================================== */}
       <div className="pt-2 pb-5">
-        <h1 className="font-serif text-[28px] text-[#564121] leading-tight font-medium">
+        <h1 className="font-serif text-[28px] text-[#754d24] leading-tight font-medium">
           How Can We Care for You?
         </h1>
         <p className="text-[13px] text-[#7f756a] mt-1.5 leading-relaxed">
@@ -169,10 +169,10 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             </div>
 
             <div>
-              <h2 className="font-serif text-[20px] font-medium text-[#564121] leading-tight">
+              <h2 className="font-serif text-[20px] font-medium text-[#754d24] leading-tight">
                 Eduardo
               </h2>
-              <p className="text-[12px] text-[#705836] mt-0.5">
+              <p className="text-[12px] text-[#8b6339] mt-0.5">
                 Kachava Concierge
               </p>
             </div>
@@ -190,7 +190,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             href="https://wa.me/529841020000?text=Hello%20Eduardo,%20I%20am%20staying%20in%20Villa%20102."
             target="_blank"
             rel="noreferrer"
-            className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3 px-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+            className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3 px-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px]">chat</span>
             <span>MESSAGE ON WHATSAPP</span>
@@ -198,7 +198,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
 
           <a
             href="tel:+529841020000"
-            className="w-full bg-[#f7f3ea] hover:bg-[#ede7da] active:scale-[0.99] text-[#564121] border border-[#e6e2d9] py-3 px-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full bg-[#f7f3ea] hover:bg-[#ede7da] active:scale-[0.99] text-[#754d24] border border-[#e6e2d9] py-3 px-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">call</span>
             <span>CALL CONCIERGE</span>
@@ -210,7 +210,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
       {/* 3. HOW CAN WE HELP? (Four Simple Action Cards)           */}
       {/* ======================================================== */}
       <div className="mb-7">
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#705836] mb-3">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8b6339] mb-3">
           HOW CAN WE HELP?
         </h3>
 
@@ -229,11 +229,11 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             }
             className="p-3.5 rounded-2xl bg-white border border-[#e6e2d9] text-left hover:bg-[#fcfaf5] transition-all flex flex-col justify-between min-h-[110px] shadow-2xs group"
           >
-            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#7f5700] mb-2 group-hover:bg-[#f1ede5] transition-colors">
+            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#a67d52] mb-2 group-hover:bg-[#f1ede5] transition-colors">
               <span className="material-symbols-outlined text-[18px]">room_service</span>
             </div>
             <div>
-              <span className="text-[13px] font-semibold text-[#564121] block leading-snug">
+              <span className="text-[13px] font-semibold text-[#754d24] block leading-snug">
                 Request Something
               </span>
               <span className="text-[11px] text-[#7f756a] mt-1 block leading-tight">
@@ -256,11 +256,11 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             }
             className="p-3.5 rounded-2xl bg-white border border-[#e6e2d9] text-left hover:bg-[#fcfaf5] transition-all flex flex-col justify-between min-h-[110px] shadow-2xs group"
           >
-            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#7f5700] mb-2 group-hover:bg-[#f1ede5] transition-colors">
+            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#a67d52] mb-2 group-hover:bg-[#f1ede5] transition-colors">
               <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
             </div>
             <div>
-              <span className="text-[13px] font-semibold text-[#564121] block leading-snug">
+              <span className="text-[13px] font-semibold text-[#754d24] block leading-snug">
                 Ask Concierge
               </span>
               <span className="text-[11px] text-[#7f756a] mt-1 block leading-tight">
@@ -283,11 +283,11 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             }
             className="p-3.5 rounded-2xl bg-white border border-[#e6e2d9] text-left hover:bg-[#fcfaf5] transition-all flex flex-col justify-between min-h-[110px] shadow-2xs group"
           >
-            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#7f5700] mb-2 group-hover:bg-[#f1ede5] transition-colors">
+            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#a67d52] mb-2 group-hover:bg-[#f1ede5] transition-colors">
               <span className="material-symbols-outlined text-[18px]">calendar_month</span>
             </div>
             <div>
-              <span className="text-[13px] font-semibold text-[#564121] block leading-snug">
+              <span className="text-[13px] font-semibold text-[#754d24] block leading-snug">
                 Change a Reservation
               </span>
               <span className="text-[11px] text-[#7f756a] mt-1 block leading-tight">
@@ -305,11 +305,11 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             }}
             className="p-3.5 rounded-2xl bg-white border border-[#e6e2d9] text-left hover:bg-[#fcfaf5] transition-all flex flex-col justify-between min-h-[110px] shadow-2xs group"
           >
-            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#7f5700] mb-2 group-hover:bg-[#f1ede5] transition-colors">
+            <div className="w-8 h-8 rounded-full bg-[#f7f3ea] flex items-center justify-center text-[#a67d52] mb-2 group-hover:bg-[#f1ede5] transition-colors">
               <span className="material-symbols-outlined text-[18px]">build</span>
             </div>
             <div>
-              <span className="text-[13px] font-semibold text-[#564121] block leading-snug">
+              <span className="text-[13px] font-semibold text-[#754d24] block leading-snug">
                 Report an Issue
               </span>
               <span className="text-[11px] text-[#7f756a] mt-1 block leading-tight">
@@ -326,11 +326,11 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#705836]">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8b6339]">
               YOUR REQUESTS
             </h3>
             {!showHistory && openRequests.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-[#fbf6ed] text-[#7f5700] text-[10px] font-bold border border-[#f0e3cc]">
+              <span className="px-2 py-0.5 rounded-full bg-[#f7f3ea] text-[#a67d52] text-[10px] font-bold border border-[#e6dccc]">
                 {openRequests.length} Open
               </span>
             )}
@@ -339,7 +339,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
-            className="text-[11px] font-medium text-[#7f5700] hover:underline"
+            className="text-[11px] font-medium text-[#a67d52] hover:underline"
           >
             {showHistory ? 'Show Open Requests' : 'View request history'}
           </button>
@@ -352,7 +352,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
               <span className="material-symbols-outlined text-[24px] text-[#a89f91] mb-1">
                 check_circle
               </span>
-              <p className="text-[13px] font-medium text-[#564121]">
+              <p className="text-[13px] font-medium text-[#754d24]">
                 {showHistory ? 'No past request history.' : 'No open requests at this moment.'}
               </p>
               <p className="text-[11px] text-[#7f756a] mt-0.5">
@@ -374,7 +374,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                   {/* Top Bar: Title & Status */}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
-                      <h4 className="text-[14px] font-semibold text-[#564121] leading-snug">
+                      <h4 className="text-[14px] font-semibold text-[#754d24] leading-snug">
                         {req.title}
                       </h4>
                       <p className="text-[11px] text-[#7f756a] mt-0.5">
@@ -386,7 +386,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                       className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
                         req.status === 'Completed'
                           ? 'bg-[#f4f8f3] text-[#3b6d41] border border-[#e1eee0]'
-                          : 'bg-[#fbf6ed] text-[#7f5700] border border-[#f0e3cc]'
+                          : 'bg-[#f7f3ea] text-[#a67d52] border border-[#e6dccc]'
                       }`}
                     >
                       {req.status}
@@ -407,9 +407,9 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                               isPassed
                                 ? req.status === 'Completed'
                                   ? 'bg-[#3b6d41]'
-                                  : 'bg-[#7f5700]'
+                                  : 'bg-[#a67d52]'
                                 : 'bg-[#e6e2d9]'
-                            } ${isCurrent ? 'ring-1 ring-[#7f5700]/30' : ''}`}
+                            } ${isCurrent ? 'ring-1 ring-[#a67d52]/30' : ''}`}
                           />
                         );
                       })}
@@ -417,9 +417,9 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
 
                     <div className="flex justify-between items-center text-[10px] text-[#7f756a]">
                       <span>
-                        Assigned to: <strong className="text-[#564121] font-medium">{req.assignedTo}</strong>
+                        Assigned to: <strong className="text-[#754d24] font-medium">{req.assignedTo}</strong>
                       </span>
-                      <span className="text-[#7f5700] font-medium flex items-center gap-0.5">
+                      <span className="text-[#a67d52] font-medium flex items-center gap-0.5">
                         <span>Details</span>
                         <span className="material-symbols-outlined text-[13px]">chevron_right</span>
                       </span>
@@ -442,10 +442,10 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
               <form onSubmit={handleSubmitIssue} className="space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-[#e6e2d9]">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                    <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                       VILLA CARE
                     </span>
-                    <h3 className="font-serif text-[22px] text-[#564121] font-medium mt-0.5">
+                    <h3 className="font-serif text-[22px] text-[#754d24] font-medium mt-0.5">
                       What needs attention?
                     </h3>
                   </div>
@@ -453,7 +453,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                   <button
                     type="button"
                     onClick={handleCloseIssueModal}
-                    className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#564121] transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#754d24] transition-colors"
                   >
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
@@ -461,7 +461,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
 
                 {/* Category Pills */}
                 <div>
-                  <label className="text-[12px] font-medium text-[#564121] block mb-2">
+                  <label className="text-[12px] font-medium text-[#754d24] block mb-2">
                     Select Category
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -474,8 +474,8 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                           onClick={() => setSelectedCategory(cat)}
                           className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
                             isSelected
-                              ? 'bg-[#564121] text-white border-[#564121]'
-                              : 'bg-white text-[#564121] border-[#e6e2d9] hover:bg-[#fcfaf5]'
+                              ? 'bg-[#754d24] text-white border-[#754d24]'
+                              : 'bg-white text-[#754d24] border-[#e6e2d9] hover:bg-[#fcfaf5]'
                           }`}
                         >
                           {cat}
@@ -487,7 +487,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
 
                 {/* Add Details */}
                 <div>
-                  <label className="text-[12px] font-medium text-[#564121] block mb-1.5">
+                  <label className="text-[12px] font-medium text-[#754d24] block mb-1.5">
                     Add details
                   </label>
                   <textarea
@@ -495,13 +495,13 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                     value={issueDetails}
                     onChange={(e) => setIssueDetails(e.target.value)}
                     placeholder="Describe what needs attention..."
-                    className="w-full bg-white border border-[#d1c5b8] rounded-xl p-3.5 text-[13px] text-[#564121] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#7f5700] shadow-2xs resize-none"
+                    className="w-full bg-white border border-[#d1c5b8] rounded-xl p-3.5 text-[13px] text-[#754d24] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#a67d52] shadow-2xs resize-none"
                   />
                 </div>
 
                 {/* Add Photo */}
                 <div>
-                  <label className="text-[12px] font-medium text-[#564121] block mb-1.5">
+                  <label className="text-[12px] font-medium text-[#754d24] block mb-1.5">
                     Add photo (optional)
                   </label>
                   <input
@@ -531,9 +531,9 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#d1c5b8] text-[12px] text-[#564121] hover:bg-[#fcfaf5] transition-colors"
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#d1c5b8] text-[12px] text-[#754d24] hover:bg-[#fcfaf5] transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[17px] text-[#7f5700]">add_a_photo</span>
+                      <span className="material-symbols-outlined text-[17px] text-[#a67d52]">add_a_photo</span>
                       <span>Attach photo</span>
                     </button>
                   )}
@@ -543,7 +543,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                    className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                   >
                     <span>SEND TO KACHAVA</span>
                     <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -553,15 +553,15 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             ) : (
               /* Confirmation Screen */
               <div className="py-6 text-center space-y-4 animate-in fade-in duration-200">
-                <div className="w-12 h-12 rounded-full bg-[#fbf6ed] border border-[#f0e3cc] text-[#7f5700] mx-auto flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-[#f7f3ea] border border-[#e6dccc] text-[#a67d52] mx-auto flex items-center justify-center">
                   <span className="material-symbols-outlined text-[24px]">check</span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <h3 className="font-serif text-[24px] text-[#564121] font-medium leading-tight">
+                  <h3 className="font-serif text-[24px] text-[#754d24] font-medium leading-tight">
                     We&apos;re on it.
                   </h3>
-                  <p className="text-[13px] text-[#705836] leading-relaxed max-w-xs mx-auto">
+                  <p className="text-[13px] text-[#8b6339] leading-relaxed max-w-xs mx-auto">
                     Your Kachava team has received your request and will keep you updated here.
                   </p>
                 </div>
@@ -570,7 +570,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                   <button
                     type="button"
                     onClick={handleCloseIssueModal}
-                    className="w-full bg-[#564121] hover:bg-[#6c532d] text-white py-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
+                    className="w-full bg-[#754d24] hover:bg-[#603917] text-white py-3 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
                   >
                     VIEW IN YOUR REQUESTS
                   </button>
@@ -590,10 +590,10 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             <form onSubmit={handleSubmitAction} className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#e6e2d9]">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                  <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                     CONCIERGE CARE
                   </span>
-                  <h3 className="font-serif text-[22px] text-[#564121] font-medium mt-0.5">
+                  <h3 className="font-serif text-[22px] text-[#754d24] font-medium mt-0.5">
                     {activeActionModal.title}
                   </h3>
                 </div>
@@ -601,7 +601,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                 <button
                   type="button"
                   onClick={() => setActiveActionModal(null)}
-                  className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#564121] transition-colors"
+                  className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#754d24] transition-colors"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
@@ -624,7 +624,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                       onClick={() =>
                         setActionDetails((prev) => (prev ? `${prev}, ${pill}` : pill))
                       }
-                      className="px-2.5 py-1 rounded-lg text-[11px] bg-white border border-[#e6e2d9] text-[#564121] hover:bg-[#fcfaf5] transition-colors"
+                      className="px-2.5 py-1 rounded-lg text-[11px] bg-white border border-[#e6e2d9] text-[#754d24] hover:bg-[#fcfaf5] transition-colors"
                     >
                       + {pill}
                     </button>
@@ -639,14 +639,14 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                   value={actionDetails}
                   onChange={(e) => setActionDetails(e.target.value)}
                   placeholder={activeActionModal.placeholder}
-                  className="w-full bg-white border border-[#d1c5b8] rounded-xl p-3.5 text-[13px] text-[#564121] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#7f5700] shadow-2xs resize-none"
+                  className="w-full bg-white border border-[#d1c5b8] rounded-xl p-3.5 text-[13px] text-[#754d24] placeholder-[#a89f91] focus:outline-none focus:ring-1 focus:ring-[#a67d52] shadow-2xs resize-none"
                 />
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                 >
                   <span>SEND TO CONCIERGE</span>
                   <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -665,10 +665,10 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
           <div className="w-full max-w-md bg-[#fdf9f0] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#d1c5b8] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#e6e2d9] mb-4">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                   REQUEST DETAILS
                 </span>
-                <h3 className="font-serif text-[22px] text-[#564121] font-medium mt-0.5">
+                <h3 className="font-serif text-[22px] text-[#754d24] font-medium mt-0.5">
                   {selectedRequest.title}
                 </h3>
               </div>
@@ -676,7 +676,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
               <button
                 type="button"
                 onClick={() => setSelectedRequest(null)}
-                className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#564121] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#f1ede5] hover:bg-[#e6e2d9] flex items-center justify-center text-[#754d24] transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -686,15 +686,15 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             <div className="space-y-3 mb-5 text-[13px]">
               <div className="flex justify-between py-1 border-b border-[#f1ede5]">
                 <span className="text-[#7f756a]">Timeline</span>
-                <span className="font-medium text-[#564121]">{selectedRequest.time}</span>
+                <span className="font-medium text-[#754d24]">{selectedRequest.time}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#f1ede5]">
                 <span className="text-[#7f756a]">Assigned To</span>
-                <span className="font-medium text-[#564121]">{selectedRequest.assignedTo} (Concierge)</span>
+                <span className="font-medium text-[#754d24]">{selectedRequest.assignedTo} (Concierge)</span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#f1ede5]">
                 <span className="text-[#7f756a]">Status</span>
-                <span className="font-semibold text-[#7f5700] uppercase text-[11px] tracking-wider">
+                <span className="font-semibold text-[#a67d52] uppercase text-[11px] tracking-wider">
                   {selectedRequest.status}
                 </span>
               </div>
@@ -702,7 +702,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
 
             {/* 4-Stage Progress Visualizer */}
             <div className="p-4 rounded-xl bg-white border border-[#e6e2d9] mb-5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#705836] block mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8b6339] block mb-3">
                 Current Progress
               </span>
 
@@ -717,7 +717,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                       {idx < PROGRESS_STEPS.length - 1 && (
                         <div
                           className={`absolute -left-6 top-3 w-0.5 h-7 ${
-                            idx < selectedRequest.currentStep - 1 ? 'bg-[#7f5700]' : 'bg-[#e6e2d9]'
+                            idx < selectedRequest.currentStep - 1 ? 'bg-[#a67d52]' : 'bg-[#e6e2d9]'
                           }`}
                         />
                       )}
@@ -726,9 +726,9 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                       <span
                         className={`absolute -left-[27px] w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
                           isCompleted
-                            ? 'bg-[#7f5700] text-white'
+                            ? 'bg-[#a67d52] text-white'
                             : isCurrent
-                            ? 'bg-[#febe4f] text-[#564121] font-bold ring-2 ring-[#7f5700]/30'
+                            ? 'bg-[#c49a6c] text-[#754d24] font-bold ring-2 ring-[#a67d52]/30'
                             : 'bg-[#f1ede5] border border-[#d1c5b8] text-transparent'
                         }`}
                       >
@@ -739,9 +739,9 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                         <span
                           className={`text-[12px] block leading-tight ${
                             isCurrent
-                              ? 'font-bold text-[#564121]'
+                              ? 'font-bold text-[#754d24]'
                               : isCompleted
-                              ? 'text-[#564121] font-medium'
+                              ? 'text-[#754d24] font-medium'
                               : 'text-[#a89f91]'
                           }`}
                         >
@@ -758,7 +758,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
             {selectedRequest.details && (
               <div className="mb-4">
                 <span className="text-[11px] text-[#7f756a] block mb-1">Request Notes</span>
-                <p className="text-[12px] text-[#564121] bg-white p-3 rounded-xl border border-[#e6e2d9] leading-relaxed">
+                <p className="text-[12px] text-[#754d24] bg-white p-3 rounded-xl border border-[#e6e2d9] leading-relaxed">
                   {selectedRequest.details}
                 </p>
               </div>
@@ -783,7 +783,7 @@ export const ConciergeScreen: React.FC<ConciergeScreenProps> = () => {
                 )}`}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full bg-[#564121] hover:bg-[#6c532d] text-white py-3 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                className="w-full bg-[#754d24] hover:bg-[#603917] text-white py-3 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-1.5 transition-colors shadow-xs"
               >
                 <span className="material-symbols-outlined text-[16px]">chat</span>
                 <span>Message Eduardo About This</span>

@@ -62,7 +62,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
       
       {/* Toast */}
       {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
           {toast}
         </div>
       )}
@@ -70,7 +70,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
       {/* Header Info */}
       <div className="px-5 pt-3 pb-2 flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#7f5700] font-bold">
+          <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#a67d52] font-bold">
             Villa 102 · Sanctuary Arrival
           </span>
           <span className="font-label-sm text-[10px] text-[#7f756a]">
@@ -78,7 +78,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
           </span>
         </div>
 
-        <h1 className="font-headline-lg text-[#564121] tracking-tight leading-tight mt-1">
+        <h1 className="font-headline-lg text-[#754d24] tracking-tight leading-tight mt-1">
           Stock My Villa
         </h1>
 
@@ -91,9 +91,9 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
       <div className="px-5 pt-3">
         <div className="bg-[#f7f3ea] border border-[#e6e2d9] rounded-2xl p-4 space-y-3">
           <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-[#7f5700] text-[22px] shrink-0 mt-0.5">kitchen</span>
+            <span className="material-symbols-outlined text-[#a67d52] text-[22px] shrink-0 mt-0.5">kitchen</span>
             <div>
-              <h3 className="font-headline-sm text-[16px] text-[#564121]">
+              <h3 className="font-headline-sm text-[16px] text-[#754d24]">
                 Majordomo Unpacking Promise
               </h3>
               <p className="text-[12px] text-[#4e453c] mt-1 leading-relaxed">
@@ -102,20 +102,20 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#e6e2d9]/60 text-[11px] text-[#564121]">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#e6e2d9]/60 text-[11px] text-[#754d24]">
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[#7f5700] text-[15px]">eco</span>
+              <span className="material-symbols-outlined text-[#a67d52] text-[15px]">eco</span>
               <span>Zero Transit Packaging</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[#7f5700] text-[15px]">dry_cleaning</span>
+              <span className="material-symbols-outlined text-[#a67d52] text-[15px]">dry_cleaning</span>
               <span>Placed in ceramic tableware</span>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-white flex items-center justify-between text-xs text-[#564121]">
+          <div className="p-2.5 rounded-xl bg-white flex items-center justify-between text-xs text-[#754d24]">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#7f5700] text-[16px]">tune</span>
+              <span className="material-symbols-outlined text-[#a67d52] text-[16px]">tune</span>
               <span className="font-medium truncate">Synced with Sarah's Preferences: Gluten-Free &amp; Pescatarian</span>
             </div>
             <span className="material-symbols-outlined text-[#7f756a] text-[16px]">chevron_right</span>
@@ -133,8 +133,8 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
               onClick={() => setSelectedCat(cat)}
               className={`whitespace-nowrap px-3.5 py-1.5 rounded-full font-label-md text-[10px] uppercase tracking-wider transition-all border ${
                 isActive
-                  ? 'bg-[#564121] text-white border-[#564121]'
-                  : 'bg-[#f1ede5] text-[#4e453c] border-transparent hover:text-[#564121]'
+                  ? 'bg-[#754d24] text-white border-[#754d24]'
+                  : 'bg-[#f1ede5] text-[#4e453c] border-transparent hover:text-[#754d24]'
               }`}
             >
               {cat}
@@ -162,12 +162,12 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
               {/* Tags */}
               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                 {item.tag && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#fdf9f0]/90 backdrop-blur-md text-[#7f5700] font-label-sm text-[8px] uppercase tracking-widest font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#fdf9f0]/90 backdrop-blur-md text-[#a67d52] font-label-sm text-[8px] uppercase tracking-widest font-bold">
                     {item.tag}
                   </span>
                 )}
                 {item.dietary && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#febe4f] text-[#564121] font-label-sm text-[8px] uppercase font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#c49a6c] text-[#754d24] font-label-sm text-[8px] uppercase font-bold">
                     {item.dietary}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
             <div className="p-4 flex flex-col gap-2.5">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-headline-sm text-[17px] text-[#564121] leading-snug">
+                  <h3 className="font-headline-sm text-[17px] text-[#754d24] leading-snug">
                     {item.name}
                   </h3>
                   <span className="font-label-sm text-[10px] text-[#7f756a] mt-0.5 block">
@@ -187,7 +187,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="font-headline-sm text-[19px] text-[#564121] leading-none block">
+                  <span className="font-headline-sm text-[19px] text-[#754d24] leading-none block">
                     ${item.price}
                   </span>
                   <span className="font-label-sm text-[9px] text-[#7f756a] uppercase">USD / FOLIO</span>
@@ -200,14 +200,14 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
 
               {/* Storage & Quantity Counter */}
               <div className="pt-2 border-t border-[#f1ede5] flex items-center justify-between">
-                <span className="font-label-sm text-[9px] text-[#7f5700] uppercase font-bold tracking-wider">
+                <span className="font-label-sm text-[9px] text-[#a67d52] uppercase font-bold tracking-wider">
                   {item.storageType || 'CHILLED IN LARDER'}
                 </span>
 
                 {item.quantity === 0 ? (
                   <button
                     onClick={() => updateQuantity(item.id, 1)}
-                    className="px-3 py-1.5 rounded-lg bg-[#564121] hover:bg-[#705836] text-white font-label-md text-[10px] uppercase font-bold flex items-center gap-1 shadow-xs"
+                    className="px-3 py-1.5 rounded-lg bg-[#754d24] hover:bg-[#8b6339] text-white font-label-md text-[10px] uppercase font-bold flex items-center gap-1 shadow-xs"
                   >
                     <span className="text-xs">+</span>
                     <span>Add to Villa</span>
@@ -216,16 +216,16 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
                   <div className="flex items-center gap-2 bg-[#f1ede5] px-2 py-1 rounded-lg">
                     <button
                       onClick={() => updateQuantity(item.id, -1)}
-                      className="w-6 h-6 rounded bg-white text-[#564121] flex items-center justify-center font-bold text-xs shadow-xs"
+                      className="w-6 h-6 rounded bg-white text-[#754d24] flex items-center justify-center font-bold text-xs shadow-xs"
                     >
                       -
                     </button>
-                    <span className="w-4 text-center font-bold text-xs text-[#564121]">
+                    <span className="w-4 text-center font-bold text-xs text-[#754d24]">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, 1)}
-                      className="w-6 h-6 rounded bg-white text-[#564121] flex items-center justify-center font-bold text-xs shadow-xs"
+                      className="w-6 h-6 rounded bg-white text-[#754d24] flex items-center justify-center font-bold text-xs shadow-xs"
                     >
                       +
                     </button>
@@ -240,9 +240,9 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
       {/* Standard In-Villa Inclusions ($0 USD) */}
       <div className="px-5 pt-8">
         <div className="p-4 rounded-2xl bg-[#f7f3ea] border border-[#e6e2d9] space-y-3">
-          <div className="flex items-center gap-2 text-[#564121]">
-            <span className="material-symbols-outlined text-[#7f5700] text-[20px]">check_circle</span>
-            <h3 className="font-headline-sm text-[16px] text-[#564121]">
+          <div className="flex items-center gap-2 text-[#754d24]">
+            <span className="material-symbols-outlined text-[#a67d52] text-[20px]">check_circle</span>
+            <h3 className="font-headline-sm text-[16px] text-[#754d24]">
               Standard In-Villa Inclusions ($0 USD)
             </h3>
           </div>
@@ -251,22 +251,22 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
             Your residency automatically includes the following complimentary staples, refreshed twice daily by your Majordomo:
           </p>
 
-          <ul className="space-y-2 text-[12px] text-[#564121] pt-1">
+          <ul className="space-y-2 text-[12px] text-[#754d24] pt-1">
             <li className="flex justify-between border-b border-[#e6e2d9]/60 pb-1.5">
               <span>• Chilled fresh cracked coconut on arrival (x2)</span>
-              <span className="font-semibold text-[#7f5700] font-label-sm text-[9px] uppercase">Included</span>
+              <span className="font-semibold text-[#a67d52] font-label-sm text-[9px] uppercase">Included</span>
             </li>
             <li className="flex justify-between border-b border-[#e6e2d9]/60 pb-1.5">
               <span>• Sparkling &amp; still glass-bottled Mexican mineral water</span>
-              <span className="font-semibold text-[#7f5700] font-label-sm text-[9px] uppercase">Unlimited</span>
+              <span className="font-semibold text-[#a67d52] font-label-sm text-[9px] uppercase">Unlimited</span>
             </li>
             <li className="flex justify-between border-b border-[#e6e2d9]/60 pb-1.5">
               <span>• Oaxacan organic espresso pods &amp; Mayan herbal teas</span>
-              <span className="font-semibold text-[#7f5700] font-label-sm text-[9px] uppercase">Included</span>
+              <span className="font-semibold text-[#a67d52] font-label-sm text-[9px] uppercase">Included</span>
             </li>
             <li className="flex justify-between">
               <span>• Raw unpasteurized agave nectar &amp; organic sea salts</span>
-              <span className="font-semibold text-[#7f5700] font-label-sm text-[9px] uppercase">Included</span>
+              <span className="font-semibold text-[#a67d52] font-label-sm text-[9px] uppercase">Included</span>
             </li>
           </ul>
         </div>
@@ -275,9 +275,9 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
       {/* Special Sourcing Request */}
       <div className="px-5 pt-5">
         <div className="p-4 rounded-2xl bg-white border border-[#e6e2d9] flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-[#7f5700]">
+          <div className="flex items-center gap-2 text-[#a67d52]">
             <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-            <h4 className="text-[13px] font-bold text-[#564121]">Special Sourcing Request</h4>
+            <h4 className="text-[13px] font-bold text-[#754d24]">Special Sourcing Request</h4>
           </div>
           <p className="text-[12px] text-[#4e453c] leading-relaxed">
             Craving a specific vintage, rare botanical digestif, or customized baby purees? Tap our lead concierge to custom-source across Quintana Roo prior to your arrival.
@@ -286,9 +286,9 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
             href="https://wa.me/529841020000"
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#f1ede5] text-[#564121] font-label-sm text-[10px] uppercase font-bold hover:bg-[#ece8df]"
+            className="mt-1 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#f1ede5] text-[#754d24] font-label-sm text-[10px] uppercase font-bold hover:bg-[#ece8df]"
           >
-            <span className="material-symbols-outlined text-[16px] text-[#7f5700]">chat</span>
+            <span className="material-symbols-outlined text-[16px] text-[#a67d52]">chat</span>
             <span>Message Concierge</span>
           </a>
         </div>
@@ -300,12 +300,12 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="font-headline-sm text-[20px] text-[#564121] leading-none">
+                <span className="font-headline-sm text-[20px] text-[#754d24] leading-none">
                   ${totalAmount}.00
                 </span>
                 <span className="text-[11px] text-[#7f756a]">USD · {totalCount} items selected</span>
               </div>
-              <span className="font-label-sm text-[9px] text-[#7f5700] uppercase font-semibold">
+              <span className="font-label-sm text-[9px] text-[#a67d52] uppercase font-semibold">
                 Villa 102 Folio
               </span>
             </div>
@@ -315,7 +315,7 @@ export const StockVillaScreen: React.FC<StockVillaScreenProps> = ({ onNavigate }
               disabled={totalCount === 0}
               className={`py-3.5 px-4 rounded-xl font-label-md text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-sm ${
                 totalCount > 0
-                  ? 'bg-[#564121] hover:bg-[#705836] text-white'
+                  ? 'bg-[#754d24] hover:bg-[#8b6339] text-white'
                   : 'bg-[#d1c5b8] text-white cursor-not-allowed'
               }`}
             >

@@ -1,5 +1,31 @@
-import { ExperienceItem, FlightDetails, LarderItem, ServiceRequest } from '../types';
+/**
+ * sanctuaryData.ts
+ * ============================================================================
+ * BRAND ASSET SWAP POINT — GUEST & DEMO DATA
+ * ============================================================================
+ * This file is the single source of truth for all prototype / demo content.
+ * When real guest data or brand content is available, update the exports below.
+ *
+ * Sections:
+ *   GUEST_INFO        — guest name, villa, dates, preferences
+ *   IMAGES            — all image URLs (CDN / Unsplash placeholders)
+ *   INITIAL_FLIGHT    — arrival flight details
+ *   SERVICE_REQUESTS  — pre-seeded concierge service requests
+ *   INITIAL_LARDER_ITEMS — villa larder / stock items
+ *   ALL_EXPERIENCES   — curated experience cards
+ * ============================================================================
+ */
+import {
+  ExperienceItem,
+  FlightDetails,
+  LarderItem,
+  ServiceRequest,
+  YachtVesselSpecs,
+  YachtCharterPackage,
+  NavigableDestination,
+} from '../types';
 
+// ============ BRAND SWAP: Guest profile =====================================
 export const GUEST_INFO = {
   name: 'Sarah Miller',
   partner: 'Mark',
@@ -19,11 +45,14 @@ export const GUEST_INFO = {
   email: 'sarah.miller@voyage.co',
 };
 
+// ============ BRAND SWAP: Image registry ====================================
+// Replace URL values below with real Kachava property photos.
+// Keys are referenced by every screen — change values here, not in components.
 export const IMAGES = {
-  facade: '/kachava-villa-facade.jpg',
-  facadeFallback: 'https://cdn.prod.website-files.com/689e55f0b5978802e2e73831/68a61638112df9ffdb54c165_3.-Fachada-Frontal-Individual.jpg',
+  facade: '/villa-facade-hdr.jpg',
+  facadeFallback: '/villa-facade-hdr.jpg',
   avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCSh1BJVQcVyzAX0RXPw0B2PwwD3mQ_C7e_b_N-Fpn_0w1eHg-Mvr_AKRY8BJ-PGPmcL6PEl1ppHrsrmGc26RHkH7TUHYlIM8UW55k1rgrNcczRmFzxbaXiQY-iHkhqVVVmDQ6aE6pzu1b5WgWnpkU7ZiT11huyB0Dc2ZiMG_DFJXTh2zi3NVhS51xHGI03BvoN1MjjTmqu4LPXGmyU3V6EyLf9e4crb9JwfkWy5aqaiSnMfY5R55ZP-xe2WyazNIhVC9dnLUFhaK3vkA',
-  yacht: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBUyrmED2tC8pluund1Ii9E0bdmacd9M7YMf36M1EqH2UkefnbR5DnBEPl4XGTHoq5KIQK7iRZdB5fFCGz-sVqaSqkx9QBqw-aRybbprYuPD3AfaRih14F54nb2w4Xfo6Y2O9ZhfjC9rSa0dMVMIKulbqLLewZBx63t_1PZakPZuAA_suLH-8l9uF4869c7pr2bMj6HTdPi9hQpPiwaZl68IsdwcyWbAYNc3Uayr1FRlfBeYVOev2EW',
+  yacht: '/yacht/galleon-sky-hero-puerto-cancun.png',
   cenote: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCSrJ2KEjtl_LMT4yXlv6wUya5B7bMlbZ7vCjHYWfqwSpo57w8KcxNZpBk1ktiqVpqMBLLUgQUzBK_abqREFZRHcaLi7d1sMLSZEgnQh0twyQW1fpxTV_kwKg2yhyuyi-BmkSngfn-NHOrSluJ1zsFYusN7pueQtj2xdyluwrvZ-6jRDSrCsDVUePoOQUs2HH-dYygszg7DthtQaVId64rTmwyXJEP2gFygZKscuFiQwFOm-NGeRDNZ',
   spa: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBfi9HrgRoV1JC_4XML8WQcjWE5LnkFY0jeSB-v0jKlcg2ETPjeIEiUwauUlWBOtAOcZRFX8Xw1s65G5KaJ7buX1Q4E4t2dOwkrJOeUh7fKYcvQQ2df300P_o9QFzgfYY-b5h6bJLshHZcE2HOO391_HDB1yVboOSMWt1UZc4Bzn8SKHKZB0hoUeenv5diaY0mkpKws7dvXSsCcfkgywc1AtvAlpOMrRUTBYgiIpo7Gob-YP5fZxkf6',
   sianKaan: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB5tFE9v41nfK5PfoSSkdosMXIhS1uT0zpmQ4Az8IOaB49v1dkTtVOE5ZzXM2pD0OsvERf8xZcjfJOC38R03jFuKV1Ixa3mAQOfQuWxQmrkOPkrFSSfKLcYb12v2kH4CNKW2Vvu8SRsIuu_3vbRuKz7loAE1JOFgJroNiSXueGNV7vYjxS7cwumgwxcqkEpTxyLGtJWaVyuYKZHEosRGcczrDi9L0HmqFIX1ryoWP_iAy-cxPVLEpd-',
@@ -56,6 +85,225 @@ export const IMAGES = {
   carlosChauffeur: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
 };
 
+// ============ KACHAVA CARIBE: Authentic Yacht Assets & Metadata =============
+export const YACHT_VESSEL_SPECS: YachtVesselSpecs = {
+  model: 'Galeon 470 Sky',
+  tagline: 'Engineering Meets Luxury · Custom Commissioned for Kachava Lux',
+  overallLength: '47 ft 3 in (14.4 m)',
+  beam: '14 ft 4 in (4.37 m)',
+  beachModeBeam: '19 ft 0 in (5.80 m)',
+  capacity: 'Up to 12 Guests + 2 Crew',
+  accommodations: '3 Private Cabins & 2 Ensuite Heads',
+  engines: 'Twin Volvo Penta D8 Turbocharged',
+  refinement: 'Kachava Custom Commissioned',
+  marinaHome: 'Puerto Cancún Marina / Riviera Maya',
+};
+
+export const CAPTAIN_INFO = {
+  name: 'Eduardo Velasco Tadeo',
+  role: 'Master Yacht Captain',
+  experience: '19 Years at Sea (10 yrs Master Captain / 9 yrs Diving & Marine)',
+  origin: 'Quintana Roo, Mexico · Caribbean Native',
+  image: '/yacht/captain.jpg',
+  quote:
+    'When our guests step on board, their only concern should be what drink to order. My crew and I handle everything else.',
+  bio:
+    'From a multi-generational Quintana Roo maritime family. Commanded vessels across Mexico, South Florida (Tampa to Cape Canaveral), Honduras, and the Bahamas.',
+};
+
+export const YACHT_PACKAGES: YachtCharterPackage[] = [
+  {
+    id: 'half-day',
+    title: 'Half-Day Guest Experience',
+    tagline: 'The Day Explorer · 4 Hours',
+    durationHours: 4,
+    durationLabel: '4 Hours (09:30 AM – 1:30 PM or 2:30 PM – 6:30 PM)',
+    valuationUSD: 2000,
+    isIncludedWithStay: true,
+    priceLabel: 'Included with 4N+ Stay · $0 Due ($2,000 USD Value)',
+    description:
+      'Dip into coastal luxury with a 4-hour private cruise. Perfect for a champagne lunch, shallow turquoise swim, and afternoon sunbathing along Bahia de Mujeres.',
+    highlights: [
+      'Dedicated Master Captain & Hospitality Host',
+      'El Meco Coral Reef & Sea Turtle Snorkeling',
+      'Freshly prepared Yellowtail Ceviche & Guacamole',
+      'Open Bar with Premium Spirits & Mexican Wines',
+      'Dual Stand-Up Paddleboards & Cressi Snorkel Gear',
+      'Door-to-Dock Mercedes-Benz Chauffeur',
+    ],
+    suggestedPaths: 'Cancun Lagoon & Bahía de Mujeres to Playa Norte Haven',
+    idealFor: 'Anniversaries, scenic coastal swims, and golden hour dining',
+  },
+  {
+    id: 'extended',
+    title: 'Extended Caribbean Experience',
+    tagline: 'The Deep Voyage · 6 Hours',
+    durationHours: 6,
+    durationLabel: '6 Hours (10:00 AM – 4:00 PM or 1:00 PM – 7:00 PM)',
+    valuationUSD: 3000,
+    isIncludedWithStay: false,
+    priceLabel: '+$1,000 USD Stay Upgrade (Valued at $3,000 USD)',
+    description:
+      'Embrace the complete rhythm of the Caribbean. 6 hours to explore isolated sandbars, dive remote reefs, and take in a stunning golden sunset.',
+    highlights: [
+      'Full Day-Cabin Access with Sub-Zero Climate Control',
+      'Extended Cruising Horizons to Secluded Anchorages',
+      'Multiple Snorkeling & Mooring Drop Points',
+      'Expanded Artisanal Tapas & Coastal Degustation',
+      'Sunset Champagne Toast & Cocktail Hour',
+    ],
+    suggestedPaths: 'Puerto Aventuras to El Cielo Sandbar Sanctuary',
+    idealFor: 'Full reef immersion, extended family cruises, and photography',
+  },
+  {
+    id: 'full-day',
+    title: 'Private Full-Day Escape',
+    tagline: 'The Yucatan Sanctuary · 8 Hours',
+    durationHours: 8,
+    durationLabel: '8 Hours (09:00 AM – 5:00 PM)',
+    valuationUSD: 4000,
+    isIncludedWithStay: false,
+    priceLabel: '+$2,000 USD Stay Upgrade (Valued at $4,000 USD)',
+    description:
+      'Navigate the legendary turquoise paths of the Mexican Caribbean. Absolute finest coral snorkeling, private sandbanks, and all-day private maritime service.',
+    highlights: [
+      'Complete 8-Hour Freedom Itinerary',
+      'Full Master & VIP Suite Access for Rest & Rejuvenation',
+      'Full-Course Fresh Seafood Lunch Prepared Onboard',
+      'Reserve Cellar Agave & French Champagne Bar',
+      'Seabob F5-S Underwater Scooter Deployment',
+    ],
+    suggestedPaths: 'Cancun to Isla Contoy Protected Biosphere or Cozumel Deep Wall',
+    idealFor: 'The ultimate aquatic luxury experience with complete privacy',
+  },
+  {
+    id: 'custom',
+    title: 'Custom Yucatan Peninsula & Caribbean Routes',
+    tagline: 'Ultimate Horizons · Bespoke Itinerary',
+    durationHours: 10,
+    durationLabel: 'Custom Duration & Itinerary',
+    valuationUSD: 5000,
+    isIncludedWithStay: false,
+    priceLabel: 'Custom Proposal by Yacht Concierge',
+    description:
+      'Chart an uncompromised path tailored exactly to your vision in coordination with Captain Eduardo Velasco.',
+    highlights: [
+      'Unrestricted Maritime Corridor Routing',
+      'Private Chef Custom Provisioning',
+      'Helicopter or Private Ground Transfer Links',
+      'Multi-day or Sunset-to-Twilight Night Cruises',
+    ],
+    suggestedPaths: 'Holbox Secluded Sands, Tulum Coast Anchorages, or Isla Contoy Borders',
+    idealFor: 'Bespoke milestones, private gatherings, and personalized expeditions',
+  },
+];
+
+export const NAVIGABLE_DESTINATIONS: NavigableDestination[] = [
+  {
+    id: 'isla-mujeres',
+    title: 'Cancún & Isla Mujeres',
+    region: 'Mexican Caribbean',
+    badge: 'Signature Inclusion',
+    image: '/yacht/playa-en-isla-mujeres.jpg',
+    subtitle: 'The Turquoise Passage & Playa Norte Haven',
+    description:
+      'Cruise across Bahía de Mujeres to world-celebrated Playa Norte turquoise shallows. Snorkel El Meco coral reef, indulge in onboard chef ceviche, and paddleboard in calm crystal waters.',
+    highlights: [
+      'Playa Norte shallow crystal sandbar anchorage',
+      'El Meco reef & sea turtle snorkeling',
+      'Freshly prepared fish ceviche & open bar',
+    ],
+    duration: '4 Hours (Half-Day) or 8 Hours',
+  },
+  {
+    id: 'isla-contoy',
+    title: 'Isla Contoy Sanctuary',
+    region: 'Protected National Park',
+    badge: 'Eco-Sanctuary Expedition',
+    image: '/yacht/galleon-sky-aerialview-ai.png',
+    subtitle: 'Untouched Marine Biosphere & Bird Haven',
+    description:
+      'An exclusive voyage to an uninhabited paradise strictly limited to 200 daily visitors. Pristine Ixlaché coral reef snorkeling, rare tropical bird nesting sanctuaries, and virgin beach dining.',
+    highlights: [
+      'Strictly regulated national marine biosphere reserve',
+      'Mesoamerican Barrier Ixlaché reef snorkel',
+      'Secluded virgin beach dining & certified eco-guide',
+    ],
+    duration: 'Bespoke Full-Day (7–8 Hours)',
+  },
+  {
+    id: 'miami',
+    title: 'Miami & Biscayne Bay',
+    region: 'South Florida, USA',
+    badge: 'Sister Fleet US Route',
+    image: '/yacht/miami-kachavacaribe.jpeg',
+    subtitle: 'Miami Skylines & Biscayne Sandbar Horizons',
+    description:
+      'Signature Kachava hospitality under South Florida skies. Scenic cruise past Downtown Miami skyline, Key Biscayne, and sunset anchorages at the famous Nixon Beach sandbar.',
+    highlights: [
+      'Downtown Miami & Brickell skyline views',
+      'Key Biscayne & Nixon Beach sandbar swim',
+      'Dual-destination guest concierge integration',
+    ],
+    duration: '4 Hours or Full-Day',
+  },
+];
+
+export const YACHT_GALLERY = [
+  {
+    src: '/yacht/galleon-sky-hero-puerto-cancun.png',
+    caption: 'Galeon 470 Sky · Cruising Puerto Cancún Waters',
+    tag: 'Exterior Profile',
+  },
+  {
+    src: '/yacht/galleon-sky-aerialview-ai.png',
+    caption: 'Aerial View · Dual Deck Line & Hardtop Aero-Sport Profile',
+    tag: 'Aerial',
+  },
+  {
+    src: '/yacht/galeon-sky-cockpitbar-ai.jpg',
+    caption: 'Cockpit Bar & Beach Mode Fold-Down Balconies',
+    tag: 'Beach Mode Club',
+  },
+  {
+    src: '/yacht/galleon-sky-loungeview-puerto-cancun.jpg',
+    caption: 'Main Saloon & Panoramic Floor-to-Ceiling Windows',
+    tag: 'Main Saloon',
+  },
+  {
+    src: '/yacht/galleon-sky-breakfast.jpg',
+    caption: 'Skydeck Lounge & Elevated Flybridge Social Sanctuary',
+    tag: 'Skydeck',
+  },
+  {
+    src: '/yacht/galleon-sky-panoramic-view-puerto-cancun.png',
+    caption: 'Open Galley & Gourmet Oceanview Kitchen',
+    tag: 'Galley',
+  },
+  {
+    src: '/yacht/galleon-sky-bedroom3.jpg',
+    caption: 'Full-Beam Master Suite with Midship Hull Windows',
+    tag: 'Master Suite',
+  },
+  {
+    src: '/yacht/galleon-sky-bedroom2.jpg',
+    caption: 'VIP Guest Cabin with Double Berth & Custom Timber Trim',
+    tag: 'VIP Stateroom',
+  },
+  {
+    src: '/yacht/galleon-sky-bathroom.jpg',
+    caption: 'Luxury Ensuite Bath with Designer Vanity & Walk-in Shower',
+    tag: 'Ensuite Head',
+  },
+  {
+    src: '/yacht/galleon-sky-sunset.jpg',
+    caption: 'Golden Hour Sunset Deck & Sundown Champagne Horizon',
+    tag: 'Sunset',
+  },
+];
+
+
+// ============ BRAND SWAP: Arrival flight details ============================
 export const INITIAL_FLIGHT: FlightDetails = {
   arrivalAirport: 'Cancun International (CUN) · Terminal 3',
   airline: 'American Airlines',
@@ -68,6 +316,7 @@ export const INITIAL_FLIGHT: FlightDetails = {
   assignedDriver: 'Carlos M.',
 };
 
+// ============ BRAND SWAP: Pre-seeded service requests =======================
 export const SERVICE_REQUESTS: ServiceRequest[] = [
   {
     id: 'req-towels',
@@ -107,6 +356,7 @@ export const SERVICE_REQUESTS: ServiceRequest[] = [
   },
 ];
 
+// ============ BRAND SWAP: Villa larder / stock items ========================
 export const INITIAL_LARDER_ITEMS: LarderItem[] = [
   {
     id: 'larder-1',
@@ -196,21 +446,22 @@ export const INITIAL_LARDER_ITEMS: LarderItem[] = [
   },
 ];
 
+// ============ BRAND SWAP: Experience cards ==================================
 export const ALL_EXPERIENCES: ExperienceItem[] = [
   {
     id: 'exp-1',
-    title: 'Kachava Private Yacht Voyage',
-    subtitle: 'Boca Paila Barrier Reef · 44ft Leopard Catamaran',
-    duration: '4 Hours',
-    location: 'Boca Paila Barrier Reef',
-    vehicleOrDetail: '44ft Leopard Catamaran',
+    title: 'Kachava Caribe · Galeon 470 Sky Private Yacht Experience',
+    subtitle: 'Cancún & Isla Mujeres Turquoise Waters · 47ft Galeon Sky',
+    duration: '4 Hours (Half-Day) or 8 Hours (Full-Day)',
+    location: 'Bahía de Mujeres & Playa Norte Haven',
+    vehicleOrDetail: '47ft Galeon 470 Sky with Beach Mode',
     priceText: '$0 USD',
     isIncluded: true,
-    inclusionLabel: 'Included With Villa 102',
+    inclusionLabel: 'Included With Villa 102 Stay ($2,000 USD Value)',
     image: IMAGES.yacht,
     category: 'Yacht Charters',
-    description: 'Navigate secluded turquoise channels aboard our signature catamaran. Includes fresh ceviche raw bar prepared by onboard cook, wild agave mezcal pairing, and bespoke snorkeling gear.',
-    amenities: ['Raw Bar', 'Reef Snorkel', 'Artisan Bar'],
+    description: 'Cruise the turquoise shallows of Bahía de Mujeres and Playa Norte aboard our custom Galeon 470 Sky with 19ft fold-down Beach Mode balconies, chef ceviche, and open bar.',
+    amenities: ['Beach Mode Balconies', 'Chef Ceviche & Open Bar', 'Reef Snorkel & Paddleboards', 'Master Captain & Host'],
     actionLabel: 'View Details & Schedule',
     actionScreen: 'yacht',
   },

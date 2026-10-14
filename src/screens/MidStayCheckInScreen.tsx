@@ -61,16 +61,16 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
       {/* Header Info */}
       <div className="px-5 pt-3 pb-2 flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#7f5700] flex items-center gap-1.5 font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7f5700]"></span>
+          <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#a67d52] flex items-center gap-1.5 font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#a67d52]"></span>
             Villa 102 · Mid-Stay Check-In
           </span>
-          <span className="px-2.5 py-1 rounded-full bg-[#ece8df] text-[#564121] font-label-sm text-[10px]">
+          <span className="px-2.5 py-1 rounded-full bg-[#ece8df] text-[#754d24] font-label-sm text-[10px]">
             Day 2 of 4 · 4th Anniversary
           </span>
         </div>
 
-        <h1 className="font-headline-lg text-[#564121] tracking-tight leading-tight mt-1">
+        <h1 className="font-headline-lg text-[#754d24] tracking-tight leading-tight mt-1">
           How Is Your Stay Unfolding, {GUEST_INFO.name.split(' ')[0]}?
         </h1>
 
@@ -90,7 +90,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
             <div className="flex items-center justify-between w-full text-white">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-[#ffddb2]">spa</span>
+                <span className="material-symbols-outlined text-[18px] text-[#f7e8d0]">spa</span>
                 <span className="font-label-md text-[10px] tracking-wider uppercase text-white font-bold">
                   Private Sanctuary Villa 102
                 </span>
@@ -106,7 +106,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
       {/* Primary Sentiment Selector */}
       <div className="px-5 pt-5 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="font-label-md text-[10px] uppercase tracking-wider text-[#7f5700] font-bold">
+          <span className="font-label-md text-[10px] uppercase tracking-wider text-[#a67d52] font-bold">
             In-Moment Sentiment
           </span>
           <span className="font-label-sm text-[11px] text-[#7f756a] italic">
@@ -120,12 +120,12 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
             onClick={() => setSelectedSentiment('transcendent')}
             className={`w-full text-left p-3.5 rounded-xl transition-all flex items-center justify-between border ${
               selectedSentiment === 'transcendent'
-                ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                : 'bg-white border-[#e6e2d9] text-[#564121] hover:bg-[#f7f3ea]'
+                ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                : 'bg-white border-[#e6e2d9] text-[#754d24] hover:bg-[#f7f3ea]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'transcendent' ? 'bg-[#705836] text-[#ffddb2]' : 'bg-[#f1ede5] text-[#7f5700]'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'transcendent' ? 'bg-[#8b6339] text-[#f7e8d0]' : 'bg-[#f1ede5] text-[#a67d52]'}`}>
                 <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
               </span>
               <div>
@@ -133,8 +133,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                 <span className={`text-[12px] ${selectedSentiment === 'transcendent' ? 'text-white/80' : 'text-[#7f756a]'}`}>Every detail exceeds our hopes</span>
               </div>
             </div>
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'transcendent' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}>
-              {selectedSentiment === 'transcendent' && <span className="w-1.5 h-1.5 rounded-full bg-[#564121]"></span>}
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'transcendent' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}>
+              {selectedSentiment === 'transcendent' && <span className="w-1.5 h-1.5 rounded-full bg-[#754d24]"></span>}
             </span>
           </button>
 
@@ -143,12 +143,12 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
             onClick={() => setSelectedSentiment('serene')}
             className={`w-full text-left p-3.5 rounded-xl transition-all flex items-center justify-between border ${
               selectedSentiment === 'serene'
-                ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                : 'bg-white border-[#e6e2d9] text-[#564121] hover:bg-[#f7f3ea]'
+                ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                : 'bg-white border-[#e6e2d9] text-[#754d24] hover:bg-[#f7f3ea]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'serene' ? 'bg-[#705836] text-[#ffddb2]' : 'bg-[#f1ede5] text-[#7f5700]'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'serene' ? 'bg-[#8b6339] text-[#f7e8d0]' : 'bg-[#f1ede5] text-[#a67d52]'}`}>
                 <span className="material-symbols-outlined text-[18px]">nature_people</span>
               </span>
               <div>
@@ -156,8 +156,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                 <span className={`text-[12px] ${selectedSentiment === 'serene' ? 'text-white/80' : 'text-[#7f756a]'}`}>Restful and deeply peaceful</span>
               </div>
             </div>
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'serene' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}>
-              {selectedSentiment === 'serene' && <span className="w-1.5 h-1.5 rounded-full bg-[#564121]"></span>}
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'serene' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}>
+              {selectedSentiment === 'serene' && <span className="w-1.5 h-1.5 rounded-full bg-[#754d24]"></span>}
             </span>
           </button>
 
@@ -166,12 +166,12 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
             onClick={() => setSelectedSentiment('tuned')}
             className={`w-full text-left p-3.5 rounded-xl transition-all flex items-center justify-between border ${
               selectedSentiment === 'tuned'
-                ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                : 'bg-white border-[#e6e2d9] text-[#564121] hover:bg-[#f7f3ea]'
+                ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                : 'bg-white border-[#e6e2d9] text-[#754d24] hover:bg-[#f7f3ea]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'tuned' ? 'bg-[#705836] text-[#ffddb2]' : 'bg-[#f1ede5] text-[#7f5700]'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'tuned' ? 'bg-[#8b6339] text-[#f7e8d0]' : 'bg-[#f1ede5] text-[#a67d52]'}`}>
                 <span className="material-symbols-outlined text-[18px]">tune</span>
               </span>
               <div>
@@ -179,8 +179,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                 <span className={`text-[12px] ${selectedSentiment === 'tuned' ? 'text-white/80' : 'text-[#7f756a]'}`}>We have a subtle wish or refinement</span>
               </div>
             </div>
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'tuned' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}>
-              {selectedSentiment === 'tuned' && <span className="w-1.5 h-1.5 rounded-full bg-[#564121]"></span>}
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'tuned' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}>
+              {selectedSentiment === 'tuned' && <span className="w-1.5 h-1.5 rounded-full bg-[#754d24]"></span>}
             </span>
           </button>
 
@@ -189,12 +189,12 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
             onClick={() => setSelectedSentiment('direct')}
             className={`w-full text-left p-3.5 rounded-xl transition-all flex items-center justify-between border ${
               selectedSentiment === 'direct'
-                ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                : 'bg-white border-[#e6e2d9] text-[#564121] hover:bg-[#f7f3ea]'
+                ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                : 'bg-white border-[#e6e2d9] text-[#754d24] hover:bg-[#f7f3ea]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'direct' ? 'bg-[#705836] text-[#ffddb2]' : 'bg-[#f1ede5] text-[#7f5700]'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedSentiment === 'direct' ? 'bg-[#8b6339] text-[#f7e8d0]' : 'bg-[#f1ede5] text-[#a67d52]'}`}>
                 <span className="material-symbols-outlined text-[18px]">support_agent</span>
               </span>
               <div>
@@ -202,8 +202,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                 <span className={`text-[12px] ${selectedSentiment === 'direct' ? 'text-white/80' : 'text-[#7f756a]'}`}>Request Majordomo to villa immediately</span>
               </div>
             </div>
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'direct' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}>
-              {selectedSentiment === 'direct' && <span className="w-1.5 h-1.5 rounded-full bg-[#564121]"></span>}
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedSentiment === 'direct' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}>
+              {selectedSentiment === 'direct' && <span className="w-1.5 h-1.5 rounded-full bg-[#754d24]"></span>}
             </span>
           </button>
         </div>
@@ -213,10 +213,10 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
       <div className="px-5 pt-6">
         <div className="bg-[#f7f3ea] border border-[#e6e2d9] rounded-2xl p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="font-headline-sm text-[18px] text-[#564121]">
+            <h2 className="font-headline-sm text-[18px] text-[#754d24]">
               Tell Us What We Can Refine
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#ffdead] text-[#7f5700] font-label-sm text-[8px] uppercase font-bold">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#ffdead] text-[#a67d52] font-label-sm text-[8px] uppercase font-bold">
               Discreet Priority
             </span>
           </div>
@@ -227,7 +227,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
 
           {/* Aspect Chips */}
           <div>
-            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block mb-2">
+            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block mb-2">
               Focus Areas (Tap all that apply)
             </span>
 
@@ -240,8 +240,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                     onClick={() => toggleAspect(a.title)}
                     className={`px-3 py-1.5 rounded-full text-[12px] flex items-center gap-1.5 transition-all border ${
                       isSelected
-                        ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                        : 'bg-white text-[#564121] border-[#e6e2d9] hover:bg-[#f1ede5]'
+                        ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                        : 'bg-white text-[#754d24] border-[#e6e2d9] hover:bg-[#f1ede5]'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[15px]">{a.icon}</span>
@@ -259,7 +259,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
               <label className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f756a] font-bold">
                 Sarah's Personal Note to Majordomo Team
               </label>
-              <span className="text-[11px] text-[#7f5700] italic">optional voice or text</span>
+              <span className="text-[11px] text-[#a67d52] italic">optional voice or text</span>
             </div>
 
             <div className="bg-white rounded-xl p-3 border border-[#d1c5b8] space-y-2">
@@ -276,7 +276,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                   type="button"
                   onClick={toggleDictation}
                   className={`flex items-center gap-1 text-[11px] font-semibold transition-colors ${
-                    isRecording ? 'text-[#ba1a1a] animate-pulse' : 'text-[#7f5700] hover:text-[#564121]'
+                    isRecording ? 'text-[#ba1a1a] animate-pulse' : 'text-[#a67d52] hover:text-[#754d24]'
                   }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">mic</span>
@@ -289,11 +289,11 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
 
           {/* Response Commitment */}
           <div className="p-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center gap-3 text-xs">
-            <div className="w-8 h-8 rounded-full bg-[#ffdead] flex items-center justify-center text-[#7f5700] shrink-0 font-bold">
+            <div className="w-8 h-8 rounded-full bg-[#ffdead] flex items-center justify-center text-[#a67d52] shrink-0 font-bold">
               <span className="material-symbols-outlined text-[18px]">timer</span>
             </div>
             <div>
-              <span className="font-bold text-[#564121] block">Estimated Response: Under 7 Minutes</span>
+              <span className="font-bold text-[#754d24] block">Estimated Response: Under 7 Minutes</span>
               <p className="text-[11px] text-[#7f756a] mt-0.5 leading-snug">
                 Eduardo will quietly dispatch our thermal engineer and confirm seamlessly via private WhatsApp.
               </p>
@@ -306,8 +306,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
             disabled={isSubmitting || isSuccess}
             className={`w-full py-3.5 px-4 rounded-xl font-label-md text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm ${
               isSuccess
-                ? 'bg-[#7f5700] text-white'
-                : 'bg-[#564121] hover:bg-[#705836] text-white'
+                ? 'bg-[#a67d52] text-white'
+                : 'bg-[#754d24] hover:bg-[#8b6339] text-white'
             }`}
           >
             {isSubmitting ? (
@@ -333,7 +333,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
       {/* Direct Line */}
       <div className="px-5 pt-5 space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold">
+          <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold">
             Direct Majordomo Line
           </span>
           <span className="text-[11px] text-[#7f756a]">Prefer immediate conversation?</span>
@@ -342,18 +342,18 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
         <div className="grid grid-cols-2 gap-2">
           <a
             href="tel:+529841020000"
-            className="py-2.5 px-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center justify-center gap-2 text-[#564121] text-xs font-semibold hover:bg-[#f7f3ea]"
+            className="py-2.5 px-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center justify-center gap-2 text-[#754d24] text-xs font-semibold hover:bg-[#f7f3ea]"
           >
-            <span className="material-symbols-outlined text-[#7f5700] text-[18px]">call</span>
+            <span className="material-symbols-outlined text-[#a67d52] text-[18px]">call</span>
             <span>Call Butler Desk</span>
           </a>
           <a
             href="https://wa.me/529841020000"
             target="_blank"
             rel="noreferrer"
-            className="py-2.5 px-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center justify-center gap-2 text-[#564121] text-xs font-semibold hover:bg-[#f7f3ea]"
+            className="py-2.5 px-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center justify-center gap-2 text-[#754d24] text-xs font-semibold hover:bg-[#f7f3ea]"
           >
-            <span className="material-symbols-outlined text-[#7f5700] text-[18px]">chat</span>
+            <span className="material-symbols-outlined text-[#a67d52] text-[18px]">chat</span>
             <span>WhatsApp Concierge</span>
           </a>
         </div>
@@ -369,12 +369,12 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
                 alt="Eduardo"
                 className="w-11 h-11 rounded-full object-cover shadow-xs"
               />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#7f5700] ring-2 ring-white"></span>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#a67d52] ring-2 ring-white"></span>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-bold text-[#564121]">Eduardo</span>
-                <span className="px-1.5 py-0.2 rounded bg-[#ffdead]/50 text-[#7f5700] font-label-sm text-[8px] uppercase font-bold">
+                <span className="text-[13px] font-bold text-[#754d24]">Eduardo</span>
+                <span className="px-1.5 py-0.2 rounded bg-[#ffdead]/50 text-[#a67d52] font-label-sm text-[8px] uppercase font-bold">
                   Majordomo
                 </span>
               </div>
@@ -383,7 +383,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
           </div>
 
           <div className="text-right">
-            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block">
+            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block">
               ON GROUNDS
             </span>
             <span className="text-[10px] text-[#7f756a]">Ready to Assist</span>
@@ -394,7 +394,7 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
       {/* The Kachava Sanctuary Vow */}
       <div className="px-5 pt-6">
         <div className="p-5 rounded-2xl bg-[#ece8df]/60 border border-[#d1c5b8]/50 space-y-2">
-          <div className="flex items-center gap-2 text-[#7f5700]">
+          <div className="flex items-center gap-2 text-[#a67d52]">
             <span className="material-symbols-outlined text-[18px]">verified</span>
             <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
               The Kachava Sanctuary Vow
@@ -406,8 +406,8 @@ export const MidStayCheckInScreen: React.FC<MidStayCheckInScreenProps> = ({ onNa
           </p>
 
           <div className="flex items-center justify-between pt-1 text-[11px]">
-            <span className="text-[#564121] font-semibold">— Elena Valdés, Resident Sanctuary Director</span>
-            <span className="text-[#7f5700]">Tulum, Quintana Roo</span>
+            <span className="text-[#754d24] font-semibold">— Elena Valdés, Resident Sanctuary Director</span>
+            <span className="text-[#a67d52]">Tulum, Quintana Roo</span>
           </div>
         </div>
       </div>

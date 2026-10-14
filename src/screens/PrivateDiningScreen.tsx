@@ -27,19 +27,19 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
       
       {/* Toast */}
       {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl animate-in fade-in duration-200">
           {toast}
         </div>
       )}
 
       {/* Header Eyebrow & Title */}
       <div className="px-5 pt-3 pb-2 flex flex-col gap-1.5">
-        <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#7f5700] flex items-center gap-1.5 font-bold">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#7f5700]"></span>
+        <span className="font-label-sm text-[10px] uppercase tracking-widest text-[#a67d52] flex items-center gap-1.5 font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#a67d52]"></span>
           Villa 102 Bespoke Gastronomy · Included
         </span>
 
-        <h1 className="font-headline-lg text-[#564121] tracking-tight leading-tight mt-1">
+        <h1 className="font-headline-lg text-[#754d24] tracking-tight leading-tight mt-1">
           In-Villa &amp; Sanctuary Dining
         </h1>
 
@@ -55,8 +55,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
             onClick={() => setDiningTab('chef')}
             className={`flex-1 py-2.5 rounded-lg font-label-md text-[10px] uppercase tracking-wider font-semibold transition-all ${
               diningTab === 'chef'
-                ? 'bg-[#564121] text-white shadow-xs'
-                : 'text-[#564121] hover:text-[#7f5700]'
+                ? 'bg-[#754d24] text-white shadow-xs'
+                : 'text-[#754d24] hover:text-[#a67d52]'
             }`}
           >
             In-Villa Chef Experience
@@ -65,8 +65,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
             onClick={() => setDiningTab('breakfast')}
             className={`flex-1 py-2.5 rounded-lg font-label-md text-[10px] uppercase tracking-wider font-semibold transition-all ${
               diningTab === 'breakfast'
-                ? 'bg-[#564121] text-white shadow-xs'
-                : 'text-[#564121] hover:text-[#7f5700]'
+                ? 'bg-[#754d24] text-white shadow-xs'
+                : 'text-[#754d24] hover:text-[#a67d52]'
             }`}
           >
             Artisanal Breakfast
@@ -80,12 +80,12 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           <div className="bg-white border border-[#e6e2d9] rounded-2xl overflow-hidden shadow-xs">
             <img src={IMAGES.breakfast} alt="Breakfast" className="w-full h-52 object-cover" />
             <div className="p-4 space-y-2">
-              <span className="font-label-sm text-[10px] text-[#7f5700] uppercase font-bold">Daily Privilege</span>
-              <h3 className="font-headline-sm text-[20px] text-[#564121]">Sanctuary Breakfast In-Suite</h3>
+              <span className="font-label-sm text-[10px] text-[#a67d52] uppercase font-bold">Daily Privilege</span>
+              <h3 className="font-headline-sm text-[20px] text-[#754d24]">Sanctuary Breakfast In-Suite</h3>
               <p className="text-[12px] text-[#4e453c] leading-relaxed">
                 Enjoy wood-fired sourdough, freshly squeezed mamey &amp; passionfruit elixirs, organic pasture eggs with epazote, and hot Mayan spiced hot chocolate served on your pool terrace every morning from 7:00 to 11:30 AM.
               </p>
-              <div className="p-3 bg-[#f7f3ea] rounded-xl text-xs text-[#564121] font-semibold mt-2">
+              <div className="p-3 bg-[#f7f3ea] rounded-xl text-xs text-[#754d24] font-semibold mt-2">
                 ✓ No reservation needed — simply dial Butler Desk or message Mateo on WhatsApp when you wake.
               </div>
             </div>
@@ -98,10 +98,10 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           <div className="px-5 pt-4">
             <div className="bg-[#f7f3ea] border border-[#e6e2d9] rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block">
+                <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block">
                   1 Complimentary Dinner Credit
                 </span>
-                <h3 className="font-headline-sm text-[18px] text-[#564121] mt-0.5">
+                <h3 className="font-headline-sm text-[18px] text-[#754d24] mt-0.5">
                   Private Degustation
                 </h3>
                 <p className="text-[11px] text-[#7f756a]">
@@ -111,8 +111,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
 
               <div className="text-right">
                 <span className="text-[10px] text-[#7f756a] line-through block">Valued at $650 USD</span>
-                <span className="font-headline-sm text-[20px] text-[#564121] leading-none">$0 Due</span>
-                <span className="text-[10px] text-[#7f5700] font-semibold block mt-0.5">Villa 102 Entitlement</span>
+                <span className="font-headline-sm text-[20px] text-[#754d24] leading-none">$0 Due</span>
+                <span className="text-[10px] text-[#a67d52] font-semibold block mt-0.5">Villa 102 Entitlement</span>
               </div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
 
                 <div className="absolute bottom-3 left-4 right-4 text-white flex items-end justify-between">
                   <div>
-                    <span className="font-label-sm text-[9px] uppercase text-[#ffddb2] tracking-wider block">
+                    <span className="font-label-sm text-[9px] uppercase text-[#f7e8d0] tracking-wider block">
                       Lead Alchemist
                     </span>
                     <h3 className="font-headline-sm text-[19px] text-white">
@@ -154,18 +154,18 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           {/* 4th Anniversary Honoring */}
           <div className="px-5 pt-4">
             <div className="p-3.5 rounded-xl bg-[#f7f3ea] border border-[#e6e2d9] flex items-start gap-3">
-              <span className="material-symbols-outlined text-[#7f5700] text-[20px] shrink-0 mt-0.5">celebration</span>
+              <span className="material-symbols-outlined text-[#a67d52] text-[20px] shrink-0 mt-0.5">celebration</span>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold">
+                  <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold">
                     4th Anniversary Honoring
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-[#ffdead] text-[#7f5700] font-label-sm text-[8px] uppercase font-bold">
+                  <span className="px-2 py-0.5 rounded bg-[#ffdead] text-[#a67d52] font-label-sm text-[8px] uppercase font-bold">
                     Pre-Arranged
                   </span>
                 </div>
                 <p className="text-[12px] text-[#4e453c] mt-1 leading-relaxed">
-                  Anniversary copal candlelit ambiance, pre-chilled Ruinart Brut Champagne, and personalized confection script: <strong className="text-[#564121]">“Happy 4th Anniversary Sarah &amp; Mark”</strong>.
+                  Anniversary copal candlelit ambiance, pre-chilled Ruinart Brut Champagne, and personalized confection script: <strong className="text-[#754d24]">“Happy 4th Anniversary Sarah &amp; Mark”</strong>.
                 </p>
               </div>
             </div>
@@ -174,7 +174,7 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           {/* Select Evening Ritual */}
           <div className="px-5 pt-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-headline-sm text-[18px] text-[#564121]">
+              <h2 className="font-headline-sm text-[18px] text-[#754d24]">
                 Select Evening Ritual
               </h2>
               <span className="font-label-sm text-[10px] text-[#7f756a]">Nov 12 – Nov 16</span>
@@ -184,8 +184,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
               {/* Wed 12 */}
               <div className="p-3 rounded-xl bg-white/60 border border-[#e6e2d9] flex items-center justify-between opacity-70">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-[#7f5700]">check_circle</span>
-                  <span className="text-[13px] font-medium text-[#564121]">Wed, Nov 12</span>
+                  <span className="material-symbols-outlined text-[16px] text-[#a67d52]">check_circle</span>
+                  <span className="text-[13px] font-medium text-[#754d24]">Wed, Nov 12</span>
                 </div>
                 <span className="text-[11px] text-[#7f756a]">Arrival Dinner (Booked)</span>
               </div>
@@ -194,11 +194,11 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
               <div
                 onClick={() => setSelectedEvening('Thu 13')}
                 className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                  selectedEvening === 'Thu 13' ? 'bg-[#564121] text-white border-[#564121]' : 'bg-white border-[#e6e2d9]'
+                  selectedEvening === 'Thu 13' ? 'bg-[#754d24] text-white border-[#754d24]' : 'bg-white border-[#e6e2d9]'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className={`w-3.5 h-3.5 rounded-full border ${selectedEvening === 'Thu 13' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}></span>
+                  <span className={`w-3.5 h-3.5 rounded-full border ${selectedEvening === 'Thu 13' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}></span>
                   <span className="text-[13px] font-medium">Thu, Nov 13</span>
                 </div>
                 <span className={`text-[11px] ${selectedEvening === 'Thu 13' ? 'text-white/80' : 'text-[#7f756a]'}`}>Open for Booking</span>
@@ -209,20 +209,20 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                 onClick={() => setSelectedEvening('Fri 14')}
                 className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                   selectedEvening === 'Fri 14'
-                    ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
+                    ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
                     : 'bg-white border-[#e6e2d9]'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 rounded-full border border-white bg-[#ffddb2]"></span>
+                    <span className="w-3.5 h-3.5 rounded-full border border-white bg-[#f7e8d0]"></span>
                     <span className="text-[13px] font-bold">Fri, Nov 14</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-[#ffdead] text-[#564121] font-label-sm text-[8px] uppercase font-bold">
+                  <span className="px-2 py-0.5 rounded bg-[#ffdead] text-[#754d24] font-label-sm text-[8px] uppercase font-bold">
                     Anniversary Night
                   </span>
                 </div>
-                <p className={`text-[11px] mt-1 pl-5 ${selectedEvening === 'Fri 14' ? 'text-[#ffddb2]' : 'text-[#7f756a]'}`}>
+                <p className={`text-[11px] mt-1 pl-5 ${selectedEvening === 'Fri 14' ? 'text-[#f7e8d0]' : 'text-[#7f756a]'}`}>
                   Selected: Optimal pairing with twilight ocean breeze and copal ceremony
                 </p>
               </div>
@@ -231,11 +231,11 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
               <div
                 onClick={() => setSelectedEvening('Sat 15')}
                 className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                  selectedEvening === 'Sat 15' ? 'bg-[#564121] text-white border-[#564121]' : 'bg-white border-[#e6e2d9]'
+                  selectedEvening === 'Sat 15' ? 'bg-[#754d24] text-white border-[#754d24]' : 'bg-white border-[#e6e2d9]'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className={`w-3.5 h-3.5 rounded-full border ${selectedEvening === 'Sat 15' ? 'border-white bg-[#ffddb2]' : 'border-[#d1c5b8]'}`}></span>
+                  <span className={`w-3.5 h-3.5 rounded-full border ${selectedEvening === 'Sat 15' ? 'border-white bg-[#f7e8d0]' : 'border-[#d1c5b8]'}`}></span>
                   <span className="text-[13px] font-medium">Sat, Nov 15</span>
                 </div>
                 <span className={`text-[11px] ${selectedEvening === 'Sat 15' ? 'text-white/80' : 'text-[#7f756a]'}`}>Farewell Evening (Available)</span>
@@ -260,11 +260,11 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                       onClick={() => setSelectedTime(t.id)}
                       className={`py-2 px-1 rounded-xl text-center border transition-all ${
                         isSel
-                          ? 'bg-[#564121] text-white border-[#564121] shadow-xs'
-                          : 'bg-white text-[#564121] border-[#e6e2d9]'
+                          ? 'bg-[#754d24] text-white border-[#754d24] shadow-xs'
+                          : 'bg-white text-[#754d24] border-[#e6e2d9]'
                       }`}
                     >
-                      <span className={`font-label-sm text-[8px] uppercase block ${isSel ? 'text-[#ffddb2]' : 'text-[#7f756a]'}`}>
+                      <span className={`font-label-sm text-[8px] uppercase block ${isSel ? 'text-[#f7e8d0]' : 'text-[#7f756a]'}`}>
                         {t.label}
                       </span>
                       <span className="text-[12px] font-bold block">{t.time}</span>
@@ -278,20 +278,20 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
             <div className="mt-4 p-3 rounded-xl bg-white border border-[#e6e2d9] flex items-center justify-between">
               <div>
                 <span className="font-label-sm text-[9px] uppercase text-[#7f756a] block">Guest Count</span>
-                <span className="text-[13px] font-semibold text-[#564121]">{guests} Guests (Included with Villa 102)</span>
+                <span className="text-[13px] font-semibold text-[#754d24]">{guests} Guests (Included with Villa 102)</span>
                 <p className="text-[10px] text-[#7f756a]">+$180 per additional visiting guest</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setGuests(Math.max(1, guests - 1))}
-                  className="w-8 h-8 rounded-lg bg-[#f1ede5] text-[#564121] font-bold"
+                  className="w-8 h-8 rounded-lg bg-[#f1ede5] text-[#754d24] font-bold"
                 >
                   -
                 </button>
                 <span className="w-4 text-center font-bold text-sm">{guests}</span>
                 <button
                   onClick={() => setGuests(Math.min(6, guests + 1))}
-                  className="w-8 h-8 rounded-lg bg-[#f1ede5] text-[#564121] font-bold"
+                  className="w-8 h-8 rounded-lg bg-[#f1ede5] text-[#754d24] font-bold"
                 >
                   +
                 </button>
@@ -309,17 +309,17 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                 <div
                   onClick={() => setTableSetting('terrace')}
                   className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                    tableSetting === 'terrace' ? 'bg-[#f7f3ea] border-[#7f5700]' : 'bg-white border-[#e6e2d9]'
+                    tableSetting === 'terrace' ? 'bg-[#f7f3ea] border-[#a67d52]' : 'bg-white border-[#e6e2d9]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#7f5700] text-[20px]">deck</span>
+                    <span className="material-symbols-outlined text-[#a67d52] text-[20px]">deck</span>
                     <div>
-                      <h4 className="text-[13px] font-bold text-[#564121]">Villa 102 Oceanfront Pool Terrace</h4>
+                      <h4 className="text-[13px] font-bold text-[#754d24]">Villa 102 Oceanfront Pool Terrace</h4>
                       <p className="text-[11px] text-[#7f756a]">Beside plunge pool under natural star canopy</p>
                     </div>
                   </div>
-                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'terrace' ? 'border-[#564121] bg-[#564121]' : 'border-[#d1c5b8]'}`}>
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'terrace' ? 'border-[#754d24] bg-[#754d24]' : 'border-[#d1c5b8]'}`}>
                     {tableSetting === 'terrace' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
                   </span>
                 </div>
@@ -328,17 +328,17 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                 <div
                   onClick={() => setTableSetting('pergola')}
                   className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                    tableSetting === 'pergola' ? 'bg-[#f7f3ea] border-[#7f5700]' : 'bg-white border-[#e6e2d9]'
+                    tableSetting === 'pergola' ? 'bg-[#f7f3ea] border-[#a67d52]' : 'bg-white border-[#e6e2d9]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#7f5700] text-[20px]">roofing</span>
+                    <span className="material-symbols-outlined text-[#a67d52] text-[20px]">roofing</span>
                     <div>
-                      <h4 className="text-[13px] font-bold text-[#564121]">Indoor Chukum Dining Pergola</h4>
+                      <h4 className="text-[13px] font-bold text-[#754d24]">Indoor Chukum Dining Pergola</h4>
                       <p className="text-[11px] text-[#7f756a]">Air-conditioned sheltered limestone room</p>
                     </div>
                   </div>
-                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'pergola' ? 'border-[#564121] bg-[#564121]' : 'border-[#d1c5b8]'}`}>
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'pergola' ? 'border-[#754d24] bg-[#754d24]' : 'border-[#d1c5b8]'}`}>
                     {tableSetting === 'pergola' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
                   </span>
                 </div>
@@ -347,17 +347,17 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                 <div
                   onClick={() => setTableSetting('palapa')}
                   className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                    tableSetting === 'palapa' ? 'bg-[#f7f3ea] border-[#7f5700]' : 'bg-white border-[#e6e2d9]'
+                    tableSetting === 'palapa' ? 'bg-[#f7f3ea] border-[#a67d52]' : 'bg-white border-[#e6e2d9]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#7f5700] text-[20px]">beach_access</span>
+                    <span className="material-symbols-outlined text-[#a67d52] text-[20px]">beach_access</span>
                     <div>
-                      <h4 className="text-[13px] font-bold text-[#564121]">Secluded Beachfront Palapa</h4>
+                      <h4 className="text-[13px] font-bold text-[#754d24]">Secluded Beachfront Palapa</h4>
                       <p className="text-[11px] text-[#7f756a]">Private dunes torchlit setup (10 min walk)</p>
                     </div>
                   </div>
-                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'palapa' ? 'border-[#564121] bg-[#564121]' : 'border-[#d1c5b8]'}`}>
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${tableSetting === 'palapa' ? 'border-[#754d24] bg-[#754d24]' : 'border-[#d1c5b8]'}`}>
                     {tableSetting === 'palapa' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
                   </span>
                 </div>
@@ -367,10 +367,10 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
 
           {/* Tasting Selections: Five-Course Curations */}
           <div className="px-5 pt-8">
-            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#7f5700] font-bold block mb-1">
+            <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#a67d52] font-bold block mb-1">
               Tasting Selections
             </span>
-            <h2 className="font-headline-sm text-[20px] text-[#564121] mb-4">
+            <h2 className="font-headline-sm text-[20px] text-[#754d24] mb-4">
               Five-Course Curations
             </h2>
 
@@ -382,7 +382,7 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                   <img src={IMAGES.lobsterDish} alt="Fuego y Mar Tasting Menu" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                   
-                  <div className="absolute top-3 left-3 bg-[#febe4f] text-[#564121] px-2.5 py-0.5 rounded-full font-label-sm text-[8px] uppercase font-bold tracking-wider">
+                  <div className="absolute top-3 left-3 bg-[#c49a6c] text-[#754d24] px-2.5 py-0.5 rounded-full font-label-sm text-[8px] uppercase font-bold tracking-wider">
                     Recommended for Anniversary
                   </div>
                 </div>
@@ -390,10 +390,10 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                 <div className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-headline-sm text-[18px] text-[#564121]">Fuego y Mar Tasting Menu</h3>
+                      <h3 className="font-headline-sm text-[18px] text-[#754d24]">Fuego y Mar Tasting Menu</h3>
                       <span className="font-label-sm text-[9px] text-[#7f756a] uppercase">Ocean &amp; Smoke Degustation</span>
                     </div>
-                    <span className="material-symbols-outlined text-[#7f5700] text-[20px]">verified</span>
+                    <span className="material-symbols-outlined text-[#a67d52] text-[20px]">verified</span>
                   </div>
 
                   <ul className="space-y-1.5 text-[12px] text-[#4e453c] border-t border-[#f1ede5] pt-2.5">
@@ -403,8 +403,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     <li>• <strong>Dessert:</strong> Chiapas dark cacao stone ganache, infused sea salt, copal-smoked cream.</li>
                   </ul>
 
-                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#564121]">
-                    <span className="material-symbols-outlined text-[16px] text-[#7f5700]">wine_bar</span>
+                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#754d24]">
+                    <span className="material-symbols-outlined text-[16px] text-[#a67d52]">wine_bar</span>
                     <span>Pairing: Sommelier reserve pairing from Valle de Guadalupe included.</span>
                   </div>
 
@@ -412,8 +412,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     onClick={() => setSelectedMenu('fuego')}
                     className={`w-full py-2.5 rounded-lg font-label-md text-[10px] uppercase tracking-wider font-bold transition-all ${
                       selectedMenu === 'fuego'
-                        ? 'bg-[#564121] text-white'
-                        : 'bg-[#ece8df] text-[#564121] hover:bg-[#e6e2d9]'
+                        ? 'bg-[#754d24] text-white'
+                        : 'bg-[#ece8df] text-[#754d24] hover:bg-[#e6e2d9]'
                     }`}
                   >
                     {selectedMenu === 'fuego' ? '✓ Selected Menu' : 'Switch to Fuego y Mar Tasting Menu'}
@@ -429,7 +429,7 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="font-headline-sm text-[18px] text-[#564121]">Tierra Sagrada</h3>
+                    <h3 className="font-headline-sm text-[18px] text-[#754d24]">Tierra Sagrada</h3>
                     <span className="font-label-sm text-[9px] text-[#7f756a] uppercase">Sacred Earth &amp; Mayan Heritage</span>
                   </div>
 
@@ -437,8 +437,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     Subterranean pit-cooked Berkshire cochinita wrapped in scorched banana leaf, heirloom corn masa varietals, and endemic squash blossom velouté.
                   </p>
 
-                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#564121]">
-                    <span className="material-symbols-outlined text-[16px] text-[#7f5700]">wine_bar</span>
+                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#754d24]">
+                    <span className="material-symbols-outlined text-[16px] text-[#a67d52]">wine_bar</span>
                     <span>Pairing: Ancestral agave flights &amp; Querétaro natural orange wines.</span>
                   </div>
 
@@ -446,8 +446,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     onClick={() => setSelectedMenu('tierra')}
                     className={`w-full py-2.5 rounded-lg font-label-md text-[10px] uppercase tracking-wider font-bold transition-all ${
                       selectedMenu === 'tierra'
-                        ? 'bg-[#564121] text-white'
-                        : 'bg-[#ece8df] text-[#564121] hover:bg-[#e6e2d9]'
+                        ? 'bg-[#754d24] text-white'
+                        : 'bg-[#ece8df] text-[#754d24] hover:bg-[#e6e2d9]'
                     }`}
                   >
                     {selectedMenu === 'tierra' ? '✓ Selected Menu' : 'Switch to Tierra Sagrada'}
@@ -463,7 +463,7 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="font-headline-sm text-[18px] text-[#564121]">Flora Silvestre</h3>
+                    <h3 className="font-headline-sm text-[18px] text-[#754d24]">Flora Silvestre</h3>
                     <span className="font-label-sm text-[9px] text-[#7f756a] uppercase">Botanical &amp; Plant-Forward</span>
                   </div>
 
@@ -471,8 +471,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     Roasted Yucatecan endemic root vegetables, charred avocado with copal oil infusion, cenote watercress salad, and smoked young coconut ceviche.
                   </p>
 
-                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#564121]">
-                    <span className="material-symbols-outlined text-[16px] text-[#7f5700]">wine_bar</span>
+                  <div className="p-2.5 bg-[#f7f3ea] rounded-xl flex items-center gap-2 text-xs text-[#754d24]">
+                    <span className="material-symbols-outlined text-[16px] text-[#a67d52]">wine_bar</span>
                     <span>Pairing: Biodynamic pet-nat and botanical wild herb fermentations.</span>
                   </div>
 
@@ -480,8 +480,8 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
                     onClick={() => setSelectedMenu('flora')}
                     className={`w-full py-2.5 rounded-lg font-label-md text-[10px] uppercase tracking-wider font-bold transition-all ${
                       selectedMenu === 'flora'
-                        ? 'bg-[#564121] text-white'
-                        : 'bg-[#ece8df] text-[#564121] hover:bg-[#e6e2d9]'
+                        ? 'bg-[#754d24] text-white'
+                        : 'bg-[#ece8df] text-[#754d24] hover:bg-[#e6e2d9]'
                     }`}
                   >
                     {selectedMenu === 'flora' ? '✓ Selected Menu' : 'Switch to Flora Silvestre'}
@@ -495,21 +495,21 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           {/* Concierge Profile Sync Note */}
           <div className="px-5 pt-6">
             <div className="p-4 rounded-xl bg-white border border-[#e6e2d9] space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#564121]">
-                <span className="material-symbols-outlined text-[16px] text-[#7f5700]">verified</span>
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#754d24]">
+                <span className="material-symbols-outlined text-[16px] text-[#a67d52]">verified</span>
                 <span>Concierge Profile Sync Active</span>
               </div>
               <p className="text-[12px] text-[#4e453c]">
                 Chef Mateo has tailored all recipes to Sarah's recorded preferences:
               </p>
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <span className="px-2 py-0.5 rounded bg-[#f1ede5] text-[#564121] text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-[#f1ede5] text-[#754d24] text-[11px]">
                   Pescatarian &amp; Gluten-Sensitive
                 </span>
                 <span className="px-2 py-0.5 rounded bg-[#ffdad6] text-[#ba1a1a] text-[11px] font-medium">
                   No Crustacean Shellfish for Sarah
                 </span>
-                <span className="px-2 py-0.5 rounded bg-[#f1ede5] text-[#564121] text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-[#f1ede5] text-[#754d24] text-[11px]">
                   Mark: Omnivore Enjoyment
                 </span>
               </div>
@@ -520,19 +520,19 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
           <div className="px-5 pt-4">
             <div className="p-3.5 rounded-xl bg-[#f7f3ea] border border-[#e6e2d9] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[#7f5700] text-[20px]">wine_bar</span>
+                <span className="material-symbols-outlined text-[#a67d52] text-[20px]">wine_bar</span>
                 <div>
                   <span className="font-label-sm text-[9px] uppercase text-[#7f756a] font-bold block">
                     Sommelier Inquiries
                   </span>
-                  <p className="text-[12px] text-[#564121]">Ask Elena about rare Mexican vintages</p>
+                  <p className="text-[12px] text-[#754d24]">Ask Elena about rare Mexican vintages</p>
                 </div>
               </div>
               <a
                 href="https://wa.me/529841020000"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-white border border-[#d1c5b8] text-[#564121] font-label-sm text-[10px] uppercase font-bold hover:bg-[#f1ede5]"
+                className="px-3 py-1.5 rounded-lg bg-white border border-[#d1c5b8] text-[#754d24] font-label-sm text-[10px] uppercase font-bold hover:bg-[#f1ede5]"
               >
                 Message
               </a>
@@ -548,15 +548,15 @@ export const PrivateDiningScreen: React.FC<PrivateDiningScreenProps> = ({ onNavi
             <div>
               <span className="font-label-sm text-[9px] uppercase text-[#7f756a] block">Total Balance Due</span>
               <div className="flex items-baseline gap-1">
-                <span className="font-headline-sm text-[20px] text-[#564121] leading-none">$0.00</span>
-                <span className="text-[11px] text-[#7f5700] font-semibold">USD · Included</span>
+                <span className="font-headline-sm text-[20px] text-[#754d24] leading-none">$0.00</span>
+                <span className="text-[11px] text-[#a67d52] font-semibold">USD · Included</span>
               </div>
               <span className="text-[10px] text-[#7f756a] block">{selectedEvening} · 8:00 PM · {guests} Guests</span>
             </div>
 
             <button
               onClick={handleConfirm}
-              className="flex-1 max-w-[210px] bg-[#564121] hover:bg-[#705836] text-white py-3.5 px-4 rounded-xl font-label-md text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+              className="flex-1 max-w-[210px] bg-[#754d24] hover:bg-[#8b6339] text-white py-3.5 px-4 rounded-xl font-label-md text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">dinner_dining</span>
               <span>Confirm Dining</span>

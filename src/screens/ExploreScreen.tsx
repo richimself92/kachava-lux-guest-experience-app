@@ -38,31 +38,32 @@ const EXPERIENCES_DATA: DetailedExperience[] = [
   // 1. Yacht - INCLUDED
   {
     id: 'exp-yacht',
-    title: 'Kachava Private Yacht Voyage',
+    title: 'Kachava Caribe · Galeon 470 Sky Private Yacht Experience',
     category: 'Yacht',
     duration: '4 Hours',
     priceType: 'INCLUDED',
     priceDisplay: 'INCLUDED',
     availability: 'Nov 13–15 · Morning & Sunset',
-    oneLineDescription: 'Private 44ft Leopard Catamaran cruise to Boca Paila reef with ceviche bar and wild mezcal.',
+    oneLineDescription: 'Private 47ft Galeon 470 Sky cruise to Playa Norte with 19ft Beach Mode balconies, chef ceviche, and open bar.',
     fullDescription:
-      'Sail along the secluded crystalline waterways of the Boca Paila Barrier Reef aboard our signature 44-foot Leopard catamaran. Your dedicated captain and onboard private cook prepare fresh ceviche and sashimi from the day’s local catch, complemented by artisanal wild agave mezcals and chilled organic elixirs. Anchor in calm turquoise coves for guided drift snorkeling among vibrant coral heads and sea turtles.',
-    heroImage: IMAGES.yacht,
+      'Cruise the turquoise shallows of Bahía de Mujeres and Playa Norte aboard our custom Galeon 470 Sky with 19ft fold-down Beach Mode balconies, chef ceviche, and open bar.',
+    heroImage: '/yacht/galleon-sky-hero-puerto-cancun.png',
     gallery: [
-      IMAGES.yacht,
-      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+      '/yacht/galleon-sky-hero-puerto-cancun.png',
+      '/yacht/galleon-sky-cockpitbar-ai.jpg',
+      '/yacht/galleon-sky-breakfast.jpg',
     ],
     whatsIncluded: [
-      'Private 44ft Leopard Catamaran & dedicated 3-person crew',
-      'Onboard raw bar: freshly cured ceviche & Caribbean lobster sashimi',
-      'Artisanal Mezcal & Valle de Guadalupe wine pairing',
-      'Professional underwater snorkeling gear & SeaDoo sea scooters',
-      'Roundtrip private Escalade transfer to Puerto Aventuras marina',
+      'Private 47ft Galeon 470 Sky with 19ft Beach Mode Balconies',
+      'Dedicated Master Captain Eduardo & Hospitality Host',
+      'Freshly prepared local fish ceviche, guacamole & blue corn tostadas',
+      'Curated Mezcal, Mexican Wine & Premium Open Bar',
+      'Professional Cressi reef snorkel gear & Stand-Up Paddleboards',
+      'Private door-to-dock Mercedes-Benz chauffeur transfer',
     ],
-    location: 'Boca Paila Barrier Reef · Private Marina Berth',
+    location: 'Puerto Cancún Marina & Bahía de Mujeres',
     isUnusedBenefit: true,
-    timeSlots: ['9:00 AM (Morning Reef Sail)', '1:30 PM (Midday Drift)', '4:15 PM (Golden Sunset Sail)'],
+    timeSlots: ['9:30 AM (Morning Reef Sail)', '2:30 PM (Golden Sunset Voyage)'],
     actionScreen: 'yacht',
   },
 
@@ -293,13 +294,13 @@ const EXPERIENCES_DATA: DetailedExperience[] = [
       'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1200&q=80',
     ],
     whatsIncluded: [
-      'Private 44ft Catamaran sunset charter',
+      'Private Galeon 470 Sky sunset charter with Skydeck Lounge',
       'Bottle of chilled Dom Pérignon champagne & caviar canapés',
       'Guided bioluminescent night swim with safety divers',
       'Star constellation storytelling by local navigator',
       'Private roundtrip luxury vehicle transfer',
     ],
-    location: 'Boca Paila South Lagoon & Barrier Reef',
+    location: 'Bahía de Mujeres & Sunset Coastal Horizon',
     timeSlots: ['5:00 PM – 8:30 PM (Sunset & Starlight)'],
     actionScreen: 'yacht',
   },
@@ -401,8 +402,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
     <div className="flex flex-col w-full pb-28 pt-2">
       {/* Toast Notification */}
       {bookingToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
-          <span className="material-symbols-outlined text-[17px] text-[#febe4f] shrink-0">check_circle</span>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2 max-w-[90vw]">
+          <span className="material-symbols-outlined text-[17px] text-[#c49a6c] shrink-0">check_circle</span>
           <span className="truncate">{bookingToast}</span>
         </div>
       )}
@@ -410,7 +411,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
       {/* TOP SECTION: INCLUDED WITH YOUR STAY (Sarah's Unused Benefits First) */}
       <section className="px-5 pt-3 pb-5 bg-gradient-to-b from-[#f7f3ea]/90 to-transparent">
         <div className="flex items-center justify-between mb-1">
-          <span className="font-label-sm text-[9px] uppercase tracking-[0.2em] text-[#7f5700] font-bold">
+          <span className="font-label-sm text-[9px] uppercase tracking-[0.2em] text-[#a67d52] font-bold">
             VILLA 102 PRIVILEGES
           </span>
           <span className="font-label-sm text-[9px] uppercase tracking-wider text-[#3b6d41] bg-[#eef5ed] px-2 py-0.5 rounded-full font-semibold">
@@ -418,7 +419,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        <h2 className="font-serif text-[22px] text-[#564121] font-medium leading-tight mb-1">
+        <h2 className="font-serif text-[22px] text-[#754d24] font-medium leading-tight mb-1">
           INCLUDED WITH YOUR STAY
         </h2>
         <p className="font-sans text-[12px] text-[#5e5449] leading-relaxed mb-3">
@@ -442,7 +443,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <span className="absolute top-2.5 left-2.5 bg-[#564121] text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs">
+                  <span className="absolute top-2.5 left-2.5 bg-[#754d24] text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs">
                     {isScheduled ? 'SCHEDULED ✓' : 'UNUSED BENEFIT'}
                   </span>
                   <span className="absolute bottom-2 right-2 text-white/95 text-[10px] font-medium bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded">
@@ -452,7 +453,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
 
                 <div className="p-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-serif text-[15px] font-medium text-[#564121] leading-snug line-clamp-1">
+                    <h3 className="font-serif text-[15px] font-medium text-[#754d24] leading-snug line-clamp-1">
                       {benefit.title}
                     </h3>
                     <p className="font-sans text-[11px] text-[#7f756a] mt-0.5 line-clamp-1">
@@ -461,10 +462,10 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                   </div>
 
                   <div className="mt-2.5 pt-2 border-t border-[#f1ede5] flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#7f5700] uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-[#a67d52] uppercase tracking-wider">
                       $0 · INCLUDED
                     </span>
-                    <span className="text-[10px] font-semibold text-[#564121] flex items-center gap-0.5 hover:underline">
+                    <span className="text-[10px] font-semibold text-[#754d24] flex items-center gap-0.5 hover:underline">
                       <span>{isScheduled ? 'View Details' : 'Schedule'}</span>
                       <span className="material-symbols-outlined text-[13px]">chevron_right</span>
                     </span>
@@ -478,7 +479,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
 
       {/* MAIN SECTION: EXPLORE YOUR KACHAVA */}
       <div className="px-5 pt-2 pb-1">
-        <h1 className="font-serif text-[26px] text-[#564121] font-normal tracking-tight">
+        <h1 className="font-serif text-[26px] text-[#754d24] font-normal tracking-tight">
           EXPLORE YOUR KACHAVA
         </h1>
         <p className="font-sans text-[12px] text-[#5e5449] mt-0.5">
@@ -496,8 +497,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
               onClick={() => setSelectedCategory(category)}
               className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wider transition-all uppercase ${
                 isActive
-                  ? 'bg-[#564121] text-white shadow-xs'
-                  : 'bg-white text-[#564121] border border-[#e6e2d9] hover:bg-[#fcfaf5]'
+                  ? 'bg-[#754d24] text-white shadow-xs'
+                  : 'bg-white text-[#754d24] border border-[#e6e2d9] hover:bg-[#fcfaf5]'
               }`}
             >
               {category}
@@ -532,8 +533,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                   <span
                     className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-xs ${
                       isIncluded
-                        ? 'bg-[#564121] text-white'
-                        : 'bg-white/95 backdrop-blur-xs text-[#564121] font-semibold'
+                        ? 'bg-[#754d24] text-white'
+                        : 'bg-white/95 backdrop-blur-xs text-[#754d24] font-semibold'
                     }`}
                   >
                     {isScheduled ? 'SCHEDULED ✓' : exp.priceDisplay}
@@ -547,10 +548,10 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                 {/* Bottom Overlay: Availability Indicator */}
                 <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
                   <div className="flex items-center gap-1.5 text-[11px] font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#febe4f] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#c49a6c] animate-pulse" />
                     <span className="truncate">{exp.availability}</span>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-[#ffddb2] font-semibold flex items-center gap-0.5">
+                  <span className="text-[10px] uppercase tracking-wider text-[#f7e8d0] font-semibold flex items-center gap-0.5">
                     Explore
                     <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
                   </span>
@@ -560,7 +561,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
               {/* Card Text Content (STRICTLY minimal: Name + One-line description) */}
               <div className="p-3.5">
                 <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="font-serif text-[17px] font-medium text-[#564121] leading-snug">
+                  <h3 className="font-serif text-[17px] font-medium text-[#754d24] leading-snug">
                     {exp.title}
                   </h3>
                 </div>
@@ -576,7 +577,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
         {filteredExperiences.length === 0 && (
           <div className="text-center py-12 px-4 bg-white rounded-2xl border border-[#e6e2d9]">
             <span className="material-symbols-outlined text-[32px] text-[#7f756a] mb-2">filter_alt_off</span>
-            <p className="text-[14px] text-[#564121] font-serif font-medium">No experiences found in this category</p>
+            <p className="text-[14px] text-[#754d24] font-serif font-medium">No experiences found in this category</p>
             <p className="text-[12px] text-[#7f756a] mt-1">Select “All” or choose another category filter.</p>
           </div>
         )}
@@ -585,8 +586,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
       {/* BESPOKE CONCIERGE BANNER */}
       <div className="px-5 pt-8">
         <div className="bg-[#f7f3ea] border border-[#e6e2d9] p-5 rounded-2xl flex flex-col items-center text-center gap-2">
-          <span className="material-symbols-outlined text-[#7f5700] text-[24px]">explore</span>
-          <h3 className="font-serif text-[18px] text-[#564121] font-medium">
+          <span className="material-symbols-outlined text-[#a67d52] text-[24px]">explore</span>
+          <h3 className="font-serif text-[18px] text-[#754d24] font-medium">
             Custom Unlisted Encounters
           </h3>
           <p className="font-sans text-[12px] text-[#5e5449] max-w-xs leading-relaxed">
@@ -594,7 +595,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
           </p>
           <button
             onClick={() => onNavigate('concierge')}
-            className="mt-2 inline-flex items-center gap-1.5 bg-[#564121] text-white px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider hover:bg-[#6c532d] transition-colors"
+            className="mt-2 inline-flex items-center gap-1.5 bg-[#754d24] text-white px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider hover:bg-[#603917] transition-colors"
           >
             <span className="material-symbols-outlined text-[15px]">chat</span>
             <span>Message Eduardo</span>
@@ -609,14 +610,14 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
             {/* Modal Top Bar */}
             <div className="px-5 py-3.5 border-b border-[#e6e2d9] bg-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-[9px] uppercase font-bold tracking-widest text-[#7f5700] bg-[#fbf6ed] border border-[#f0e3cc] px-2 py-0.5 rounded-md">
+                <span className="text-[9px] uppercase font-bold tracking-widest text-[#a67d52] bg-[#f7f3ea] border border-[#e6dccc] px-2 py-0.5 rounded-md">
                   {activeExperience.category}
                 </span>
                 <span
                   className={`text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-md ${
                     activeExperience.priceType === 'INCLUDED'
-                      ? 'bg-[#564121] text-white'
-                      : 'bg-[#ece8df] text-[#564121]'
+                      ? 'bg-[#754d24] text-white'
+                      : 'bg-[#ece8df] text-[#754d24]'
                   }`}
                 >
                   {activeExperience.priceDisplay}
@@ -625,7 +626,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
 
               <button
                 onClick={handleCloseDetail}
-                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#564121] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#754d24] transition-colors"
                 aria-label="Close details"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -654,7 +655,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                           key={`thumb-${idx}`}
                           onClick={() => setSelectedGalleryImg(img)}
                           className={`w-16 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
-                            isSelected ? 'border-[#7f5700] scale-105' : 'border-transparent opacity-70 hover:opacity-100'
+                            isSelected ? 'border-[#a67d52] scale-105' : 'border-transparent opacity-70 hover:opacity-100'
                           }`}
                         >
                           <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
@@ -667,17 +668,17 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
 
               {/* Title & Core Meta */}
               <div>
-                <h2 className="font-serif text-[22px] font-medium text-[#564121] leading-tight">
+                <h2 className="font-serif text-[22px] font-medium text-[#754d24] leading-tight">
                   {activeExperience.title}
                 </h2>
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-[11px] text-[#7f756a] mt-1.5">
-                  <span className="flex items-center gap-1 font-medium text-[#564121]">
-                    <span className="material-symbols-outlined text-[15px] text-[#7f5700]">schedule</span>
+                  <span className="flex items-center gap-1 font-medium text-[#754d24]">
+                    <span className="material-symbols-outlined text-[15px] text-[#a67d52]">schedule</span>
                     {activeExperience.duration}
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-[#7f5700]">location_on</span>
+                    <span className="material-symbols-outlined text-[15px] text-[#a67d52]">location_on</span>
                     {activeExperience.location}
                   </span>
                   <span>•</span>
@@ -706,7 +707,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                 <ul className="space-y-2">
                   {activeExperience.whatsIncluded.map((item, idx) => (
                     <li key={`inc-${idx}`} className="flex items-start gap-2 text-[12px] text-[#4e453c]">
-                      <span className="material-symbols-outlined text-[16px] text-[#7f5700] shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-[16px] text-[#a67d52] shrink-0 mt-0.5">
                         check
                       </span>
                       <span>{item}</span>
@@ -717,7 +718,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
 
               {/* DATE & TIME SELECTION */}
               <div className="bg-[#f7f3ea] p-4 rounded-xl border border-[#e6e2d9] space-y-3">
-                <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#564121]">
+                <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#754d24]">
                   Select Date &amp; Time
                 </h4>
 
@@ -741,8 +742,8 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                           onClick={() => setSelectedDate(d.date)}
                           className={`py-2 rounded-lg text-center transition-all ${
                             isSelected
-                              ? 'bg-[#564121] text-white font-semibold shadow-xs'
-                              : 'bg-white text-[#564121] border border-[#e6e2d9] hover:bg-[#ece8df]'
+                              ? 'bg-[#754d24] text-white font-semibold shadow-xs'
+                              : 'bg-white text-[#754d24] border border-[#e6e2d9] hover:bg-[#ece8df]'
                           }`}
                         >
                           <span className="text-[9px] block uppercase opacity-80">{d.day}</span>
@@ -767,14 +768,14 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                           onClick={() => setSelectedTime(slot)}
                           className={`w-full py-2.5 px-3 rounded-lg text-left text-[12px] flex items-center justify-between border transition-all ${
                             isSelected
-                              ? 'bg-white border-[#7f5700] text-[#564121] font-semibold shadow-xs'
-                              : 'bg-white/80 border-[#e6e2d9] text-[#564121] hover:bg-white'
+                              ? 'bg-white border-[#a67d52] text-[#754d24] font-semibold shadow-xs'
+                              : 'bg-white/80 border-[#e6e2d9] text-[#754d24] hover:bg-white'
                           }`}
                         >
                           <span>{slot}</span>
                           <span
                             className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                              isSelected ? 'border-[#7f5700] bg-[#7f5700] text-white' : 'border-[#d1c5b8]'
+                              isSelected ? 'border-[#a67d52] bg-[#a67d52] text-white' : 'border-[#d1c5b8]'
                             }`}
                           >
                             {isSelected && <span className="material-symbols-outlined text-[12px]">check</span>}
@@ -786,7 +787,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Party Size */}
-                <div className="pt-1 flex items-center justify-between text-[12px] text-[#564121]">
+                <div className="pt-1 flex items-center justify-between text-[12px] text-[#754d24]">
                   <span className="font-medium">Guests</span>
                   <span className="font-semibold bg-white border border-[#e6e2d9] px-3 py-1 rounded-md">
                     2 Guests (Villa 102)
@@ -803,7 +804,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                       handleCloseDetail();
                       onNavigate(screen);
                     }}
-                    className="text-[11px] text-[#7f5700] underline font-medium"
+                    className="text-[11px] text-[#a67d52] underline font-medium"
                   >
                     Open dedicated {activeExperience.title} portal →
                   </button>
@@ -817,14 +818,14 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({ onNavigate }) => {
                 <span className="text-[9px] uppercase font-bold text-[#7f756a] block tracking-wider">
                   Total Folio Charge
                 </span>
-                <span className="font-serif text-[17px] font-semibold text-[#564121]">
+                <span className="font-serif text-[17px] font-semibold text-[#754d24]">
                   {activeExperience.priceType === 'INCLUDED' ? '$0 USD (Included)' : activeExperience.priceDisplay}
                 </span>
               </div>
 
               <button
                 onClick={handleConfirmBooking}
-                className="flex-1 bg-[#564121] hover:bg-[#6c532d] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors shadow-sm"
+                className="flex-1 bg-[#754d24] hover:bg-[#603917] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors shadow-sm"
               >
                 <span className="material-symbols-outlined text-[17px]">
                   {activeExperience.priceType === 'INCLUDED' ? 'task_alt' : 'calendar_month'}

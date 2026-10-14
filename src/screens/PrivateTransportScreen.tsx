@@ -111,18 +111,18 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
     <div className="flex flex-col w-full pb-28 pt-2 px-5 max-w-md mx-auto">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#564121] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[16px] text-[#febe4f]">check</span>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#754d24] text-white px-4 py-2.5 rounded-full text-[12px] font-medium shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px] text-[#c49a6c]">check</span>
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* TOP HEADER: Label & Title */}
       <div className="pt-2 pb-3">
-        <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[#7f5700] mb-1.5">
+        <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[#a67d52] mb-1.5">
           INCLUDED WITH YOUR STAY
         </span>
-        <h1 className="font-serif text-[26px] leading-tight text-[#564121] font-normal tracking-tight">
+        <h1 className="font-serif text-[26px] leading-tight text-[#754d24] font-normal tracking-tight">
           Private Airport Transportation
         </h1>
       </div>
@@ -137,7 +137,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/15" />
         <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px] text-[#ffddb2]">directions_car</span>
+            <span className="material-symbols-outlined text-[16px] text-[#f7e8d0]">directions_car</span>
             <span className="text-[11px] font-medium tracking-wide uppercase">Direct Villa 102 Escort</span>
           </div>
           <span className="text-[10px] text-white/90 bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-md font-sans">
@@ -154,11 +154,11 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
             <span className="w-5 h-5 rounded-full bg-[#3b6d41] text-white flex items-center justify-center text-[13px] font-bold">
               ✓
             </span>
-            <span className="font-serif text-[17px] font-medium text-[#564121]">
+            <span className="font-serif text-[17px] font-medium text-[#754d24]">
               Transportation Confirmed ✓
             </span>
           </div>
-          <span className="text-[10px] font-semibold text-[#7f5700] bg-[#fbf6ed] border border-[#f0e3cc] px-2 py-0.5 rounded-full uppercase tracking-wider">
+          <span className="text-[10px] font-semibold text-[#a67d52] bg-[#f7f3ea] border border-[#e6dccc] px-2 py-0.5 rounded-full uppercase tracking-wider">
             Active
           </span>
         </div>
@@ -166,29 +166,29 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
         {/* Essential Flight Details (4 lines visible at a glance) */}
         <div className="py-3.5 space-y-2 text-[#4e453c]">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[17px] text-[#7f5700] shrink-0">location_on</span>
+            <span className="material-symbols-outlined text-[17px] text-[#a67d52] shrink-0">location_on</span>
             <span className="text-[14px] font-medium text-[#2c2621]">
               {transport.airport}
             </span>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[17px] text-[#7f5700] shrink-0">flight</span>
+            <span className="material-symbols-outlined text-[17px] text-[#a67d52] shrink-0">flight</span>
             <span className="text-[13px] font-medium text-[#2c2621]">
               {transport.airline} {transport.flightNumber}
             </span>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[17px] text-[#7f5700] shrink-0">schedule</span>
-            <span className="text-[13px] text-[#564121]">
+            <span className="material-symbols-outlined text-[17px] text-[#a67d52] shrink-0">schedule</span>
+            <span className="text-[13px] text-[#754d24]">
               {transport.arrivalDate} · {transport.arrivalTime}
             </span>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[17px] text-[#7f5700] shrink-0">group</span>
-            <span className="text-[13px] text-[#564121]">
+            <span className="material-symbols-outlined text-[17px] text-[#a67d52] shrink-0">group</span>
+            <span className="text-[13px] text-[#754d24]">
               {transport.guests} guests
             </span>
             <span className="text-[11px] text-[#7f756a] ml-1">
@@ -211,7 +211,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                   <div className="w-full flex items-center">
                     <div
                       className={`h-1.5 w-full rounded-full transition-colors ${
-                        isConfirmed ? 'bg-[#564121]' : 'bg-[#e6e2d9]'
+                        isConfirmed ? 'bg-[#754d24]' : 'bg-[#e6e2d9]'
                       }`}
                     />
                   </div>
@@ -219,14 +219,14 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                     <span
                       className={`text-[10px] leading-tight font-medium ${
                         isConfirmed
-                          ? 'text-[#564121] font-semibold'
+                          ? 'text-[#754d24] font-semibold'
                           : 'text-[#9c9388]'
                       }`}
                     >
                       {step.label}
                     </span>
                     {isConfirmed && (
-                      <span className="text-[8px] font-bold text-[#7f5700] uppercase tracking-wider mt-0.5">
+                      <span className="text-[8px] font-bold text-[#a67d52] uppercase tracking-wider mt-0.5">
                         Current
                       </span>
                     )}
@@ -242,7 +242,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
       <div className="space-y-2 mb-6">
         <button
           onClick={handleOpenEdit}
-          className="w-full bg-[#564121] hover:bg-[#6c532d] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-sm"
+          className="w-full bg-[#754d24] hover:bg-[#603917] active:scale-[0.99] text-white py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-sm"
         >
           <span className="material-symbols-outlined text-[17px]">edit_calendar</span>
           <span>EDIT FLIGHT DETAILS</span>
@@ -250,9 +250,9 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
 
         <button
           onClick={handleMessageConcierge}
-          className="w-full bg-white hover:bg-[#fbf9f4] active:scale-[0.99] border border-[#d1c5b8] text-[#564121] py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-xs"
+          className="w-full bg-white hover:bg-[#fbf9f4] active:scale-[0.99] border border-[#d1c5b8] text-[#754d24] py-3.5 px-4 rounded-xl text-[11px] font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-xs"
         >
-          <span className="material-symbols-outlined text-[17px] text-[#7f5700]">support_agent</span>
+          <span className="material-symbols-outlined text-[17px] text-[#a67d52]">support_agent</span>
           <span>MESSAGE CONCIERGE</span>
         </button>
       </div>
@@ -267,14 +267,14 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
             aria-expanded={expandedSections.landing}
           >
             <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-[19px] text-[#7f5700]">flight_land</span>
-              <span className="font-serif text-[16px] font-medium text-[#564121]">
+              <span className="material-symbols-outlined text-[19px] text-[#a67d52]">flight_land</span>
+              <span className="font-serif text-[16px] font-medium text-[#754d24]">
                 What happens when I land?
               </span>
             </div>
             <span
               className={`material-symbols-outlined text-[20px] text-[#7f756a] transition-transform duration-200 ${
-                expandedSections.landing ? 'rotate-180 text-[#564121]' : ''
+                expandedSections.landing ? 'rotate-180 text-[#754d24]' : ''
               }`}
             >
               expand_more
@@ -284,11 +284,11 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
           {expandedSections.landing && (
             <div className="px-4 pb-4 pt-1 border-t border-[#f1ede5] text-[#4e453c] text-[12px] space-y-3.5 animate-in fade-in duration-150">
               <div className="flex items-start gap-3 pt-2">
-                <span className="w-5 h-5 rounded-full bg-[#564121] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 rounded-full bg-[#754d24] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   1
                 </span>
                 <div>
-                  <h4 className="font-semibold text-[#564121] text-[13px]">Baggage Claim &amp; Customs</h4>
+                  <h4 className="font-semibold text-[#754d24] text-[13px]">Baggage Claim &amp; Customs</h4>
                   <p className="mt-0.5 text-[#5e5449] leading-relaxed">
                     Collect your baggage and proceed past Mexican Customs. Exit directly through the main terminal arrival glass doors.
                   </p>
@@ -296,11 +296,11 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-[#7f5700] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 rounded-full bg-[#a67d52] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   2
                 </span>
                 <div>
-                  <h4 className="font-semibold text-[#564121] text-[13px]">Kachava Private Valet Greeting</h4>
+                  <h4 className="font-semibold text-[#754d24] text-[13px]">Kachava Private Valet Greeting</h4>
                   <p className="mt-0.5 text-[#5e5449] leading-relaxed">
                     Your personal chauffeur will greet you curbside with a personalized Kachava Lux crest sign, chilled eucalyptus-scented organic towels, and fresh cold young coconuts.
                   </p>
@@ -308,11 +308,11 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-[#564121] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 rounded-full bg-[#754d24] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   3
                 </span>
                 <div>
-                  <h4 className="font-semibold text-[#564121] text-[13px]">Direct Private Escort to Villa 102</h4>
+                  <h4 className="font-semibold text-[#754d24] text-[13px]">Direct Private Escort to Villa 102</h4>
                   <p className="mt-0.5 text-[#5e5449] leading-relaxed">
                     Relax during the ~90 minute scenic jungle corridor escort. Enjoy curated soundscapes, high-speed Wi-Fi, and artisanal refreshments along the journey.
                   </p>
@@ -330,14 +330,14 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
             aria-expanded={expandedSections.vehicle}
           >
             <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-[19px] text-[#7f5700]">directions_car</span>
-              <span className="font-serif text-[16px] font-medium text-[#564121]">
+              <span className="material-symbols-outlined text-[19px] text-[#a67d52]">directions_car</span>
+              <span className="font-serif text-[16px] font-medium text-[#754d24]">
                 Your vehicle
               </span>
             </div>
             <span
               className={`material-symbols-outlined text-[20px] text-[#7f756a] transition-transform duration-200 ${
-                expandedSections.vehicle ? 'rotate-180 text-[#564121]' : ''
+                expandedSections.vehicle ? 'rotate-180 text-[#754d24]' : ''
               }`}
             >
               expand_more
@@ -355,7 +355,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
               </div>
 
               <div>
-                <h4 className="font-semibold text-[#564121] text-[13px]">
+                <h4 className="font-semibold text-[#754d24] text-[13px]">
                   Cadillac Escalade ESV / Mercedes-Benz Suburban
                 </h4>
                 <p className="mt-0.5 text-[#5e5449] leading-relaxed">
@@ -365,21 +365,21 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
 
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div className="p-2.5 rounded-lg bg-[#fbf9f4] border border-[#e6e2d9]">
-                  <span className="text-[10px] uppercase font-bold text-[#7f5700] block tracking-wider">In-Cabin Wi-Fi</span>
-                  <span className="text-[12px] text-[#564121]">High-Speed 5G Hotspot</span>
+                  <span className="text-[10px] uppercase font-bold text-[#a67d52] block tracking-wider">In-Cabin Wi-Fi</span>
+                  <span className="text-[12px] text-[#754d24]">High-Speed 5G Hotspot</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-[#fbf9f4] border border-[#e6e2d9]">
-                  <span className="text-[10px] uppercase font-bold text-[#7f5700] block tracking-wider">Climate Control</span>
-                  <span className="text-[12px] text-[#564121]">Pre-chilled to 21°C</span>
+                  <span className="text-[10px] uppercase font-bold text-[#a67d52] block tracking-wider">Climate Control</span>
+                  <span className="text-[12px] text-[#754d24]">Pre-chilled to 21°C</span>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-lg bg-[#f7f3ea] border border-[#e6e2d9] flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-[#7f5700] block tracking-wider">Dedicated Chauffeur</span>
-                  <span className="text-[12px] font-semibold text-[#564121]">Carlos M. (Assigned 24h prior)</span>
+                  <span className="text-[10px] uppercase font-bold text-[#a67d52] block tracking-wider">Dedicated Chauffeur</span>
+                  <span className="text-[12px] font-semibold text-[#754d24]">Carlos M. (Assigned 24h prior)</span>
                 </div>
-                <span className="material-symbols-outlined text-[#7f5700] text-[20px]">badge</span>
+                <span className="material-symbols-outlined text-[#a67d52] text-[20px]">badge</span>
               </div>
             </div>
           )}
@@ -393,14 +393,14 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
             aria-expanded={expandedSections.included}
           >
             <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-[19px] text-[#7f5700]">verified</span>
-              <span className="font-serif text-[16px] font-medium text-[#564121]">
+              <span className="material-symbols-outlined text-[19px] text-[#a67d52]">verified</span>
+              <span className="font-serif text-[16px] font-medium text-[#754d24]">
                 What's included
               </span>
             </div>
             <span
               className={`material-symbols-outlined text-[20px] text-[#7f756a] transition-transform duration-200 ${
-                expandedSections.included ? 'rotate-180 text-[#564121]' : ''
+                expandedSections.included ? 'rotate-180 text-[#754d24]' : ''
               }`}
             >
               expand_more
@@ -416,7 +416,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                   className="w-12 h-12 rounded-lg object-cover shadow-xs shrink-0"
                 />
                 <div>
-                  <h4 className="font-semibold text-[#564121] text-[13px]">
+                  <h4 className="font-semibold text-[#754d24] text-[13px]">
                     Arrival Refreshments &amp; Elixirs
                   </h4>
                   <p className="mt-0.5 text-[#5e5449] leading-relaxed">
@@ -426,8 +426,8 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
               </div>
 
               <div className="p-3 rounded-lg bg-[#fbf9f4] border border-[#e6e2d9] space-y-2">
-                <div className="flex items-center gap-2 text-[#564121] font-medium text-[12px]">
-                  <span className="material-symbols-outlined text-[#7f5700] text-[17px]">shield</span>
+                <div className="flex items-center gap-2 text-[#754d24] font-medium text-[12px]">
+                  <span className="material-symbols-outlined text-[#a67d52] text-[17px]">shield</span>
                   <span>Zero-Friction Guarantee</span>
                 </div>
                 <p className="text-[11px] text-[#5e5449] leading-relaxed">
@@ -435,8 +435,8 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                 </p>
               </div>
 
-              <div className="flex items-start gap-2 text-[#564121] text-[12px]">
-                <span className="material-symbols-outlined text-[#7f5700] text-[17px] shrink-0 mt-0.5">luggage</span>
+              <div className="flex items-start gap-2 text-[#754d24] text-[12px]">
+                <span className="material-symbols-outlined text-[#a67d52] text-[17px] shrink-0 mt-0.5">luggage</span>
                 <p className="text-[#5e5449] leading-relaxed">
                   Complimentary full door-to-villa luggage handling from the curbside straight to the Villa 102 master wardrobe.
                 </p>
@@ -452,16 +452,16 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
           <div className="w-full max-w-md bg-[#fdf9f0] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#d1c5b8] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-[#e6e2d9]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#7f5700] tracking-widest block">
+                <span className="text-[10px] uppercase font-bold text-[#a67d52] tracking-widest block">
                   Flight Coordinates
                 </span>
-                <h3 className="font-serif text-[20px] text-[#564121] font-medium mt-0.5">
+                <h3 className="font-serif text-[20px] text-[#754d24] font-medium mt-0.5">
                   Edit Flight Details
                 </h3>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#564121] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#ece8df] hover:bg-[#dfd9cd] flex items-center justify-center text-[#754d24] transition-colors"
                 aria-label="Close"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -477,7 +477,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                   type="text"
                   value={tempAirport}
                   onChange={(e) => setTempAirport(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                   required
                 />
               </div>
@@ -491,7 +491,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                     type="text"
                     value={tempAirline}
                     onChange={(e) => setTempAirline(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     required
                   />
                 </div>
@@ -503,7 +503,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                     type="text"
                     value={tempFlightNo}
                     onChange={(e) => setTempFlightNo(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     required
                   />
                 </div>
@@ -518,7 +518,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                     type="text"
                     value={tempDate}
                     onChange={(e) => setTempDate(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     required
                   />
                 </div>
@@ -530,7 +530,7 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                     type="text"
                     value={tempTime}
                     onChange={(e) => setTempTime(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#7f5700]"
+                    className="w-full p-2.5 rounded-xl bg-white border border-[#d1c5b8] text-[#2c2621] text-[13px] focus:outline-none focus:border-[#a67d52]"
                     required
                   />
                 </div>
@@ -582,13 +582,13 @@ export const PrivateTransportScreen: React.FC<PrivateTransportScreenProps> = ({ 
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 py-3 rounded-xl bg-[#ece8df] text-[#564121] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#e4ded3] transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#ece8df] text-[#754d24] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#e4ded3] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-xl bg-[#564121] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#6c532d] shadow-sm transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#754d24] text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-[#603917] shadow-sm transition-colors"
                 >
                   Save &amp; Sync
                 </button>
