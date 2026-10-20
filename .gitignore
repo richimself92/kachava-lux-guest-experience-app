@@ -67,9 +67,6 @@ logs/
 tmp/
 scratch/
 
-# Legacy Prototype Archive
-old/
-
 # OS & Editor Files
 .DS_Store
 **/.DS_Store
