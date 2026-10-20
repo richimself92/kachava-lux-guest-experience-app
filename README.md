@@ -176,36 +176,51 @@ Once started, the local services are available at:
 
 ---
 
-## Guía Paso a Paso de Prueba End-to-End (End-to-End Testing Walkthrough)
+## Guía Paso a Paso de Prueba End-to-End (Local y Cloud)
 
-Follow this 4-step walkthrough to validate the complete real-time bi-directional flow between the **Host Admin** and the **Guest**:
+Sigue esta guía paso a paso para ejecutar y validar el flujo completo en tiempo real entre el **Host Admin** y el **Huésped** tanto en **Local (`./run-local.sh`)** como en **Cloud**:
+
+### Paso 0 — Levantar el Entorno Local (`./run-local.sh`)
+
+Desde la raíz del repositorio, ejecuta el lanzador unificado para iniciar simultáneamente el Backend NestJS, el Portal del Huésped y el Centro de Comando del Host:
+
+```bash
+./run-local.sh
+```
+
+- **Consola Host Admin (Local)**: `http://localhost:3002`
+- **Portal del Huésped (Local)**: `http://localhost:3000/?guestId=<uuid>` *(generado al crear la estancia en el Admin; abrir `http://localhost:3000` sin `?guestId=` muestra la pantalla de bloqueo **Acceso Restringido — ID de Huésped Obligatorio**)*
+- **Backend API (Local)**: `http://localhost:3001/api/v1`
+- *(Nota: Si modificas código Dart y deseas recompilar los bundles estáticos locales con `config/dev.json`, ejecuta: `cd web && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json` y `cd admin && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json`, o bien inicia en modo compilación en vivo con `./run-local.sh --dev`)*.
 
 ### Paso 1 — Crear la Estancia y Generar el Magic Link (Host Admin)
 
-1. Open the Admin Command Center at [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) and navigate to **`2. Villas, Huéspedes, Links y Traslados`** (`2. Villas, Guests, Links & Transfers`).
-2. Verify that all 8 Villas display **`🟢 LIBRE`** (`🟢 FREE`). Click **`+ Nueva Estancia / Generar Magic Link`**, enter the Guest Name (`Familia Gómez`), select **`Villa 102 — Ceiba Suite`**, and pick the Check-In / Check-Out dates (`19 Oct` to `22 Oct` → automatically calculates `3 noches`).
-3. Click **`Crear y Generar Link`**: `Villa 102` immediately transitions to **`🔴 OCUPADA`** (`🔴 OCCUPIED`). Copy the generated Magic Link (`https://kavacha-app-guest-portal.web.app/?guestId=<uuid>`).
-4. **Security Gate Validation**: Open [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app) *without* `?guestId=...` and confirm that the portal blocks access with the **`Acceso Restringido — ID de Huésped Obligatorio`** screen.
+1. Abre la Consola Host Admin en **Local** (`http://localhost:3002`) o **Cloud** ([https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app)) y entra en **`2. Villas, Huéspedes, Links y Traslados`** (`2. Villas, Guests, Links & Transfers`).
+2. Verifica que las 8 Villas aparezcan en estado **`🟢 LIBRE`** (`🟢 FREE`). Haz clic en **`+ Nueva Estancia / Generar Magic Link`**, ingresa el nombre del huésped (`Familia Gómez`), selecciona **`Villa 102 — Ceiba Suite`**, y elige las fechas de Check-In / Check-Out (`19 Oct` al `22 Oct` → calcula automáticamente `3 noches`).
+3. Haz clic en **`Crear y Generar Link`**: `Villa 102` pasa inmediatamente a **`🔴 OCUPADA`** (`🔴 OCCUPIED`). Copia el Magic Link generado:
+   - **En Local**: `http://localhost:3000/?guestId=<uuid>`
+   - **En Cloud**: `https://kavacha-app-guest-portal.web.app/?guestId=<uuid>`
+4. **Validación del Bloqueo de Seguridad**: Abre `http://localhost:3000` (o [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app)) *sin* `?guestId=...` y verifica que el portal bloquee el acceso mostrando **`Acceso Restringido — ID de Huésped Obligatorio`**.
 
 ### Paso 2 — Pre-Llegada del Huésped: Vuelo, Confort y Minibar (Huésped)
 
-1. Open the copied Magic Link (`?guestId=<uuid>`) on Mobile (`< 768px`) or Desktop (`>= 768px`) and toggle `EN | ES` in the top header as desired.
-2. **`1. Registrar Vuelo y Transporte`**: Pick the arrival date from the stay-bounded calendar, enter the airline (`Aeroméxico`), flight number (`AM 542`), airport (`CUN`), terminal (`T2`), and arrival time (`2:30 PM`), then click **`Guardar y Sincronizar Vuelo`**.
-3. **`2. Confort, Aroma, Dieta y Alergias`**: Select your pillow preference, welcome botanical scent, **`Horario de Limpieza`** (`Mañana (09:00 - 11:00)`), dietary profile, and allergy notes, then click **`Guardar Preferencias`**.
-4. **`3. Pedir Bebidas y Minibar`**: Increment product quantities (`+`, e.g., `2`) and click **`Confirmar Pedido`**. Verify that all product steppers (`- 0 +`) **immediately reset to `0`** so you can place additional orders anytime, while the top status banner displays **`⏳ Pedido Enviado · Pendiente`** along with the ordered items (`2x ...`).
+1. Abre el Magic Link copiado (`http://localhost:3000/?guestId=<uuid>` en Local o `https://kavacha-app-guest-portal.web.app/?guestId=<uuid>` en Cloud) en vista Móvil (`< 768px`) o Escritorio (`>= 768px`) y alterna el idioma `EN | ES` en el encabezado según prefieras.
+2. **`1. Registrar Vuelo y Transporte`**: Selecciona la fecha de llegada desde el calendario acotado a la estancia, ingresa aerolínea (`Aeroméxico`), número de vuelo (`AM 542`), aeropuerto (`CUN`), terminal (`T2`) y hora de llegada (`2:30 PM`), y pulsa **`Guardar y Sincronizar Vuelo`**.
+3. **`2. Confort, Aroma, Dieta y Alergias`**: Elige tipo de almohada, aroma de bienvenida, **`Horario de Limpieza`** (`Mañana (09:00 - 11:00)`), perfil alimenticio y alergias, y pulsa **`Guardar Preferencias`**.
+4. **`3. Pedir Bebidas y Minibar`**: Incrementa las cantidades de productos (`+`, por ejemplo `2`) y pulsa **`Confirmar Pedido`**. Verifica que todos los contadores (`- 0 +`) **vuelvan inmediatamente a `0`** para permitir nuevos pedidos en cualquier momento, mientras el banner superior muestra **`⏳ Pedido Enviado · Pendiente`** junto con el desglose de artículos (`2x ...`).
 
 ### Paso 3 — Recepción de Alertas en Vivo y Atención (Host Admin)
 
-1. Return to the Host Admin console: verify the **10-second WebAudio chime** and the real-time operational notifications in **`1. Resumen y Alertas en Vivo`**.
-2. In **`2. Villas, Huéspedes, Links y Traslados`**, inspect the guest's complete flight details and housekeeping schedule; assign the chauffeur name and airport meeting point, then click **`Guardar y Enviar al Huésped`** (reflected live on the guest's screen `1`).
-3. In **`3. Minibar y Despensa Pre-Llegada`**, verify the exact item count (`Cantidad: 2x`), advance the order status to **`En Preparación`**, and then to **`Entregado en Villa`** (the guest's top banner updates live to **`✅ Entregado en Villa`**).
+1. Regresa a la Consola Host Admin (`http://localhost:3002` en Local o [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) en Cloud): escucha la **alerta sonora WebAudio de 10 segundos** y revisa las notificaciones en **`1. Resumen y Alertas en Vivo`**.
+2. En **`2. Villas, Huéspedes, Links y Traslados`**, inspecciona los datos completos del vuelo y el horario de limpieza del huésped; asigna el nombre del chofer y punto de encuentro en el aeropuerto y pulsa **`Guardar y Enviar al Huésped`** (se refleja en vivo en la opción `1` del huésped).
+3. En **`3. Minibar y Despensa Pre-Llegada`**, verifica la cantidad exacta (`Cantidad: 2x`), avanza el estado a **`En Preparación`** y luego a **`Entregado en Villa`** (el banner superior del huésped cambia en vivo a **`✅ Entregado en Villa`**).
 
 ### Paso 4 — Cena con Chef Privado, Encuesta y Check-Out Final (Ambos Roles)
 
-1. **Huésped** → **`6. Cena con Chef Privado en Villa`**: Select a tasting menu, pick a stay-bounded date, choose a preset chip or custom time (**`⏰ Hora personalizada`**), enter an optional dietary note over the clean placeholder, and submit (**`⏳ Pendiente de Aprobación`**).
-2. **Host Admin** → **`4. Yate, Cena Privada y Tours`**: Click **`Aprobar / Confirmar`** (or **`Cancelar con Motivo`** to verify real-time cancellation reason synchronization on the guest portal).
-3. **Huésped** → **`8. ¿Cómo va tu estancia?`**: Select **`5 ★`**, choose a sentiment tag, add a comment, and submit.
-4. **Host Admin** → Open **`6. Resumen de Estancia y Calificación`** to review the 5-star feedback and full stay summary, then in **`2. Villas, Huéspedes, Links y Traslados`** click **`Dar Salida / Liberar Villa`** and confirm inside the Stay Summary modal (**`Confirmar Check-Out y Liberar Villa`**). Verify that `Villa 102` returns to **`🟢 LIBRE`** and the guest's Magic Link locks into read-only mode (**`CHECK-OUT COMPLETADO`**).
+1. **Huésped** → **`6. Cena con Chef Privado en Villa`**: Selecciona menú de degustación, fecha dentro del rango de la estancia, horario predefinido o personalizado (**`⏰ Hora personalizada`**), nota opcional sobre el placeholder limpio, y envía la solicitud (**`⏳ Pendiente de Aprobación`**).
+2. **Host Admin** → **`4. Yate, Cena Privada y Tours`**: Pulsa **`Aprobar / Confirmar`** (o **`Cancelar con Motivo`** para comprobar la sincronización del motivo de cancelación en la pantalla del huésped).
+3. **Huésped** → **`8. ¿Cómo va tu estancia?`**: Selecciona **`5 ★`**, etiqueta de sentimiento y comentario, y envía la encuesta.
+4. **Host Admin** → Revisa en **`6. Resumen de Estancia y Calificación`** la calificación de 5 estrellas y el resumen de servicios adquiridos; luego entra en **`2. Villas, Huéspedes, Links y Traslados`**, pulsa **`Dar Salida / Liberar Villa`** y confirma en el modal de Resumen de Estancia (**`Confirmar Check-Out y Liberar Villa`**). Verifica que `Villa 102` vuelva a **`🟢 LIBRE`** y que el link del huésped quede bloqueado en modo solo lectura (**`CHECK-OUT COMPLETADO`**).
 
 ---
 
