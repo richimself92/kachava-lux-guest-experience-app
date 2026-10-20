@@ -1,0 +1,37 @@
+name: kachava_admin_dashboard
+description: Kachava Lux Administrative & Concierge Operations Dashboard (Flutter Web).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/fonts/
+  fonts:
+    - family: Libre Baskerville
+      fonts:
+        - asset: assets/fonts/LibreBaskerville-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LibreBaskerville-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/LibreBaskerville-Bold.ttf
+          weight: 700
+    - family: Libre Franklin
+      fonts:
+        - asset: assets/fonts/LibreFranklin-VariableFont_wght.ttf
+        - asset: assets/fonts/LibreFranklin-Italic-VariableFont_wght.ttf
+          style: italic

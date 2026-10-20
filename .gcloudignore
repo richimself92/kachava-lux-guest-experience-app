@@ -1,0 +1,18 @@
+.git/
+.gitignore
+**/node_modules/
+**/dist/
+**/build/
+**/.dart_tool/
+/web/
+/admin/
+/e2e/
+/old/
+/docs/
+/doc/
+/context/
+/.agents/
+/test-results/
+/Kachava Lux - Brand Assets/
+*.log
+.env*

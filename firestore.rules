@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Zero direct client-to-database access.
+    // All Guest Portal (web/) and Admin Dashboard (admin/) reads and writes
+    // are brokered through the shared NestJS Cloud Run backend via IAM Service Account.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

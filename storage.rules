@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public brand, villa, yacht, and catalog photography: globally readable, admin-only write
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Uploaded via Admin SDK / CI deployment pipeline only
+    }
+
+    // Private guest concierge attachments: zero direct client SDK access;
+    // Guest uploads use V4 Signed PUT URLs (GuestTokenGuard) and Admin inspections use V4 Signed GET URLs (AdminAuthGuard)
+    match /private/stays/{stayId}/concierge/{requestId}/{fileName} {
+      allow read, write: if false;
+    }
+  }
+}

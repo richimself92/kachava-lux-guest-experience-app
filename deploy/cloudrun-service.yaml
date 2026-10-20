@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kachava-backend
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "2"
+        run.googleapis.com/cpu-throttling: "true"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+        - image: us-central1-docker.pkg.dev/kavacha-app/cloud-run-source-deploy/kachava-backend:latest
+          ports:
+            - name: http1
+              containerPort: 8080
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: USE_FIRESTORE
+              value: "true"
+            - name: FIREBASE_PROJECT_ID
+              value: "kavacha-app"
+            - name: FIRESTORE_DATABASE_ID
+              value: "kavacha-db"
+            - name: FIREBASE_STORAGE_BUCKET
+              value: "kavacha-store"
+            - name: GUEST_PORTAL_URL
+              value: "https://kavacha-app-guest-portal.web.app"
+            - name: ADMIN_PORTAL_URL
+              value: "https://kavacha-app-admin-dashboard.web.app"
+          resources:
+            limits:
+              cpu: "1"
+              memory: "512Mi"

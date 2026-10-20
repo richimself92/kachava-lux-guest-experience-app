@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "development",
+  "API_BASE_URL": "http://localhost:3001/api/v1",
+  "GUEST_PORTAL_URL": "http://localhost:8080"
+}

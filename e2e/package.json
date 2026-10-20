@@ -1,0 +1,15 @@
+{
+  "name": "kachava-lux-e2e-suite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-Browser Playwright E2E Test Suite for Kachava Lux Guest Portal, Admin Dashboard, and Backend REST API",
+  "scripts": {
+    "test": "playwright test",
+    "test:guest": "playwright test tests/guest-portal.e2e.spec.ts",
+    "test:admin": "playwright test tests/admin-dashboard.e2e.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0"
+  }
+}

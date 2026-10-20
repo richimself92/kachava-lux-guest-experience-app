@@ -1,7 +1,0 @@
-{
-  "name": "Kachava Lux",
-  "description": "Exclusive guest concierge and residency portal for Villa 102 at Kachava Lux.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-

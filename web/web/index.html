@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F7F3EA">
+  <meta name="description" content="Kachava Lux — Villa 102 (Ceiba Suite) Digital Sanctuary Guest Portal">
+  <title>Kachava Lux · Sanctuary Guest Portal</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="alternate icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body style="background-color: #F7F3EA; margin: 0;">
+  <script>
+    (function() {
+      var VERSION = '20261019c';
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            for (var i = 0; i < regs.length; i++) { regs[i].unregister(); }
+          });
+        }
+        if ('caches' in window && localStorage.getItem('kachava_sw_ver') !== VERSION) {
+          caches.keys().then(function(names) {
+            return Promise.all(names.map(function(n) { return caches.delete(n); }));
+          }).then(function() {
+            localStorage.setItem('kachava_sw_ver', VERSION);
+            window.location.reload();
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script src="flutter_bootstrap.js?v=20261019c" async></script>
+</body>
+</html>

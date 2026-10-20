@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "kavacha-app"
+  },
+  "targets": {
+    "kavacha-app": {
+      "hosting": {
+        "guest-portal": [
+          "kavacha-app-guest-portal"
+        ],
+        "admin-dashboard": [
+          "kavacha-app-admin-dashboard"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

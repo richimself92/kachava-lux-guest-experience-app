@@ -1,8 +1,82 @@
+# Dependencies & Package Caches
 node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Flutter & Dart Build / Tooling Artifacts
 build/
-dist/
+**/build/
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+**/coverage/
 coverage/
-.DS_Store
-*.log
-.env*
+
+# Backend & TypeScript Build Artifacts
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Playwright & E2E Test Artifacts
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+blob-report/
+**/blob-report/
+playwright/.cache/
+**/playwright/.cache/
+
+# Firebase & Google Cloud Caches / Logs
+.firebase/
+**/.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+pglite-debug.log*
+gcloud-debug.log*
+
+# Environment Variables, Secrets & Credentials (NEVER COMMIT)
+.env
+.env.*
+*.env
 !.env.example
+!*/*.env.example
+google-services.json
+**/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+*service-account*.json
+*credentials*.json
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+# Local AI Agent & Orchestration State
+.agents/
+.claude/
+.gemini/
+context/
+PLAN.md
+logs/
+tmp/
+scratch/
+
+# Legacy Prototype Archive
+old/
+
+# OS & Editor Files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.log
+*.swp
+*~
+.idea/
+.vscode/
+*.iml
