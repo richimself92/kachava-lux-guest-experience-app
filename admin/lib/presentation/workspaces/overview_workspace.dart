@@ -78,7 +78,7 @@ class OverviewWorkspace extends StatelessWidget {
     final residencySub = controller.stays.isEmpty
         ? AdminI18n.tr(
             isEs, 'All 8 Villas FREE (🟢)', 'Las 8 Villas LIBRES (🟢)')
-        : '${controller.stays.first.villaName} · ${controller.stays.first.guestNames}';
+        : '${AdminI18n.orDash(controller.stays.first.villaName)} · ${AdminI18n.orDash(controller.stays.first.guestNames)}';
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -237,7 +237,7 @@ class OverviewWorkspace extends StatelessWidget {
             customStyle: KachavaAdminColors.stage4Completed,
           ),
         Text(
-          '${alert.villaName} · ${alert.guestNames}',
+          '${AdminI18n.orDash(alert.villaName)} · ${AdminI18n.orDash(alert.guestNames)}',
           style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -282,7 +282,8 @@ class OverviewWorkspace extends StatelessWidget {
               type: InspectorRecordType.alert,
               recordId: alert.alertId,
               title: alert.title,
-              subtitle: '${alert.villaName} · ${alert.guestNames}',
+              subtitle:
+                  '${AdminI18n.orDash(alert.villaName)} · ${AdminI18n.orDash(alert.guestNames)}',
             ),
           ),
           child: Text(AdminI18n.tr(isEs, 'Inspect & Assign', 'Cambiar Estado')),

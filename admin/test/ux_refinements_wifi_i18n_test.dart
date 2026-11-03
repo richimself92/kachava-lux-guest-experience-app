@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
 import 'package:kachava_admin_dashboard/core/admin_i18n.dart';
-import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+
+import 'support/admin_sync_envelope.dart';
+import 'support/signed_in_api_client.dart';
 
 void main() {
   group('Prominent Guest Comfort Box, Configurable Wi-Fi & Wire Mapping', () {
@@ -44,10 +47,26 @@ void main() {
           patchBody = jsonDecode(req.body) as Map<String, dynamic>;
           return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
         }
+        if (req.method == 'POST' && req.url.path.endsWith('/stays')) {
+          final body = jsonDecode(req.body) as Map<String, dynamic>;
+          return jsonResponse({
+            'success': true,
+            'data': {
+              'stay': {
+                ...liveStayWire(stayId: 'stay_server_101'),
+                'villaAccess': {
+                  'wifiSsid': body['wifiSsid'],
+                  'wifiPasscode': body['wifiPasscode'],
+                },
+              },
+            },
+          }, 201);
+        }
+        if (isSyncRequest(req)) return jsonResponse(adminSyncEnvelope());
         return http.Response(jsonEncode({'success': true, 'data': []}), 200);
       });
       final repo = ApiAdminOperationsRepository(
-        apiClient: AdminApiClient(httpClient: mockHttp),
+        apiClient: signedInApiClient(mockHttp),
       );
       final ctrl = AdminDashboardController(repository: repo);
       await ctrl.initialize();
@@ -85,7 +104,8 @@ void main() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();
         });
-        await tester.pumpWidget(const KachavaAdminApp());
+        await tester
+            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
         await tester.pumpAndSettle();
@@ -138,7 +158,8 @@ void main() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();
         });
-        await tester.pumpWidget(const KachavaAdminApp());
+        await tester
+            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const Key('nav-tab-admin-larder')));
@@ -191,16 +212,13 @@ void main() {
           },
         ];
         final mockHttp = MockClient((req) async {
-          if (req.url.path.endsWith('/alerts')) {
-            return http.Response(
-              jsonEncode({'success': true, 'data': alertsPayload}),
-              200,
-            );
+          if (isSyncRequest(req)) {
+            return jsonResponse(adminSyncEnvelope(alerts: alertsPayload));
           }
           return http.Response(jsonEncode({'success': true, 'data': []}), 200);
         });
         final repo = ApiAdminOperationsRepository(
-          apiClient: AdminApiClient(httpClient: mockHttp),
+          apiClient: signedInApiClient(mockHttp),
         );
         final ctrl = AdminDashboardController(repository: repo);
         await ctrl.initialize();

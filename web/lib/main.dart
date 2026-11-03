@@ -34,7 +34,6 @@ class KachavaGuestPortalApp extends StatefulWidget {
 class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
   late SanctuaryController _controller;
   late bool _ownsController;
-  Timer? _pollingTimer;
 
   @override
   void initState() {
@@ -42,8 +41,9 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
     _bindController();
   }
 
+  /// The first load and live polling share the controller's poller, so a
+  /// refresh never overlaps another one.
   void _bindController() {
-    _pollingTimer?.cancel();
     if (widget.controller != null) {
       _controller = widget.controller!;
       _ownsController = false;
@@ -54,14 +54,14 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
         soundscape: SanctuarySoundscapeSynthesizer(),
         requireExplicitGuestId: true,
       );
-      _controller.initialize();
+      unawaited(_controller.initialize());
     }
-    if (widget.enableLivePolling) {
-      _pollingTimer = Timer.periodic(
-        const Duration(seconds: 2),
-        (_) => _controller.refreshFromBackend(),
-      );
-    }
+    if (widget.enableLivePolling) _controller.startLivePolling();
+  }
+
+  void _releaseController() {
+    _controller.stopLivePolling();
+    if (_ownsController) _controller.dispose();
   }
 
   @override
@@ -70,19 +70,14 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
     if (widget.controller != oldWidget.controller ||
         widget.repository != oldWidget.repository ||
         widget.enableLivePolling != oldWidget.enableLivePolling) {
-      if (_ownsController) {
-        _controller.dispose();
-      }
+      _releaseController();
       _bindController();
     }
   }
 
   @override
   void dispose() {
-    _pollingTimer?.cancel();
-    if (_ownsController) {
-      _controller.dispose();
-    }
+    _releaseController();
     super.dispose();
   }
 

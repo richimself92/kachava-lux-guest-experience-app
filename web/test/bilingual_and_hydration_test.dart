@@ -11,8 +11,13 @@ import 'package:kachava_guest_portal/data/repositories/api_sanctuary_repository.
 import 'package:kachava_guest_portal/domain/entities/concierge_folio_entities.dart';
 import 'package:kachava_guest_portal/main.dart';
 
+import 'support/catalog_fixture.dart';
+import 'support/fake_sanctuary_repository.dart';
+
 SanctuaryController _buildHydratedController() {
   final mockClient = MockClient((request) async {
+    final catalog = villa102CatalogResponse(request);
+    if (catalog != null) return catalog;
     final payload = {
       'success': true,
       'data': {
@@ -47,9 +52,9 @@ SanctuaryController _buildHydratedController() {
 
 void main() {
   group('Host Admin, Dynamic Hydration & Bilingual EN|ES Tests', () {
-    test('test_defaultSeedAndController_assignsAllStaffToHostAdmin', () async {
+    test('test_seededStaff_keptAndNewRequestHasNoInventedAssignee', () async {
       final controller = SanctuaryController(
-        repository: ApiSanctuaryRepository(enableNetwork: false),
+        repository: FakeSanctuaryRepository.villa102(),
         soundscape: SanctuarySoundscapeSynthesizer(),
       );
       await controller.initialize();
@@ -66,8 +71,8 @@ void main() {
         category: 'Housekeeping',
         details: 'Two pool towels',
       );
-      expect(
-          controller.conciergeRequests.first.assignedTo, equals('HOST ADMIN'));
+      expect(controller.conciergeRequests.first.assignedTo, isEmpty,
+          reason: 'the UI shows "Resort Host" until the server assigns one');
       expect(controller.activeToastMessage, contains('HOST ADMIN'));
       controller.dispose();
     });

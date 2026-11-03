@@ -1,19 +1,23 @@
 import { Global, Module, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { isFirestoreFlagEnabled } from '../../common/config/runtime-flags';
 import {
   ALERT_REPOSITORY_PORT,
+  AlertRepositoryPort,
   CATALOG_REPOSITORY_PORT,
   STAFF_REPOSITORY_PORT,
   STAY_REPOSITORY_PORT,
   STORAGE_SIGNER_PORT,
 } from '../../domain/ports/repository.ports';
-import { FirestoreStayRepositoryAdapter } from '../repositories/firestore-stay.repository';
-import { InMemorySeededAlertRepository } from '../repositories/in-memory-alert.repository';
-import { InMemorySeededCatalogRepository } from '../repositories/in-memory-catalog.repository';
 import { InMemorySeededStaffRepository } from '../repositories/in-memory-staff.repository';
-import { InMemorySeededStayRepository } from '../repositories/in-memory-stay.repository';
 import { FirebaseStorageSignerAdapter } from '../storage/storage-signer.adapter';
+import {
+  createAlertRepository,
+  createCatalogRepository,
+  createStayRepository,
+} from './repository.providers';
 
 export const DEFAULT_GCP_PROJECT_ID = 'kavacha-app';
 export const DEFAULT_FIRESTORE_DATABASE_ID = 'kavacha-db';
@@ -36,13 +40,12 @@ export function ensureFirebaseAdminApp(): admin.app.App {
   });
 }
 
-export function getNamedFirestoreDb(): Firestore | null {
-  const isFirestoreEnabled =
-    process.env.NODE_ENV !== 'test' &&
-    (process.env.USE_FIRESTORE === 'true' ||
-      process.env.USE_GCP_FIRESTORE === 'true');
+function isFirestoreModeEnabled(): boolean {
+  return process.env.NODE_ENV !== 'test' && isFirestoreFlagEnabled();
+}
 
-  if (!isFirestoreEnabled) {
+export function getNamedFirestoreDb(): Firestore | null {
+  if (!isFirestoreModeEnabled()) {
     return null;
   }
   const app = ensureFirebaseAdminApp();
@@ -51,26 +54,35 @@ export function getNamedFirestoreDb(): Firestore | null {
   return getFirestore(app, databaseId);
 }
 
+/** Firestore mode signs with the real bucket; in-memory mode issues local-development URLs. */
+export function createStorageSigner(): FirebaseStorageSignerAdapter {
+  if (!isFirestoreModeEnabled()) {
+    return new FirebaseStorageSignerAdapter(null);
+  }
+  const bucketName =
+    process.env.FIREBASE_STORAGE_BUCKET || DEFAULT_STORAGE_BUCKET;
+  return new FirebaseStorageSignerAdapter(
+    getStorage(ensureFirebaseAdminApp()).bucket(bucketName),
+  );
+}
+
 @Global()
 @Module({
   providers: [
-    InMemorySeededStayRepository,
-    FirestoreStayRepositoryAdapter,
-    InMemorySeededCatalogRepository,
-    InMemorySeededAlertRepository,
     InMemorySeededStaffRepository,
-    FirebaseStorageSignerAdapter,
     {
       provide: STAY_REPOSITORY_PORT,
-      useExisting: FirestoreStayRepositoryAdapter,
+      useFactory: (alerts: AlertRepositoryPort) =>
+        createStayRepository(getNamedFirestoreDb(), alerts),
+      inject: [ALERT_REPOSITORY_PORT],
     },
     {
       provide: CATALOG_REPOSITORY_PORT,
-      useExisting: InMemorySeededCatalogRepository,
+      useFactory: () => createCatalogRepository(getNamedFirestoreDb()),
     },
     {
       provide: ALERT_REPOSITORY_PORT,
-      useExisting: InMemorySeededAlertRepository,
+      useFactory: () => createAlertRepository(getNamedFirestoreDb()),
     },
     {
       provide: STAFF_REPOSITORY_PORT,
@@ -78,7 +90,7 @@ export function getNamedFirestoreDb(): Firestore | null {
     },
     {
       provide: STORAGE_SIGNER_PORT,
-      useExisting: FirebaseStorageSignerAdapter,
+      useFactory: createStorageSigner,
     },
   ],
   exports: [
@@ -91,11 +103,7 @@ export function getNamedFirestoreDb(): Firestore | null {
 })
 export class FirebaseInfrastructureModule implements OnModuleInit {
   onModuleInit(): void {
-    if (
-      process.env.NODE_ENV !== 'test' &&
-      (process.env.USE_FIRESTORE === 'true' ||
-        process.env.USE_GCP_FIRESTORE === 'true')
-    ) {
+    if (isFirestoreModeEnabled()) {
       ensureFirebaseAdminApp();
     }
   }

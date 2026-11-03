@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
 import 'package:kachava_admin_dashboard/core/admin_i18n.dart';
-import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+
+import 'support/admin_sync_envelope.dart';
+import 'support/signed_in_api_client.dart';
 
 void main() {
   group('Milestone 11 Track 3 — Admin Console Verification Suite', () {
@@ -100,25 +103,19 @@ void main() {
 
       var returnAlert = false;
       final mockHttp = MockClient((req) async {
-        if (req.url.path.endsWith('/alerts')) {
-          return http.Response(
-            jsonEncode({
-              'success': true,
-              'data': {
-                'alerts': returnAlert
-                    ? rawAlertsEnvelope['alerts']
-                    : <Map<String, dynamic>>[],
-                'unreadCount': returnAlert ? 1 : 0,
-              },
-            }),
-            200,
-          );
+        if (isSyncRequest(req)) {
+          return jsonResponse(adminSyncEnvelope(alerts: {
+            'alerts': returnAlert
+                ? rawAlertsEnvelope['alerts']
+                : <Map<String, dynamic>>[],
+            'unreadCount': returnAlert ? 1 : 0,
+          }));
         }
         return http.Response(jsonEncode({'success': true, 'data': []}), 200);
       });
 
       final repo = ApiAdminOperationsRepository(
-        apiClient: AdminApiClient(httpClient: mockHttp),
+        apiClient: signedInApiClient(mockHttp),
       );
       final ctrl = AdminDashboardController(repository: repo);
       await ctrl.initialize();
@@ -210,7 +207,8 @@ void main() {
           tester.view.resetDevicePixelRatio();
         });
 
-        await tester.pumpWidget(const KachavaAdminApp());
+        await tester
+            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
@@ -272,7 +270,8 @@ void main() {
           tester.view.resetDevicePixelRatio();
         });
 
-        await tester.pumpWidget(const KachavaAdminApp());
+        await tester
+            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
         // Tab 3: Larder quantities (English default)

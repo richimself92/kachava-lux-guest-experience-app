@@ -83,8 +83,8 @@ class _MidStayScreenState extends State<MidStayScreen> {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             onPressed: _submitMidStay,
-            child: Text(i18n.t('SHARE WITH HOST ADMIN (< 7 MIN SLA) →',
-                'COMPARTIR CON HOST ADMIN →')),
+            child: Text(i18n.t('SHARE WITH YOUR RESORT HOST →',
+                'COMPARTIR CON TU ANFITRIÓN →')),
           ),
         ],
       ],
@@ -182,13 +182,13 @@ class _MidStayScreenState extends State<MidStayScreen> {
             'transcendent': 'Excelente, todo perfecto',
             'serene': 'Muy agradable y tranquilo',
             'tuned': 'Hay un detalle por mejorar',
-            'direct': 'Necesito atención inmediata de HOST ADMIN',
+            'direct': 'Necesito atención directa',
           }
         : const {
             'transcendent': 'Transcendent & Flawless',
             'serene': 'Serene & Delightful',
             'tuned': 'A Detail Could Be Tuned',
-            'direct': 'Need Direct Assistance (< 7 Min Callback)',
+            'direct': 'Need Direct Assistance',
           };
     return Card(
       child: Padding(
@@ -240,8 +240,8 @@ class _MidStayScreenState extends State<MidStayScreen> {
               controller: _notesController,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: i18n.t(
-                    'Personal Note to HOST ADMIN', 'Nota para HOST ADMIN'),
+                labelText: i18n.t('Personal Note to Your Resort Host',
+                    'Nota para tu anfitrión'),
                 hintText: i18n.t(
                   'e.g. Warm plunge pool by 2 degrees for evening swim',
                   'Ej. Templado de alberca o cualquier comentario sobre tu estancia',
@@ -252,8 +252,8 @@ class _MidStayScreenState extends State<MidStayScreen> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 i18n.t(
-                  'Priority Host Callback (< 7 Min SLA)',
-                  'Solicitar llamada prioritaria de HOST ADMIN',
+                  'Request a Priority Callback',
+                  'Solicitar llamada prioritaria',
                 ),
                 style:
                     const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),

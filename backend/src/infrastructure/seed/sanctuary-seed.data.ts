@@ -11,7 +11,6 @@ import {
 } from './sanctuary-subcollections.seed';
 
 export const DEFAULT_DEMO_GUEST_UUID = '550e8400-e29b-41d4-a716-446655440000';
-export const SECONDARY_SPEC_GUEST_UUID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
 export function createSeededStayAggregate(): StayAggregate {
   return {

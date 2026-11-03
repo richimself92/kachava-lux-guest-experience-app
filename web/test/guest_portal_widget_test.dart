@@ -9,15 +9,21 @@ import 'package:kachava_guest_portal/core/constants/screen_id.dart';
 import 'package:kachava_guest_portal/data/repositories/api_sanctuary_repository.dart';
 import 'package:kachava_guest_portal/main.dart';
 
-SanctuaryController _createTestController({String? uriString}) {
-  return SanctuaryController(
-    repository: ApiSanctuaryRepository(enableNetwork: false),
+import 'support/catalog_fixture.dart';
+import 'support/fake_sanctuary_repository.dart';
+
+/// Controller hydrated from the test-only Villa 102 fixture.
+Future<SanctuaryController> _createTestController({String? uriString}) async {
+  final controller = SanctuaryController(
+    repository: FakeSanctuaryRepository.villa102(),
     soundscape: SanctuarySoundscapeSynthesizer(),
     initialUri: Uri.parse(
       uriString ??
           'https://kachavalux.com/?guestId=550e8400-e29b-41d4-a716-446655440000',
     ),
   );
+  await controller.initialize();
+  return controller;
 }
 
 void main() {
@@ -25,15 +31,14 @@ void main() {
     testWidgets(
       'test_invalidMagicLinkUuid_rendersAccessRestrictedScreen',
       (tester) async {
-        final controller = _createTestController(
+        final controller = await _createTestController(
           uriString: 'https://kachavalux.com/?guestId=invalid-uuid',
         );
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Access Restricted'), findsWidgets);
-        expect(find.textContaining('Acceso Restringido'), findsWidgets);
-        expect(find.textContaining('HOST ADMIN'), findsWidgets);
+        expect(find.textContaining('invalid or has expired'), findsOneWidget);
 
         // Normal URL without ?guestId=<uuid> also renders Access Restricted
         await tester.pumpWidget(
@@ -43,7 +48,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.textContaining('Access Restricted'), findsWidgets);
-        expect(find.textContaining('?guestId='), findsWidgets);
+        expect(find.textContaining('invitation link'), findsOneWidget);
       },
     );
 
@@ -54,7 +59,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
         await tester.pumpAndSettle();
 
@@ -134,7 +139,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
         await tester.pumpAndSettle();
 
@@ -162,7 +167,7 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
-      final controller = _createTestController();
+      final controller = await _createTestController();
       controller.navigateTo(ScreenId.stockVilla);
       await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
       await tester.pumpAndSettle();
@@ -192,7 +197,9 @@ void main() {
       expect(find.textContaining('\$0.00 USD'), findsWidgets);
 
       // Verify delivered order clears cart and shows reorder banner
-      final deliveredClient = MockClient((_) async => http.Response(
+      final deliveredClient = MockClient((request) async =>
+          villa102CatalogResponse(request) ??
+          http.Response(
             jsonEncode({
               'success': true,
               'data': {
@@ -234,7 +241,7 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
-      final controller = _createTestController();
+      final controller = await _createTestController();
       controller.updateLarderQuantity('larder-1', 1);
       await controller.confirmVillaStocking();
       await controller.submitYachtCharterRequest();
@@ -262,7 +269,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         controller.navigateTo(ScreenId.yacht);
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
         await tester.pumpAndSettle();
@@ -291,7 +298,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         controller.navigateTo(ScreenId.concierge);
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));
         await tester.pumpAndSettle();
@@ -340,7 +347,7 @@ void main() {
         expect(find.textContaining('Access Restricted'), findsWidgets);
         expect(tester.takeException(), isNull, reason: 'access-restricted');
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         await controller.updateFlightDetails(controller.transport
             .copyWith(flightNumber: '', assignedDriver: '', meetingPoint: ''));
         await controller.savePersonalization(controller.preferences
@@ -375,7 +382,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final controller = _createTestController();
+        final controller = await _createTestController();
         await controller.updateFlightDetails(controller.transport
             .copyWith(flightNumber: '', assignedDriver: '', meetingPoint: ''));
         await tester.pumpWidget(KachavaGuestPortalApp(controller: controller));

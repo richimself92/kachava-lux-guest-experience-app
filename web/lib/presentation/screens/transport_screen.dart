@@ -3,6 +3,7 @@ import '../../application/sanctuary_controller.dart';
 import '../../core/constants/screen_id.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
+import '../shell/stay_date_picker.dart';
 
 /// Screen 2: Private Aviation & Transfer (`transport`).
 class TransportScreen extends StatefulWidget {
@@ -54,18 +55,9 @@ class _TransportScreenState extends State<TransportScreen> {
   }
 
   Future<void> _pickArrivalDate() async {
-    final stay = widget.controller.stay;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: stay.checkInDateTime,
-      firstDate: stay.checkInDateTime,
-      lastDate: stay.checkOutDateTime,
-    );
+    final picked = await pickStayDate(context, widget.controller.stay);
     if (!mounted || picked == null) return;
-    final y = picked.year.toString();
-    final m = picked.month.toString().padLeft(2, '0');
-    final d = picked.day.toString().padLeft(2, '0');
-    setState(() => _dateCtrl.text = '$y-$m-$d');
+    setState(() => _dateCtrl.text = picked);
   }
 
   Future<void> _saveFlightUpdate() async {

@@ -4,13 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
-import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+
+import 'support/admin_sync_envelope.dart';
+import 'support/signed_in_api_client.dart';
 
 Map<String, dynamic> _sampleStayPayload() => {
       'success': true,
@@ -201,14 +203,13 @@ void main() {
           alertsList = [];
           return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
         }
-        if (p.endsWith('/alerts')) {
-          return http.Response(
-              jsonEncode({'success': true, 'data': alertsList}), 200);
+        if (isSyncRequest(request)) {
+          return jsonResponse(adminSyncEnvelope(alerts: alertsList));
         }
         return http.Response(jsonEncode({'success': true, 'data': []}), 200);
       });
-      final repo = ApiAdminOperationsRepository(
-          apiClient: AdminApiClient(httpClient: mockHttp), enableNetwork: true);
+      final repo =
+          ApiAdminOperationsRepository(apiClient: signedInApiClient(mockHttp));
       final controller = AdminDashboardController(repository: repo);
       await controller.initialize();
       expect(controller.stays, isEmpty);
@@ -288,18 +289,17 @@ void main() {
           findsOneWidget);
     });
 
-    testWidgets('test_live_polling_refreshes_automatically_every_2_seconds',
+    testWidgets('test_live_polling_refreshes_automatically_every_5_seconds',
         (tester) async {
       var alertsList = <Map<String, dynamic>>[];
       final mockHttp = MockClient((request) async {
-        if (request.url.path.endsWith('/alerts')) {
-          return http.Response(
-              jsonEncode({'success': true, 'data': alertsList}), 200);
+        if (isSyncRequest(request)) {
+          return jsonResponse(adminSyncEnvelope(alerts: alertsList));
         }
         return http.Response(jsonEncode({'success': true, 'data': []}), 200);
       });
-      final repo = ApiAdminOperationsRepository(
-          apiClient: AdminApiClient(httpClient: mockHttp), enableNetwork: true);
+      final repo =
+          ApiAdminOperationsRepository(apiClient: signedInApiClient(mockHttp));
       await tester.pumpWidget(
           KachavaAdminApp(repository: repo, enableLivePolling: true));
       await tester.pumpAndSettle();
@@ -316,14 +316,15 @@ void main() {
           'guestName': 'Guest 102',
           'category': 'CONCIERGE',
           'severity': 'URGENT',
-          'title': 'Real-Time 2s Update',
-          'summary': 'Arrived within 2s',
+          'title': 'Real-Time 5s Update',
+          'summary': 'Arrived within 5s',
           'isAcknowledged': false
         }
       ];
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
       expect(shell.controller.unreadAlertsCount, 1);
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

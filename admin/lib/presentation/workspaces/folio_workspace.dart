@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
+import '../../core/rating_label.dart';
 import '../../core/admin_theme.dart';
 import '../../domain/admin_entities.dart';
 import '../../domain/admin_stay_entities.dart';
@@ -92,8 +93,7 @@ class FolioWorkspace extends StatelessWidget {
   }
 
   Widget _buildMidStayPulseCard(AdminMidStayPulse pulse, bool isEs) {
-    final clamped = pulse.rating.clamp(1, 5);
-    final stars = '${'★' * clamped}${'☆' * (5 - clamped)} — $clamped/5';
+    final stars = RatingLabel.stars(pulse.rating);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -112,7 +112,7 @@ class FolioWorkspace extends StatelessWidget {
             children: [
               SemanticStatusBadge(label: pulse.status),
               Text(
-                '${pulse.villaName} · ${pulse.guestNames}',
+                '${AdminI18n.orDash(pulse.villaName)} · ${AdminI18n.orDash(pulse.guestNames)}',
                 style:
                     const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
@@ -231,7 +231,7 @@ class FolioWorkspace extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                '${stay.villaName} · ${stay.guestNames} (${stay.checkInDate} – ${stay.checkOutDate} · ${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")})',
+                '${AdminI18n.orDash(stay.villaName)} · ${AdminI18n.orDash(stay.guestNames)} (${AdminI18n.orDash(stay.checkInDate)} – ${AdminI18n.orDash(stay.checkOutDate)} · ${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")})',
                 style: const TextStyle(
                   fontFamily: 'Libre Baskerville',
                   fontSize: 15,

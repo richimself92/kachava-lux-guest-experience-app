@@ -173,13 +173,15 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
     final titleColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${ticket.title} · ${ticket.villaName}',
+        Text(
+            '${AdminI18n.orDash(ticket.title)} · ${AdminI18n.orDash(ticket.villaName)}',
             style: const TextStyle(
                 fontFamily: 'Libre Baskerville',
                 fontSize: 16,
                 fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
-        Text('${ticket.details} (${ticket.assignedStaffName})',
+        Text(
+            '${ticket.details} (${AdminI18n.staffLabel(ticket.assignedStaffName, isEs)})',
             style: const TextStyle(
                 fontSize: 12, color: KachavaAdminColors.neutralMuted)),
       ],

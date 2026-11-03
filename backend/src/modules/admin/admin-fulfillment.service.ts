@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
 import {
   ConciergeMessage,
   ConciergeRequest,
@@ -93,7 +92,6 @@ export class AdminFulfillmentService {
     if (!updated) {
       throw new NotFoundException(`Booking ${bookingId} not found.`);
     }
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 
@@ -115,7 +113,6 @@ export class AdminFulfillmentService {
     if (!updated) {
       throw new NotFoundException(`Larder order item ${orderId} not found.`);
     }
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 
@@ -160,7 +157,6 @@ export class AdminFulfillmentService {
     if (!updated) {
       throw new NotFoundException(`Concierge request ${requestId} not found.`);
     }
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 
@@ -191,30 +187,13 @@ export class AdminFulfillmentService {
     approvedByStaffId: string;
     lateCheckoutApproved: boolean;
   }> {
-    const stay = await this.stayRepo.findByStayId(stayId);
-    if (!stay) {
-      throw new NotFoundException(`Stay ${stayId} not found.`);
-    }
-    const now = new Date().toISOString();
-    const updatedSummary = {
-      ...stay.folioSummary,
-      paymentStatus: 'SETTLED' as const,
-      isCheckedOut: true,
-      checkedOutAt: stay.folioSummary.checkedOutAt || now,
+    const result = await this.stayRepo.settleFolio(stayId, {
+      settledAt: new Date().toISOString(),
+      status: 'CHECKED_OUT',
+      lateCheckoutRequested: dto.approveLateCheckout,
       approvedByStaffId: staff.staffId,
-    };
-    const settledItems = stay.folioItems.map((fi) => ({
-      ...fi,
-      status: 'SETTLED' as const,
-    }));
-    const result = await this.stayRepo.updateFolioAndStatus(
-      stayId,
-      updatedSummary,
-      settledItems,
-      'CHECKED_OUT',
-      dto.approveLateCheckout,
-    );
-    GuestTokenGuard.invalidateCache();
+      keepFirstCheckoutTime: true,
+    });
     return {
       stayId,
       status: result.status,

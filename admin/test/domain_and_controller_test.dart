@@ -6,9 +6,13 @@ import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.d
 import 'package:kachava_admin_dashboard/core/app_config.dart';
 import 'package:kachava_admin_dashboard/core/responsive_breakpoints.dart';
 import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
+import 'package:kachava_admin_dashboard/data/admin_session.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
+
+import 'support/admin_sync_envelope.dart';
+import 'support/signed_in_api_client.dart';
 
 void main() {
   group('AdminApiClient REST Contract & Envelope Unwrapping', () {
@@ -28,7 +32,7 @@ void main() {
       });
 
       final client = AdminApiClient(
-        staffJwt: 'test_staff_token_123',
+        session: AdminSession(token: 'test_staff_token_123'),
         httpClient: mockHttp,
       );
       final response = await client.patchJson(
@@ -60,6 +64,7 @@ void main() {
 
       final client = AdminApiClient(
         baseUrl: 'http://localhost:3001/api/v1/',
+        session: AdminSession(token: 'test_staff_token'),
         httpClient: mockHttp,
       );
       final response = await client.postJson(
@@ -74,64 +79,101 @@ void main() {
       expect(AdminAppConfig.apiBaseUrl, isNotEmpty);
     });
 
-    test(
-        'test_api_client_auto_authenticates_staff_session_and_attaches_hmac_token',
+    test('test_api_client_signIn_posts_email_then_sends_issued_token_on_sync',
         () async {
-      String? capturedStaysAuth;
-      String? loginEmail;
+      final requests = <String>[];
+      String? loginBody;
+      String? syncAuth;
       final mockHttp = MockClient((request) async {
+        requests.add('${request.method} ${request.url.path}');
         if (request.url.path.endsWith('/auth/login')) {
-          loginEmail = (jsonDecode(request.body)
-              as Map<String, dynamic>)['email'] as String?;
+          loginBody = request.body;
+          expect(request.headers['Authorization'], isNull);
           return http.Response(
-            jsonEncode({
-              'success': true,
-              'data': {'token': 'hmac_signed_staff_jwt'}
-            }),
-            200,
-          );
+              jsonEncode({
+                'success': true,
+                'data': {'token': 'hmac_signed_staff_jwt'}
+              }),
+              201);
         }
-        capturedStaysAuth = request.headers['Authorization'];
-        return http.Response(jsonEncode({'success': true, 'data': []}), 200);
+        syncAuth = request.headers['Authorization'];
+        return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
       });
+      final client = AdminApiClient(httpClient: mockHttp);
 
-      final client =
-          AdminApiClient(httpClient: mockHttp, autoAuthenticate: true);
-      await client.getJson('/stays');
+      await client.signIn('mateo@kachavalux.com');
+      await client.getJson('/sync');
 
-      expect(loginEmail, 'eduardo.rivera@kachavalux.com');
-      expect(capturedStaysAuth, 'Bearer hmac_signed_staff_jwt');
+      expect(requests,
+          ['POST /api/v1/admin/auth/login', 'GET /api/v1/admin/sync']);
+      expect(jsonDecode(loginBody!), {'email': 'mateo@kachavalux.com'});
+      expect(syncAuth, 'Bearer hmac_signed_staff_jwt');
+      expect(client.session.isAuthenticated, isTrue);
+    });
+
+    test('test_api_client_without_session_refuses_call_and_sends_nothing',
+        () async {
+      var calls = 0;
+      final mockHttp = MockClient((_) async {
+        calls++;
+        return http.Response('{}', 200);
+      });
+      final client = AdminApiClient(httpClient: mockHttp);
+
+      await expectLater(
+          client.getJson('/sync'), throwsA(isA<AdminUnauthorizedException>()));
+      expect(calls, 0);
+    });
+
+    test('test_api_client_signIn_rejected_throws_and_stays_signed_out',
+        () async {
+      final mockHttp = MockClient(
+          (_) async => http.Response('{"message":"Invalid credentials"}', 401));
+      final client = AdminApiClient(httpClient: mockHttp);
+
+      await expectLater(client.signIn('nobody@example.com'),
+          throwsA(isA<AdminUnauthorizedException>()));
+      expect(client.session.isAuthenticated, isFalse);
+    });
+
+    test('test_api_client_401_response_expires_session_and_throws', () async {
+      final session = AdminSession(token: 'expired_token');
+      var notified = 0;
+      session.addListener(() => notified++);
+      final mockHttp = MockClient(
+          (_) async => http.Response('{"message":"Unauthorized"}', 401));
+      final client = AdminApiClient(httpClient: mockHttp, session: session);
+
+      await expectLater(
+          client.getJson('/sync'), throwsA(isA<AdminUnauthorizedException>()));
+      expect(session.isAuthenticated, isFalse);
+      expect(notified, 1);
     });
 
     test('test_api_client_throws_explicit_exception_on_non_2xx', () async {
       final mockHttp = MockClient(
-          (_) async => http.Response('{"message":"Unauthorized"}', 401));
-      final client = AdminApiClient(httpClient: mockHttp);
+          (_) async => http.Response('{"message":"Unavailable"}', 503));
+      final client = AdminApiClient(
+          httpClient: mockHttp, session: AdminSession(token: 'staff_token'));
       expect(() => client.getJson('/stays'), throwsA(isA<AdminApiException>()));
     });
   });
 
   group('ApiAdminOperationsRepository Hybrid Offline Fallback & DTO Alignment',
       () {
-    test('test_api_repository_falls_back_cleanly_when_backend_offline',
+    test('test_api_repository_offline_propagates_failure_without_seed_data',
         () async {
       final failingHttp = MockClient(
           (_) async => throw http.ClientException('Connection refused'));
       final repo = ApiAdminOperationsRepository(
-        apiClient: AdminApiClient(httpClient: failingHttp),
+        apiClient: signedInApiClient(failingHttp),
       );
       final controller = AdminDashboardController(repository: repo);
 
-      await controller.initialize();
-      expect(controller.stays, isNotEmpty);
-      expect(controller.alerts, isNotEmpty);
-
-      await controller.updateTransferDispatch(
-        stayId: controller.stays.first.stayId,
-        chauffeurId: 'staff_carlos',
-        transferStatus: 'En Route',
-      );
-      expect(controller.stays.first.transfer.transferStatus, 'En Route');
+      await expectLater(
+          controller.initialize(), throwsA(isA<http.ClientException>()));
+      expect(controller.stays, isEmpty);
+      expect(controller.alerts, isEmpty);
       controller.dispose();
     });
 
@@ -143,10 +185,42 @@ void main() {
           payloads['${request.method} ${request.url.path}'] =
               jsonDecode(request.body) as Map<String, dynamic>;
         }
+        if (request.url.path.endsWith('/admin/staff')) {
+          return jsonResponse({
+            'success': true,
+            'data': [
+              {
+                'staffId': 'staff_carlos',
+                'fullName': 'Carlos',
+                'department': 'TRANSPORT',
+              },
+              {
+                'staffId': 'staff_velasco',
+                'fullName': 'Velasco',
+                'department': 'MARINE',
+              },
+            ]
+          });
+        }
+        if (isSyncRequest(request)) {
+          return jsonResponse(adminSyncEnvelope(stays: [
+            liveStayWire(stayId: 'stay_villa_102')
+          ], bookings: [
+            {'bookingId': 'bkg_102_yacht', 'stayId': 'stay_villa_102'}
+          ]));
+        }
+        if (request.method == 'POST') {
+          return jsonResponse({
+            'success': true,
+            'data': {'stay': liveStayWire(stayId: 'stay_106')}
+          }, 201);
+        }
         return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
       });
-      final repo = ApiAdminOperationsRepository(
-          apiClient: AdminApiClient(httpClient: mockHttp));
+      final repo =
+          ApiAdminOperationsRepository(apiClient: signedInApiClient(mockHttp));
+      await repo.fetchSnapshot();
+      await repo.fetchStaffDirectory();
       await repo.createStay(
           villaName: 'Villa 106',
           guestNames: 'Marcus Sterling',
@@ -201,8 +275,8 @@ void main() {
     });
 
     test('test_initial_state_loads_villa_102_and_staff_directory', () {
-      expect(controller.activeStaff.fullName, 'HOST ADMIN');
-      expect(controller.activeStaff.rbacRole, StaffRole.hostAdmin);
+      expect(controller.activeStaff?.fullName, 'HOST ADMIN');
+      expect(controller.activeStaff?.rbacRole, StaffRole.hostAdmin);
       expect(controller.stays, isNotEmpty);
       expect(
         controller.stays.first.magicLinkUrl,

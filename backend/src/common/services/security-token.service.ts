@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { resolveSecret } from '../config/runtime-secrets';
 import {
   Department,
   RbacRole,
@@ -19,10 +20,8 @@ export interface VerifiedStaffPayload {
 
 @Injectable()
 export class SecurityTokenService {
-  private readonly stepUpSecret =
-    process.env.STEPUP_HMAC_SECRET || 'kachava-stepup-hmac-secret-2026';
-  private readonly staffJwtSecret =
-    process.env.STAFF_JWT_SECRET || 'kachava-staff-jwt-secret-2026';
+  private readonly stepUpSecret = resolveSecret('STEPUP_HMAC_SECRET');
+  private readonly staffJwtSecret = resolveSecret('STAFF_JWT_SECRET');
 
   isValidUuidV4(candidate: string | undefined | null): boolean {
     if (!candidate || typeof candidate !== 'string') return false;

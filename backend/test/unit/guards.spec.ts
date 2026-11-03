@@ -3,6 +3,10 @@ import { Reflector } from '@nestjs/core';
 import { GuestTokenGuard } from '../../src/common/guards/guest-token.guard';
 import { StepUpVerifiedGuard } from '../../src/common/guards/step-up-verified.guard';
 import { AdminAuthGuard } from '../../src/common/guards/admin-auth.guard';
+import {
+  FirebaseIdTokenVerifier,
+  VerifiedFirebaseIdentity,
+} from '../../src/common/services/firebase-id-token.verifier';
 import { RolesGuard } from '../../src/common/guards/roles.guard';
 import { SecurityTokenService } from '../../src/common/services/security-token.service';
 import { InMemorySeededStayRepository } from '../../src/infrastructure/repositories/in-memory-stay.repository';
@@ -27,6 +31,7 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
   let guestTokenGuard: GuestTokenGuard;
   let stepUpGuard: StepUpVerifiedGuard;
   let adminAuthGuard: AdminAuthGuard;
+  let firebaseVerify: jest.Mock<Promise<VerifiedFirebaseIdentity | null>, [string]>;
 
   beforeEach(() => {
     stayRepository = new InMemorySeededStayRepository();
@@ -34,11 +39,14 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
     securityTokenService = new SecurityTokenService();
     guestTokenGuard = new GuestTokenGuard(stayRepository);
     stepUpGuard = new StepUpVerifiedGuard(securityTokenService);
-    adminAuthGuard = new AdminAuthGuard(staffRepository, securityTokenService);
+    firebaseVerify = jest.fn().mockResolvedValue(null);
+    adminAuthGuard = new AdminAuthGuard(staffRepository, securityTokenService, {
+      verify: firebaseVerify,
+    } as unknown as FirebaseIdTokenVerifier);
   });
 
   describe('GuestTokenGuard', () => {
-    it('test_guestTokenGuard_validUuidV4ActiveStay_allowsAccessAndCachesStay', async () => {
+    it('test_guestTokenGuard_validUuidV4ActiveStay_readsStoreOnEveryRequest', async () => {
       const req: Record<string, unknown> = {
         method: 'GET',
         params: { guestUuid: '550e8400-e29b-41d4-a716-446655440000' },
@@ -52,8 +60,60 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
 
       expect(allowedFirst).toBe(true);
       expect(allowedSecond).toBe(true);
-      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledTimes(2);
       expect((req.stay as { villaName: string }).villaName).toContain('Villa 102');
+    });
+
+    it('test_guestTokenGuard_stayChangedAfterFirstRequest_nextRequestSeesFreshStateWithoutCacheClear', async () => {
+      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const req = (): Record<string, unknown> => ({ method: 'GET', params: { guestUuid: uuid }, headers: {} });
+      await guestTokenGuard.canActivate(createMockExecutionContext(req()));
+      const stay = await stayRepository.findByGuestTokenUuid(uuid);
+      await stayRepository.updateStayStatus(stay!.stayId, 'CANCELLED');
+
+      await expect(guestTokenGuard.canActivate(createMockExecutionContext(req()))).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('test_guestTokenGuard_tokenRotated_oldTokenRejectedImmediately', async () => {
+      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const req = (): Record<string, unknown> => ({ method: 'GET', params: { guestUuid: uuid }, headers: {} });
+      await guestTokenGuard.canActivate(createMockExecutionContext(req()));
+      const stay = await stayRepository.findByGuestTokenUuid(uuid);
+      await stayRepository.updateStayToken(stay!.stayId, '33333333-3333-4333-8333-333333333333');
+
+      await expect(guestTokenGuard.canActivate(createMockExecutionContext(req()))).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('test_guestTokenGuard_retiredDemoAliasUuid_isRejectedAsUnknownToken', async () => {
+      const req: Record<string, unknown> = {
+        method: 'GET',
+        params: { guestUuid: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
+        headers: {},
+      };
+
+      await expect(guestTokenGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('test_guestTokenGuard_storageFailure_propagatesInsteadOfUnauthorized', async () => {
+      jest
+        .spyOn(stayRepository, 'findByGuestTokenUuid')
+        .mockRejectedValue(new Error('UNAVAILABLE: firestore down'));
+      const req: Record<string, unknown> = {
+        method: 'GET',
+        params: { guestUuid: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      };
+
+      const outcome = guestTokenGuard.canActivate(createMockExecutionContext(req));
+
+      await expect(outcome).rejects.toThrow('UNAVAILABLE: firestore down');
+      await expect(outcome).rejects.not.toBeInstanceOf(UnauthorizedException);
     });
 
     it('test_guestTokenGuard_malformedUuid_throwsUnauthorizedException', async () => {
@@ -70,13 +130,10 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
     it('test_guestTokenGuard_checkedOutStay_allowsGetWithinWindowAndRejectsPostWithForbidden', async () => {
       const stay = await stayRepository.findByGuestTokenUuid('550e8400-e29b-41d4-a716-446655440000');
       expect(stay).not.toBeNull();
-      await stayRepository.updateFolioAndStatus(
-        stay!.stayId,
-        { ...stay!.folioSummary, isCheckedOut: true, checkedOutAt: new Date().toISOString() },
-        stay!.folioItems,
-        'CHECKED_OUT',
-      );
-      guestTokenGuard.clearCache();
+      await stayRepository.settleFolio(stay!.stayId, {
+        settledAt: new Date().toISOString(),
+        status: 'CHECKED_OUT',
+      });
 
       const getReq: Record<string, unknown> = {
         method: 'GET',
@@ -97,13 +154,7 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
 
     it('test_guestTokenGuard_expiredOrCancelledStay_throwsForbiddenException', async () => {
       const stay = await stayRepository.findByGuestTokenUuid('550e8400-e29b-41d4-a716-446655440000');
-      await stayRepository.updateFolioAndStatus(
-        stay!.stayId,
-        stay!.folioSummary,
-        stay!.folioItems,
-        'EXPIRED',
-      );
-      guestTokenGuard.clearCache();
+      await stayRepository.updateStayStatus(stay!.stayId, 'EXPIRED');
 
       const req: Record<string, unknown> = {
         method: 'GET',
@@ -149,17 +200,64 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
       );
     });
 
-    it('test_adminAuthGuard_fallsBackToHostAdminForFrictionlessAccess', async () => {
-      const noTokenReq: Record<string, unknown> = { headers: {} };
-      expect(await adminAuthGuard.canActivate(createMockExecutionContext(noTokenReq))).toBe(true);
-      expect((noTokenReq.staff as { fullName: string; rbacRole: string }).fullName).toBe('HOST ADMIN');
-      expect((noTokenReq.staff as { fullName: string; rbacRole: string }).rbacRole).toBe('HOST_ADMIN');
+    it('test_adminAuthGuard_missingToken_throwsUnauthorizedWithoutStaffFallback', async () => {
+      const req: Record<string, unknown> = { headers: {} };
 
-      const fallbackTokenReq: Record<string, unknown> = {
-        headers: { authorization: 'Bearer host-admin-session' },
-      };
-      expect(await adminAuthGuard.canActivate(createMockExecutionContext(fallbackTokenReq))).toBe(true);
-      expect((fallbackTokenReq.staff as { fullName: string; shortName: string }).shortName).toBe('HOST ADMIN');
+      await expect(adminAuthGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(req.staff).toBeUndefined();
+    });
+
+    it('test_adminAuthGuard_unknownOrForgedToken_throwsUnauthorizedWithoutStaffFallback', async () => {
+      const genuine = securityTokenService.issueStaffToken((await staffRepository.findByStaffId('staff_eduardo'))!);
+      const [payload] = genuine.split('.');
+      for (const token of ['host-admin-session', `${payload}.forged-signature`]) {
+        const req: Record<string, unknown> = { headers: { authorization: `Bearer ${token}` } };
+
+        await expect(adminAuthGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
+          UnauthorizedException,
+        );
+        expect(req.staff).toBeUndefined();
+      }
+    });
+
+    it('test_adminAuthGuard_firebaseIdTokenOfKnownStaff_resolvesStaffByUid', async () => {
+      firebaseVerify.mockResolvedValue({ uid: 'uid_kachava_mateo_02' });
+      const req: Record<string, unknown> = { headers: { authorization: 'Bearer firebase.id.token' } };
+
+      expect(await adminAuthGuard.canActivate(createMockExecutionContext(req))).toBe(true);
+      expect((req.staff as { staffId: string }).staffId).toBe('staff_mateo');
+      expect(firebaseVerify).toHaveBeenCalledWith('firebase.id.token');
+    });
+
+    it('test_adminAuthGuard_firebaseVerificationRejectsToken_throwsUnauthorizedWithoutStaffFallback', async () => {
+      firebaseVerify.mockResolvedValue(null);
+      const req: Record<string, unknown> = { headers: { authorization: 'Bearer firebase.id.token' } };
+
+      await expect(adminAuthGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(req.staff).toBeUndefined();
+    });
+
+    it('test_adminAuthGuard_firebaseIdentityNotOnStaffRoster_throwsUnauthorized', async () => {
+      firebaseVerify.mockResolvedValue({ uid: 'uid_stranger', email: 'stranger@example.com' });
+      const req: Record<string, unknown> = { headers: { authorization: 'Bearer firebase.id.token' } };
+
+      await expect(adminAuthGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('test_adminAuthGuard_firebaseInfrastructureFailure_propagatesInsteadOfUnauthorized', async () => {
+      firebaseVerify.mockRejectedValue(new Error('UNAVAILABLE: cannot fetch Google public keys'));
+      const req: Record<string, unknown> = { headers: { authorization: 'Bearer firebase.id.token' } };
+
+      const outcome = adminAuthGuard.canActivate(createMockExecutionContext(req));
+
+      await expect(outcome).rejects.toThrow('UNAVAILABLE: cannot fetch Google public keys');
+      await expect(outcome).rejects.not.toBeInstanceOf(UnauthorizedException);
     });
 
     it('test_adminAuthGuardAndRolesGuard_enforcesRbacRoles', async () => {

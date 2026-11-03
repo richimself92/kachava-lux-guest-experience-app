@@ -3,12 +3,17 @@ import 'package:flutter/foundation.dart';
 import '../core/audio/soundscape_port.dart';
 import '../core/auth/magic_link_parser.dart';
 import '../core/constants/screen_id.dart';
+import '../core/i18n/guest_feedback_i18n.dart';
 import '../core/i18n/guest_i18n.dart';
-import '../data/seed/villa_102_seed_data.dart';
 import '../domain/entities/concierge_folio_entities.dart';
+import '../domain/entities/empty_sanctuary.dart';
 import '../domain/entities/experience_entities.dart';
 import '../domain/entities/stay_entities.dart';
 import '../domain/repositories/sanctuary_repository.dart';
+import 'larder_order_state.dart';
+import 'poll_merge.dart';
+import 'sanctuary_connection.dart';
+import 'sanctuary_poller.dart';
 
 /// Application state controller managing all 13 guest sanctuary screens,
 /// UUID v4 Magic-Link auth, Step-Up verification, 432Hz Soundscape, and mutations.
@@ -18,18 +23,24 @@ class SanctuaryController extends ChangeNotifier {
     required SoundscapePort soundscape,
     Uri? initialUri,
     bool requireExplicitGuestId = false,
+    Duration pollInterval = SanctuaryPoller.defaultInterval,
   })  : _repository = repository,
         _soundscape = soundscape,
         _requireExplicitGuestId = requireExplicitGuestId,
         _authResult = MagicLinkParser.parseUri(initialUri ?? Uri.base) {
-    _hydrateFromSnapshot(
-        Villa102SeedData.buildDefaultSnapshot(_authResult.guestUuid));
+    _poller = SanctuaryPoller(
+        onPoll: _fetchAndHydrate,
+        onError: _onPollError,
+        interval: pollInterval);
+    _hydrateFromSnapshot(EmptySanctuary.snapshot(_authResult.guestUuid));
   }
 
   final SanctuaryRepository _repository;
   final SoundscapePort _soundscape;
   final bool _requireExplicitGuestId;
   final MagicLinkParseResult _authResult;
+  late final SanctuaryPoller _poller;
+  final SanctuaryConnection _connection = SanctuaryConnection();
 
   ScreenId _currentScreen = ScreenId.home;
   GuestLocale _locale = GuestLocale.en;
@@ -38,7 +49,7 @@ class SanctuaryController extends ChangeNotifier {
       _isDisposed = false,
       _hasUnsavedLarderEdits = false,
       _isLarderOrderConfirmed = false,
-      _stayNotFoundOnBackend = false;
+      _isToastError = false;
   String _larderOrderStatus = '';
   String? _stepUpSessionToken, _activeToastMessage;
   MidStayCheckIn? _latestMidStayCheckIn;
@@ -66,13 +77,23 @@ class SanctuaryController extends ChangeNotifier {
   bool get isUuidValid =>
       _authResult.isValid &&
       !(_requireExplicitGuestId && _authResult.isDefaultDemo) &&
-      !_stayNotFoundOnBackend;
+      !_connection.isLinkRejected;
   String get guestUuid => _authResult.guestUuid;
-  String? get authErrorMessage => _authResult.errorMessage;
+
+  /// A link was given but is malformed or the server rejected it.
+  bool get isLinkInvalid =>
+      _authResult.errorMessage != null || _connection.isLinkRejected;
   bool get isStepUpVerified => _isStepUpVerified;
   bool get isReadOnly =>
       _stay.lifecycleStatus == StayLifecycleStatus.checkedOut;
   String? get activeToastMessage => _activeToastMessage;
+  bool get isToastError => _isToastError;
+
+  /// False until the server answers once; the UI shows a loading screen.
+  bool get hasServerData => _connection.hasServerData;
+
+  /// True while the last fetch failed transiently (5xx, 429, network).
+  bool get isReconnecting => _connection.isReconnecting;
   bool get isSoundscapeActive => _soundscape.isActive;
   int get soundscapeFrequencyHz => _soundscape.rootFrequencyHz;
   StaySummary get stay => _stay;
@@ -113,18 +134,17 @@ class SanctuaryController extends ChangeNotifier {
       0, (s, i) => s + (i.priceUsd * i.quantity));
   int get larderTotalCount =>
       _larderItems.fold<int>(0, (s, i) => s + i.quantity);
-  int get yachtNetUpgradeUsd => _yachtPackages
-      .firstWhere(
-        (p) => p.id == _yachtCharter.selectedPackageId,
-        orElse: () => _yachtPackages.first,
-      )
-      .netUpgradeUsd;
-  int get folioTotalIncidentalsUsd =>
-      _folioItems
-          .where((i) => !i.isIncludedPrivilege && i.id != 'fol-paid-2')
-          .fold<int>(0, (s, i) => s + i.amountUsd) +
-      (larderTotalAmount > 0 ? larderTotalAmount : submittedLarderTotalAmount) +
-      yachtNetUpgradeUsd;
+  int get yachtNetUpgradeUsd =>
+      _yachtPackages
+          .where((p) => p.id == _yachtCharter.selectedPackageId)
+          .firstOrNull
+          ?.netUpgradeUsd ??
+      0;
+
+  /// Paid lines exactly as the server folio lists them.
+  int get folioTotalIncidentalsUsd => _folioItems
+      .where((i) => !i.isIncludedPrivilege)
+      .fold<int>(0, (s, i) => s + i.amountUsd);
 
   void _hydrateFromSnapshot(
     SanctuarySnapshot s, {
@@ -139,197 +159,164 @@ class SanctuaryController extends ChangeNotifier {
     _conciergeRequests = List.from(s.conciergeRequests);
     _chatMessages = List.from(s.chatMessages);
     _folioItems = List.from(s.folioItems);
-    if (s.latestMidStayCheckIn != null) {
-      _latestMidStayCheckIn = s.latestMidStayCheckIn;
-    }
-    if (!isBackgroundPoll) {
-      _experiences = List.from(s.experiences);
-      _yachtCharter = s.yachtCharter;
-      _diningReservation = s.diningReservation;
-      final statusItem = s.larderItems
-          .where((i) => i.provisioningStatus.isNotEmpty)
-          .firstOrNull;
-      if (statusItem != null) {
-        final raw = statusItem.provisioningStatus.toLowerCase();
-        final isDelivered =
-            raw.contains('stocked') || raw.contains('delivered');
-        _larderOrderStatus =
-            isDelivered ? 'Stocked in Villa' : statusItem.provisioningStatus;
-        _isLarderOrderConfirmed = !isDelivered;
-        _submittedLarderItems = isDelivered
-            ? []
-            : s.larderItems.where((i) => i.quantity > 0).toList();
-      }
-      _larderItems = s.larderItems
-          .map((i) => i.copyWith(quantity: 0, isConfirmed: false))
-          .toList();
-      return;
-    }
-    _larderItems = _mergePollLarder(s.larderItems);
-    _experiences = _mergePollExperiences(s.experiences);
-    if (s.yachtCharter.bookingStatus.isNotEmpty) {
+    _latestMidStayCheckIn = s.latestMidStayCheckIn ?? _latestMidStayCheckIn;
+    _applyLarderOrder(s.larderItems);
+    _larderItems = PollMerge.larder(s.larderItems,
+        unsavedCart: isBackgroundPoll && _hasUnsavedLarderEdits
+            ? _larderItems
+            : const []);
+    _hydrateBookings(s, isBackgroundPoll: isBackgroundPoll);
+  }
+
+  void _applyLarderOrder(List<LarderItem> incoming) {
+    final order = LarderOrderState.fromServerItems(incoming);
+    if (order == null) return;
+    _larderOrderStatus = order.status;
+    _isLarderOrderConfirmed = order.isConfirmed;
+    _submittedLarderItems = order.submittedItems;
+  }
+
+  /// A background poll never unlocks a request the guest already made.
+  void _hydrateBookings(SanctuarySnapshot s, {required bool isBackgroundPoll}) {
+    _experiences = isBackgroundPoll
+        ? PollMerge.experiences(s.experiences, _experiences)
+        : List.from(s.experiences);
+    if (!isBackgroundPoll || s.yachtCharter.bookingStatus.isNotEmpty) {
       _yachtCharter = s.yachtCharter;
     }
-    if (s.diningReservation.bookingStatus.isNotEmpty) {
+    if (!isBackgroundPoll || s.diningReservation.bookingStatus.isNotEmpty) {
       _diningReservation = s.diningReservation;
     }
   }
 
-  List<LarderItem> _mergePollLarder(List<LarderItem> incoming) {
-    final prevById = {for (final i in _larderItems) i.id: i};
-    final incomingStatus = incoming
-            .where((i) => i.provisioningStatus.isNotEmpty)
-            .firstOrNull
-            ?.provisioningStatus ??
-        '';
-    final isDelivered = incomingStatus.toLowerCase().contains('stocked') ||
-        incomingStatus.toLowerCase().contains('delivered');
-    if (isDelivered) {
-      _submittedLarderItems = [];
-      _larderOrderStatus = 'Stocked in Villa';
-      _isLarderOrderConfirmed = false;
-    } else if (incomingStatus.isNotEmpty) {
-      _submittedLarderItems = incoming.where((i) => i.quantity > 0).toList();
-      _larderOrderStatus = incomingStatus;
-      _isLarderOrderConfirmed = true;
-    }
-    return incoming.map((item) {
-      final prev = prevById[item.id];
-      final qty = _hasUnsavedLarderEdits ? (prev?.quantity ?? 0) : 0;
-      return item.copyWith(
-        quantity: qty,
-        isConfirmed: false,
-        provisioningStatus: item.provisioningStatus,
-      );
-    }).toList();
+  /// First load. Shares the poller's in-flight guard with every refresh.
+  Future<void> initialize() => _poller.pollNow();
+
+  /// Manual refresh; joins a poll already in flight instead of overlapping.
+  Future<void> refreshFromBackend() => _poller.pollNow();
+
+  void startLivePolling() => _poller.start();
+
+  void stopLivePolling() => _poller.stop();
+
+  /// False once the server rejected the link: a rejected link is final.
+  bool get _canReachServer => isUuidValid && !_isDisposed;
+
+  Future<void> _fetchAndHydrate() async {
+    if (!_canReachServer) return;
+    _applyFetchResult(await _repository.fetchLiveSanctuary(guestUuid));
   }
 
-  List<ExperienceItem> _mergePollExperiences(List<ExperienceItem> incoming) {
-    final prevById = {for (final e in _experiences) e.id: e};
-    return incoming.map((exp) {
-      final prev = prevById[exp.id];
-      return (!exp.isReserved && prev != null && prev.isReserved) ? prev : exp;
-    }).toList();
-  }
+  /// Any unexpected poll error is treated like an unreachable server.
+  void _onPollError(Object error, StackTrace stack) =>
+      _applyFetchResult(const SanctuaryUnreachable());
 
-  Future<void> initialize() => _fetchAndHydrate(isBackgroundPoll: false);
-  Future<void> refreshFromBackend() => _fetchAndHydrate(isBackgroundPoll: true);
-
-  Future<void> _fetchAndHydrate({required bool isBackgroundPoll}) async {
-    if (!_authResult.isValid ||
-        (_requireExplicitGuestId && _authResult.isDefaultDemo) ||
-        _isDisposed) {
-      return;
-    }
-    final live = await _repository.fetchLiveSanctuary(guestUuid);
+  void _applyFetchResult(SanctuaryFetchResult result) {
     if (_isDisposed) return;
-    if (live == null) {
-      if (_requireExplicitGuestId) {
-        _stayNotFoundOnBackend = true;
-        notifyListeners();
-      }
-      return;
+    final hadServerData = _connection.hasServerData;
+    final (:fresh, :changed) = _connection.record(result);
+    if (fresh != null) {
+      _hydrateFromSnapshot(fresh, isBackgroundPoll: hadServerData);
     }
-    _stayNotFoundOnBackend = false;
-    _hydrateFromSnapshot(live, isBackgroundPoll: isBackgroundPoll);
-    notifyListeners();
+    if (_connection.isLinkRejected) _poller.stop();
+    if (changed) _notify();
+  }
+
+  void _notify() {
+    if (!_isDisposed) notifyListeners();
   }
 
   void navigateTo(ScreenId screen) {
     _currentScreen = screen;
     _isDrawerOpen = false;
-    notifyListeners();
+    _notify();
   }
 
   void setDrawerOpen(bool open) {
     _isDrawerOpen = open;
-    notifyListeners();
+    _notify();
   }
 
   void toggleSoundscape() {
     _soundscape.toggle();
-    notifyListeners();
+    _notify();
   }
 
   void toggleLocale() {
     _locale = isEs ? GuestLocale.en : GuestLocale.es;
-    notifyListeners();
+    _notify();
   }
 
-  void showToast(String? message) {
+  void showToast(String? message) => _showToast(message);
+
+  /// Sets message and error flag together so listeners never see a mix.
+  void _showToast(String? message, {bool isError = false}) {
     _activeToastMessage = message;
-    notifyListeners();
+    _isToastError = isError;
+    _notify();
+  }
+
+  /// Awaits the server; on failure shows a one-line error instead of success.
+  Future<bool> _serverConfirms(Future<MutationResult> request) async {
+    final confirmed = switch (await request) {
+      MutationConfirmed() => true,
+      MutationFailed() => false,
+    };
+    if (_isDisposed) return false;
+    if (confirmed) return true;
+    _showToast(i18n.mutationFailed, isError: true);
+    return false;
   }
 
   void clearToast() => showToast(null);
 
-  bool verifyStepUp(String challengeInput) {
-    final n = challengeInput.trim().toLowerCase(),
-        v = _stay.villaNumber.toLowerCase();
-    if (n != v && n != 'villa $v' && n != _stay.lastName.toLowerCase()) {
-      return false;
-    }
+  /// Verified only when the server issues a step-up token for [answer]
+  /// (villa number or last name); the caller shows the failure line.
+  Future<bool> verifyStepUp(String answer) async {
+    final candidate = answer.trim();
+    if (candidate.isEmpty) return false;
+    final token = await _repository.verifyStepUpChallenge(guestUuid, candidate);
+    if (_isDisposed || token == null || token.isEmpty) return false;
     _isStepUpVerified = true;
-    _stepUpSessionToken = 'stepup-verified-${_stay.villaNumber}';
-    unawaited(_syncStepUpToken(challengeInput.trim()));
-    showToast(i18n.t(
-      'Identity verified for ${_stay.villaTitle}.',
-      'Identidad verificada para ${_stay.villaTitle}.',
-    ));
+    _stepUpSessionToken = token;
+    showToast(i18n.identityVerified(_stay.villaTitle));
     return true;
-  }
-
-  Future<void> _syncStepUpToken(String candidate) async {
-    final t = await _repository.verifyStepUpChallenge(
-      guestUuid,
-      villaNumber: _stay.villaNumber,
-      lastName: candidate,
-    );
-    if (!_isDisposed && t != null && t.isNotEmpty) _stepUpSessionToken = t;
   }
 
   Future<bool> updateFlightDetails(FlightTransport updated) async {
     if (_guardReadOnly()) return false;
+    if (!await _serverConfirms(_repository.syncFlightTransport(
+        guestUuid, updated,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
     _transport = updated;
-    await _repository.syncFlightTransport(
-      guestUuid,
-      _transport,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Flight details updated & synced with HOST ADMIN.',
-      'Datos de vuelo actualizados y sincronizados con HOST ADMIN.',
-    ));
+    showToast(i18n.flightSynced);
     return true;
   }
 
   Future<bool> savePersonalization(PersonalizationPreferences updated) async {
     if (_guardReadOnly()) return false;
+    if (!await _serverConfirms(_repository.savePersonalization(
+        guestUuid, updated,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
     _preferences = updated;
     _markChecklistCompleted('chk-1');
-    await _repository.savePersonalization(
-      guestUuid,
-      _preferences,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Personalization saved for ${_stay.villaTitle}.',
-      'Preferencias guardadas para ${_stay.villaTitle}.',
-    ));
+    showToast(i18n.personalizationSaved(_stay.villaTitle));
     return true;
   }
 
   Future<bool> saveStayPersonalization(PersonalizationPreferences updated) =>
       savePersonalization(updated);
 
+  /// Local selection only: no server endpoint stores it yet, so nothing is
+  /// announced as saved or coordinated.
   void switchSignaturePrivilege(String privilegeId) {
     if (_guardReadOnly()) return;
     _stay = _stay.copyWith(selectedSignaturePrivilege: privilegeId);
-    _markChecklistCompleted('chk-2');
-    showToast(i18n.t(
-      'Included Sanctuary Privilege updated & coordinated with HOST ADMIN.',
-      'Beneficio incluido actualizado y coordinado con HOST ADMIN.',
-    ));
+    _notify();
   }
 
   void toggleExperienceReservation(
@@ -340,46 +327,47 @@ class SanctuaryController extends ChangeNotifier {
     if (_guardReadOnly()) return;
     final existing = _experiences.where((e) => e.id == id).firstOrNull;
     if (existing == null || existing.bookingStatus.isNotEmpty) return;
-    final sDate = (scheduledDate != null && scheduledDate.trim().isNotEmpty)
-        ? scheduledDate.trim()
-        : _stay.defaultStayDateLabel;
-    final sTime =
-        (scheduledTimeSlot != null && scheduledTimeSlot.trim().isNotEmpty)
-            ? scheduledTimeSlot.trim()
-            : '10:00 AM';
+    final sDate = _trimmedOr(scheduledDate, _stay.defaultStayDateLabel);
+    final sTime = _trimmedOr(scheduledTimeSlot, '');
+    if (sDate.isEmpty || sTime.isEmpty) return;
     final fullSlot = '$sDate · $sTime';
-    ExperienceItem? booked;
-    _experiences = _experiences.map((e) {
-      if (e.id != id) return e;
-      booked = e.copyWith(
-        isScheduled: true,
-        isReserved: true,
-        scheduledSlot: fullSlot,
-        scheduledDate: sDate,
-        scheduledTimeSlot: sTime,
-        bookingStatus: 'REQUESTED',
-      );
-      return booked!;
-    }).toList();
-    if (booked != null) {
-      unawaited(_repository.saveExperienceBooking(
-        guestUuid,
-        booked!,
-        fullSlot,
-        partySize: _stay.guestsCount,
-        stepUpSession: _stepUpSessionToken,
-      ));
+    final booked = existing.copyWith(
+      isScheduled: true,
+      isReserved: true,
+      scheduledSlot: fullSlot,
+      scheduledDate: sDate,
+      scheduledTimeSlot: sTime,
+      bookingStatus: 'REQUESTED',
+    );
+    _experiences = [for (final e in _experiences) e.id == id ? booked : e];
+    _notify();
+    unawaited(_confirmExperienceRequest(existing, booked, fullSlot));
+  }
+
+  static String _trimmedOr(String? value, String fallback) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isNotEmpty ? trimmed : fallback;
+  }
+
+  /// Keeps the optimistic lock only if the server confirms; otherwise reverts.
+  Future<void> _confirmExperienceRequest(
+      ExperienceItem original, ExperienceItem booked, String slot) async {
+    if (await _serverConfirms(_repository.saveExperienceBooking(
+        guestUuid, booked, slot,
+        partySize: _stay.guestsCount, stepUpSession: _stepUpSessionToken))) {
+      return showToast(i18n.experienceRequested(slot));
     }
-    showToast(i18n.t(
-      'Experience requested for $fullSlot · Pending approval by HOST ADMIN.',
-      'Solicitud de experiencia enviada ($fullSlot) · Pendiente de aprobación por HOST ADMIN.',
-    ));
+    if (_isDisposed) return;
+    _experiences = [
+      for (final e in _experiences) e.id == original.id ? original : e
+    ];
+    _notify();
   }
 
   void scheduleExperience(String id, String slot) {
     final parts = slot.split('·');
     final sDate = parts.first.trim();
-    final sTime = parts.length > 1 ? parts.last.trim() : '10:00 AM';
+    final sTime = parts.length > 1 ? parts.last.trim() : '';
     toggleExperienceReservation(
       id,
       scheduledDate: sDate,
@@ -405,7 +393,7 @@ class SanctuaryController extends ChangeNotifier {
           : i;
       return base.id == itemId ? base.copyWith(quantity: newQuantity) : base;
     }).toList();
-    notifyListeners();
+    _notify();
   }
 
   Future<bool> confirmVillaStocking() async {
@@ -416,6 +404,11 @@ class SanctuaryController extends ChangeNotifier {
             (i) => i.copyWith(isConfirmed: true, provisioningStatus: 'Pending'))
         .toList();
     final orderedCount = orderedItems.fold<int>(0, (s, i) => s + i.quantity);
+    if (!await _serverConfirms(_repository.saveLarderOrder(
+        guestUuid, orderedItems,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
     _submittedLarderItems = orderedItems;
     _isLarderOrderConfirmed = true;
     _larderOrderStatus = 'Pending';
@@ -427,47 +420,29 @@ class SanctuaryController extends ChangeNotifier {
               provisioningStatus: 'Pending',
             ))
         .toList();
-    notifyListeners();
-    await _repository.saveLarderOrder(
-      guestUuid,
-      orderedItems,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Villa ${_stay.villaNumber} Larder stocked ($orderedCount items).',
-      'Pedido de minibar confirmado para Villa ${_stay.villaNumber} ($orderedCount artículos).',
-    ));
+    showToast(i18n.larderStocked(_stay.villaNumber, orderedCount));
     return true;
   }
 
   Future<bool> confirmLarderSelection() => confirmVillaStocking();
 
-  void updateYachtGuestCount(int count) {
-    if (!_guardReadOnly() && _yachtCharter.bookingStatus.isEmpty) {
-      _yachtCharter = _yachtCharter.copyWith(guestCount: count.clamp(1, 12));
-      notifyListeners();
-    }
-  }
+  void updateYachtGuestCount(int count) =>
+      _editYachtForm((c) => c.copyWith(guestCount: count.clamp(1, 12)));
 
-  void selectYachtPackage(String packageId) {
-    if (!_guardReadOnly() && _yachtCharter.bookingStatus.isEmpty) {
-      _yachtCharter = _yachtCharter.copyWith(selectedPackageId: packageId);
-      notifyListeners();
-    }
-  }
+  void selectYachtPackage(String packageId) =>
+      _editYachtForm((c) => c.copyWith(selectedPackageId: packageId));
 
-  void updateYachtDate(String selectedDate) {
-    if (!_guardReadOnly() && _yachtCharter.bookingStatus.isEmpty) {
-      _yachtCharter = _yachtCharter.copyWith(selectedDate: selectedDate);
-      notifyListeners();
-    }
-  }
+  void updateYachtDate(String selectedDate) =>
+      _editYachtForm((c) => c.copyWith(selectedDate: selectedDate));
 
-  void updateYachtSlot(String selectedSlot) {
-    if (!_guardReadOnly() && _yachtCharter.bookingStatus.isEmpty) {
-      _yachtCharter = _yachtCharter.copyWith(selectedSlot: selectedSlot);
-      notifyListeners();
-    }
+  void updateYachtSlot(String selectedSlot) =>
+      _editYachtForm((c) => c.copyWith(selectedSlot: selectedSlot));
+
+  /// The form is editable until the request is sent.
+  void _editYachtForm(YachtCharterConfig Function(YachtCharterConfig) edit) {
+    if (_guardReadOnly() || _yachtCharter.bookingStatus.isNotEmpty) return;
+    _yachtCharter = edit(_yachtCharter);
+    _notify();
   }
 
   Future<bool> submitYachtCharterRequest() async {
@@ -477,21 +452,18 @@ class SanctuaryController extends ChangeNotifier {
     final effectiveDate = _yachtCharter.selectedDate.trim().isEmpty
         ? _stay.defaultStayDateLabel
         : _yachtCharter.selectedDate.trim();
-    _yachtCharter = _yachtCharter.copyWith(
+    final request = _yachtCharter.copyWith(
       selectedDate: effectiveDate,
       isConfirmed: false,
       bookingStatus: 'REQUESTED',
     );
+    if (!await _serverConfirms(_repository.saveYachtCharter(guestUuid, request,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
+    _yachtCharter = request;
     _markChecklistCompleted('chk-3');
-    await _repository.saveYachtCharter(
-      guestUuid,
-      _yachtCharter,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Solicitud de Yate enviada · Pendiente de aprobación por HOST ADMIN',
-      'Solicitud de Yate enviada · Pendiente de aprobación por HOST ADMIN',
-    ));
+    showToast(i18n.yachtRequested);
     return true;
   }
 
@@ -503,20 +475,18 @@ class SanctuaryController extends ChangeNotifier {
     final effectiveDate = baseRes.selectedEvening.trim().isEmpty
         ? _stay.defaultStayDateLabel
         : baseRes.selectedEvening.trim();
-    _diningReservation = baseRes.copyWith(
+    final request = baseRes.copyWith(
       selectedEvening: effectiveDate,
       isConfirmed: false,
       bookingStatus: 'REQUESTED',
     );
-    await _repository.saveDiningReservation(
-      guestUuid,
-      _diningReservation,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Solicitud de Cena Privada enviada · Pendiente de aprobación por HOST ADMIN',
-      'Solicitud de Cena Privada enviada · Pendiente de aprobación por HOST ADMIN',
-    ));
+    if (!await _serverConfirms(_repository.saveDiningReservation(
+        guestUuid, request,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
+    _diningReservation = request;
+    showToast(i18n.diningRequested);
     return true;
   }
 
@@ -531,26 +501,23 @@ class SanctuaryController extends ChangeNotifier {
       id: 'req-${DateTime.now().millisecondsSinceEpoch}',
       title: title.trim(),
       category: category,
-      timestampLabel: 'Requested just now',
+      timestampLabel: i18n.requestedJustNow,
       stage: ConciergeStage.requested,
-      assignedTo: 'HOST ADMIN',
+      assignedTo: '',
       details: details.trim(),
       photoUrl: photoUrl,
     );
-    _conciergeRequests = [req, ..._conciergeRequests];
-    await _repository.submitConciergeRequest(
-      guestUuid,
-      req,
-      stepUpSession: _stepUpSessionToken,
-    );
+    if (!await _serverConfirms(_repository.submitConciergeRequest(
+        guestUuid, req,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
     await refreshFromBackend();
+    if (_isDisposed) return false;
     if (!_conciergeRequests.any((r) => r.title == req.title)) {
       _conciergeRequests = [req, ..._conciergeRequests];
     }
-    showToast(i18n.t(
-      'Concierge request dispatched to HOST ADMIN.',
-      'Solicitud enviada a Concierge HOST ADMIN.',
-    ));
+    showToast(i18n.conciergeDispatched);
     return true;
   }
 
@@ -559,35 +526,41 @@ class SanctuaryController extends ChangeNotifier {
     _conciergeRequests = _conciergeRequests
         .map((r) => r.id == id ? r.copyWith(stage: r.stage.nextStage) : r)
         .toList();
-    notifyListeners();
+    _notify();
   }
 
-  void sendChatMessage(String text) {
-    if (_guardReadOnly() || text.trim().isEmpty) return;
-    final t = text.trim(), id = 'msg-${DateTime.now().millisecondsSinceEpoch}';
+  /// Shows the message at once and removes it if the server does not
+  /// confirm it.
+  Future<bool> sendChatMessage(String text) async {
+    final t = text.trim();
+    if (_guardReadOnly() || t.isEmpty) return false;
     final msg = ChatMessage(
-      id: id,
+      id: 'msg-${DateTime.now().millisecondsSinceEpoch}',
       senderName: _stay.guestNames,
       isFromHost: false,
       text: t,
-      timestampLabel: 'Just now',
+      timestampLabel: i18n.sentJustNow,
     );
     _chatMessages = [..._chatMessages, msg];
-    if (_conciergeRequests.isEmpty) {
-      unawaited(
-        createConciergeRequest(title: t, category: 'Concierge', details: t),
-      );
-    } else {
-      unawaited(_repository.appendConciergeMessage(
-        guestUuid,
-        _conciergeRequests.first.id,
-        t,
-        senderName: _stay.guestNames,
-        stepUpSession: _stepUpSessionToken,
-      ));
+    _notify();
+    final sent = await _deliverChatMessage(t);
+    if (!sent && !_isDisposed) {
+      _chatMessages = _chatMessages.where((m) => m.id != msg.id).toList();
+      _notify();
     }
-    notifyListeners();
+    return sent;
   }
+
+  Future<bool> _deliverChatMessage(String text) => _conciergeRequests.isEmpty
+      ? createConciergeRequest(
+          title: text, category: 'Concierge', details: text)
+      : _serverConfirms(_repository.appendConciergeMessage(
+          guestUuid,
+          _conciergeRequests.first.id,
+          text,
+          senderName: _stay.guestNames,
+          stepUpSession: _stepUpSessionToken,
+        ));
 
   Future<bool> submitMidStayCheckIn({
     required int rating,
@@ -605,39 +578,34 @@ class SanctuaryController extends ChangeNotifier {
       focusAreas: focusAreas,
       notes: notes.trim(),
       requestPriorityCallback: requestPriorityCallback,
-      submittedAtLabel: 'Submitted · Response < 7 Min SLA',
+      submittedAtLabel: i18n.submittedJustNow,
     );
+    if (!await _serverConfirms(_repository.submitMidStayCheckIn(
+        guestUuid, checkIn,
+        stepUpSession: _stepUpSessionToken))) {
+      return false;
+    }
     _latestMidStayCheckIn = checkIn;
-    await _repository.submitMidStayCheckIn(
-      guestUuid,
-      checkIn,
-      stepUpSession: _stepUpSessionToken,
-    );
-    showToast(i18n.t(
-      'Mid-Stay pulse shared. HOST ADMIN will respond in < 7 Min.',
-      'Comentarios enviados. HOST ADMIN responderá en < 7 min.',
-    ));
+    showToast(i18n.midStayShared);
     return true;
   }
 
   void toggleDigitalKeycard() {
     if (!_guardReadOnly()) {
       _stay = _stay.copyWith(isDigitalKeyEnabled: !_stay.isDigitalKeyEnabled);
-      notifyListeners();
+      _notify();
     }
   }
 
   Future<bool> completeExpressCheckout() async {
-    if (_guardReadOnly() || !_isStepUpVerified) return false;
-    await _repository.completeCheckout(
-      guestUuid,
-      stepUpToken: _stepUpSessionToken ?? 'stepup-verified-102',
-    );
+    final token = _stepUpSessionToken;
+    if (_guardReadOnly() || token == null) return false;
+    if (!await _serverConfirms(
+        _repository.completeCheckout(guestUuid, stepUpToken: token))) {
+      return false;
+    }
     _stay = _stay.copyWith(lifecycleStatus: StayLifecycleStatus.checkedOut);
-    showToast(i18n.t(
-      'Express Check-Out completed. Safe travels from Villa ${_stay.villaNumber}.',
-      'Salida Express completada. Buen viaje desde Villa ${_stay.villaNumber}.',
-    ));
+    showToast(i18n.checkoutCompleted(_stay.villaNumber));
     return true;
   }
 
@@ -649,10 +617,7 @@ class SanctuaryController extends ChangeNotifier {
 
   bool _guardReadOnly() {
     if (!isReadOnly) return false;
-    showToast(i18n.t(
-      'Stay Checked Out — Portal is in Read-Only Archive mode.',
-      'Estancia Finalizada — El portal está en modo de solo lectura.',
-    ));
+    showToast(i18n.readOnlyArchive);
     return true;
   }
 
@@ -660,6 +625,7 @@ class SanctuaryController extends ChangeNotifier {
   void dispose() {
     if (!_isDisposed) {
       _isDisposed = true;
+      _poller.stop();
       _repository.dispose();
       super.dispose();
     }

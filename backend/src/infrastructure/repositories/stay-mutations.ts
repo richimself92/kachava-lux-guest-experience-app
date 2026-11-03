@@ -1,149 +1,177 @@
+import { chargeBooking, chargeLarderOrder } from '../../domain/folio-ledger';
 import {
   ConciergeMessage,
   ConciergeRequest,
   ExperienceBooking,
-  FolioItem,
+  FlightTransfer,
   FolioSummary,
   LarderOrderItem,
+  MidStayFeedback,
+  Personalization,
   StayAggregate,
   StayLifecycleStatus,
+  StayRecord,
 } from '../../domain/models/domain.models';
+import { StayLimitExceededError } from '../../domain/stay-errors';
 import {
-  BookingFilterCriteria,
-  ConciergeFilterCriteria,
-  LarderFilterCriteria,
-  StayFilterCriteria,
-} from '../../domain/ports/repository.ports';
+  MAX_BOOKINGS_PER_STAY,
+  MAX_CONCIERGE_REQUESTS_PER_STAY,
+  MAX_MESSAGES_PER_REQUEST,
+  MAX_MIDSTAY_FEEDBACK_PER_STAY,
+} from '../../domain/stay-limits';
 
-export function matchesStayFilter(
+/**
+ * Pure, storage-agnostic mutators applied to a single stay aggregate. Each one mutates the
+ * given draft and returns a detached copy of the affected entity (or null when not found).
+ */
+function assertRoomFor(list: unknown[], max: number, listName: string): void {
+  if (list.length >= max) throw new StayLimitExceededError(listName, max);
+}
+
+function touch(stay: StayAggregate): void {
+  stay.updatedAt = new Date().toISOString();
+}
+
+export function rotateGuestToken(stay: StayAggregate, newUuid: string): StayRecord {
+  stay.guestTokenUuid = newUuid;
+  touch(stay);
+  return structuredClone(stay);
+}
+
+export function changeStayStatus(stay: StayAggregate, status: StayLifecycleStatus): StayRecord {
+  stay.status = status;
+  touch(stay);
+  return structuredClone(stay);
+}
+
+export function patchStayWifi(
   stay: StayAggregate,
-  filter?: StayFilterCriteria,
-): boolean {
-  if (!filter) return true;
-  if (filter.status && stay.status !== filter.status) return false;
-  if (filter.villaId && stay.villaId !== filter.villaId) return false;
-  if (filter.search) {
-    const q = filter.search.toLowerCase();
-    const target = `${stay.guestProfile.name} ${stay.villaName} ${stay.suiteName}`.toLowerCase();
-    if (!target.includes(q)) return false;
-  }
-  return true;
+  wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
+): StayRecord {
+  stay.villaAccess = {
+    ...stay.villaAccess,
+    wifiSsid: wifiPatch.wifiSsid?.trim() || stay.villaAccess.wifiSsid,
+    wifiPasscode: wifiPatch.wifiPasscode?.trim() || stay.villaAccess.wifiPasscode,
+  };
+  touch(stay);
+  return structuredClone(stay);
 }
 
-export function matchesBookingFilter(
-  b: ExperienceBooking,
-  filter?: BookingFilterCriteria,
-): boolean {
-  if (!filter) return true;
-  if (
-    filter.category &&
-    !b.bookingType.includes(filter.category.toUpperCase()) &&
-    b.category !== filter.category.toUpperCase()
-  ) {
-    return false;
-  }
-  if (filter.bookingType && b.bookingType !== filter.bookingType) return false;
-  if (filter.status && b.status !== filter.status) return false;
-  if (filter.assignedDepartment && b.assignedDepartment !== filter.assignedDepartment) {
-    return false;
-  }
-  if (filter.scheduledDate && b.scheduledDate !== filter.scheduledDate) return false;
-  return true;
+export function patchTransfer(
+  stay: StayAggregate,
+  transferPatch: Partial<FlightTransfer>,
+): FlightTransfer {
+  stay.flightTransfer = { ...stay.flightTransfer, ...transferPatch };
+  touch(stay);
+  return structuredClone(stay.flightTransfer);
 }
 
-export function matchesLarderFilter(
-  item: LarderOrderItem,
-  filter?: LarderFilterCriteria,
-): boolean {
-  if (!filter) return true;
-  if (
-    filter.provisioningStatus &&
-    item.provisioningStatus !== filter.provisioningStatus
-  ) {
-    return false;
-  }
-  if (filter.category && item.category !== filter.category) return false;
-  if (filter.villaId && item.villaId !== filter.villaId) return false;
-  return true;
+export function patchPersonalization(
+  stay: StayAggregate,
+  personalizationPatch: Partial<Personalization>,
+  allergiesLabel?: string,
+): Personalization {
+  const now = new Date().toISOString();
+  stay.personalization = { ...stay.personalization, ...personalizationPatch, updatedAt: now };
+  if (allergiesLabel) stay.guestProfile.allergies = allergiesLabel;
+  stay.updatedAt = now;
+  return structuredClone(stay.personalization);
 }
 
-export function matchesConciergeFilter(
-  r: ConciergeRequest,
-  filter?: ConciergeFilterCriteria,
-): boolean {
-  if (!filter) return true;
-  if (filter.status && r.status !== filter.status) return false;
-  if (filter.priority && r.priority !== filter.priority) return false;
-  if (filter.assignedDepartment && r.assignedDepartment !== filter.assignedDepartment) {
-    return false;
-  }
-  if (filter.category && r.category !== filter.category) return false;
-  if (filter.villaId && r.villaId !== filter.villaId) return false;
-  return true;
+export function selectSignaturePrivilege(
+  stay: StayAggregate,
+  privilege: 'massage' | 'golf',
+): StayRecord {
+  stay.selectedSignaturePrivilege = privilege;
+  touch(stay);
+  return structuredClone(stay);
+}
+
+/** Replaces the larder order and re-prices its folio line from the stored folio. */
+export function replaceLarderAndFolio(
+  stay: StayAggregate,
+  orders: LarderOrderItem[],
+): { orders: LarderOrderItem[]; folioSummary: FolioSummary } {
+  stay.larderOrders = structuredClone(orders);
+  touch(stay);
+  chargeLarderOrder(stay, stay.larderOrders, stay.updatedAt);
+  return { orders: structuredClone(stay.larderOrders), folioSummary: structuredClone(stay.folioSummary) };
+}
+
+/** Stores the booking and charges it to the stored folio. */
+export function addBooking(stay: StayAggregate, booking: ExperienceBooking): ExperienceBooking {
+  assertRoomFor(stay.experienceBookings, MAX_BOOKINGS_PER_STAY, 'bookings');
+  stay.experienceBookings.unshift(structuredClone(booking));
+  chargeBooking(stay, booking);
+  touch(stay);
+  return structuredClone(booking);
+}
+
+export function addConciergeRequest(stay: StayAggregate, request: ConciergeRequest): ConciergeRequest {
+  assertRoomFor(stay.conciergeRequests, MAX_CONCIERGE_REQUESTS_PER_STAY, 'concierge requests');
+  stay.conciergeRequests.unshift(structuredClone(request));
+  return structuredClone(request);
+}
+
+export function addMidStayFeedback(stay: StayAggregate, feedback: MidStayFeedback): MidStayFeedback {
+  assertRoomFor(stay.midstayFeedback, MAX_MIDSTAY_FEEDBACK_PER_STAY, 'mid-stay check-ins');
+  stay.midstayFeedback.unshift(structuredClone(feedback));
+  return structuredClone(feedback);
+}
+
+export function ownsConciergeRequest(stay: StayAggregate, requestId: string): boolean {
+  return stay.conciergeRequests.some((r) => r.requestId === requestId);
+}
+
+export function ownsBooking(stay: StayAggregate, bookingId: string): boolean {
+  return stay.experienceBookings.some((b) => b.bookingId === bookingId);
+}
+
+/** Admin larder actions address a stay's whole order by item id, stay id or `larder_<stayId>`. */
+export function ownsLarderOrder(stay: StayAggregate, orderItemId: string): boolean {
+  const referencesStay =
+    stay.larderOrders.some((o) => o.orderItemId === orderItemId) ||
+    stay.stayId === orderItemId ||
+    orderItemId === `larder_${stay.stayId}`;
+  return referencesStay && stay.larderOrders.length > 0;
 }
 
 export function applyConciergeAdminUpdate(
-  stays: Iterable<StayAggregate>,
+  stay: StayAggregate,
   requestId: string,
   patch: Partial<ConciergeRequest>,
   newMessage?: ConciergeMessage,
 ): ConciergeRequest | null {
-  for (const stay of stays) {
-    const target = stay.conciergeRequests.find((r) => r.requestId === requestId);
-    if (target) {
-      Object.assign(target, patch, { updatedAt: new Date().toISOString() });
-      if (newMessage) target.messages.push(structuredClone(newMessage));
-      return structuredClone(target);
-    }
-  }
-  return null;
+  const target = stay.conciergeRequests.find((r) => r.requestId === requestId);
+  if (!target) return null;
+  if (newMessage) assertRoomFor(target.messages, MAX_MESSAGES_PER_REQUEST, 'messages per request');
+  Object.assign(target, patch, { updatedAt: new Date().toISOString() });
+  if (newMessage) target.messages.push(structuredClone(newMessage));
+  return structuredClone(target);
 }
 
 export function applyLarderOrderStatusUpdate(
-  stays: Iterable<StayAggregate>,
+  stay: StayAggregate,
   orderItemId: string,
   patch: Partial<LarderOrderItem>,
 ): LarderOrderItem | null {
+  if (!ownsLarderOrder(stay, orderItemId)) return null;
   const now = new Date().toISOString();
-  for (const stay of stays) {
-    const matchesStayOrder =
-      stay.larderOrders.some((o) => o.orderItemId === orderItemId) ||
-      stay.stayId === orderItemId ||
-      orderItemId === `larder_${stay.stayId}`;
-    if (matchesStayOrder && stay.larderOrders.length > 0) {
-      for (const item of stay.larderOrders) {
-        Object.assign(item, patch, { updatedAt: now });
-      }
-      return structuredClone(stay.larderOrders[0]);
-    }
+  for (const item of stay.larderOrders) {
+    Object.assign(item, patch, { updatedAt: now });
   }
-  return null;
+  return structuredClone(stay.larderOrders[0]);
 }
 
 export function applyBookingAssignmentUpdate(
-  stays: Iterable<StayAggregate>,
+  stay: StayAggregate,
   bookingId: string,
   patch: Partial<ExperienceBooking>,
 ): ExperienceBooking | null {
-  for (const stay of stays) {
-    const target = stay.experienceBookings.find((b) => b.bookingId === bookingId);
-    if (target) {
-      Object.assign(target, patch);
-      return structuredClone(target);
-    }
-  }
-  return null;
-}
-
-export function findConciergeRequestAcrossStays(
-  stays: Iterable<StayAggregate>,
-  requestId: string,
-): ConciergeRequest | null {
-  for (const stay of stays) {
-    const found = stay.conciergeRequests.find((r) => r.requestId === requestId);
-    if (found) return structuredClone(found);
-  }
-  return null;
+  const target = stay.experienceBookings.find((b) => b.bookingId === bookingId);
+  if (!target) return null;
+  Object.assign(target, patch);
+  return structuredClone(target);
 }
 
 export function appendMessageToStayRequest(
@@ -153,30 +181,8 @@ export function appendMessageToStayRequest(
 ): ConciergeRequest | null {
   const req = stay.conciergeRequests.find((r) => r.requestId === requestId);
   if (!req) return null;
+  assertRoomFor(req.messages, MAX_MESSAGES_PER_REQUEST, 'messages per request');
   req.messages.push(structuredClone(message));
   req.updatedAt = message.sentAt;
   return structuredClone(req);
 }
-
-export function applyFolioAndStatusUpdate(
-  stay: StayAggregate,
-  folioSummary: FolioSummary,
-  folioItems: FolioItem[],
-  newStatus?: StayLifecycleStatus,
-  lateCheckoutRequested?: boolean,
-): { folioSummary: FolioSummary; folioItems: FolioItem[]; status: StayLifecycleStatus } {
-  stay.folioSummary = structuredClone(folioSummary);
-  stay.folioItems = structuredClone(folioItems);
-  if (newStatus) stay.status = newStatus;
-  if (lateCheckoutRequested !== undefined) {
-    stay.flightTransfer.lateCheckoutRequested = lateCheckoutRequested;
-  }
-  stay.updatedAt = new Date().toISOString();
-  return {
-    folioSummary: structuredClone(stay.folioSummary),
-    folioItems: structuredClone(stay.folioItems),
-    status: stay.status,
-  };
-}
-
-

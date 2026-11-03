@@ -10,6 +10,11 @@
 #   ./run-local.sh          (Default: serves compiled web/build/web & admin/build/web
 #                            instantly if present, or falls back to flutter run)
 #   ./run-local.sh --dev    (Forces live `flutter run -d web-server` compilation)
+#
+# Data mode (see backend/scripts/local-firestore-mode.sh):
+#   default                                         -> in-memory repositories (USE_FIRESTORE=false)
+#   USE_FIRESTORE=true FIRESTORE_EMULATOR_HOST=...  -> Firestore emulator
+#   USE_FIRESTORE=true KACHAVA_ALLOW_LIVE_FIRESTORE=1 -> live Firestore (explicit opt-in only)
 # ==============================================================================
 
 set -euo pipefail
@@ -26,7 +31,9 @@ export GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT:-kavacha-app}"
 export FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID:-kavacha-app}"
 export FIRESTORE_DATABASE_ID="${FIRESTORE_DATABASE_ID:-kavacha-db}"
 export FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET:-kavacha-store}"
-export USE_FIRESTORE="${USE_FIRESTORE:-true}"
+
+# shellcheck source=backend/scripts/local-firestore-mode.sh
+source "${ROOT_DIR}/backend/scripts/local-firestore-mode.sh"
 
 PIDS=()
 
@@ -48,6 +55,7 @@ trap cleanup EXIT INT TERM
 echo "=============================================================================="
 echo "  KACHAVA LUX — LOCAL FULL-STACK ECOSYSTEM LAUNCHER"
 echo "  GCP Project: ${FIREBASE_PROJECT_ID} | Firestore DB: ${FIRESTORE_DATABASE_ID} | Bucket: ${FIREBASE_STORAGE_BUCKET}"
+resolve_local_firestore_mode || exit 1
 echo "=============================================================================="
 
 # 1. Verify required CLI tools
@@ -63,6 +71,8 @@ echo "[1/3] Starting Shared NestJS Backend (backend/ on port ${BACKEND_PORT})...
 if [[ ! -d "${ROOT_DIR}/backend/node_modules" ]]; then
   (cd "${ROOT_DIR}/backend" && npm install)
 fi
+# Always rebuild so `npm run start` never serves a stale dist/ from older sources.
+(cd "${ROOT_DIR}/backend" && npm run build)
 
 (
   cd "${ROOT_DIR}/backend"
@@ -72,6 +82,7 @@ fi
   FIRESTORE_DATABASE_ID="${FIRESTORE_DATABASE_ID}" \
   FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET}" \
   USE_FIRESTORE="${USE_FIRESTORE}" \
+  USE_GCP_FIRESTORE="${USE_GCP_FIRESTORE}" \
   npm run start
 ) &
 PIDS+=($!)
@@ -119,7 +130,7 @@ fi
 echo "------------------------------------------------------------------------------"
 echo "  Services running:"
 echo "  - Backend REST API:       http://localhost:${BACKEND_PORT}/api/v1/stays/${DEMO_GUEST_UUID}"
-echo "  - Guest Portal (Villa 102 Magic Link):"
+echo "  - Guest Portal (Villa 102 demo Magic Link, in-memory mode only):"
 echo "                            http://localhost:${GUEST_WEB_PORT}/?guestId=${DEMO_GUEST_UUID}"
 echo "  - Admin Operations Panel: http://localhost:${ADMIN_WEB_PORT}"
 echo ""

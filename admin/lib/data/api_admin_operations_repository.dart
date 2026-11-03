@@ -2,77 +2,79 @@ import '../domain/admin_entities.dart';
 import '../domain/admin_enums.dart';
 import '../domain/admin_repository.dart';
 import '../domain/admin_stay_entities.dart';
+import '../domain/admin_sync_snapshot.dart';
+import '../domain/admin_villa_directory.dart';
 import 'admin_api_client.dart';
+import 'admin_staff_mapper.dart';
+import 'admin_sync_mapper.dart';
 import 'admin_wire_mapper.dart';
 import 'seeded_admin_repository.dart';
 
-/// Offline-resilient hybrid repository that communicates with `/api/v1/admin/*`
-/// and deterministically falls back to [SeededAdminRepository] when offline.
+/// Live repository for `/api/v1/admin/*`.
+///
+/// Reads always come from the server and failures propagate: no seeded or
+/// fixture data is ever presented as live. Mutations go through a
+/// write-through cache that starts empty and only applies server-confirmed
+/// changes.
 class ApiAdminOperationsRepository implements AdminOperationsRepository {
-  ApiAdminOperationsRepository({
-    AdminApiClient? apiClient,
-    SeededAdminRepository? fallbackRepository,
-    this.enableNetwork = true,
-  }) : _apiClient = apiClient ?? AdminApiClient() {
-    _fallback = fallbackRepository ??
-        SeededAdminRepository(apiClient: enableNetwork ? _apiClient : null);
+  ApiAdminOperationsRepository({AdminApiClient? apiClient})
+      : _apiClient = apiClient ?? AdminApiClient() {
+    _cache = SeededAdminRepository(
+        apiClient: _apiClient, initialData: AdminSyncSnapshot.empty);
   }
 
   final AdminApiClient _apiClient;
-  late final SeededAdminRepository _fallback;
-  final bool enableNetwork;
+  late final SeededAdminRepository _cache;
 
   @override
-  Future<void> resetAllData() async {
-    if (enableNetwork) {
-      try {
-        await _apiClient.postJson('/reset', {});
-      } catch (_) {}
-    }
-    await _fallback.resetAllData();
+  Future<AdminSyncSnapshot> fetchSnapshot() async {
+    final snapshot = AdminSyncMapper.parse(await _apiClient.getJson('/sync'));
+    _cache.applySnapshot(snapshot);
+    return snapshot;
   }
 
+  @override
+  Future<void> resetAllData() => _cache.resetAllData();
+
+  /// Live staff roster from `GET /admin/staff`.
   @override
   Future<List<StaffMember>> fetchStaffDirectory() async {
-    if (enableNetwork) {
-      try {
-        await _apiClient.getJson('/staff');
-      } catch (_) {}
-    }
-    return _fallback.fetchStaffDirectory();
+    final staff =
+        AdminStaffMapper.parseDirectory(await _apiClient.getJson('/staff'));
+    _cache.syncStaff(staff);
+    return staff;
   }
+
+  @override
+  StaffMember? get sessionStaff => _apiClient.session.staff;
+
+  /// Derived from server stays until the API exposes a villas endpoint.
+  @override
+  List<AdminVillaInfo> villasFor(List<AdminStayRecord> stays) =>
+      AdminVillaDirectory.fromStays(stays);
 
   @override
   Future<List<OperationalAlert>> fetchAlerts() async {
-    if (!enableNetwork) return _fallback.fetchAlerts();
-    try {
-      final parsed =
-          AdminWireMapper.parseAlerts(await _apiClient.getJson('/alerts'));
-      _fallback.syncCache(alerts: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchAlerts();
-    }
+    final parsed =
+        AdminWireMapper.parseAlerts(await _apiClient.getJson('/alerts'));
+    _cache.syncCache(alerts: parsed);
+    return parsed;
   }
 
   @override
   Future<OperationalAlert> acknowledgeAlert(
           {required String alertId, required String staffId}) =>
-      _fallback.acknowledgeAlert(alertId: alertId, staffId: staffId);
+      _cache.acknowledgeAlert(alertId: alertId, staffId: staffId);
 
   @override
   Future<List<AdminStayRecord>> fetchStays() async {
-    if (!enableNetwork) return _fallback.fetchStays();
-    try {
-      final raw = await _apiClient.getJson('/stays');
-      final parsed = AdminWireMapper.parseStays(raw);
-      final folios = AdminWireMapper.parseFolioItemsFromStays(
-          AdminWireMapper.extractMapList(raw));
-      _fallback.syncCache(stays: parsed, folioItems: folios);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchStays();
-    }
+    final raw = await _apiClient.getJson('/stays');
+    final parsed = AdminWireMapper.parseStays(raw);
+    _cache.syncCache(
+        stays: parsed,
+        folioItems: AdminWireMapper.parseFolioItemsFromStays(
+            AdminWireMapper.extractMapList(raw)));
+    return parsed;
   }
 
   @override
@@ -84,9 +86,8 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String occasion,
     String? wifiSsid,
     String? wifiPasscode,
-  }) async {
-    if (!enableNetwork) {
-      return _fallback.createStay(
+  }) =>
+      _cache.createStay(
           villaName: villaName,
           guestNames: guestNames,
           checkInDate: checkInDate,
@@ -94,54 +95,15 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
           occasion: occasion,
           wifiSsid: wifiSsid,
           wifiPasscode: wifiPasscode);
-    }
-    try {
-      final res = await _apiClient.postJson('/stays', {
-        'guestName': guestNames,
-        'villaId': villaName,
-        'villaName': villaName,
-        'checkIn': checkInDate,
-        'checkOut': checkOutDate,
-        'occasion': occasion,
-        if (wifiSsid != null && wifiSsid.isNotEmpty) 'wifiSsid': wifiSsid,
-        if (wifiPasscode != null && wifiPasscode.isNotEmpty)
-          'wifiPasscode': wifiPasscode,
-      });
-      if (res['stay'] is Map) {
-        final mapped = AdminWireMapper.mapStay(
-            Map<String, dynamic>.from(res['stay'] as Map));
-        _fallback.upsertStay(mapped);
-        return mapped;
-      }
-      return _fallback.createStayLocal(
-          villaName: villaName,
-          guestNames: guestNames,
-          checkInDate: checkInDate,
-          checkOutDate: checkOutDate,
-          occasion: occasion,
-          wifiSsid: wifiSsid,
-          wifiPasscode: wifiPasscode,
-          uuidOverride: res['guestTokenUuid'] as String?);
-    } catch (_) {
-      return _fallback.createStayLocal(
-          villaName: villaName,
-          guestNames: guestNames,
-          checkInDate: checkInDate,
-          checkOutDate: checkOutDate,
-          occasion: occasion,
-          wifiSsid: wifiSsid,
-          wifiPasscode: wifiPasscode);
-    }
-  }
 
   @override
   Future<AdminStayRecord> regenerateGuestUuid(String stayId) =>
-      _fallback.regenerateGuestUuid(stayId);
+      _cache.regenerateGuestUuid(stayId);
 
   @override
   Future<AdminStayRecord> updateStayLifecycle(
           {required String stayId, required StayLifecycleStatus status}) =>
-      _fallback.updateStayLifecycle(stayId: stayId, status: status);
+      _cache.updateStayLifecycle(stayId: stayId, status: status);
 
   @override
   Future<AdminStayRecord> updateStayWifi({
@@ -149,7 +111,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String wifiSsid,
     required String wifiPasscode,
   }) =>
-      _fallback.updateStayWifi(
+      _cache.updateStayWifi(
           stayId: stayId, wifiSsid: wifiSsid, wifiPasscode: wifiPasscode);
 
   @override
@@ -160,7 +122,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     String? driverAndVehicle,
     String? meetingPoint,
   }) =>
-      _fallback.updateTransferDispatch(
+      _cache.updateTransferDispatch(
           stayId: stayId,
           chauffeurId: chauffeurId,
           transferStatus: transferStatus,
@@ -169,16 +131,10 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
 
   @override
   Future<List<AdminBookingRecord>> fetchBookings() async {
-    if (!enableNetwork) return _fallback.fetchBookings();
-    try {
-      final raw = await _apiClient.getJson('/bookings');
-      final parsed =
-          AdminWireMapper.parseBookings(raw, await _fallback.fetchStays());
-      _fallback.syncCache(bookings: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchBookings();
-    }
+    final parsed = AdminWireMapper.parseBookings(
+        await _apiClient.getJson('/bookings'), await _cache.fetchStays());
+    _cache.syncCache(bookings: parsed);
+    return parsed;
   }
 
   @override
@@ -188,7 +144,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String status,
     String? cancellationReason,
   }) =>
-      _fallback.assignAndUpdateBooking(
+      _cache.assignAndUpdateBooking(
           bookingId: bookingId,
           staffId: staffId,
           status: status,
@@ -196,17 +152,10 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
 
   @override
   Future<List<AdminExperienceCatalogItem>> fetchExperienceCatalog() async {
-    if (!enableNetwork) return _fallback.fetchExperienceCatalog();
-    try {
-      final parsed = AdminWireMapper.parseExperienceCatalog(
-          await _apiClient.getJson('/catalog/experiences'));
-      if (parsed.isNotEmpty) _fallback.syncCache(experienceCatalog: parsed);
-      return parsed.isNotEmpty
-          ? parsed
-          : await _fallback.fetchExperienceCatalog();
-    } catch (_) {
-      return _fallback.fetchExperienceCatalog();
-    }
+    final parsed = AdminWireMapper.parseExperienceCatalog(
+        await _apiClient.getJson('/catalog/experiences'));
+    _cache.syncCache(experienceCatalog: parsed);
+    return parsed;
   }
 
   @override
@@ -218,7 +167,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     bool isIncluded = false,
     String description = '',
   }) =>
-      _fallback.createExperienceCatalogItem(
+      _cache.createExperienceCatalogItem(
           title: title,
           category: category,
           duration: duration,
@@ -228,20 +177,14 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
 
   @override
   Future<void> deleteExperienceCatalogItem(String id) =>
-      _fallback.deleteExperienceCatalogItem(id);
+      _cache.deleteExperienceCatalogItem(id);
 
   @override
   Future<List<AdminLarderOrder>> fetchLarderOrders() async {
-    if (!enableNetwork) return _fallback.fetchLarderOrders();
-    try {
-      final raw = await _apiClient.getJson('/larder-orders');
-      final parsed =
-          AdminWireMapper.parseLarderOrders(raw, await _fallback.fetchStays());
-      _fallback.syncCache(larderOrders: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchLarderOrders();
-    }
+    final parsed = AdminWireMapper.parseLarderOrders(
+        await _apiClient.getJson('/larder-orders'), await _cache.fetchStays());
+    _cache.syncCache(larderOrders: parsed);
+    return parsed;
   }
 
   @override
@@ -250,20 +193,15 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String status,
     required String staffId,
   }) =>
-      _fallback.updateLarderOrder(
+      _cache.updateLarderOrder(
           orderId: orderId, status: status, staffId: staffId);
 
   @override
   Future<List<AdminLarderCatalogItem>> fetchLarderCatalog() async {
-    if (!enableNetwork) return _fallback.fetchLarderCatalog();
-    try {
-      final parsed = AdminWireMapper.parseLarderCatalog(
-          await _apiClient.getJson('/catalog/larder'));
-      if (parsed.isNotEmpty) _fallback.syncCache(larderCatalog: parsed);
-      return parsed.isNotEmpty ? parsed : await _fallback.fetchLarderCatalog();
-    } catch (_) {
-      return _fallback.fetchLarderCatalog();
-    }
+    final parsed = AdminWireMapper.parseLarderCatalog(
+        await _apiClient.getJson('/catalog/larder'));
+    _cache.syncCache(larderCatalog: parsed);
+    return parsed;
   }
 
   @override
@@ -274,7 +212,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String storageType,
     String description = '',
   }) =>
-      _fallback.createLarderCatalogItem(
+      _cache.createLarderCatalogItem(
           name: name,
           category: category,
           price: price,
@@ -283,20 +221,15 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
 
   @override
   Future<void> deleteLarderCatalogItem(String id) =>
-      _fallback.deleteLarderCatalogItem(id);
+      _cache.deleteLarderCatalogItem(id);
 
   @override
   Future<List<AdminConciergeTicket>> fetchConciergeTickets() async {
-    if (!enableNetwork) return _fallback.fetchConciergeTickets();
-    try {
-      final raw = await _apiClient.getJson('/concierge-requests');
-      final parsed = AdminWireMapper.parseConciergeTickets(
-          raw, await _fallback.fetchStays());
-      _fallback.syncCache(tickets: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchConciergeTickets();
-    }
+    final parsed = AdminWireMapper.parseConciergeTickets(
+        await _apiClient.getJson('/concierge-requests'),
+        await _cache.fetchStays());
+    _cache.syncCache(tickets: parsed);
+    return parsed;
   }
 
   @override
@@ -305,7 +238,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required ConciergeStage stage,
     String? staffId,
   }) =>
-      _fallback.updateConciergeTicket(
+      _cache.updateConciergeTicket(
           requestId: requestId, stage: stage, staffId: staffId);
 
   @override
@@ -315,7 +248,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String senderRole,
     required String messageText,
   }) =>
-      _fallback.appendConciergeReply(
+      _cache.appendConciergeReply(
           requestId: requestId,
           senderName: senderName,
           senderRole: senderRole,
@@ -323,16 +256,11 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
 
   @override
   Future<List<AdminMidStayPulse>> fetchMidStayPulses() async {
-    if (!enableNetwork) return _fallback.fetchMidStayPulses();
-    try {
-      final raw = await _apiClient.getJson('/midstay-feedback');
-      final parsed =
-          AdminWireMapper.parseMidStayPulses(raw, await _fallback.fetchStays());
-      _fallback.syncCache(pulses: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchMidStayPulses();
-    }
+    final parsed = AdminWireMapper.parseMidStayPulses(
+        await _apiClient.getJson('/midstay-feedback'),
+        await _cache.fetchStays());
+    _cache.syncCache(pulses: parsed);
+    return parsed;
   }
 
   @override
@@ -341,23 +269,15 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String followUpNote,
     required String staffName,
   }) =>
-      _fallback.attendMidStayPulse(
+      _cache.attendMidStayPulse(
           checkInId: checkInId,
           followUpNote: followUpNote,
           staffName: staffName);
 
   @override
   Future<List<FolioLineItem>> fetchFolioItems(String stayId) async {
-    if (!enableNetwork) return _fallback.fetchFolioItems(stayId);
-    try {
-      final raw = await _apiClient.getJson('/stays');
-      final parsed = AdminWireMapper.parseFolioItemsFromStays(
-          AdminWireMapper.extractMapList(raw));
-      _fallback.syncCache(folioItems: parsed);
-      return parsed;
-    } catch (_) {
-      return _fallback.fetchFolioItems(stayId);
-    }
+    await fetchStays();
+    return _cache.fetchFolioItems(stayId);
   }
 
   @override
@@ -367,7 +287,7 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     required String categoryLabel,
     required double amountUsd,
   }) =>
-      _fallback.addFolioItem(
+      _cache.addFolioItem(
           stayId: stayId,
           title: title,
           categoryLabel: categoryLabel,
@@ -376,12 +296,12 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
   @override
   Future<AdminStayRecord> approveExpressCheckout(
           {required String stayId, required bool approveLateCheckout}) =>
-      _fallback.approveExpressCheckout(
+      _cache.approveExpressCheckout(
           stayId: stayId, approveLateCheckout: approveLateCheckout);
 
   @override
-  void dispose() {
-    _apiClient.dispose();
-    _fallback.dispose();
-  }
+  void clearCache() => _cache.clearCache();
+
+  @override
+  void dispose() => _cache.dispose();
 }

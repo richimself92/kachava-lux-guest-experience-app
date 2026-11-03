@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/concierge_folio_entities.dart';
@@ -18,7 +20,6 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _chatController = TextEditingController();
   final String _selectedCategory = 'Maintenance';
-  bool _attachPhoto = false;
 
   @override
   void dispose() {
@@ -34,19 +35,15 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
       title: text,
       category: _selectedCategory,
       details: text,
-      photoUrl: _attachPhoto
-          ? 'https://storage.googleapis.com/kachava-lux/villa102/issue.jpg'
-          : null,
     );
     if (!mounted) return;
     _titleController.clear();
-    setState(() => _attachPhoto = false);
   }
 
   void _sendChat() {
     final text = _chatController.text.trim();
     if (text.isEmpty) return;
-    widget.controller.sendChatMessage(text);
+    unawaited(widget.controller.sendChatMessage(text));
     _chatController.clear();
   }
 
@@ -82,7 +79,7 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.controller.stay.privateHostName,
+                  Text(i18n.hostLabel(widget.controller.stay.privateHostName),
                       style: const TextStyle(
                           fontFamily: KachavaTheme.serifFamily,
                           fontSize: 16,
@@ -128,29 +125,17 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
                       'Describe your request...', 'Describe tu solicitud...')),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                FilterChip(
-                  key: const Key('concierge-attach-photo-chip'),
-                  label: Text(i18n.t('Attach Photo', 'Adjuntar Foto'),
-                      style: const TextStyle(fontSize: 11)),
-                  selected: _attachPhoto,
-                  onSelected: (v) => setState(() => _attachPhoto = v),
-                ),
-                ElevatedButton(
-                  key: const Key('concierge-submit-request-btn'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: KachavaColors.primary,
-                      foregroundColor: Colors.white),
-                  onPressed: _submitRequest,
-                  child:
-                      Text(i18n.t('Send to HOST ADMIN', 'Enviar a HOST ADMIN')),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                key: const Key('concierge-submit-request-btn'),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: KachavaColors.primary,
+                    foregroundColor: Colors.white),
+                onPressed: _submitRequest,
+                child:
+                    Text(i18n.t('Send to HOST ADMIN', 'Enviar a HOST ADMIN')),
+              ),
             ),
           ],
         ),
@@ -169,6 +154,11 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
                 fontWeight: FontWeight.w700,
                 color: KachavaColors.secondary)),
         const SizedBox(height: 8),
+        if (widget.controller.conciergeRequests.isEmpty)
+          Text(i18n.noConciergeRequests,
+              key: const Key('concierge-requests-empty'),
+              style: const TextStyle(
+                  fontSize: 13, color: KachavaColors.onSurfaceVariant)),
         ...widget.controller.conciergeRequests.map(_buildRequestCard),
       ],
     );
@@ -203,8 +193,8 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
             const SizedBox(height: 6),
             Text(
               i18n.t(
-                  'Assigned to: ${req.assignedTo} · Requested -> Assigned -> In Progress -> Completed',
-                  'Atendido por: ${req.assignedTo} · Solicitado -> Asignado -> En Proceso -> Completado'),
+                  'Assigned to: ${i18n.hostLabel(req.assignedTo)} · Requested -> Assigned -> In Progress -> Completed',
+                  'Atendido por: ${i18n.hostLabel(req.assignedTo)} · Solicitado -> Asignado -> En Proceso -> Completado'),
               style: const TextStyle(
                   fontSize: 10, color: KachavaColors.mutedMetadata),
             ),
@@ -290,7 +280,7 @@ class _ConciergeScreenState extends State<ConciergeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(msg.senderName,
+          Text(msg.isFromHost ? i18n.hostLabel(msg.senderName) : msg.senderName,
               style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

@@ -2,38 +2,66 @@ import '../domain/admin_entities.dart';
 import '../domain/admin_enums.dart';
 import '../domain/admin_repository.dart';
 import '../domain/admin_stay_entities.dart';
+import '../domain/admin_sync_snapshot.dart';
 import 'admin_api_client.dart';
+import 'admin_cached_records.dart';
 import 'admin_seed_concierge_folio.dart';
+import 'admin_server_confirmation.dart';
 import 'admin_seed_fixtures.dart';
 import 'admin_seed_operations.dart';
 import 'admin_wire_mapper.dart';
+import 'admin_wire_values.dart';
 
-/// Repository implementation pre-populated with Villa 102 and resort operational data,
-/// plus optional non-blocking REST synchronization with `/api/v1/admin/*`.
+/// In-memory admin store.
+///
+/// Without an [AdminApiClient] it is an offline fake pre-populated with seed
+/// fixtures (tests/demo only). With a client it is a write-through cache:
+/// every mutation is sent to `/api/v1/admin/*` first and applied locally only
+/// after the server confirms; failures propagate and nothing is invented.
 class SeededAdminRepository implements AdminOperationsRepository {
-  SeededAdminRepository({AdminApiClient? apiClient}) : _apiClient = apiClient;
+  SeededAdminRepository(
+      {AdminApiClient? apiClient, AdminSyncSnapshot? initialData})
+      : _apiClient = apiClient {
+    applySnapshot(initialData ?? _seedSnapshot());
+    if (initialData == null) {
+      _staff.addAll(AdminSeedFixtures.buildStaffDirectory());
+    }
+  }
 
   final AdminApiClient? _apiClient;
-  final List<StaffMember> _staff =
-      List.of(AdminSeedFixtures.buildStaffDirectory());
-  final List<AdminStayRecord> _stays = List.of(AdminSeedFixtures.buildStays());
-  final List<OperationalAlert> _alerts =
-      List.of(AdminSeedOperations.buildAlerts());
-  final List<AdminBookingRecord> _bookings =
-      List.of(AdminSeedOperations.buildBookings());
-  final List<AdminLarderOrder> _larderOrders =
-      List.of(AdminSeedOperations.buildLarderOrders());
-  final List<AdminConciergeTicket> _tickets =
-      List.of(AdminSeedOperations.buildConciergeTickets());
-  final List<AdminMidStayPulse> _pulses =
-      List.of(AdminSeedOperations.buildMidStayPulses());
-  final List<FolioLineItem> _folioItems =
-      List.of(AdminSeedOperations.buildFolioItems());
-  final List<AdminExperienceCatalogItem> _experienceCatalog =
-      List.of(AdminSeedConciergeFolio.buildExperienceCatalog());
-  final List<AdminLarderCatalogItem> _larderCatalog =
-      List.of(AdminSeedConciergeFolio.buildLarderCatalog());
+  final List<StaffMember> _staff = [];
+  final List<AdminStayRecord> _stays = [];
+  final List<OperationalAlert> _alerts = [];
+  final List<AdminBookingRecord> _bookings = [];
+  final List<AdminLarderOrder> _larderOrders = [];
+  final List<AdminConciergeTicket> _tickets = [];
+  final List<AdminMidStayPulse> _pulses = [];
+  final List<FolioLineItem> _folioItems = [];
+  final List<AdminExperienceCatalogItem> _experienceCatalog = [];
+  final List<AdminLarderCatalogItem> _larderCatalog = [];
   int _uuidCounter = 100;
+
+  static AdminSyncSnapshot _seedSnapshot() => AdminSyncSnapshot(
+      stays: AdminSeedFixtures.buildStays(),
+      alerts: AdminSeedOperations.buildAlerts(),
+      bookings: AdminSeedOperations.buildBookings(),
+      larderOrders: AdminSeedOperations.buildLarderOrders(),
+      conciergeTickets: AdminSeedOperations.buildConciergeTickets(),
+      midStayPulses: AdminSeedOperations.buildMidStayPulses(),
+      experienceCatalog: AdminSeedConciergeFolio.buildExperienceCatalog(),
+      larderCatalog: AdminSeedConciergeFolio.buildLarderCatalog(),
+      folioItems: AdminSeedOperations.buildFolioItems());
+
+  void applySnapshot(AdminSyncSnapshot s) => syncCache(
+      stays: s.stays,
+      alerts: s.alerts,
+      bookings: s.bookings,
+      larderOrders: s.larderOrders,
+      tickets: s.conciergeTickets,
+      pulses: s.midStayPulses,
+      folioItems: s.folioItems,
+      experienceCatalog: s.experienceCatalog,
+      larderCatalog: s.larderCatalog);
 
   void syncCache({
     List<OperationalAlert>? alerts,
@@ -46,105 +74,73 @@ class SeededAdminRepository implements AdminOperationsRepository {
     List<AdminExperienceCatalogItem>? experienceCatalog,
     List<AdminLarderCatalogItem>? larderCatalog,
   }) {
-    if (alerts != null) {
-      _alerts
-        ..clear()
-        ..addAll(alerts);
-    }
-    if (stays != null) {
-      _stays
-        ..clear()
-        ..addAll(stays);
-    }
-    if (bookings != null) {
-      _bookings
-        ..clear()
-        ..addAll(bookings);
-    }
-    if (larderOrders != null) {
-      _larderOrders
-        ..clear()
-        ..addAll(larderOrders);
-    }
-    if (tickets != null) {
-      _tickets
-        ..clear()
-        ..addAll(tickets);
-    }
-    if (pulses != null) {
-      _pulses
-        ..clear()
-        ..addAll(pulses);
-    }
-    if (folioItems != null) {
-      _folioItems
-        ..clear()
-        ..addAll(folioItems);
-    }
-    if (experienceCatalog != null) {
-      _experienceCatalog
-        ..clear()
-        ..addAll(experienceCatalog);
-    }
-    if (larderCatalog != null) {
-      _larderCatalog
-        ..clear()
-        ..addAll(larderCatalog);
-    }
+    _replace(_alerts, alerts);
+    _replace(_stays, stays);
+    _replace(_bookings, bookings);
+    _replace(_larderOrders, larderOrders);
+    _replace(_tickets, tickets);
+    _replace(_pulses, pulses);
+    _replace(_folioItems, folioItems);
+    _replace(_experienceCatalog, experienceCatalog);
+    _replace(_larderCatalog, larderCatalog);
   }
+
+  static void _replace<T>(List<T> target, List<T>? values) {
+    if (values != null) target.replaceRange(0, target.length, values);
+  }
+
+  /// Drops every cached record and the roster (e.g. on a staff switch).
+  @override
+  void clearCache() {
+    applySnapshot(AdminSyncSnapshot.empty);
+    _staff.clear();
+  }
+
+  /// Replaces the cached roster with the server-confirmed one.
+  void syncStaff(List<StaffMember> staff) => _replace(_staff, staff);
 
   void upsertStay(AdminStayRecord stay) {
     _stays.removeWhere((s) => s.stayId == stay.stayId);
     _stays.insert(0, stay);
   }
 
-  AdminStayRecord createStayLocal({
-    required String villaName,
-    required String guestNames,
-    required String checkInDate,
-    required String checkOutDate,
-    required String occasion,
-    String? wifiSsid,
-    String? wifiPasscode,
-    String? uuidOverride,
-  }) {
-    _uuidCounter++;
-    final uuid = (uuidOverride != null && uuidOverride.isNotEmpty)
-        ? uuidOverride
-        : '550e8400-e29b-41d4-a716-446655440$_uuidCounter';
-    final created = AdminSeedFixtures.buildCreatedStay(
-        counter: _uuidCounter,
-        uuid: uuid,
-        villaName: villaName,
-        guestNames: guestNames,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
-        occasion: occasion,
-        wifiSsid: wifiSsid,
-        wifiPasscode: wifiPasscode);
-    upsertStay(created);
-    return created;
-  }
+  @override
+  Future<AdminSyncSnapshot> fetchSnapshot() async => AdminSyncSnapshot(
+      stays: List.unmodifiable(_stays),
+      alerts: List.unmodifiable(_alerts),
+      bookings: List.unmodifiable(_bookings),
+      larderOrders: List.unmodifiable(_larderOrders),
+      conciergeTickets: List.unmodifiable(_tickets),
+      midStayPulses: List.unmodifiable(_pulses),
+      experienceCatalog: List.unmodifiable(_experienceCatalog),
+      larderCatalog: List.unmodifiable(_larderCatalog),
+      folioItems: List.unmodifiable(_folioItems));
 
   @override
   Future<void> resetAllData() async {
     await _syncPost('/reset', {});
-    for (final list in <List<dynamic>>[
-      _stays,
-      _alerts,
-      _bookings,
-      _larderOrders,
-      _tickets,
-      _pulses,
-      _folioItems
-    ]) {
-      list.clear();
-    }
+    syncCache(
+        stays: const [],
+        alerts: const [],
+        bookings: const [],
+        larderOrders: const [],
+        tickets: const [],
+        pulses: const [],
+        folioItems: const []);
   }
 
   @override
   Future<List<StaffMember>> fetchStaffDirectory() async =>
       List.unmodifiable(_staff);
+
+  /// Offline fake: the first seeded staff member acts as the session.
+  @override
+  StaffMember? get sessionStaff => _staff.isEmpty ? null : _staff.first;
+
+  /// Offline fake: the seeded resort villas.
+  @override
+  List<AdminVillaInfo> villasFor(List<AdminStayRecord> stays) =>
+      AdminSeedFixtures.buildVillas();
   @override
   Future<List<OperationalAlert>> fetchAlerts() async =>
       List.unmodifiable(_alerts);
@@ -175,10 +171,10 @@ class SeededAdminRepository implements AdminOperationsRepository {
   @override
   Future<OperationalAlert> acknowledgeAlert(
       {required String alertId, required String staffId}) async {
+    final cur = CachedRecords.find(_alerts, (a) => a.alertId, alertId);
     await _syncPatch('/alerts/$alertId/acknowledge', {'staffId': staffId});
-    final index = _alerts.indexWhere((a) => a.alertId == alertId);
-    return _alerts[index] = _alerts[index]
-        .copyWith(isAcknowledged: true, acknowledgedByStaffId: staffId);
+    return CachedRecords.replace<OperationalAlert>(_alerts, (a) => a.alertId,
+        cur.copyWith(isAcknowledged: true, acknowledgedByStaffId: staffId));
   }
 
   @override
@@ -191,7 +187,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
     String? wifiSsid,
     String? wifiPasscode,
   }) async {
-    final res = await _syncPost('/stays', {
+    final payload = {
       'guestName': guestNames,
       'villaId': villaName,
       'villaName': villaName,
@@ -201,42 +197,44 @@ class SeededAdminRepository implements AdminOperationsRepository {
       if (wifiSsid != null && wifiSsid.isNotEmpty) 'wifiSsid': wifiSsid,
       if (wifiPasscode != null && wifiPasscode.isNotEmpty)
         'wifiPasscode': wifiPasscode,
-    });
-    if (res?['stay'] is Map) {
-      final mapped = AdminWireMapper.mapStay(
-          Map<String, dynamic>.from(res!['stay'] as Map));
-      upsertStay(mapped);
-      return mapped;
-    }
-    return createStayLocal(
-        villaName: villaName,
-        guestNames: guestNames,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
-        occasion: occasion,
-        wifiSsid: wifiSsid,
-        wifiPasscode: wifiPasscode,
-        uuidOverride: res?['guestTokenUuid'] as String?);
+    };
+    final res = await _syncPost('/stays', payload);
+    final created = res == null
+        ? _offlineStay(payload)
+        : AdminServerConfirmation.createdStay(res);
+    upsertStay(created);
+    return created;
   }
+
+  /// Offline fake only: a stay built from the create payload.
+  AdminStayRecord _offlineStay(Map<String, String> p) =>
+      AdminSeedFixtures.buildCreatedStay(
+          counter: ++_uuidCounter,
+          uuid: '550e8400-e29b-41d4-a716-446655440$_uuidCounter',
+          villaName: p['villaName']!,
+          guestNames: p['guestName']!,
+          checkInDate: p['checkIn']!,
+          checkOutDate: p['checkOut']!,
+          occasion: p['occasion']!,
+          wifiSsid: p['wifiSsid'],
+          wifiPasscode: p['wifiPasscode']);
 
   @override
   Future<AdminStayRecord> regenerateGuestUuid(String stayId) async {
-    _uuidCounter++;
-    final res = await _syncPost('/stays/$stayId/regenerate-token', {}),
-        apiUuid = res?['guestTokenUuid'] as String?;
-    final rotated = (apiUuid != null && apiUuid.isNotEmpty)
-        ? apiUuid
-        : 'a8098c1a-f86e-41da-bd1a-00112444b$_uuidCounter';
-    final index = _stays.indexWhere((s) => s.stayId == stayId);
-    return _stays[index] = _stays[index].copyWith(guestTokenUuid: rotated);
+    final cur = _stay(stayId);
+    final res = await _syncPost('/stays/$stayId/regenerate-token', {});
+    final rotated = res == null
+        ? 'a8098c1a-f86e-41da-bd1a-00112444b${++_uuidCounter}'
+        : AdminServerConfirmation.rotatedToken(res);
+    return _putStay(cur.copyWith(guestTokenUuid: rotated));
   }
 
   @override
   Future<AdminStayRecord> updateStayLifecycle(
       {required String stayId, required StayLifecycleStatus status}) async {
+    final cur = _stay(stayId);
     await _syncPatch('/stays/$stayId/status', {'status': status.label});
-    final index = _stays.indexWhere((s) => s.stayId == stayId);
-    return _stays[index] = _stays[index].copyWith(lifecycleStatus: status);
+    return _putStay(cur.copyWith(lifecycleStatus: status));
   }
 
   @override
@@ -244,11 +242,11 @@ class SeededAdminRepository implements AdminOperationsRepository {
       {required String stayId,
       required String wifiSsid,
       required String wifiPasscode}) async {
+    final cur = _stay(stayId);
     await _syncPatch('/stays/$stayId/wifi',
         {'wifiSsid': wifiSsid, 'wifiPasscode': wifiPasscode});
-    final index = _stays.indexWhere((s) => s.stayId == stayId);
-    return _stays[index] =
-        _stays[index].copyWith(wifiSsid: wifiSsid, wifiPasscode: wifiPasscode);
+    return _putStay(
+        cur.copyWith(wifiSsid: wifiSsid, wifiPasscode: wifiPasscode));
   }
 
   @override
@@ -259,36 +257,37 @@ class SeededAdminRepository implements AdminOperationsRepository {
     String? driverAndVehicle,
     String? meetingPoint,
   }) async {
-    final staff = _findStaff(chauffeurId);
-    final drv = (driverAndVehicle != null && driverAndVehicle.trim().isNotEmpty)
-        ? driverAndVehicle.trim()
-        : null;
-    final meet = (meetingPoint != null && meetingPoint.trim().isNotEmpty)
-        ? meetingPoint.trim()
-        : null;
+    final staff = _findStaff(chauffeurId),
+        drv = WireValues.blankToNull(driverAndVehicle),
+        meet = WireValues.blankToNull(meetingPoint),
+        stay = _stay(stayId);
     await _syncPatch('/stays/$stayId/transfer', {
       'status': transferStatus,
-      'assignedStaffId': staff.staffId,
-      'assignedStaffName': drv ?? staff.shortName,
+      if (staff != null) 'assignedStaffId': staff.staffId,
+      if ((drv ?? staff?.shortName) != null)
+        'assignedStaffName': drv ?? staff?.shortName,
       if (drv != null) 'assignedDriver': drv,
       if (drv != null) 'vehicleModel': drv,
       if (meet != null) 'meetingPoint': meet,
       if (meet != null) 'adminDispatchNotes': meet,
     });
-    final index = _stays.indexWhere((s) => s.stayId == stayId),
-        cur = _stays[index].transfer;
-    return _stays[index] = _stays[index].copyWith(
-        transfer: cur.copyWith(
-            assignedChauffeurId: staff.staffId,
-            assignedChauffeurName: drv ??
-                (cur.assignedChauffeurName.isNotEmpty
-                    ? cur.assignedChauffeurName
-                    : staff.shortName),
-            vehicleLabel: drv ?? cur.vehicleLabel,
-            cabinBeverage: meet ?? cur.cabinBeverage,
-            outboundRoute: meet ?? cur.outboundRoute,
-            transferStatus: transferStatus));
+    return _putStay(stay.copyWith(
+        transfer:
+            _dispatched(stay.transfer, staff, drv, meet, transferStatus)));
   }
+
+  static AviationTransferInfo _dispatched(AviationTransferInfo cur,
+          StaffMember? staff, String? drv, String? meet, String status) =>
+      cur.copyWith(
+          assignedChauffeurId: staff?.staffId ?? '',
+          assignedChauffeurName: drv ??
+              (cur.assignedChauffeurName.isNotEmpty
+                  ? cur.assignedChauffeurName
+                  : staff?.shortName ?? ''),
+          vehicleLabel: drv ?? cur.vehicleLabel,
+          cabinBeverage: meet ?? cur.cabinBeverage,
+          outboundRoute: meet ?? cur.outboundRoute,
+          transferStatus: status);
 
   @override
   Future<AdminBookingRecord> assignAndUpdateBooking({
@@ -298,27 +297,27 @@ class SeededAdminRepository implements AdminOperationsRepository {
     String? cancellationReason,
   }) async {
     final staff = _findStaff(staffId),
-        nowIso = DateTime.now().toUtc().toIso8601String();
-    final upper = status.toUpperCase().replaceAll(' ', '_');
-    final normalizedStatus = upper == 'CANCELLED'
-        ? 'Cancelled'
-        : (upper == 'CONFIRMED' ? 'Confirmed' : status);
+        upper = status.toUpperCase().replaceAll(' ', '_'),
+        cur = CachedRecords.find(_bookings, (b) => b.bookingId, bookingId);
     await _syncPatch('/bookings/$bookingId/assign', {
       'status': upper,
-      'assignedStaffId': staff.staffId,
-      'assignedStaffName': staff.shortName,
-      'assignedDepartment': staff.department.apiValue,
+      if (staff != null) ...{
+        'assignedStaffId': staff.staffId,
+        'assignedStaffName': staff.shortName,
+        'assignedDepartment': staff.department.apiValue,
+      },
       'notifyStaff': true,
       'cancellationReason': cancellationReason,
     });
-    final index = _bookings.indexWhere((b) => b.bookingId == bookingId);
-    return _bookings[index] = _bookings[index].copyWith(
-        status: normalizedStatus,
-        assignedStaffId: staff.staffId,
-        assignedStaffName: staff.shortName,
-        assignedDepartment: staff.department,
-        notifiedAt: nowIso,
-        cancellationReason: cancellationReason);
+    return _putBooking(cur.copyWith(
+        status: upper == 'CANCELLED'
+            ? 'Cancelled'
+            : (upper == 'CONFIRMED' ? 'Confirmed' : status),
+        assignedStaffId: staff?.staffId ?? '',
+        assignedStaffName: staff?.shortName ?? '',
+        assignedDepartment: staff?.department,
+        notifiedAt: DateTime.now().toUtc().toIso8601String(),
+        cancellationReason: cancellationReason));
   }
 
   @override
@@ -343,8 +342,8 @@ class SeededAdminRepository implements AdminOperationsRepository {
       'isIncluded': isIncluded,
       'description': description,
     });
-    final item = (res != null && res['id'] != null)
-        ? AdminWireMapper.mapExperienceCatalogItem(res)
+    final item = res != null
+        ? AdminWireMapper.mapExperienceCatalogItem(_confirmedId(res))
         : AdminExperienceCatalogItem(
             id: 'exp_$_uuidCounter',
             title: title,
@@ -370,20 +369,24 @@ class SeededAdminRepository implements AdminOperationsRepository {
       {required String orderId,
       required String status,
       required String staffId}) async {
-    final staff = _findStaff(staffId);
-    await _syncPatch('/larder-orders/$orderId/status',
-        {'provisioningStatus': status, 'assignedStaffId': staff.staffId});
-    final index = _larderOrders.indexWhere((o) => o.orderId == orderId),
-        markStocked = status == 'Stocked in Villa';
-    final updatedItems = _larderOrders[index]
-        .items
-        .map((i) => i.copyWith(isStocked: markStocked || i.isStocked))
-        .toList();
-    return _larderOrders[index] = _larderOrders[index].copyWith(
-        status: status,
-        assignedStaffId: staff.staffId,
-        assignedStaffName: staff.shortName,
-        items: updatedItems);
+    final staff = _findStaff(staffId),
+        cur = CachedRecords.find(_larderOrders, (o) => o.orderId, orderId);
+    await _syncPatch('/larder-orders/$orderId/status', {
+      'provisioningStatus': status,
+      if (staff != null) 'assignedStaffId': staff.staffId
+    });
+    final markStocked = status == 'Stocked in Villa';
+    return CachedRecords.replace<AdminLarderOrder>(
+        _larderOrders,
+        (o) => o.orderId,
+        cur.copyWith(
+            status: status,
+            assignedStaffId: staff?.staffId ?? '',
+            assignedStaffName: staff?.shortName ?? '',
+            items: [
+              for (final i in cur.items)
+                i.copyWith(isStocked: markStocked || i.isStocked)
+            ]));
   }
 
   @override
@@ -403,8 +406,8 @@ class SeededAdminRepository implements AdminOperationsRepository {
       'category': category,
       'storageType': storageType
     });
-    final item = (res != null && res['id'] != null)
-        ? AdminWireMapper.mapLarderCatalogItem(res)
+    final item = res != null
+        ? AdminWireMapper.mapLarderCatalogItem(_confirmedId(res))
         : AdminLarderCatalogItem(
             id: 'lrd_$_uuidCounter',
             name: name,
@@ -429,7 +432,8 @@ class SeededAdminRepository implements AdminOperationsRepository {
       required ConciergeStage stage,
       String? staffId}) async {
     final staff = staffId != null ? _findStaff(staffId) : null,
-        nowIso = DateTime.now().toUtc().toIso8601String();
+        nowIso = DateTime.now().toUtc().toIso8601String(),
+        cur = CachedRecords.find(_tickets, (t) => t.requestId, requestId);
     await _syncPatch('/concierge-requests/$requestId', {
       'status': stage.label,
       'currentStep': stage.step,
@@ -437,7 +441,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
     });
     return AdminSeedConciergeFolio.applyStageUpdate(
         tickets: _tickets,
-        requestId: requestId,
+        current: cur,
         stage: stage,
         staff: staff,
         nowIso: nowIso);
@@ -449,11 +453,12 @@ class SeededAdminRepository implements AdminOperationsRepository {
       required String senderName,
       required String senderRole,
       required String messageText}) async {
+    final cur = CachedRecords.find(_tickets, (t) => t.requestId, requestId);
     await _syncPatch('/concierge-requests/$requestId',
         {'replyMessage': messageText, 'message': messageText});
     return AdminSeedConciergeFolio.applyReply(
         tickets: _tickets,
-        requestId: requestId,
+        current: cur,
         senderName: senderName,
         senderRole: senderRole,
         messageText: messageText);
@@ -464,11 +469,12 @@ class SeededAdminRepository implements AdminOperationsRepository {
       {required String checkInId,
       required String followUpNote,
       required String staffName}) async {
+    final cur = CachedRecords.find(_pulses, (p) => p.checkInId, checkInId);
     await _syncPatch('/midstay-checkins/$checkInId',
         {'status': 'ATTENDED', 'followUpNote': followUpNote});
     return AdminSeedConciergeFolio.applyPulseUpdate(
         pulses: _pulses,
-        checkInId: checkInId,
+        current: cur,
         followUpNote: followUpNote,
         staffName: staffName);
   }
@@ -494,47 +500,49 @@ class SeededAdminRepository implements AdminOperationsRepository {
   @override
   Future<AdminStayRecord> approveExpressCheckout(
       {required String stayId, required bool approveLateCheckout}) async {
+    final cur = _stay(stayId);
     await _syncPatch('/stays/$stayId/folio/approve-checkout', {
       'paymentStatus': 'SETTLED',
       'lateCheckoutApproved': approveLateCheckout,
       'approveLateCheckout': approveLateCheckout,
       'status': StayLifecycleStatus.checkedOut.label,
     });
-    final index = _stays.indexWhere((s) => s.stayId == stayId);
-    return _stays[index] = _stays[index].copyWith(
+    return _putStay(cur.copyWith(
         lifecycleStatus: StayLifecycleStatus.checkedOut,
         paymentStatus: 'SETTLED',
-        lateCheckoutApproved: approveLateCheckout);
+        lateCheckoutApproved: approveLateCheckout));
   }
 
-  StaffMember _findStaff(String staffId) => _staff
-      .firstWhere((s) => s.staffId == staffId, orElse: () => _staff.first);
+  AdminStayRecord _stay(String id) =>
+      CachedRecords.find(_stays, (s) => s.stayId, id);
+  AdminStayRecord _putStay(AdminStayRecord s) =>
+      CachedRecords.replace(_stays, (s) => s.stayId, s);
+  AdminBookingRecord _putBooking(AdminBookingRecord b) =>
+      CachedRecords.replace(_bookings, (x) => x.bookingId, b);
+
+  /// Roster member with [staffId], or `null` (unassigned) when unknown.
+  StaffMember? _findStaff(String staffId) {
+    if (_staff.isEmpty) {
+      throw const AdminUnconfirmedMutationException('Staff roster not loaded.');
+    }
+    return _staff.where((s) => s.staffId == staffId).firstOrNull;
+  }
+
+  static Map<String, dynamic> _confirmedId(Map<String, dynamic> res) {
+    AdminServerConfirmation.requireText(res, 'id');
+    return res;
+  }
 
   Future<Map<String, dynamic>?> _syncPatch(
-      String path, Map<String, dynamic> payload) async {
-    try {
-      return await _apiClient?.patchJson(path, payload);
-    } catch (_) {
-      return null;
-    }
-  }
+          String path, Map<String, dynamic> payload) async =>
+      _apiClient?.patchJson(path, payload);
 
   Future<Map<String, dynamic>?> _syncPost(
-      String path, Map<String, dynamic> payload) async {
-    try {
-      return await _apiClient?.postJson(path, payload);
-    } catch (_) {
-      return null;
-    }
-  }
+          String path, Map<String, dynamic> payload) async =>
+      _apiClient?.postJson(path, payload);
 
-  Future<Map<String, dynamic>?> _syncDelete(String path) async {
-    try {
-      return await _apiClient?.deleteJson(path);
-    } catch (_) {
-      return null;
-    }
-  }
+  Future<Map<String, dynamic>?> _syncDelete(String path) async =>
+      _apiClient?.deleteJson(path);
 
   @override
   void dispose() => _apiClient?.dispose();

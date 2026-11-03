@@ -2,12 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../core/admin_i18n.dart';
 import '../core/alert_chime_port.dart';
-import '../data/admin_seed_fixtures.dart';
 import '../domain/admin_entities.dart';
 import '../domain/admin_enums.dart';
 import '../domain/admin_repository.dart';
 import '../domain/admin_stay_entities.dart';
+import '../domain/admin_sync_snapshot.dart';
+import 'admin_activity_tracker.dart';
+import 'admin_dashboard_views.dart';
 import 'inspector_selection.dart';
+import 'server_confirmed_action.dart';
+
+export 'admin_dashboard_views.dart';
 
 /// Application state controller for the Kachava Lux Admin & Concierge Dashboard.
 class AdminDashboardController extends ChangeNotifier {
@@ -19,8 +24,7 @@ class AdminDashboardController extends ChangeNotifier {
 
   final AdminOperationsRepository _repository;
   final AlertChimePort _chime;
-  final Set<String> _seenAlertIds = {};
-  List<AdminVillaInfo> _villas = List.of(AdminSeedFixtures.buildVillas());
+  final AdminActivityTracker _activity = AdminActivityTracker();
   List<StaffMember> _staffDirectory = const [];
   List<OperationalAlert> _alerts = const [];
   List<AdminStayRecord> _stays = const [];
@@ -45,6 +49,9 @@ class AdminDashboardController extends ChangeNotifier {
   StaffDepartment? _conciergeDepartmentFilter;
   AdminDrawerSelection? _inspectorSelection;
   String? _activeLightboxTicketId, _lastToastMessage;
+  AdminSyncSnapshot? _snapshot;
+  bool _isDisposed = false;
+  int _epoch = 0; // bumped when the staff session changes
 
   AdminLocale get locale => _locale;
   bool get isEs => _locale == AdminLocale.es;
@@ -63,11 +70,10 @@ class AdminDashboardController extends ChangeNotifier {
   AdminDrawerSelection? get inspectorSelection => _inspectorSelection;
   String? get activeLightboxTicketId => _activeLightboxTicketId;
   String? get lastToastMessage => _lastToastMessage;
-  List<AdminVillaInfo> get villas => List.unmodifiable(_villas);
+  List<AdminVillaInfo> get villas =>
+      List.unmodifiable(_repository.villasFor(_stays));
   List<StaffMember> get staffDirectory => _staffDirectory;
-  StaffMember get activeStaff => _staffDirectory.isNotEmpty
-      ? _staffDirectory.first
-      : AdminSeedFixtures.buildStaffDirectory().first;
+  StaffMember? get activeStaff => _repository.sessionStaff; // signed-in staff
   List<OperationalAlert> get alerts => _alerts;
   List<AdminStayRecord> get stays => _stays;
   List<AdminBookingRecord> get bookings => _bookings;
@@ -77,117 +83,69 @@ class AdminDashboardController extends ChangeNotifier {
   List<AdminConciergeTicket> get conciergeTickets => _conciergeTickets;
   List<AdminMidStayPulse> get midStayPulses => _midStayPulses;
   List<FolioLineItem> get folioItems => _folioItems;
-  int get unreadAlertsCount => _alerts.where((a) => !a.isAcknowledged).length;
-  int get openConciergeCount => _conciergeTickets
-      .where((t) => t.stage != ConciergeStage.completed)
-      .length;
-  int get pendingBookingsAndLarderCount =>
-      _bookings.where((b) => b.status == 'Requested').length +
-      _larderOrders.where((o) => o.status != 'Stocked in Villa').length;
-  int get urgentSlaAlertsCount => _alerts
-      .where((a) => a.severity == AlertSeverity.urgent && !a.isAcknowledged)
-      .length;
-  List<OperationalAlert> get filteredAlerts => AdminFilterEngine.filterAlerts(
-      alerts: _alerts,
-      query: _searchQuery,
-      villaFilter: _villaFilter,
-      urgentOnly: _urgentOnly,
-      categoryFilter: _alertCategoryFilter);
-  List<AdminStayRecord> get filteredStays => AdminFilterEngine.filterStays(
-      stays: _stays,
-      query: _searchQuery,
-      villaFilter: _villaFilter,
-      lifecycleFilter: _lifecycleFilter);
-  List<AdminBookingRecord> get filteredBookings =>
-      AdminFilterEngine.filterBookings(
-          bookings: _bookings,
-          query: _searchQuery,
-          categoryFilter: _experienceCategoryFilter);
-  List<AdminLarderOrder> get filteredLarderOrders =>
-      AdminFilterEngine.filterLarderOrders(
-          orders: _larderOrders,
-          query: _searchQuery,
-          statusFilter: _larderStatusFilter,
-          zoneFilter: _larderZoneFilter);
-  List<AdminConciergeTicket> get filteredConciergeTickets =>
-      AdminFilterEngine.filterConciergeTickets(
-          tickets: _conciergeTickets,
-          query: _searchQuery,
-          stageFilter: _conciergeStageFilter,
-          departmentFilter: _conciergeDepartmentFilter);
-  double get folioIncidentalsTotalUsd => _folioItems
-      .where((i) => !i.isIncludedPrivilege)
-      .fold(0.0, (sum, item) => sum + item.amountUsd);
-  AdminStayRecord? activeStayForVilla(String villaLabel) =>
-      AdminFilterEngine.findActiveStayForVilla(_stays, villaLabel);
-  bool isVillaOccupied(String villaLabel) =>
-      activeStayForVilla(villaLabel) != null;
 
+  /// First load: `/sync` must succeed; the staff roster is best-effort (an
+  /// empty roster plus a one-line notice when `GET /admin/staff` fails).
   Future<void> initialize() async {
-    _staffDirectory = await _repository.fetchStaffDirectory();
-    await _hydrateCollections();
-    _seenAlertIds
-      ..clear()
-      ..addAll(_alerts.map((a) => a.alertId))
-      ..addAll(_unacknowledgedActivityIds());
-    notifyListeners();
+    final epoch = _epoch;
+    final snapshot = await _repository.fetchSnapshot();
+    final staff = await bestEffortRead(_repository.fetchStaffDirectory);
+    if (_isStale(epoch)) return;
+    _staffDirectory = staff ?? const [];
+    _activity.baseline(_apply(snapshot));
+    if (staff != null) return notifyListeners();
+    showToast(AdminI18n.tr(
+        isEs, 'Staff list unavailable.', 'Lista de personal no disponible.'));
   }
 
-  Set<String> _unacknowledgedActivityIds() => {
-        for (final b in _bookings.where((b) => b.status == 'Requested'))
-          'bkg:${b.bookingId}',
-        for (final o in _larderOrders.where((o) => o.status == 'Pending'))
-          'lrd:${o.orderId}:${o.items.length}',
-        for (final t in _conciergeTickets
-            .where((t) => t.stage != ConciergeStage.completed))
-          'tkt:${t.requestId}:${t.messages.where((m) => !m.isStaff).length}',
-        for (final p in _midStayPulses.where((p) => p.status != 'ATTENDED'))
-          'pls:${p.checkInId}',
-      };
+  /// Drops every record of the previous staff session (401 or staff switch).
+  void clearSessionData() => _update(() {
+        _epoch++;
+        _apply(AdminSyncSnapshot.empty);
+        _staffDirectory = const [];
+        _activity.clear();
+        _repository.clearCache();
+        _chime.stopChime();
+        _inspectorSelection = null;
+        _activeLightboxTicketId = _lastToastMessage = null;
+        _searchQuery = '';
+      });
 
-  Future<void> _hydrateCollections() async {
-    _stays = await _repository.fetchStays();
-    _alerts = await _repository.fetchAlerts();
-    _bookings = await _repository.fetchBookings();
-    _experienceCatalog = await _repository.fetchExperienceCatalog();
-    _larderOrders = await _repository.fetchLarderOrders();
-    _larderCatalog = await _repository.fetchLarderCatalog();
-    _conciergeTickets = await _repository.fetchConciergeTickets();
-    _midStayPulses = await _repository.fetchMidStayPulses();
-    _folioItems = _stays.isNotEmpty
-        ? await _repository.fetchFolioItems(_stays.first.stayId)
-        : const [];
+  AdminSyncSnapshot _apply(AdminSyncSnapshot s) {
+    _snapshot = s;
+    _stays = s.stays;
+    _alerts = s.alerts;
+    _bookings = s.bookings;
+    _experienceCatalog = s.experienceCatalog;
+    _larderOrders = s.larderOrders;
+    _larderCatalog = s.larderCatalog;
+    _conciergeTickets = s.conciergeTickets;
+    _midStayPulses = s.midStayPulses;
+    _folioItems = s.folioItems;
+    return s;
   }
 
+  /// Applies one sync (a silent identical one is skipped); throws on failure.
   Future<void> refreshFromBackend({bool silent = false}) async {
+    final epoch = _epoch, s = await _repository.fetchSnapshot();
+    if (_isStale(epoch) || (silent && s.isSameAs(_snapshot))) return;
     final prevUnread = unreadAlertsCount;
-    await _hydrateCollections();
-    final newUnread = _alerts
-        .where((a) => !a.isAcknowledged && !_seenAlertIds.contains(a.alertId))
-        .toList();
-    final currentActivity = _unacknowledgedActivityIds();
-    final newActivity = currentActivity.difference(_seenAlertIds);
-    _seenAlertIds
-      ..addAll(_alerts.map((a) => a.alertId))
-      ..addAll(currentActivity);
-    if ((newUnread.isNotEmpty || unreadAlertsCount > prevUnread) &&
-        _alerts.isNotEmpty) {
-      final a = newUnread.isNotEmpty ? newUnread.first : _alerts.first;
+    final delta = _activity.absorb(_apply(s));
+    final a = _guestUpdateAlert(delta.newAlerts, prevUnread);
+    if (a != null) {
       final titleText = AdminI18n.translateText(a.title, isEs);
-      showToast(
+      return showToast(
           isEs
               ? 'NUEVA ACTUALIZACIÓN DE HUÉSPED · ${a.villaName} — $titleText'
               : 'NEW GUEST UPDATE · ${a.villaName} — ${a.title}',
           playChime: true);
-      return;
     }
-    if (newActivity.isNotEmpty) {
-      showToast(
+    if (delta.hasNewActivity) {
+      return showToast(
           isEs
               ? 'NUEVA SOLICITUD DE HUÉSPED EN VIVO · Revisa las alertas en vivo'
               : 'NEW LIVE GUEST SUBMISSION · Check live alerts',
           playChime: true);
-      return;
     }
     if (!silent) {
       return showToast(isEs
@@ -197,16 +155,24 @@ class AdminDashboardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> resetAllOperationalData() async {
-    await _repository.resetAllData();
-    _seenAlertIds.clear();
-    await _hydrateCollections();
-    showToast(isEs
-        ? 'Datos reiniciados: Las 8 Villas están LIBRES (🟢) para probar desde cero'
-        : 'All data reset: All 8 Villas are FREE (🟢) to test from scratch');
+  OperationalAlert? _guestUpdateAlert(
+      List<OperationalAlert> fresh, int prevUnread) {
+    if (_alerts.isEmpty) return null;
+    if (fresh.isNotEmpty) return fresh.first;
+    return unreadAlertsCount > prevUnread ? _alerts.first : null;
   }
 
+  Future<void> resetAllOperationalData() => _guard(() async {
+        await _live(_repository.resetAllData());
+        _activity.clear();
+        if (await _reread(_repository.fetchSnapshot) case final s?) _apply(s);
+        showToast(isEs
+            ? 'Datos reiniciados: Las 8 Villas están LIBRES (🟢) para probar desde cero'
+            : 'All data reset: All 8 Villas are FREE (🟢) to test from scratch');
+      });
+
   void _update(VoidCallback fn) {
+    if (_isDisposed) return;
     fn();
     notifyListeners();
   }
@@ -230,7 +196,7 @@ class AdminDashboardController extends ChangeNotifier {
   void showToast(String msg, {bool playChime = false}) => _update(() {
         _lastToastMessage = msg;
         if (playChime) {
-          _chime.triggerTenSecondChime(onAutoStop: notifyListeners);
+          _chime.triggerTenSecondChime(onAutoStop: () => _update(() {}));
         }
       });
   void dismissToastAndStopChime() => _update(() {
@@ -242,30 +208,6 @@ class AdminDashboardController extends ChangeNotifier {
           ? 'NUEVA SOLICITUD DE HUÉSPED · Requiere atención de HOST ADMIN (Sonando 10s)'
           : 'NEW GUEST REQUEST · Requires HOST ADMIN attention (Ringing 10s)',
       playChime: true);
-
-  void createVilla(
-          {required String villaName,
-          required String suiteType,
-          required String maxGuests,
-          String? wifiSsid,
-          String? wifiPasscode}) =>
-      _update(() {
-        final c = AdminVillaInfo(
-            villaId: 'villa-${_villas.length + 101}',
-            villaName: villaName,
-            suiteType: suiteType,
-            maxGuests: maxGuests,
-            wifiSsid: (wifiSsid != null && wifiSsid.isNotEmpty)
-                ? wifiSsid
-                : 'Kachava_Sanctuary_102',
-            wifiPasscode: (wifiPasscode != null && wifiPasscode.isNotEmpty)
-                ? wifiPasscode
-                : 'stillness2026');
-        _villas = [c, ..._villas];
-        _lastToastMessage = isEs
-            ? 'Villa creada: ${c.displayLabel}'
-            : 'Villa created: ${c.displayLabel}';
-      });
 
   void setQuickFilter(
           {String? villa,
@@ -296,31 +238,31 @@ class AdminDashboardController extends ChangeNotifier {
         if (department != null) _conciergeDepartmentFilter = department;
       });
 
-  Future<void> acknowledgeAlert(String alertId) async {
-    final u = await _repository.acknowledgeAlert(
-        alertId: alertId, staffId: activeStaff.staffId);
-    _alerts = await _repository.fetchAlerts();
-    showToast(isEs
-        ? 'Alerta atendida por HOST ADMIN: ${u.villaName} — ${AdminI18n.translateText(u.title, true)}'
-        : 'Alert attended by HOST ADMIN: ${u.villaName} — ${u.title}');
-  }
+  Future<void> acknowledgeAlert(String alertId) => _guard(() async {
+        final u = await _live(_repository.acknowledgeAlert(
+            alertId: alertId, staffId: _requireStaff().staffId));
+        _alerts = await _reread(_repository.fetchAlerts) ?? _alerts;
+        showToast(isEs
+            ? 'Alerta atendida por HOST ADMIN: ${u.villaName} — ${AdminI18n.translateText(u.title, true)}'
+            : 'Alert attended by HOST ADMIN: ${u.villaName} — ${u.title}');
+      });
 
   Future<void> copyMagicLink(AdminStayRecord stay) async {
+    if (!stay.hasGuestLink) return;
     showToast(isEs
         ? 'Link copiado: ${stay.magicLinkUrl}'
         : 'Link copied: ${stay.magicLinkUrl}');
-    try {
-      await Clipboard.setData(ClipboardData(text: stay.magicLinkUrl));
-    } catch (_) {}
+    await Clipboard.setData(ClipboardData(text: stay.magicLinkUrl))
+        .catchError((Object _) {});
   }
 
-  Future<void> regenerateMagicLink(String stayId) async {
-    final u = await _repository.regenerateGuestUuid(stayId);
-    _stays = await _repository.fetchStays();
-    showToast(isEs
-        ? 'Nuevo Magic Link generado: ${u.magicLinkUrl}'
-        : 'New Magic Link generated: ${u.magicLinkUrl}');
-  }
+  Future<void> regenerateMagicLink(String stayId) => _guard(() async {
+        final u = await _live(_repository.regenerateGuestUuid(stayId));
+        _stays = await _reread(_repository.fetchStays) ?? _patched(u);
+        showToast(isEs
+            ? 'Nuevo Magic Link generado: ${u.magicLinkUrl}'
+            : 'New Magic Link generated: ${u.magicLinkUrl}');
+      }, AdminFailureText.rotateToken);
 
   Future<void> createNewStay({
     required String villaName,
@@ -330,56 +272,58 @@ class AdminDashboardController extends ChangeNotifier {
     required String occasion,
     String? wifiSsid,
     String? wifiPasscode,
-  }) async {
-    final occ = activeStayForVilla(villaName);
-    if (occ != null) {
-      return showToast(isEs
-          ? 'Error: $villaName está ocupada por ${occ.guestNames}. Libera la villa primero.'
-          : 'Error: $villaName is occupied by ${occ.guestNames}. Release the villa first.');
-    }
-    final c = await _repository.createStay(
-        villaName: villaName,
-        guestNames: guestNames,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
-        occasion: occasion,
-        wifiSsid: wifiSsid,
-        wifiPasscode: wifiPasscode);
-    _stays = [c, ..._stays.where((s) => s.stayId != c.stayId)];
-    showToast(isEs
-        ? 'Estancia creada (${c.guestNames} · ${c.villaName}): ${c.magicLinkUrl}'
-        : 'Stay created (${c.guestNames} · ${c.villaName}): ${c.magicLinkUrl}');
-  }
+  }) =>
+      _guard(() async {
+        final occ = activeStayForVilla(villaName);
+        if (occ != null) {
+          return showToast(isEs
+              ? 'Error: $villaName está ocupada por ${occ.guestNames}. Libera la villa primero.'
+              : 'Error: $villaName is occupied by ${occ.guestNames}. Release the villa first.');
+        }
+        final c = await _live(_repository.createStay(
+            villaName: villaName,
+            guestNames: guestNames,
+            checkInDate: checkInDate,
+            checkOutDate: checkOutDate,
+            occasion: occasion,
+            wifiSsid: wifiSsid,
+            wifiPasscode: wifiPasscode));
+        _stays = [c, ..._stays.where((s) => s.stayId != c.stayId)];
+        showToast(isEs
+            ? 'Estancia creada (${c.guestNames} · ${c.villaName}): ${c.magicLinkUrl}'
+            : 'Stay created (${c.guestNames} · ${c.villaName}): ${c.magicLinkUrl}');
+      }, AdminFailureText.createStay);
 
   Future<void> updateStayWifi(
-      {required String stayId,
-      required String wifiSsid,
-      required String wifiPasscode}) async {
-    final u = await _repository.updateStayWifi(
-        stayId: stayId, wifiSsid: wifiSsid, wifiPasscode: wifiPasscode);
-    _stays = _stays.map((s) => s.stayId == stayId ? u : s).toList();
-    showToast(isEs
-        ? 'Red Wi-Fi actualizada (${u.villaName}): ${u.wifiSsid}'
-        : 'Wi-Fi updated (${u.villaName}): ${u.wifiSsid}');
-  }
+          {required String stayId,
+          required String wifiSsid,
+          required String wifiPasscode}) =>
+      _guard(() async {
+        final u = await _live(_repository.updateStayWifi(
+            stayId: stayId, wifiSsid: wifiSsid, wifiPasscode: wifiPasscode));
+        _stays = _patched(u);
+        showToast(isEs
+            ? 'Red Wi-Fi actualizada (${u.villaName}): ${u.wifiSsid}'
+            : 'Wi-Fi updated (${u.villaName}): ${u.wifiSsid}');
+      });
 
-  Future<void> checkInGuest(String stayId) async {
-    final u = await _repository.updateStayLifecycle(
-        stayId: stayId, status: StayLifecycleStatus.activeStay);
-    _stays = await _repository.fetchStays();
-    showToast(isEs
-        ? 'Llegada registrada (Check-In): ${u.guestNames} en ${u.villaName}'
-        : 'Guest checked in: ${u.guestNames} at ${u.villaName}');
-  }
+  Future<void> checkInGuest(String stayId) => _guard(() async {
+        final u = await _live(_repository.updateStayLifecycle(
+            stayId: stayId, status: StayLifecycleStatus.activeStay));
+        _stays = await _reread(_repository.fetchStays) ?? _patched(u);
+        showToast(isEs
+            ? 'Llegada registrada (Check-In): ${u.guestNames} en ${u.villaName}'
+            : 'Guest checked in: ${u.guestNames} at ${u.villaName}');
+      });
 
-  Future<void> checkOutAndReleaseVilla(String stayId) async {
-    await _repository.approveExpressCheckout(
-        stayId: stayId, approveLateCheckout: false);
-    _stays = await _repository.fetchStays();
-    showToast(isEs
-        ? 'Salida registrada: Villa liberada y disponible para nuevo huésped'
-        : 'Check-out complete: Villa released and available for new guest');
-  }
+  Future<void> checkOutAndReleaseVilla(String stayId) => _guard(() async {
+        final u = await _live(_repository.approveExpressCheckout(
+            stayId: stayId, approveLateCheckout: false));
+        _stays = await _reread(_repository.fetchStays) ?? _patched(u);
+        showToast(isEs
+            ? 'Salida registrada: Villa liberada y disponible para nuevo huésped'
+            : 'Check-out complete: Villa released and available for new guest');
+      });
 
   Future<void> updateTransferDispatch({
     required String stayId,
@@ -387,38 +331,39 @@ class AdminDashboardController extends ChangeNotifier {
     required String transferStatus,
     String? driverAndVehicle,
     String? meetingPoint,
-  }) async {
-    final u = await _repository.updateTransferDispatch(
-        stayId: stayId,
-        chauffeurId: chauffeurId,
-        transferStatus: transferStatus,
-        driverAndVehicle: driverAndVehicle,
-        meetingPoint: meetingPoint);
-    _stays = await _repository.fetchStays();
-    final drv = u.transfer.assignedChauffeurName.isEmpty
-        ? 'HOST ADMIN'
-        : u.transfer.assignedChauffeurName;
-    showToast(isEs
-        ? 'Traslado (${u.villaName}) actualizado a: ${AdminI18n.statusLabel(transferStatus, true)}'
-        : 'Transfer updated: $drv · $transferStatus (${u.villaName})');
-  }
+  }) =>
+      _guard(() async {
+        final u = await _live(_repository.updateTransferDispatch(
+            stayId: stayId,
+            chauffeurId: chauffeurId,
+            transferStatus: transferStatus,
+            driverAndVehicle: driverAndVehicle,
+            meetingPoint: meetingPoint));
+        _stays = await _reread(_repository.fetchStays) ?? _patched(u);
+        final drv =
+            AdminI18n.staffLabel(u.transfer.assignedChauffeurName, isEs);
+        showToast(isEs
+            ? 'Traslado (${u.villaName}) actualizado a: ${AdminI18n.statusLabel(transferStatus, true)}'
+            : 'Transfer updated: $drv · $transferStatus (${u.villaName})');
+      });
 
   Future<void> assignAndNotifyBooking({
     required String bookingId,
-    required String staffId,
+    String? staffId,
     required String status,
     String? cancellationReason,
-  }) async {
-    final u = await _repository.assignAndUpdateBooking(
-        bookingId: bookingId,
-        staffId: staffId,
-        status: status,
-        cancellationReason: cancellationReason);
-    _bookings = await _repository.fetchBookings();
-    showToast(isEs
-        ? 'Reserva "${u.title}" actualizada a: ${AdminI18n.statusLabel(u.status, true)} (HOST ADMIN)'
-        : 'Booking "${u.title}" — Assigned & Notified ${u.assignedStaffName} (${u.status})');
-  }
+  }) =>
+      _guard(() async {
+        final u = await _live(_repository.assignAndUpdateBooking(
+            bookingId: bookingId,
+            staffId: staffId ?? _requireStaff().staffId,
+            status: status,
+            cancellationReason: cancellationReason));
+        _bookings = await _reread(_repository.fetchBookings) ?? _bookings;
+        showToast(isEs
+            ? 'Reserva "${u.title}" actualizada a: ${AdminI18n.statusLabel(u.status, true)} (HOST ADMIN)'
+            : 'Booking "${u.title}" — Assigned & Notified ${u.assignedStaffName} (${u.status})');
+      });
 
   Future<void> addExperienceCatalogItem({
     required String title,
@@ -427,39 +372,46 @@ class AdminDashboardController extends ChangeNotifier {
     required double basePriceUSD,
     bool isIncluded = false,
     String description = '',
-  }) async {
-    final item = await _repository.createExperienceCatalogItem(
-        title: title,
-        category: category,
-        duration: duration,
-        basePriceUSD: basePriceUSD,
-        isIncluded: isIncluded,
-        description: description);
-    _experienceCatalog = await _repository.fetchExperienceCatalog();
-    showToast(isEs
-        ? 'Experiencia agregada al catálogo: ${item.title}'
-        : 'Experience added to catalog: ${item.title}');
-  }
+  }) =>
+      _guard(() async {
+        final item = await _live(_repository.createExperienceCatalogItem(
+            title: title,
+            category: category,
+            duration: duration,
+            basePriceUSD: basePriceUSD,
+            isIncluded: isIncluded,
+            description: description));
+        _experienceCatalog =
+            await _reread(_repository.fetchExperienceCatalog) ??
+                _experienceCatalog;
+        showToast(isEs
+            ? 'Experiencia agregada al catálogo: ${item.title}'
+            : 'Experience added to catalog: ${item.title}');
+      });
 
-  Future<void> deleteExperienceCatalogItem(String id) async {
-    await _repository.deleteExperienceCatalogItem(id);
-    _experienceCatalog = await _repository.fetchExperienceCatalog();
-    showToast(isEs
-        ? 'Experiencia eliminada del catálogo'
-        : 'Experience removed from catalog');
-  }
+  Future<void> deleteExperienceCatalogItem(String id) => _guard(() async {
+        await _live(_repository.deleteExperienceCatalogItem(id));
+        _experienceCatalog =
+            await _reread(_repository.fetchExperienceCatalog) ??
+                _experienceCatalog;
+        showToast(isEs
+            ? 'Experiencia eliminada del catálogo'
+            : 'Experience removed from catalog');
+      });
 
   Future<void> updateLarderOrderStatus(
-      {required String orderId,
-      required String status,
-      required String staffId}) async {
-    final u = await _repository.updateLarderOrder(
-        orderId: orderId, status: status, staffId: staffId);
-    _larderOrders = await _repository.fetchLarderOrders();
-    showToast(isEs
-        ? 'Pedido de Minibar (${u.villaName}) actualizado a: ${AdminI18n.statusLabel(status, true)}'
-        : 'Minibar order (${u.villaName}) marked ${u.status} (${u.assignedStaffName})');
-  }
+          {required String orderId,
+          required String status,
+          required String staffId}) =>
+      _guard(() async {
+        final u = await _live(_repository.updateLarderOrder(
+            orderId: orderId, status: status, staffId: staffId));
+        _larderOrders =
+            await _reread(_repository.fetchLarderOrders) ?? _larderOrders;
+        showToast(isEs
+            ? 'Pedido de Minibar (${u.villaName}) actualizado a: ${AdminI18n.statusLabel(status, true)}'
+            : 'Minibar order (${u.villaName}) marked ${u.status} (${u.assignedStaffName})');
+      });
 
   Future<void> addLarderCatalogItem({
     required String name,
@@ -467,77 +419,114 @@ class AdminDashboardController extends ChangeNotifier {
     required double price,
     required String storageType,
     String description = '',
-  }) async {
-    final item = await _repository.createLarderCatalogItem(
-        name: name,
-        category: category,
-        price: price,
-        storageType: storageType,
-        description: description);
-    _larderCatalog = await _repository.fetchLarderCatalog();
-    showToast(isEs
-        ? 'Producto agregado al catálogo: ${item.name}'
-        : 'Product added to minibar catalog: ${item.name}');
-  }
+  }) =>
+      _guard(() async {
+        final item = await _live(_repository.createLarderCatalogItem(
+            name: name,
+            category: category,
+            price: price,
+            storageType: storageType,
+            description: description));
+        _larderCatalog =
+            await _reread(_repository.fetchLarderCatalog) ?? _larderCatalog;
+        showToast(isEs
+            ? 'Producto agregado al catálogo: ${item.name}'
+            : 'Product added to minibar catalog: ${item.name}');
+      });
 
-  Future<void> deleteLarderCatalogItem(String id) async {
-    await _repository.deleteLarderCatalogItem(id);
-    _larderCatalog = await _repository.fetchLarderCatalog();
-    showToast(isEs
-        ? 'Producto eliminado del catálogo'
-        : 'Product removed from minibar catalog');
-  }
+  Future<void> deleteLarderCatalogItem(String id) => _guard(() async {
+        await _live(_repository.deleteLarderCatalogItem(id));
+        _larderCatalog =
+            await _reread(_repository.fetchLarderCatalog) ?? _larderCatalog;
+        showToast(isEs
+            ? 'Producto eliminado del catálogo'
+            : 'Product removed from minibar catalog');
+      });
 
   Future<void> advanceConciergeTicketStage(
-      {required String requestId,
-      required ConciergeStage targetStage,
-      String? staffId}) async {
-    final u = await _repository.updateConciergeTicket(
-        requestId: requestId, stage: targetStage, staffId: staffId);
-    _conciergeTickets = await _repository.fetchConciergeTickets();
-    showToast(isEs
-        ? 'Solicitud "${u.title}" actualizada a: ${AdminI18n.statusLabel(u.stage.label, true)}'
-        : 'Request "${u.title}" updated to: ${u.stage.label} · ${u.assignedStaffName}');
-  }
+          {required String requestId,
+          required ConciergeStage targetStage,
+          String? staffId}) =>
+      _guard(() async {
+        final u = await _live(_repository.updateConciergeTicket(
+            requestId: requestId, stage: targetStage, staffId: staffId));
+        _conciergeTickets = await _reread(_repository.fetchConciergeTickets) ??
+            _conciergeTickets;
+        showToast(isEs
+            ? 'Solicitud "${u.title}" actualizada a: ${AdminI18n.statusLabel(u.stage.label, true)}'
+            : 'Request "${u.title}" updated to: ${u.stage.label} · ${u.assignedStaffName}');
+      });
 
   Future<void> sendConciergeHostReply(
-      {required String requestId, required String messageText}) async {
-    if (messageText.trim().isEmpty) return;
-    await _repository.appendConciergeReply(
-        requestId: requestId,
-        senderName: activeStaff.fullName,
-        senderRole: activeStaff.role,
-        messageText: messageText.trim());
-    _conciergeTickets = await _repository.fetchConciergeTickets();
-    showToast(isEs
-        ? 'Respuesta enviada al huésped por HOST ADMIN'
-        : 'Reply sent to guest by HOST ADMIN');
-  }
+          {required String requestId, required String messageText}) =>
+      _guard(() async {
+        if (messageText.trim().isEmpty) return;
+        final staff = _requireStaff();
+        await _live(_repository.appendConciergeReply(
+            requestId: requestId,
+            senderName: staff.fullName,
+            senderRole: staff.role,
+            messageText: messageText.trim()));
+        _conciergeTickets = await _reread(_repository.fetchConciergeTickets) ??
+            _conciergeTickets;
+        showToast(isEs
+            ? 'Respuesta enviada al huésped por HOST ADMIN'
+            : 'Reply sent to guest by HOST ADMIN');
+      });
 
   Future<void> attendMidStayPulse(
-      {required String checkInId, required String followUpNote}) async {
-    await _repository.attendMidStayPulse(
-        checkInId: checkInId,
-        followUpNote: followUpNote,
-        staffName: activeStaff.fullName);
-    _midStayPulses = await _repository.fetchMidStayPulses();
-    showToast(isEs
-        ? 'Comentario de estancia atendido por HOST ADMIN'
-        : 'Guest stay feedback attended by HOST ADMIN');
-  }
+          {required String checkInId, required String followUpNote}) =>
+      _guard(() async {
+        await _live(_repository.attendMidStayPulse(
+            checkInId: checkInId,
+            followUpNote: followUpNote,
+            staffName: _requireStaff().fullName));
+        _midStayPulses =
+            await _reread(_repository.fetchMidStayPulses) ?? _midStayPulses;
+        showToast(isEs
+            ? 'Comentario de estancia atendido por HOST ADMIN'
+            : 'Guest stay feedback attended by HOST ADMIN');
+      });
 
   Future<void> approveExpressCheckout(
-      {required String stayId, required bool approveLateCheckout}) async {
-    final u = await _repository.approveExpressCheckout(
-        stayId: stayId, approveLateCheckout: approveLateCheckout);
-    _stays = await _repository.fetchStays();
-    showToast(isEs
-        ? 'Salida completada: ${u.villaName} ahora está LIBRE'
-        : 'Express Checkout settled for ${u.villaName} (${u.paymentStatus})');
+          {required String stayId, required bool approveLateCheckout}) =>
+      _guard(() async {
+        final u = await _live(_repository.approveExpressCheckout(
+            stayId: stayId, approveLateCheckout: approveLateCheckout));
+        _stays = await _reread(_repository.fetchStays) ?? _patched(u);
+        showToast(isEs
+            ? 'Salida completada: ${u.villaName} ahora está LIBRE'
+            : 'Express Checkout settled for ${u.villaName} (${u.paymentStatus})');
+      });
+
+  Future<void> _guard(Future<void> Function() run,
+          [FailureText failure = AdminFailureText.mutation]) =>
+      runServerConfirmed(run, report: showToast, failureMessage: failure(isEs));
+
+  /// Awaits a repository call and aborts the action if disposed or if the
+  /// staff session changed meanwhile.
+  Future<T> _live<T>(Future<T> pending) async {
+    final epoch = _epoch, value = await pending;
+    if (_isStale(epoch)) throw const OwnerDisposedException();
+    return value;
   }
+
+  bool _isStale(int epoch) => _isDisposed || epoch != _epoch;
+
+  /// Re-read after a server-confirmed mutation: null on failure (the live
+  /// sync catches up), so success is still reported exactly once.
+  Future<T?> _reread<T>(Future<T> Function() read) =>
+      _live(bestEffortRead(read));
+
+  List<AdminStayRecord> _patched(AdminStayRecord u) =>
+      [for (final s in _stays) s.stayId == u.stayId ? u : s];
+
+  StaffMember _requireStaff() =>
+      activeStaff ?? (throw const NoSessionStaffException());
 
   @override
   void dispose() {
+    _isDisposed = true;
     _chime.dispose();
     _repository.dispose();
     super.dispose();

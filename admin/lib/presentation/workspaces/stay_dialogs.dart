@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
 import '../../core/admin_theme.dart';
+import '../../core/rating_label.dart';
 import '../../domain/admin_stay_entities.dart';
 
 export 'stays_dialogs.dart';
@@ -98,7 +99,7 @@ class _ConfirmCheckoutDialog extends StatelessWidget {
     ];
     final pulseLines = <String>[
       for (final pulse in pulses)
-        '⭐ ${pulse.rating}/5 · "${pulse.sentiment}" — ${pulse.guestNote}',
+        '⭐ ${RatingLabel.score(pulse.rating)} · "${pulse.sentiment}" — ${pulse.guestNote}',
     ];
 
     return Container(

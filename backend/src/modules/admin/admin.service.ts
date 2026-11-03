@@ -1,6 +1,12 @@
-import { Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { isAdminResetAllowed } from '../../common/config/runtime-flags';
 import * as crypto from 'crypto';
-import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
 import { SecurityTokenService } from '../../common/services/security-token.service';
 import {
   AlertCategory,
@@ -8,7 +14,6 @@ import {
   Department,
   FlightTransfer,
   OperationalAlert,
-  Personalization,
   StaffMember,
   StayAggregate,
   StayLifecycleStatus,
@@ -27,8 +32,8 @@ import {
   StayFilterCriteria,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { createSeededStayAggregate } from '../../infrastructure/seed/sanctuary-seed.data';
 import { AdminFulfillmentService } from './admin-fulfillment.service';
+import { buildNewStay } from './new-stay.builder';
 import {
   AdminLoginDto,
   ApproveCheckoutDto,
@@ -52,6 +57,10 @@ export class AdminService {
     private readonly fulfillmentService: AdminFulfillmentService,
   ) {}
 
+  /**
+   * Email-only staff login, pending owner decision (Firebase Auth vs staff passcodes):
+   * any rostered email receives a staff token; `passcode`/`password` are accepted but NOT checked.
+   */
   async loginStaff(dto: AdminLoginDto): Promise<{ token: string; staff: StaffMember }> {
     const staff = await this.staffRepo.findByEmail(dto.email);
     if (!staff) throw new UnauthorizedException('Invalid sanctuary staff credentials.');
@@ -78,130 +87,21 @@ export class AdminService {
     const newUuid = crypto.randomUUID();
     const baseDomain = (process.env.GUEST_PORTAL_URL || 'http://localhost:3000').replace(/\/$/, '');
     const magicLinkUrl = `${baseDomain}/?guestId=${newUuid}`;
-    const newStay = this.buildNewStayAggregate(dto, newUuid, magicLinkUrl);
+    const stayId = `stay_${crypto.randomUUID()}`;
+    const newStay = buildNewStay(dto, {
+      stayId,
+      guestTokenUuid: newUuid,
+      magicLinkUrl,
+      now: new Date().toISOString(),
+    });
     const created = await this.stayRepo.createStay(newStay);
     return { stay: created, magicLinkUrl };
-  }
-
-  private buildNewStayAggregate(dto: CreateReservationDto, newUuid: string, magicLinkUrl: string): StayAggregate {
-    const template = createSeededStayAggregate();
-    const villaId = dto.villaId || 'villa-102';
-    const villaNum = (dto.villaName || villaId).replace(/[^0-9]/g, '') || '102';
-    const celebration = dto.occasion || dto.celebration || 'Sanctuary Residency';
-    const now = new Date().toISOString();
-    const guestsCount = dto.guestsCount ?? 2;
-    return {
-      ...template,
-      stayId: `stay_${Date.now()}_${villaId}`, guestTokenUuid: newUuid, magicLinkUrl,
-      status: 'PRE_ARRIVAL', villaId, villaName: dto.villaName || villaId,
-      suiteName: this.extractSuiteName(dto.villaName, dto.suiteName),
-      stayDatesLabel: this.resolveStayDatesLabel(dto),
-      checkInDate: dto.checkIn || '',
-      checkOutDate: dto.checkOut || '',
-      nights: this.calculateNights(dto),
-      guestsCount,
-      guestProfile: this.buildGuestProfile(template, dto, celebration),
-      hostInfo: { ...template.hostInfo, name: 'HOST ADMIN', shortName: 'HOST ADMIN', role: 'HOST ADMIN' },
-      villaAccess: {
-        ...template.villaAccess,
-        wifiSsid: dto.wifiSsid?.trim() || `Kachava_Sanctuary_${villaNum}`,
-        wifiPasscode: dto.wifiPasscode?.trim() || 'stillness2026',
-      },
-      flightTransfer: this.buildCleanTransfer(template, guestsCount),
-      personalization: this.buildCleanPersonalization(celebration, now),
-      folioSummary: { ...template.folioSummary, complimentarySavingsUSD: 0, incidentalsSubtotalUSD: 0, ecologicalLevyUSD: 0, finalSettledTotalUSD: 0, paymentStatus: 'PRE_AUTHORIZED', isCheckedOut: false },
-      folioItems: [], larderOrders: [], experienceBookings: [], conciergeRequests: [], midstayFeedback: [],
-      createdAt: now, updatedAt: now,
-    };
-  }
-
-  private calculateNights(dto: CreateReservationDto): number {
-    if (typeof dto.nights === 'number' && dto.nights > 0) {
-      return dto.nights;
-    }
-    if (dto.checkIn && dto.checkOut) {
-      const normalizeDate = (raw: string) =>
-        /\b\d{4}\b/.test(raw) ? raw.trim() : `${raw.trim()}, 2026`;
-      const inDate = new Date(normalizeDate(dto.checkIn));
-      const outDate = new Date(normalizeDate(dto.checkOut));
-      if (!Number.isNaN(inDate.getTime()) && !Number.isNaN(outDate.getTime())) {
-        const diffDays = Math.round((outDate.getTime() - inDate.getTime()) / 86400000);
-        if (diffDays > 0) return diffDays;
-      }
-    }
-    return 3;
-  }
-
-  private buildCleanTransfer(template: StayAggregate, partySize: number): FlightTransfer {
-    return {
-      ...template.flightTransfer,
-      arrivalDate: '', arrivalAirport: '', airline: '', flightNumber: '', terminal: '',
-      arrivalTime: '', estimatedLanding: '', partySize,
-      luggageCount: 0, luggageChecked: 0, luggageCarryOn: 0, notes: '',
-      status: 'Not Requested', assignedStaffId: '', assignedStaffName: '', assignedDriver: '',
-      vehicleModel: '', fleetNumber: '', meetingPoint: '', adminDispatchNotes: '',
-      departureFlightNumber: '', departureRoute: '', departureTimeLabel: '',
-      lateCheckoutRequested: false, notifiedAt: null,
-    };
-  }
-
-  private buildCleanPersonalization(celebration: string, now: string): Personalization {
-    return {
-      currentStep: 1,
-      tripPurpose: celebration,
-      occasionDetails: '',
-      selectedInterests: [],
-      dietary: '',
-      dietaryAllergies: [],
-      allergies: '',
-      villaScent: '',
-      scentProfile: '',
-      pillowType: '',
-      pillowSelection: '',
-      temperatureCurve: '',
-      lightingRhythm: '',
-      housekeepingCadence: '',
-      commChannel: 'WhatsApp',
-      updatedAt: now,
-    };
-  }
-
-  private buildGuestProfile(template: StayAggregate, dto: CreateReservationDto, celebration: string) {
-    const lastName = dto.guestName.trim().split(/\s+/).pop()?.toLowerCase() || 'guest';
-    return {
-      ...template.guestProfile,
-      name: dto.guestName,
-      lastNameNormalized: lastName,
-      partner: dto.partnerName || '',
-      celebration,
-      folioCard: 'On File',
-      dietaryProfile: '',
-      allergies: '',
-      inVillaBar: '',
-      email: dto.email || '',
-      phone: dto.phone || '',
-    };
-  }
-
-  private resolveStayDatesLabel(dto: CreateReservationDto): string {
-    if (dto.checkIn && dto.checkOut) return `${dto.checkIn} – ${dto.checkOut}`;
-    return dto.stayDatesLabel || 'Dec 01–05, 2026';
-  }
-
-  private extractSuiteName(villaName?: string, suiteName?: string): string {
-    if (suiteName?.trim()) return suiteName.trim();
-    if (villaName && (villaName.includes('—') || villaName.includes('-'))) {
-      const extracted = villaName.split(/—|-/).slice(1).join('-').trim();
-      if (extracted) return extracted;
-    }
-    return 'Sanctuary Villa';
   }
 
   async updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord> {
     const existing = await this.stayRepo.findByStayId(stayId);
     if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
     const updated = await this.stayRepo.updateStayStatus(stayId, status);
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 
@@ -212,14 +112,15 @@ export class AdminService {
       wifiSsid: dto.wifiSsid?.trim() || existing.villaAccess.wifiSsid,
       wifiPasscode: dto.wifiPasscode?.trim() || existing.villaAccess.wifiPasscode,
     });
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 
   async resetAllData(): Promise<{ reset: boolean }> {
+    if (!isAdminResetAllowed()) {
+      throw new ForbiddenException('Data reset is disabled in this environment.');
+    }
     await this.stayRepo.resetAllStays();
     await this.alertRepo.resetAllAlerts();
-    GuestTokenGuard.invalidateCache();
     return { reset: true };
   }
 
@@ -230,7 +131,6 @@ export class AdminService {
     if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
     const newUuid = crypto.randomUUID();
     const updated: StayRecord = await this.stayRepo.updateStayToken(stayId, newUuid);
-    GuestTokenGuard.invalidateCache();
     const baseDomain = process.env.GUEST_PORTAL_URL || 'http://localhost:3000';
     return {
       stayId: updated.stayId,
@@ -254,7 +154,6 @@ export class AdminService {
       adminDispatchNotes: dto.adminDispatchNotes ?? existing.flightTransfer.adminDispatchNotes,
       notifiedAt: new Date().toISOString(),
     });
-    GuestTokenGuard.invalidateCache();
     return updated;
   }
 

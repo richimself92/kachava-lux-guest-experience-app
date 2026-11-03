@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/experience_entities.dart';
+import '../shell/stay_date_picker.dart';
 
 /// Screen 7: In-Villa Private Dining (`dining`).
 class DiningScreen extends StatefulWidget {
@@ -44,18 +46,9 @@ class _DiningScreenState extends State<DiningScreen> {
   }
 
   Future<void> _pickEveningDate() async {
-    final stay = widget.controller.stay;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: stay.checkInDateTime,
-      firstDate: stay.checkInDateTime,
-      lastDate: stay.checkOutDateTime,
-    );
+    final picked = await pickStayDate(context, widget.controller.stay);
     if (!mounted || picked == null) return;
-    final y = picked.year.toString();
-    final m = picked.month.toString().padLeft(2, '0');
-    final d = picked.day.toString().padLeft(2, '0');
-    setState(() => _selectedEvening = '$y-$m-$d');
+    setState(() => _selectedEvening = picked);
   }
 
   Future<void> _pickCustomTime() async {
@@ -98,34 +91,49 @@ class _DiningScreenState extends State<DiningScreen> {
             _buildDiningStatusBanner(dining),
             const SizedBox(height: 12),
           ],
-          _buildCulinaryHeaderCard(),
-          const SizedBox(height: 12),
-          _buildEveningAndTimeSelector(isLocked),
-          const SizedBox(height: 12),
-          ...widget.controller.diningMenus
-              .map((m) => _buildMenuCard(m, isLocked)),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            key: const Key('dining-confirm-btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            onPressed: isLocked ? null : _confirmDining,
-            child: Text(
-              isLocked
-                  ? i18n.t('REQUEST SENT · LOCKED ✓',
-                      'SOLICITUD ENVIADA · BLOQUEADA ✓')
-                  : i18n.t(
-                      'CONFIRM IN-VILLA DINING (\$0.00) →',
-                      'CONFIRMAR CENA EN VILLA (\$0.00) →',
-                    ),
-            ),
-          ),
+          if (widget.controller.diningMenus.isEmpty)
+            Text(
+              i18n.diningEmptyState,
+              key: const Key('dining-empty-state'),
+              style: const TextStyle(
+                  fontSize: 13, color: KachavaColors.onSurfaceVariant),
+            )
+          else
+            ..._buildEveningReservation(isLocked),
         ],
       ],
     );
+  }
+
+  /// Menus, evening and confirm button; shown only when the server has menus.
+  List<Widget> _buildEveningReservation(bool isLocked) {
+    final i18n = widget.controller.i18n;
+    return [
+      _buildCulinaryHeaderCard(),
+      const SizedBox(height: 12),
+      _buildEveningAndTimeSelector(isLocked),
+      const SizedBox(height: 12),
+      ...widget.controller.diningMenus.map((m) => _buildMenuCard(m, isLocked)),
+      const SizedBox(height: 12),
+      ElevatedButton(
+        key: const Key('dining-confirm-btn'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: KachavaColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        onPressed: isLocked ? null : _confirmDining,
+        child: Text(
+          isLocked
+              ? i18n.t(
+                  'REQUEST SENT · LOCKED ✓', 'SOLICITUD ENVIADA · BLOQUEADA ✓')
+              : i18n.t(
+                  'CONFIRM IN-VILLA DINING (\$0.00) →',
+                  'CONFIRMAR CENA EN VILLA (\$0.00) →',
+                ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildDiningStatusBanner(DiningReservation dining) {

@@ -1,19 +1,19 @@
-import * as firebaseAdminModule from '../../src/infrastructure/firebase/firebase-admin.module';
 import { SecurityTokenService } from '../../src/common/services/security-token.service';
-import { FirestoreStayRepositoryAdapter } from '../../src/infrastructure/repositories/firestore-stay.repository';
+import { StayRepositoryPort } from '../../src/domain/ports/repository.ports';
+import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
 import { InMemorySeededAlertRepository } from '../../src/infrastructure/repositories/in-memory-alert.repository';
 import { InMemorySeededCatalogRepository } from '../../src/infrastructure/repositories/in-memory-catalog.repository';
 import { InMemorySeededStaffRepository } from '../../src/infrastructure/repositories/in-memory-staff.repository';
-import { createSeededStayAggregate } from '../../src/infrastructure/seed/sanctuary-seed.data';
+import { InMemorySeededStayRepository } from '../../src/infrastructure/repositories/in-memory-stay.repository';
 import { FirebaseStorageSignerAdapter } from '../../src/infrastructure/storage/storage-signer.adapter';
 import { AdminFulfillmentService } from '../../src/modules/admin/admin-fulfillment.service';
 import { AdminService } from '../../src/modules/admin/admin.service';
+import { FakeFirestore } from '../support/fake-firestore';
 
-describe('Cloud Run Cold-Start Firestore Hydration & Production Magic Link URL', () => {
+describe('AdminService reservations & production magic link URL', () => {
   const originalGuestPortalUrl = process.env.GUEST_PORTAL_URL;
 
   afterEach(() => {
-    jest.restoreAllMocks();
     if (originalGuestPortalUrl === undefined) {
       delete process.env.GUEST_PORTAL_URL;
     } else {
@@ -21,23 +21,17 @@ describe('Cloud Run Cold-Start Firestore Hydration & Production Magic Link URL',
     }
   });
 
-  function createAdminService(): AdminService {
-    const stayRepo = new FirestoreStayRepositoryAdapter();
-    const alertRepo = new InMemorySeededAlertRepository();
-    const staffRepo = new InMemorySeededStaffRepository();
-    const catalogRepo = new InMemorySeededCatalogRepository();
-    const storageSigner = new FirebaseStorageSignerAdapter();
-    const securityTokenService = new SecurityTokenService();
+  function createAdminService(stayRepo: StayRepositoryPort = new InMemorySeededStayRepository()): AdminService {
     const fulfillmentService = new AdminFulfillmentService(
       stayRepo,
-      catalogRepo,
-      storageSigner,
+      new InMemorySeededCatalogRepository(),
+      new FirebaseStorageSignerAdapter(),
     );
     return new AdminService(
       stayRepo,
-      alertRepo,
-      staffRepo,
-      securityTokenService,
+      new InMemorySeededAlertRepository(),
+      new InMemorySeededStaffRepository(),
+      new SecurityTokenService(),
       fulfillmentService,
     );
   }
@@ -67,75 +61,34 @@ describe('Cloud Run Cold-Start Firestore Hydration & Production Magic Link URL',
       villaId: 'villa-105',
     });
 
-    expect(result.magicLinkUrl).toMatch(
-      /^http:\/\/localhost:3000\/\?guestId=[0-9a-f-]{36}$/i,
-    );
+    expect(result.magicLinkUrl).toMatch(/^http:\/\/localhost:3000\/\?guestId=[0-9a-f-]{36}$/i);
     expect(result.stay.magicLinkUrl).toBe(result.magicLinkUrl);
   });
 
-  it('test_firestoreStayRepositoryAdapter_hydratesAndExecutesReadWriteMethods', async () => {
-    const repo = new FirestoreStayRepositoryAdapter();
-    await repo.ensureHydrated();
+  it('test_createReservation_onOneInstance_magicLinkResolvesOnAnotherInstance', async () => {
+    const fake = new FakeFirestore();
+    const instanceA = createAdminService(new FirestoreStayRepository(fake.asFirestore()));
+    const guestSideRepo = new FirestoreStayRepository(fake.asFirestore());
 
-    const stays = await repo.listStays();
-    expect(stays.length).toBeGreaterThanOrEqual(1);
+    const { stay } = await instanceA.createReservation({ guestName: 'Ana Ruiz', villaId: 'villa-107' });
+    const resolved = await guestSideRepo.findByGuestTokenUuid(stay.guestTokenUuid);
 
-    const stay = stays[0];
-    const byId = await repo.findByStayId(stay.stayId);
-    expect(byId?.stayId).toBe(stay.stayId);
-
-    const byToken = await repo.findByGuestTokenUuid(stay.guestTokenUuid);
-    expect(byToken?.stayId).toBe(stay.stayId);
-
-    const updatedPriv = await repo.updateSignaturePrivilege(stay.stayId, 'massage');
-    expect(updatedPriv.selectedSignaturePrivilege).toBe('massage');
-
-    const larderOrders = await repo.listAllLarderOrders();
-    expect(Array.isArray(larderOrders)).toBe(true);
-
-    const bookings = await repo.listAllBookings();
-    expect(Array.isArray(bookings)).toBe(true);
-
-    const requests = await repo.listAllConciergeRequests();
-    expect(Array.isArray(requests)).toBe(true);
+    expect(resolved?.stayId).toBe(stay.stayId);
+    expect(resolved?.guestProfile.name).toBe('Ana Ruiz');
+    expect(resolved?.flightTransfer.flightNumber).toBe('');
   });
 
-  it('test_firestoreStayRepositoryAdapter_hydratesFromFirestoreWhenEnabled', async () => {
-    const remoteStay = createSeededStayAggregate();
-    remoteStay.stayId = 'stay_cloud_hydrated_108';
-    remoteStay.villaName = 'Villa 108 — Cloud Sanctuary';
+  it('test_createReservation_storeWriteFails_rejectsInsteadOfReturningUnusableLink', async () => {
+    const fake = new FakeFirestore();
+    fake.failWritesWith(new Error('UNAVAILABLE'));
+    const adminService = createAdminService(new FirestoreStayRepository(fake.asFirestore()));
 
-    const setMock = jest.fn().mockResolvedValue(undefined);
-    const mockDb = {
-      collection: jest.fn().mockReturnValue({
-        get: jest.fn().mockResolvedValue({
-          empty: false,
-          docs: [{ data: () => remoteStay }],
-        }),
-        doc: jest.fn().mockReturnValue({
-          set: setMock,
-          collection: jest.fn().mockReturnValue({
-            doc: jest.fn().mockReturnValue({ set: setMock }),
-          }),
-        }),
-      }),
-    };
-
-    jest
-      .spyOn(firebaseAdminModule, 'getNamedFirestoreDb')
-      .mockReturnValue(mockDb as unknown as FirebaseFirestore.Firestore);
-
-    const repo = new FirestoreStayRepositoryAdapter();
-    const stays = await repo.listStays();
-
-    expect(stays).toHaveLength(1);
-    expect(stays[0].stayId).toBe('stay_cloud_hydrated_108');
-
-    await repo.updateStayStatus('stay_cloud_hydrated_108', 'ACTIVE_STAY');
-    expect(setMock).toHaveBeenCalled();
+    await expect(
+      adminService.createReservation({ guestName: 'Ana Ruiz', villaId: 'villa-107' }),
+    ).rejects.toThrow('UNAVAILABLE');
   });
 
-  it('test_alertRepository_hydratesAndExecutesCrudInMemoryWhenFirestoreDisabled', async () => {
+  it('test_alertRepository_executesCrudInMemoryWhenFirestoreDisabled', async () => {
     const alertRepo = new InMemorySeededAlertRepository();
     const initial = await alertRepo.listAlerts();
     expect(initial.alerts.length).toBeGreaterThan(0);
@@ -145,10 +98,9 @@ describe('Cloud Run Cold-Start Firestore Hydration & Production Magic Link URL',
     expect(acked?.isAcknowledged).toBe(true);
   });
 
-  it('test_catalogRepository_hydratesAndExecutesCrudInMemoryWhenFirestoreDisabled', async () => {
+  it('test_catalogRepository_executesCrudInMemoryWhenFirestoreDisabled', async () => {
     const catalogRepo = new InMemorySeededCatalogRepository();
-    const larder = await catalogRepo.getLarderCatalog();
-    expect(larder.length).toBeGreaterThan(0);
+    expect((await catalogRepo.getLarderCatalog()).length).toBeGreaterThan(0);
 
     const createdLarder = await catalogRepo.createLarderCatalogItem({
       id: 'larder_test_hydration',
@@ -159,8 +111,22 @@ describe('Cloud Run Cold-Start Firestore Hydration & Production Magic Link URL',
 
     const deletedLarder = await catalogRepo.deleteLarderCatalogItem('larder_test_hydration');
     expect(deletedLarder.deleted).toBe(true);
+    expect((await catalogRepo.getExperiencesCatalog()).length).toBeGreaterThan(0);
+  });
 
-    const experiences = await catalogRepo.getExperiencesCatalog();
-    expect(experiences.length).toBeGreaterThan(0);
+  it('test_createReservation_sameVillaSameMillisecond_getsUniqueRandomStayIds', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-12-01T00:00:00.000Z'));
+    const adminService = createAdminService();
+    const dto = { guestName: 'Guest N', villaId: 'villa-7', villaName: 'Villa 7' };
+
+    const created = await Promise.all([
+      adminService.createReservation(dto),
+      adminService.createReservation(dto),
+    ]);
+
+    jest.restoreAllMocks();
+    const [first, second] = created.map((c) => c.stay.stayId);
+    expect(first).not.toBe(second);
+    expect(first).toMatch(/^stay_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   });
 });

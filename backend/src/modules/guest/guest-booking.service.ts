@@ -4,11 +4,9 @@ import {
   Injectable,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
 import {
   Department,
   ExperienceBooking,
-  FolioItem,
   FolioSummary,
   LarderOrderItem,
   StayAggregate,
@@ -29,7 +27,7 @@ export class GuestBookingService {
     private readonly stayRepo: StayRepositoryPort,
     @Inject(CATALOG_REPOSITORY_PORT)
     private readonly catalogRepo: CatalogRepositoryPort,
-    private readonly alertFolioHelper: GuestAlertFolioHelper,
+    private readonly alerts: GuestAlertFolioHelper,
   ) {}
 
   async updateLarderOrder(
@@ -38,31 +36,16 @@ export class GuestBookingService {
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
     const orders = await this.buildLarderOrderItems(stay, dto);
     const larderTotal = orders.reduce((acc, o) => acc + o.lineTotalUSD, 0);
-    const updatedFolioItems = this.upsertLarderFolioItem(
-      stay.folioItems,
-      larderTotal,
-      orders.length,
+    return this.stayRepo.replaceLarderOrders(stay.stayId, orders, () =>
+      this.alerts.buildAlert(stay, {
+        category: 'LARDER',
+        severity: 'NORMAL',
+        title: `${stay.villaName} Larder Stocking Order ($${larderTotal} USD)`,
+        summary: `${orders.length} artisanal larder items requested for pre-arrival provisioning.`,
+        sourceDocumentPath: `stays/${stay.stayId}/larder_orders`,
+        assignedDepartment: 'CULINARY',
+      }),
     );
-    const folioSummary = this.alertFolioHelper.recalculateFolioSummary(
-      stay.folioSummary,
-      updatedFolioItems,
-    );
-    const result = await this.stayRepo.replaceLarderOrders(
-      stay.stayId,
-      orders,
-      updatedFolioItems,
-      folioSummary,
-    );
-    GuestTokenGuard.invalidateCache();
-    await this.alertFolioHelper.emitAlert(stay, {
-      category: 'LARDER',
-      severity: 'NORMAL',
-      title: `${stay.villaName} Larder Stocking Order ($${larderTotal} USD)`,
-      summary: `${orders.length} artisanal larder items requested for pre-arrival provisioning.`,
-      sourceDocumentPath: `stays/${stay.stayId}/larder_orders`,
-      assignedDepartment: 'CULINARY',
-    });
-    return result;
   }
 
   async createBooking(
@@ -76,78 +59,18 @@ export class GuestBookingService {
         'Galeon 470 Sky Private Yacht Charter strictly enforces a maximum capacity of 12 guests.',
       );
     }
-
     const resolved = await this.resolveBookingPricing(normalizedCat, dto, partySize);
     const booking = this.constructBookingEntity(stay, dto, partySize, resolved);
-    const folioItems = [...stay.folioItems];
-    if (booking.priceChargedUSD > 0) {
-      folioItems.push({
-        folioItemId: `folio_${booking.bookingId}`,
-        displayOrder: folioItems.length + 1,
-        title: booking.title,
-        subtitle: `${booking.scheduledDate} · ${booking.scheduledTimeSlot}`,
-        category: 'EXCURSION',
-        badgeLabel: null,
-        isComplimentary: false,
-        originalValuationUSD: booking.originalValuationUSD,
-        chargedAmountUSD: booking.priceChargedUSD,
-        status: 'PRE_AUTHORIZED',
-        sourceRefId: booking.bookingId,
-        createdAt: booking.createdAt,
-      });
-    }
-    const folioSummary = this.alertFolioHelper.recalculateFolioSummary(
-      stay.folioSummary,
-      folioItems,
+    return this.stayRepo.createBooking(stay.stayId, booking, () =>
+      this.alerts.buildAlert(stay, {
+        category: 'BOOKING',
+        severity: 'NORMAL',
+        title: `${stay.villaName} New Booking: ${booking.title}`,
+        summary: `Scheduled for ${booking.scheduledDate} (${booking.scheduledTimeSlot}) for ${partySize} guests.`,
+        sourceDocumentPath: `stays/${stay.stayId}/experience_bookings/${booking.bookingId}`,
+        assignedDepartment: booking.assignedDepartment,
+      }),
     );
-    const saved = await this.stayRepo.createBooking(
-      stay.stayId,
-      booking,
-      folioItems,
-      folioSummary,
-    );
-    GuestTokenGuard.invalidateCache();
-    await this.alertFolioHelper.emitAlert(stay, {
-      category: 'BOOKING',
-      severity: 'NORMAL',
-      title: `${stay.villaName} New Booking: ${booking.title}`,
-      summary: `Scheduled for ${booking.scheduledDate} (${booking.scheduledTimeSlot}) for ${partySize} guests.`,
-      sourceDocumentPath: `stays/${stay.stayId}/experience_bookings/${booking.bookingId}`,
-      assignedDepartment: booking.assignedDepartment,
-    });
-    return saved;
-  }
-
-  private upsertLarderFolioItem(
-    folioItems: FolioItem[],
-    larderTotal: number,
-    itemCount: number,
-  ): FolioItem[] {
-    if (folioItems.some((fi) => fi.category === 'LARDER')) {
-      return folioItems.map((fi) =>
-        fi.category === 'LARDER'
-          ? { ...fi, originalValuationUSD: larderTotal, chargedAmountUSD: larderTotal }
-          : fi,
-      );
-    }
-    if (larderTotal <= 0) return [...folioItems];
-    return [
-      ...folioItems,
-      {
-        folioItemId: 'folio-4',
-        displayOrder: folioItems.length + 1,
-        title: 'Stock My Villa Curated Larder',
-        subtitle: `Pre-Arrival Provisioning (${itemCount} Artisanal Items)`,
-        category: 'LARDER',
-        badgeLabel: null,
-        isComplimentary: false,
-        originalValuationUSD: larderTotal,
-        chargedAmountUSD: larderTotal,
-        status: 'PRE_AUTHORIZED',
-        sourceRefId: 'larder-cart',
-        createdAt: new Date().toISOString(),
-      },
-    ];
   }
 
   private async buildLarderOrderItems(
@@ -203,7 +126,7 @@ export class GuestBookingService {
   ): ExperienceBooking {
     const now = new Date().toISOString();
     return {
-      bookingId: `bk_${crypto.randomBytes(4).toString('hex')}`,
+      bookingId: `bk_${crypto.randomUUID()}`,
       stayId: stay.stayId,
       villaId: stay.villaId,
       villaName: stay.villaName,

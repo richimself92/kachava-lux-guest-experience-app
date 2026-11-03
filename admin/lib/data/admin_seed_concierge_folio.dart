@@ -1,6 +1,7 @@
 import '../domain/admin_entities.dart';
 import '../domain/admin_enums.dart';
 import '../domain/admin_stay_entities.dart';
+import 'admin_cached_records.dart';
 
 /// Seeded concierge tickets, mid-stay pulses, and folio line items with mutation helpers.
 class AdminSeedConciergeFolio {
@@ -138,32 +139,29 @@ class AdminSeedConciergeFolio {
 
   static AdminConciergeTicket applyStageUpdate({
     required List<AdminConciergeTicket> tickets,
-    required String requestId,
+    required AdminConciergeTicket current,
     required ConciergeStage stage,
     required StaffMember? staff,
     required String nowIso,
-  }) {
-    final index = tickets.indexWhere((t) => t.requestId == requestId);
-    final updated = tickets[index].copyWith(
-      stage: stage,
-      assignedStaffId: staff?.staffId,
-      assignedStaffName: staff?.shortName,
-      department: staff?.department,
-      notifiedAt: nowIso,
-    );
-    tickets[index] = updated;
-    return updated;
-  }
+  }) =>
+      CachedRecords.replace(
+          tickets,
+          (t) => t.requestId,
+          current.copyWith(
+            stage: stage,
+            assignedStaffId: staff?.staffId,
+            assignedStaffName: staff?.shortName,
+            department: staff?.department,
+            notifiedAt: nowIso,
+          ));
 
   static AdminConciergeTicket applyReply({
     required List<AdminConciergeTicket> tickets,
-    required String requestId,
+    required AdminConciergeTicket current,
     required String senderName,
     required String senderRole,
     required String messageText,
   }) {
-    final index = tickets.indexWhere((t) => t.requestId == requestId);
-    final current = tickets[index];
     final newMsg = ConciergeChatMessage(
       messageId: 'msg_${current.messages.length + 1}',
       senderName: senderName,
@@ -172,26 +170,24 @@ class AdminSeedConciergeFolio {
       timestampLabel: 'Just now',
       isStaff: true,
     );
-    final updated = current.copyWith(messages: [...current.messages, newMsg]);
-    tickets[index] = updated;
-    return updated;
+    return CachedRecords.replace(tickets, (t) => t.requestId,
+        current.copyWith(messages: [...current.messages, newMsg]));
   }
 
   static AdminMidStayPulse applyPulseUpdate({
     required List<AdminMidStayPulse> pulses,
-    required String checkInId,
+    required AdminMidStayPulse current,
     required String followUpNote,
     required String staffName,
-  }) {
-    final index = pulses.indexWhere((p) => p.checkInId == checkInId);
-    final updated = pulses[index].copyWith(
-      status: 'ATTENDED',
-      followUpNote: followUpNote,
-      handledByStaffName: staffName,
-    );
-    pulses[index] = updated;
-    return updated;
-  }
+  }) =>
+      CachedRecords.replace(
+          pulses,
+          (p) => p.checkInId,
+          current.copyWith(
+            status: 'ATTENDED',
+            followUpNote: followUpNote,
+            handledByStaffName: staffName,
+          ));
 
   static List<FolioLineItem> applyAddedFolioItem({
     required List<FolioLineItem> items,

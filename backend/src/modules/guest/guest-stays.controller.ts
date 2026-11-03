@@ -11,6 +11,18 @@ import {
 import { CurrentStay } from '../../common/decorators/auth.decorators';
 import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
 import { StepUpVerifiedGuard } from '../../common/guards/step-up-verified.guard';
+import {
+  GuestStayView,
+  toGuestBookingView,
+  toGuestConciergeRequestView,
+  toGuestFeedbackView,
+  toGuestFolioSummaryView,
+  toGuestFolioView,
+  toGuestLarderOrderView,
+  toGuestPersonalizationView,
+  toGuestStayView,
+  toGuestTransferView,
+} from '../../domain/guest-stay-view';
 import { StayAggregate } from '../../domain/models/domain.models';
 import {
   CreateBookingDto,
@@ -26,14 +38,18 @@ import {
 } from './dto/guest.dto';
 import { GuestService } from './guest.service';
 
+/**
+ * Guest capability routes. Every response is built from the ADR-007 allow-list projections in
+ * `domain/guest-stay-view.ts`; the stored aggregate itself is never returned to a guest.
+ */
 @Controller('stays/:guestUuid')
 @UseGuards(GuestTokenGuard)
 export class GuestStaysController {
   constructor(private readonly guestService: GuestService) {}
 
   @Get()
-  getStayAggregate(@CurrentStay() stay: StayAggregate): StayAggregate {
-    return stay;
+  getStayAggregate(@CurrentStay() stay: StayAggregate): GuestStayView {
+    return toGuestStayView(stay);
   }
 
   @Post('verify-step-up')
@@ -57,7 +73,7 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: UpdateTransferDto,
   ) {
-    return this.guestService.updateTransfer(stay, dto);
+    return this.guestService.updateTransfer(stay, dto).then(toGuestTransferView);
   }
 
   @Patch('transport')
@@ -65,7 +81,7 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: UpdateTransferDto,
   ) {
-    return this.guestService.updateTransfer(stay, dto);
+    return this.guestService.updateTransfer(stay, dto).then(toGuestTransferView);
   }
 
   @Patch('personalization')
@@ -73,20 +89,24 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: UpdatePersonalizationDto,
   ) {
-    return this.guestService.updatePersonalization(stay, dto);
+    return this.guestService.updatePersonalization(stay, dto).then(toGuestPersonalizationView);
   }
 
   @Put('larder')
-  updateLarder(
+  async updateLarder(
     @CurrentStay() stay: StayAggregate,
     @Body() dto: UpdateLarderOrderDto,
   ) {
-    return this.guestService.updateLarderOrder(stay, dto);
+    const result = await this.guestService.updateLarderOrder(stay, dto);
+    return {
+      orders: result.orders.map(toGuestLarderOrderView),
+      folioSummary: toGuestFolioSummaryView(result.folioSummary),
+    };
   }
 
   @Get('bookings')
   listBookings(@CurrentStay() stay: StayAggregate) {
-    return stay.experienceBookings;
+    return stay.experienceBookings.map(toGuestBookingView);
   }
 
   @Post('bookings')
@@ -94,12 +114,12 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: CreateBookingDto,
   ) {
-    return this.guestService.createBooking(stay, dto);
+    return this.guestService.createBooking(stay, dto).then(toGuestBookingView);
   }
 
   @Get('concierge-requests')
   listConciergeRequests(@CurrentStay() stay: StayAggregate) {
-    return stay.conciergeRequests;
+    return stay.conciergeRequests.map(toGuestConciergeRequestView);
   }
 
   @Post('concierge-requests')
@@ -107,7 +127,9 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: CreateConciergeRequestDto,
   ) {
-    return this.guestService.createConciergeRequest(stay, dto);
+    return this.guestService
+      .createConciergeRequest(stay, dto)
+      .then(toGuestConciergeRequestView);
   }
 
   @Post('concierge-requests/upload-url')
@@ -124,7 +146,9 @@ export class GuestStaysController {
     @Param('requestId') requestId: string,
     @Body() dto: CreateConciergeMessageDto,
   ) {
-    return this.guestService.appendConciergeMessage(stay, requestId, dto);
+    return this.guestService
+      .appendConciergeMessage(stay, requestId, dto)
+      .then(toGuestConciergeRequestView);
   }
 
   @Post('midstay-checkin')
@@ -132,23 +156,21 @@ export class GuestStaysController {
     @CurrentStay() stay: StayAggregate,
     @Body() dto: CreateMidStayCheckInDto,
   ) {
-    return this.guestService.submitMidStayCheckIn(stay, dto);
+    return this.guestService.submitMidStayCheckIn(stay, dto).then(toGuestFeedbackView);
   }
 
   @Get('folio')
   getFolio(@CurrentStay() stay: StayAggregate) {
-    return {
-      folioSummary: stay.folioSummary,
-      folioItems: stay.folioItems,
-    };
+    return toGuestFolioView(stay);
   }
 
   @Post('folio/checkout')
   @UseGuards(StepUpVerifiedGuard)
-  expressCheckout(
+  async expressCheckout(
     @CurrentStay() stay: StayAggregate,
     @Body() dto: ExpressCheckoutDto,
   ) {
-    return this.guestService.processExpressCheckout(stay, dto);
+    const settled = await this.guestService.processExpressCheckout(stay, dto);
+    return { ...toGuestFolioView(settled), status: settled.status };
   }
 }

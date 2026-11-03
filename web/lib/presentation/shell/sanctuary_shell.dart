@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
 import '../../core/constants/screen_id.dart';
 import '../../core/theme/kachava_colors.dart';
-import '../../core/theme/kachava_theme.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../screens/concierge_screen.dart';
 import '../screens/departure_screen.dart';
 import '../screens/dining_screen.dart';
@@ -16,8 +16,11 @@ import '../screens/profile_screen.dart';
 import '../screens/stock_villa_screen.dart';
 import '../screens/transport_screen.dart';
 import '../screens/yacht_screen.dart';
+import 'access_restricted_screen.dart';
+import 'reconnecting_indicator.dart';
 import 'sanctuary_bottom_nav.dart';
 import 'sanctuary_header.dart';
+import 'sanctuary_loading_screen.dart';
 import 'screen_switcher_drawer.dart';
 
 /// Adaptive Sanctuary Shell (`< 768px` exact Mobile canvas, `>= 768px` centered
@@ -33,7 +36,13 @@ class SanctuaryShell extends StatelessWidget {
       listenable: controller,
       builder: (context, _) {
         if (!controller.isUuidValid) {
-          return _buildAccessRestrictedScreen();
+          return AccessRestrictedScreen(
+            i18n: controller.i18n,
+            isLinkInvalid: controller.isLinkInvalid,
+          );
+        }
+        if (!controller.hasServerData) {
+          return SanctuaryLoadingScreen(controller: controller);
         }
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -87,6 +96,8 @@ class SanctuaryShell extends StatelessWidget {
           children: [
             SanctuaryHeader(controller: controller),
             if (controller.isReadOnly) _buildCheckedOutBanner(),
+            if (controller.isReconnecting)
+              ReconnectingIndicator(label: controller.i18n.reconnecting),
             if (controller.activeToastMessage != null) _buildToastBanner(),
             Expanded(
               child: isDesktop
@@ -148,22 +159,25 @@ class SanctuaryShell extends StatelessWidget {
   }
 
   Widget _buildToastBanner() {
+    final isError = controller.isToastError;
     return Container(
-      key: const Key('sanctuary-toast-banner'),
+      key: Key(isError ? 'sanctuary-error-banner' : 'sanctuary-toast-banner'),
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: KachavaColors.primary,
+        color: isError ? KachavaColors.errorRed : KachavaColors.primary,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle,
+          Icon(isError ? Icons.error_outline : Icons.check_circle,
               size: 16, color: KachavaColors.secondaryContainer),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               controller.activeToastMessage ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -250,62 +264,5 @@ class SanctuaryShell extends StatelessWidget {
       case ScreenId.profile:
         return ProfileScreen(controller: controller);
     }
-  }
-
-  Widget _buildAccessRestrictedScreen() {
-    return Scaffold(
-      backgroundColor: KachavaColors.surfaceContainerLow,
-      body: Center(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Card(
-              margin: const EdgeInsets.all(24),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: _buildRestrictedCardBody(),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRestrictedCardBody() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.support_agent, size: 44, color: KachavaColors.primary),
-        const SizedBox(height: 12),
-        const Text(
-          'Acceso Restringido — ID de Huésped Obligatorio / Access Restricted — Guest ID Required',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: KachavaTheme.serifFamily,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: KachavaColors.primary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          controller.authErrorMessage ??
-              'Para ingresar al Portal de Huéspedes es obligatorio utilizar un enlace de invitación válido con ?guestId=<uuid>. / A valid invitation link with ?guestId=<uuid> is required to access the Sanctuary Portal.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-              fontSize: 13, color: KachavaColors.onSurfaceVariant),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Dedicated Concierge: HOST ADMIN · +1 (415) 890-4412',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: KachavaColors.secondary),
-        ),
-      ],
-    );
   }
 }

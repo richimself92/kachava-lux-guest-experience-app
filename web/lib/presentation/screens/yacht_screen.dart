@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/experience_entities.dart';
+import '../shell/stay_date_picker.dart';
 
 /// Screen 6: Private Yacht Charter (`yacht`).
 class YachtScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class YachtScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final charter = controller.yachtCharter;
+    if (controller.yachtPackages.isEmpty) return _buildEmptyState(charter);
     final dateLabel = charter.selectedDate.isEmpty
         ? controller.stay.defaultStayDateLabel
         : charter.selectedDate;
@@ -38,6 +41,26 @@ class YachtScreen extends StatelessWidget {
             charter.guestCount, charter.bookingStatus.isNotEmpty),
         const SizedBox(height: 8),
         _buildBookingSummaryBar(charter.bookingStatus.isNotEmpty),
+      ],
+    );
+  }
+
+  /// No server catalog yet: one line, plus the guest's request status if any.
+  Widget _buildEmptyState(YachtCharterConfig charter) {
+    return ListView(
+      key: const Key('screen-yacht'),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+      children: [
+        if (charter.bookingStatus.isNotEmpty) ...[
+          _buildYachtStatusBanner(charter),
+          const SizedBox(height: 8),
+        ],
+        Text(
+          controller.i18n.yachtEmptyState,
+          key: const Key('yacht-empty-state'),
+          style: const TextStyle(
+              fontSize: 13, color: KachavaColors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -100,18 +123,9 @@ class YachtScreen extends StatelessWidget {
   }
 
   Future<void> _pickCharterDate(BuildContext context) async {
-    final stay = controller.stay;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: stay.checkInDateTime,
-      firstDate: stay.checkInDateTime,
-      lastDate: stay.checkOutDateTime,
-    );
+    final picked = await pickStayDate(context, controller.stay);
     if (!context.mounted || picked == null) return;
-    final y = picked.year.toString();
-    final m = picked.month.toString().padLeft(2, '0');
-    final d = picked.day.toString().padLeft(2, '0');
-    controller.updateYachtDate('$y-$m-$d');
+    controller.updateYachtDate(picked);
   }
 
   Widget _buildCharterDateCard(

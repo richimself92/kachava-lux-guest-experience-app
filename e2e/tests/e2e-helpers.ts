@@ -4,11 +4,14 @@ import * as path from 'path';
 
 export const GUEST_PORTAL_URL = 'http://localhost:3000';
 export const ADMIN_DASHBOARD_URL = 'http://localhost:3002';
-export const API_BASE_URL = 'http://localhost:3001/api/v1';
+// Override with E2E_API_BASE_URL when the backend runs on a non-default port.
+export const API_BASE_URL = process.env.E2E_API_BASE_URL ?? 'http://localhost:3001/api/v1';
 export const VILLA_102_UUID = '550e8400-e29b-41d4-a716-446655440000';
 export const ADMIN_STAFF_EMAIL = 'eduardo.rivera@kachavalux.com';
-export const ARTIFACT_SCREENSHOT_DIR =
-  '/Users/jggomez/.gemini/antigravity-cli/brain/931c042f-a480-488d-845b-685ff41b66dc';
+export const ARTIFACT_SCREENSHOT_DIR = path.resolve(
+  __dirname,
+  '../../doc/kachava-command-center/evidence',
+);
 export const LOCAL_SCREENSHOT_DIR = path.resolve(__dirname, '../screenshots');
 
 export interface ErrorMonitor {
@@ -49,13 +52,16 @@ export async function assertNoHorizontalOverflow(page: Page): Promise<void> {
   expect(dims.scrollWidth).toBeLessThanOrEqual(dims.innerWidth);
 }
 
-export async function installAdminLoginNormalizer(page: Page): Promise<void> {
-  await page.route('**/api/v1/admin/auth/login', async (route) => {
-    const req = route.request();
-    const raw = req.postData() || '{}';
-    const fixed = raw.replace('eduardo@kachavalux.com', ADMIN_STAFF_EMAIL);
-    await route.continue({ postData: fixed });
-  });
+/**
+ * Opens the admin app and signs in through the Staff Sign-In screen
+ * (keys `staff-sign-in-email` / `staff-sign-in-submit`), exactly as staff would.
+ */
+export async function signInAsStaff(page: Page, email = ADMIN_STAFF_EMAIL): Promise<void> {
+  await page.goto(ADMIN_DASHBOARD_URL);
+  await waitForFlutterSemantics(page, 'Staff Sign-In');
+  expect(await fillSemanticsTextField(page, 'Staff email', email)).toBe(true);
+  expect(await clickSemanticsExact(page, 'Sign in')).toBe(true);
+  await waitForFlutterSemantics(page, 'HOST ADMIN');
 }
 
 export async function readSemanticsSnapshot(page: Page): Promise<string> {
@@ -108,7 +114,7 @@ export async function findSemanticsCenter(
       root.querySelectorAll('flt-semantics, [role="button"], [aria-label], input, textarea').forEach((el) => {
         const text = `${el.getAttribute('aria-label') || ''} ${el.getAttribute('placeholder') || ''} ${(el as HTMLElement).innerText || ''}`.toLowerCase();
         const r = el.getBoundingClientRect();
-        if (text.includes(needle) && r.width > 4 && r.height > 4 && r.width < 600 && r.height < 220) {
+        if (text.includes(needle) && r.width > 4 && r.height > 4 && r.width < 600 && r.height < 300) {
           const rolePenalty = el.getAttribute('role') === 'button' ? 0 : 100000;
           matches.push({ x: r.left + r.width / 2, y: r.top + r.height / 2, score: rolePenalty + r.width * r.height });
         }
@@ -121,11 +127,46 @@ export async function findSemanticsCenter(
   }, labelSubstring);
 }
 
+/** Polls (no fixed sleep) until a node matching [labelSubstring] has a clickable box. */
+export async function waitForSemanticsCenter(
+  page: Page,
+  labelSubstring: string,
+  timeoutMs = 10000,
+): Promise<{ x: number; y: number } | null> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const coords = await findSemanticsCenter(page, labelSubstring);
+    if (coords || Date.now() >= deadline) return coords;
+    await page.waitForTimeout(250);
+  }
+}
+
 export async function clickSemanticsByText(
   page: Page,
   labelSubstring: string,
 ): Promise<boolean> {
-  const coords = await findSemanticsCenter(page, labelSubstring);
+  const coords = await waitForSemanticsCenter(page, labelSubstring);
+  if (!coords) return false;
+  await page.mouse.click(coords.x, coords.y);
+  return true;
+}
+
+/** Clicks the semantics node whose whole label equals [label] (case-insensitive). */
+export async function clickSemanticsExact(page: Page, label: string): Promise<boolean> {
+  const coords = await page.evaluate((target) => {
+    const needle = target.toLowerCase();
+    let best: { x: number; y: number; area: number } | null = null;
+    document.querySelectorAll('flt-semantics').forEach((el) => {
+      const text = `${el.getAttribute('aria-label') || ''}`.trim().toLowerCase() ||
+        ((el as HTMLElement).innerText || '').trim().toLowerCase();
+      const r = el.getBoundingClientRect();
+      if (text === needle && r.width > 4 && r.height > 4) {
+        const area = r.width * r.height;
+        if (!best || area < best.area) best = { x: r.left + r.width / 2, y: r.top + r.height / 2, area };
+      }
+    });
+    return best;
+  }, label);
   if (!coords) return false;
   await page.mouse.click(coords.x, coords.y);
   return true;
@@ -136,7 +177,7 @@ export async function fillSemanticsTextField(
   labelSubstring: string,
   value: string,
 ): Promise<boolean> {
-  const coords = await findSemanticsCenter(page, labelSubstring);
+  const coords = await waitForSemanticsCenter(page, labelSubstring);
   if (!coords) return false;
   await page.mouse.click(coords.x, coords.y);
   await page.waitForTimeout(150);
@@ -214,4 +255,91 @@ export async function ensureActiveVilla102Stay(
   const stayId = stay.stayId as string;
   await browserFetchJson(page, `${API_BASE_URL}/admin/stays/${stayId}/status`, 'PATCH', { status: 'ACTIVE_STAY' }, authHeader);
   return { stayId, guestUuid: stay.guestTokenUuid as string };
+}
+
+export interface CreatedStay {
+  stayId: string;
+  guestUuid: string;
+  magicLinkUrl: string;
+  villaName: string;
+  guestName: string;
+}
+
+/**
+ * The live console lists only villas that already appear on a server stay, so a
+ * free villa is prepared by creating and releasing one throw-away stay via the API.
+ */
+export async function prepareFreeVilla(page: Page, villaId: string, villaName: string): Promise<void> {
+  const token = await fetchAdminAuthToken(page);
+  const authHeader = { Authorization: `Bearer ${token}` };
+  const created = await browserFetchJson(
+    page,
+    `${API_BASE_URL}/admin/stays`,
+    'POST',
+    { guestName: 'Villa Seed', villaId, villaName, nights: 1, guestsCount: 1 },
+    authHeader,
+  );
+  expect(created.status).toBe(201);
+  const stay = (created.body.data as Record<string, unknown>).stay as Record<string, unknown>;
+  const out = await browserFetchJson(
+    page,
+    `${API_BASE_URL}/admin/stays/${stay.stayId}/status`,
+    'PATCH',
+    { status: 'CHECKED_OUT' },
+    authHeader,
+  );
+  expect(out.status).toBe(200);
+  // The console learns about the villa on its next /admin/sync tick (second one = a request started after the change).
+  await waitForAdminSyncCycles(page, 2);
+}
+
+export async function waitForAdminSyncCycles(page: Page, cycles: number): Promise<void> {
+  for (let i = 0; i < cycles; i += 1) {
+    await page.waitForResponse((r) => r.url().includes('/api/v1/admin/sync'), { timeout: 30000 });
+  }
+}
+
+/** Picks a day in the NEXT month so the date is always in the future. */
+async function pickFutureDate(page: Page, fieldLabel: string, day: number): Promise<void> {
+  expect(await clickSemanticsByText(page, fieldLabel)).toBe(true);
+  await waitForFlutterSemantics(page, 'Next month');
+  expect(await clickSemanticsExact(page, 'Next month')).toBe(true);
+  const next = new Date();
+  next.setDate(1);
+  next.setMonth(next.getMonth() + 1);
+  const month = next.toLocaleString('en-US', { month: 'long' });
+  const dayLabel = `${month} ${day}, ${next.getFullYear()}`;
+  await waitForFlutterSemantics(page, dayLabel);
+  expect(await clickSemanticsByText(page, dayLabel)).toBe(true);
+  expect(await clickSemanticsExact(page, 'OK')).toBe(true);
+}
+
+/** Drives Tab 2 "+ New Guest Stay" dialog for an AVAILABLE villa. */
+export async function submitNewStayDialog(page: Page, villaLabel: string, guestName: string): Promise<void> {
+  expect(await clickSemanticsByText(page, '2. Villas, Guests & Magic Links')).toBe(true);
+  expect(await clickSemanticsByText(page, '+ New Guest Stay')).toBe(true);
+  await waitForFlutterSemantics(page, 'New Guest Stay & Magic Link');
+  expect(await clickSemanticsByText(page, 'Select Villa')).toBe(true);
+  expect(await clickSemanticsByText(page, `${villaLabel} — AVAILABLE`)).toBe(true);
+  expect(await fillSemanticsTextField(page, 'Guest Name(s)', guestName)).toBe(true);
+  await pickFutureDate(page, 'Check-In Date', 10);
+  await pickFutureDate(page, 'Check-Out Date', 15);
+  expect(await clickSemanticsByText(page, 'Create & Generate Link')).toBe(true);
+}
+
+export async function findAdminStayByGuest(page: Page, guestName: string): Promise<CreatedStay | null> {
+  const token = await fetchAdminAuthToken(page);
+  const res = await browserFetchJson(page, `${API_BASE_URL}/admin/stays`, 'GET', undefined, {
+    Authorization: `Bearer ${token}`,
+  });
+  const stays = (res.body.data as Array<Record<string, any>>) || [];
+  const hit = stays.find((s) => s.guestProfile?.name === guestName);
+  if (!hit) return null;
+  return {
+    stayId: hit.stayId,
+    guestUuid: hit.guestTokenUuid,
+    magicLinkUrl: hit.magicLinkUrl,
+    villaName: hit.villaName,
+    guestName,
+  };
 }

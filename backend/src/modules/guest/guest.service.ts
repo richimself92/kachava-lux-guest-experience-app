@@ -3,10 +3,11 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
 import { SecurityTokenService } from '../../common/services/security-token.service';
+import { StepUpAttemptLimiter } from '../../common/services/step-up-attempt-limiter';
 import {
   FlightTransfer,
+  OperationalAlert,
   Personalization,
   StayAggregate,
 } from '../../domain/models/domain.models';
@@ -29,6 +30,7 @@ import {
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
 import { GuestBookingService } from './guest-booking.service';
 import { GuestConciergeService } from './guest-concierge.service';
+import { matchesGuestLastName } from './step-up-last-name.matcher';
 
 @Injectable()
 export class GuestService {
@@ -39,35 +41,42 @@ export class GuestService {
     private readonly alertFolioHelper: GuestAlertFolioHelper,
     private readonly bookingService: GuestBookingService,
     private readonly conciergeService: GuestConciergeService,
+    private readonly stepUpLimiter: StepUpAttemptLimiter,
   ) {}
 
+  /**
+   * Step-up answers are the villa number or the primary guest's last name. Both are visible in
+   * the guest view (villa name, guest name), so this only proves possession of a session that
+   * already holds the link; a secret not exposed to guests is a pending owner decision. Failed
+   * answers are rate limited per stay (StepUpAttemptLimiter).
+   */
   verifyStepUp(
     stay: StayAggregate,
     dto: VerifyStepUpDto,
-  ): { verified: boolean; stepUpToken: string; stayId: string } {
-    const cleanVilla = dto.villaNumber?.replace(/[^0-9]/g, '');
-    const stayVillaDigits =
-      stay.villaName.replace(/[^0-9]/g, '') || stay.villaId.replace(/[^0-9]/g, '');
-    const cleanLastName = dto.lastName?.trim().toLowerCase();
-    const matchesVilla =
-      cleanVilla === '102' ||
-      (Boolean(cleanVilla) && cleanVilla === stayVillaDigits) ||
-      dto.villaNumber === stay.villaId;
-    const matchesLastName =
-      cleanLastName === stay.guestProfile.lastNameNormalized ||
-      stay.guestProfile.name.toLowerCase().includes(cleanLastName || '__none__');
-
-    if (!matchesVilla && !matchesLastName) {
+  ): { verified: boolean; stepUpToken: string } {
+    this.stepUpLimiter.assertCanAttempt(stay.stayId);
+    if (!this.matchesStepUpAnswer(stay, dto)) {
+      this.stepUpLimiter.recordFailure(stay.stayId);
       throw new ForbiddenException(
         'Step-up challenge failed: Villa Number or Primary Guest Last Name did not match.',
       );
     }
-
+    this.stepUpLimiter.recordSuccess(stay.stayId);
     const stepUpToken = this.securityTokenService.issueStepUpToken(
       stay.stayId,
       stay.guestTokenUuid,
     );
-    return { verified: true, stepUpToken, stayId: stay.stayId };
+    return { verified: true, stepUpToken };
+  }
+
+  private matchesStepUpAnswer(stay: StayAggregate, dto: VerifyStepUpDto): boolean {
+    const cleanVilla = dto.villaNumber?.replace(/[^0-9]/g, '');
+    const stayVillaDigits =
+      stay.villaName.replace(/[^0-9]/g, '') || stay.villaId.replace(/[^0-9]/g, '');
+    const matchesVilla =
+      (Boolean(cleanVilla) && cleanVilla === stayVillaDigits) ||
+      dto.villaNumber === stay.villaId;
+    return matchesVilla || matchesGuestLastName(stay.guestProfile, dto.lastName);
   }
 
   async updateTransfer(
@@ -78,22 +87,22 @@ export class GuestService {
       stay.flightTransfer.status === 'Not Requested' || !dto.status
         ? 'Pending'
         : dto.status;
-    const updated = await this.stayRepo.updateTransfer(stay.stayId, {
+    const patch = {
       ...dto,
       status: nextStatus,
       estimatedLanding:
         dto.estimatedLanding || dto.arrivalTime || stay.flightTransfer.estimatedLanding,
-    });
-    GuestTokenGuard.invalidateCache();
-    await this.alertFolioHelper.emitAlert(stay, {
-      category: 'TRANSFER',
-      severity: 'NORMAL',
-      title: `${stay.villaName} Aviation Transfer Updated (${updated.flightNumber})`,
-      summary: `Flight ${updated.flightNumber} landing at ${updated.estimatedLanding}.`,
-      sourceDocumentPath: `stays/${stay.stayId}`,
-      assignedDepartment: 'TRANSPORT',
-    });
-    return updated;
+    };
+    return this.stayRepo.updateTransfer(stay.stayId, patch, (updated) =>
+      this.alertFolioHelper.buildAlert(stay, {
+        category: 'TRANSFER',
+        severity: 'NORMAL',
+        title: `${stay.villaName} Aviation Transfer Updated (${updated.flightNumber})`,
+        summary: `Flight ${updated.flightNumber} landing at ${updated.estimatedLanding}.`,
+        sourceDocumentPath: `stays/${stay.stayId}`,
+        assignedDepartment: 'TRANSPORT',
+      }),
+    );
   }
 
   async updatePersonalization(
@@ -107,7 +116,7 @@ export class GuestService {
           ? [dto.allergies]
           : [];
     const allergiesLabel = (allergiesList.join(', ') || dto.allergies || '').trim();
-    const updated = await this.stayRepo.updatePersonalization(
+    return this.stayRepo.updatePersonalization(
       stay.stayId,
       {
         ...dto,
@@ -122,21 +131,19 @@ export class GuestService {
         allergies: allergiesLabel,
       },
       allergiesLabel || undefined,
+      (updated) => this.personalizationAlert(stay, updated, allergiesLabel),
     );
-    GuestTokenGuard.invalidateCache();
-    await this.emitPersonalizationAlert(stay, updated, allergiesLabel);
-    return updated;
   }
 
-  private async emitPersonalizationAlert(
+  private personalizationAlert(
     stay: StayAggregate,
     updated: Personalization,
     allergiesLabel: string,
-  ): Promise<void> {
+  ): OperationalAlert {
     const hasAllergies =
       allergiesLabel.length > 0 && allergiesLabel.toLowerCase() !== 'none';
     const baseSummary = `Pillow: ${updated.pillowType || '—'} · Scent: ${updated.scentProfile || '—'} · Diet: ${updated.dietary || '—'} · Cleaning: ${updated.housekeepingCadence || '—'}`;
-    await this.alertFolioHelper.emitAlert(stay, {
+    return this.alertFolioHelper.buildAlert(stay, {
       category: 'DIETARY',
       severity: hasAllergies ? 'URGENT' : 'NORMAL',
       title: hasAllergies

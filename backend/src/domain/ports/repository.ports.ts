@@ -20,6 +20,7 @@ import {
   StayRecord,
   YachtCatalog,
 } from '../models/domain.models';
+import { FolioSettlement, SettledFolio } from '../folio-ledger';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
 export const CATALOG_REPOSITORY_PORT = Symbol('CATALOG_REPOSITORY_PORT');
@@ -62,6 +63,13 @@ export interface AlertFilterCriteria {
   assignedDepartment?: Department;
 }
 
+/**
+ * Builds the operational alert for a stay mutation from its result. The repository writes the
+ * alert in the same transaction as the stay, so a failed request persists neither and a client
+ * retry cannot duplicate the mutation. Returning null writes no alert.
+ */
+export type StayAlertFactory<T> = (result: T) => OperationalAlert | null;
+
 export interface StayRepositoryPort {
   findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null>;
   findByStayId(stayId: string): Promise<StayAggregate | null>;
@@ -77,21 +85,23 @@ export interface StayRepositoryPort {
   updateTransfer(
     stayId: string,
     transferPatch: Partial<FlightTransfer>,
+    alertOf?: StayAlertFactory<FlightTransfer>,
   ): Promise<FlightTransfer>;
   updatePersonalization(
     stayId: string,
     personalizationPatch: Partial<Personalization>,
     allergiesLabel?: string,
+    alertOf?: StayAlertFactory<Personalization>,
   ): Promise<Personalization>;
   updateSignaturePrivilege(
     stayId: string,
     privilege: 'massage' | 'golf',
   ): Promise<StayRecord>;
+  /** Replaces the larder order; the larder folio line is re-priced from the stored folio. */
   replaceLarderOrders(
     stayId: string,
     orders: LarderOrderItem[],
-    folioItems: FolioItem[],
-    folioSummary: FolioSummary,
+    alertOf?: StayAlertFactory<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>;
   listLarderOrdersAcrossStays(
     filter?: LarderFilterCriteria,
@@ -100,11 +110,11 @@ export interface StayRepositoryPort {
     orderItemId: string,
     patch: Partial<LarderOrderItem>,
   ): Promise<LarderOrderItem | null>;
+  /** Stores the booking and, when paid, appends its folio line to the stored folio. */
   createBooking(
     stayId: string,
     booking: ExperienceBooking,
-    folioItems: FolioItem[],
-    folioSummary: FolioSummary,
+    alertOf?: StayAlertFactory<ExperienceBooking>,
   ): Promise<ExperienceBooking>;
   listBookingsForStay(stayId: string): Promise<ExperienceBooking[]>;
   listBookingsAcrossStays(
@@ -122,11 +132,13 @@ export interface StayRepositoryPort {
   createConciergeRequest(
     stayId: string,
     request: ConciergeRequest,
+    alertOf?: StayAlertFactory<ConciergeRequest>,
   ): Promise<ConciergeRequest>;
   appendConciergeMessage(
     stayId: string,
     requestId: string,
     message: ConciergeMessage,
+    alertOf?: StayAlertFactory<ConciergeRequest | null>,
   ): Promise<ConciergeRequest | null>;
   updateConciergeRequestAdmin(
     requestId: string,
@@ -136,18 +148,18 @@ export interface StayRepositoryPort {
   createMidStayFeedback(
     stayId: string,
     feedback: MidStayFeedback,
+    alertOf?: StayAlertFactory<MidStayFeedback>,
   ): Promise<MidStayFeedback>;
   listMidStayFeedbackAcrossStays(): Promise<MidStayFeedback[]>;
   getFolioForStay(
     stayId: string,
   ): Promise<{ folioSummary: FolioSummary; folioItems: FolioItem[] }>;
-  updateFolioAndStatus(
+  /** Settles every folio line stored at commit time (no caller-supplied folio snapshot). */
+  settleFolio(
     stayId: string,
-    folioSummary: FolioSummary,
-    folioItems: FolioItem[],
-    newStatus?: StayLifecycleStatus,
-    lateCheckoutRequested?: boolean,
-  ): Promise<{ folioSummary: FolioSummary; folioItems: FolioItem[]; status: StayLifecycleStatus }>;
+    settlement: FolioSettlement,
+    alertOf?: StayAlertFactory<SettledFolio>,
+  ): Promise<SettledFolio>;
 }
 
 export interface CatalogRepositoryPort {

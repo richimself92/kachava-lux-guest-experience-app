@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../application/admin_dashboard_controller.dart';
+import '../application/admin_live_sync.dart';
 import '../core/admin_i18n.dart';
 import '../core/admin_theme.dart';
 import '../core/responsive_breakpoints.dart';
 import '../domain/admin_enums.dart';
 import 'widgets/admin_navigation_bars.dart';
+import 'widgets/reconnecting_indicator.dart';
 import 'widgets/slide_over_inspector_drawer.dart';
 import 'widgets/top_command_bar.dart';
 import 'workspaces/concierge_workspace.dart';
@@ -16,9 +19,13 @@ import 'workspaces/stays_workspace.dart';
 
 /// 3-Breakpoint Responsive Browser & Mobile-Adaptive Command Shell.
 class AdminCommandShell extends StatelessWidget {
-  const AdminCommandShell({super.key, required this.controller});
+  const AdminCommandShell(
+      {super.key, required this.controller, this.syncStatus});
 
   final AdminDashboardController controller;
+
+  /// Live sync health; unhealthy states show one small status line.
+  final ValueListenable<AdminSyncStatus>? syncStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +43,9 @@ class AdminCommandShell extends StatelessWidget {
                   : null,
               body: Column(
                 children: [
+                  if (syncStatus != null)
+                    ReconnectingIndicator(
+                        status: syncStatus!, isEs: controller.isEs),
                   if (controller.lastToastMessage != null)
                     _buildToastBanner(controller.lastToastMessage!),
                   Expanded(

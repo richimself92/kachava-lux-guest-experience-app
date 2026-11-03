@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
 import '../../core/constants/screen_id.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/stay_entities.dart';
@@ -201,7 +202,7 @@ class HomeScreen extends StatelessWidget {
         _stageTile(
             i18n.t('10. Guest Profile, Wi-Fi & Allergies',
                 '10. Mi Perfil, Wi-Fi y Alergias'),
-            'Wi-Fi: ${controller.stay.wifiSsid} · ${controller.stay.guestNames}',
+            _profileTileSubtitle(controller.stay),
             Icons.person_outline,
             ScreenId.profile),
         _stageTile(
@@ -214,6 +215,10 @@ class HomeScreen extends StatelessWidget {
       ],
     );
   }
+
+  static String _profileTileSubtitle(StaySummary stay) => stay.wifiSsid.isEmpty
+      ? stay.guestNames
+      : 'Wi-Fi: ${stay.wifiSsid} · ${stay.guestNames}';
 
   Widget _buildHeroCard(StaySummary stay) {
     final i18n = controller.i18n;
@@ -236,7 +241,10 @@ class HomeScreen extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: KachavaColors.onPrimaryContainer)),
           const SizedBox(height: 6),
-          Text('${stay.guestNames} — ${stay.celebrationTitle}',
+          Text(
+              [stay.guestNames, stay.celebrationTitle]
+                  .where((part) => part.isNotEmpty)
+                  .join(' — '),
               style: const TextStyle(
                   fontFamily: KachavaTheme.serifFamily,
                   fontSize: 20,
@@ -327,7 +335,7 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(width: 8),
         _buildStatCard(
             i18n.t('24/7 CONCIERGE', 'CONCIERGE 24/7'),
-            stay.privateHostName,
+            i18n.hostLabel(stay.privateHostName),
             stay.privateHostRole,
             KachavaColors.confirmedGreen),
       ],

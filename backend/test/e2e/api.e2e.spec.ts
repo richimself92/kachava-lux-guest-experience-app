@@ -393,15 +393,18 @@ describe('Kachava Lux REST API E2E Suite (Guest Portal & Admin Dashboard)', () =
       expect(createdStay.villaId).toBe('villa-104');
       expect(createdStay.villaName).toBe('Villa 104 — Copal Suite');
       expect(createdStay.suiteName).toBe('Copal Suite');
-      expect(createdStay.villaAccess.wifiSsid).toBe('Kachava_Sanctuary_104');
-      expect(createdStay.villaAccess.wifiPasscode).toBe('stillness2026');
+      // FR-00: no synthesized Wi-Fi credentials when the request does not provide them.
+      expect(createdStay.villaAccess.wifiSsid).toBe('');
+      expect(createdStay.villaAccess.wifiPasscode).toBe('');
       expect(createdStay.stayDatesLabel).toBe('2026-12-01 – 2026-12-05');
       expect(createdStay.guestProfile.name).toBe('Elena & Marcus Vance');
       expect(createdStay.guestProfile.celebration).toBe('Babymoon Retreat');
       expect(createdStay.guestProfile.dietaryProfile).toBe('');
       expect(createdStay.guestProfile.allergies).toBe('');
       expect(createdStay.guestProfile.inVillaBar).toBe('');
-      expect(createdStay.guestProfile.folioCard).toBe('On File');
+      expect(createdStay.guestProfile.folioCard).toBe('');
+      expect(createdStay.guestProfile.avatarUrl).toBe('');
+      expect(createdStay.hostInfo.whatsappPhone).toBe('');
       expect(createdStay.hostInfo.name).toBe('HOST ADMIN');
       expect(createdStay.hostInfo.shortName).toBe('HOST ADMIN');
       expect(createdStay.experienceBookings).toEqual([]);

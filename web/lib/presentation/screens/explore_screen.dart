@@ -4,6 +4,7 @@ import '../../core/i18n/guest_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/experience_entities.dart';
+import '../shell/stay_date_picker.dart';
 
 /// Screen 5: Curated Excursions & Discovery (`explore`).
 class ExploreScreen extends StatefulWidget {
@@ -102,6 +103,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  /// Shows only the date/time the guest picked; never a default time.
+  String _scheduleLabel(ExperienceItem exp) {
+    final date = exp.scheduledDate.isNotEmpty
+        ? exp.scheduledDate
+        : widget.controller.stay.defaultStayDateLabel;
+    final time = exp.scheduledTimeSlot.trim();
+    return [
+      if (date.isNotEmpty) '📅 $date',
+      if (time.isNotEmpty) '⏰ $time',
+    ].join(' · ');
+  }
+
   Widget _buildBookingStatusBanner(ExperienceItem exp) {
     final i18n = widget.controller.i18n;
     final status = exp.bookingStatus.toUpperCase();
@@ -117,12 +130,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ? i18n.t('❌ CANCELLED BY HOST ADMIN', '❌ CANCELADO POR HOST ADMIN')
             : i18n.t('⏳ SUBMITTED · PENDING APPROVAL',
                 '⏳ ENVIADO · PENDIENTE DE APROBACIÓN'));
-    final datePart = exp.scheduledDate.isNotEmpty
-        ? exp.scheduledDate
-        : widget.controller.stay.defaultStayDateLabel;
-    final timePart =
-        exp.scheduledTimeSlot.isNotEmpty ? exp.scheduledTimeSlot : '10:00 AM';
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
@@ -135,7 +142,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '📅 $datePart · ⏰ $timePart',
+            _scheduleLabel(exp),
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
@@ -276,17 +283,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       TextButton.icon(
                         key: Key('pick-exp-date-${exp.id}'),
                         onPressed: () async {
-                          final selected = await showDatePicker(
-                            context: ctx,
-                            initialDate: stay.checkInDateTime,
-                            firstDate: stay.checkInDateTime,
-                            lastDate: stay.checkOutDateTime,
-                          );
+                          final selected = await pickStayDate(ctx, stay);
                           if (!ctx.mounted || selected == null) return;
-                          setModalState(() {
-                            pickedDate =
-                                '${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
-                          });
+                          setModalState(() => pickedDate = selected);
                         },
                         icon: const Icon(Icons.calendar_today, size: 15),
                         label: Text(i18n.t('Calendar', 'Calendario')),

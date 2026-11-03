@@ -1,4 +1,4 @@
-import '../core/app_config.dart';
+import '../core/guest_portal_link.dart';
 import 'admin_enums.dart';
 
 /// Registered sanctuary villa record for Stays & Magic Link creation.
@@ -8,8 +8,8 @@ class AdminVillaInfo {
     required this.villaName,
     required this.suiteType,
     required this.maxGuests,
-    this.wifiSsid = 'Kachava_Sanctuary_102',
-    this.wifiPasscode = 'stillness2026',
+    this.wifiSsid = '',
+    this.wifiPasscode = '',
   });
 
   final String villaId;
@@ -165,11 +165,11 @@ class AdminStayRecord {
     required this.personalization,
     required this.transfer,
     required this.cardReference,
-    this.nights = 3,
-    this.wifiSsid = 'Kachava_Sanctuary_102',
-    this.wifiPasscode = 'stillness2026',
+    this.nights = 0,
+    this.wifiSsid = '',
+    this.wifiPasscode = '',
     this.lateCheckoutApproved = false,
-    this.paymentStatus = 'PRE_AUTHORIZED',
+    this.paymentStatus = '',
   });
 
   final String stayId;
@@ -190,9 +190,11 @@ class AdminStayRecord {
   final bool lateCheckoutApproved;
   final String paymentStatus;
 
+  /// Whether the server issued a guest token (a usable Magic Link exists).
+  bool get hasGuestLink => guestTokenUuid.trim().isNotEmpty;
+
   /// Full passwordless Welcome Email Magic Link URL.
-  String get magicLinkUrl =>
-      '${AdminAppConfig.sanctuaryPortalUrl}/?guestId=$guestTokenUuid';
+  String get magicLinkUrl => GuestPortalLink.forToken(guestTokenUuid);
 
   AdminStayRecord copyWith({
     String? guestTokenUuid,

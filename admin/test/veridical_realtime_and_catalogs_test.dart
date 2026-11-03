@@ -10,6 +10,7 @@ import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'support/signed_in_api_client.dart';
 
 void main() {
   group('ADR-002 Veridical Wire Mapping, Timeout & Canonical Stay Sync', () {
@@ -24,7 +25,7 @@ void main() {
         deletedPath = '${req.method} ${req.url.path}';
         return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
       });
-      final mockClient = AdminApiClient(httpClient: mockHttp);
+      final mockClient = signedInApiClient(mockHttp);
       expect(mockClient.timeout, const Duration(milliseconds: 900));
       await mockClient.deleteJson('/catalog/experiences/exp_1');
       expect(deletedPath, 'DELETE /api/v1/admin/catalog/experiences/exp_1');
@@ -96,8 +97,8 @@ void main() {
         }
         return http.Response(jsonEncode({'success': true, 'data': []}), 200);
       });
-      final repo = ApiAdminOperationsRepository(
-          apiClient: AdminApiClient(httpClient: mockHttp));
+      final repo =
+          ApiAdminOperationsRepository(apiClient: signedInApiClient(mockHttp));
       final created = await repo.createStay(
           villaName: 'Villa 106 — Copal Pavilion',
           guestNames: 'Carlos Slim',
@@ -122,10 +123,6 @@ void main() {
           checkInDate: 'Dec 01, 2026',
           checkOutDate: 'Dec 05, 2026',
           occasion: 'Relax');
-      expect(ctrl.isChimeRinging, isFalse);
-
-      ctrl.createVilla(
-          villaName: 'Villa 109', suiteType: 'Suite', maxGuests: '2');
       expect(ctrl.isChimeRinging, isFalse);
 
       await ctrl.updateTransferDispatch(
@@ -160,7 +157,8 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      await tester.pumpWidget(const KachavaAdminApp());
+      await tester
+          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
 
       expect(
@@ -183,6 +181,11 @@ void main() {
 
       await tester.enterText(
           find.byKey(const Key('new-stay-guest-input')), 'Nadia Boulanger');
+      await tester.enterText(
+          find.byKey(const Key('new-stay-checkin-input')), 'Dec 1, 2026');
+      await tester.enterText(
+          find.byKey(const Key('new-stay-checkout-input')), 'Dec 4, 2026');
+      await tester.pump();
       await tester.tap(find.byKey(const Key('confirm-create-stay-btn')));
       await tester.pumpAndSettle();
       expect(
@@ -215,7 +218,8 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      await tester.pumpWidget(const KachavaAdminApp());
+      await tester
+          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('nav-tab-admin-experiences')));

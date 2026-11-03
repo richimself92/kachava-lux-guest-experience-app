@@ -158,6 +158,13 @@ class AdminI18n {
 
   static String tr(bool isEs, String en, String es) => isEs ? es : en;
 
+  /// Placeholder for a value the server did not send (never invented).
+  static String orDash(String value) => value.trim().isEmpty ? '—' : value;
+
+  /// Staff name, or "Unassigned" when the server has no known assignee.
+  static String staffLabel(String name, bool isEs) =>
+      name.trim().isEmpty ? tr(isEs, 'Unassigned', 'Sin asignar') : name;
+
   static String translatePref(String raw, bool isEs) {
     final clean = raw.trim();
     if (clean.isEmpty) {

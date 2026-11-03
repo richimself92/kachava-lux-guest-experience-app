@@ -1,10 +1,21 @@
 import 'admin_entities.dart';
 import 'admin_enums.dart';
 import 'admin_stay_entities.dart';
+import 'admin_sync_snapshot.dart';
 
 /// Clean Architecture Repository contract for Kachava Lux Admin Operations.
 abstract class AdminOperationsRepository {
+  /// One server-confirmed read of every live collection (`GET /admin/sync`).
+  Future<AdminSyncSnapshot> fetchSnapshot();
+
   Future<List<StaffMember>> fetchStaffDirectory();
+
+  /// Staff member of the open session (the one mutations are attributed to),
+  /// or null when no signed-in staff is known.
+  StaffMember? get sessionStaff;
+
+  /// Villas this source knows about, given the current [stays].
+  List<AdminVillaInfo> villasFor(List<AdminStayRecord> stays);
 
   Future<List<OperationalAlert>> fetchAlerts();
 
@@ -126,6 +137,9 @@ abstract class AdminOperationsRepository {
   });
 
   Future<void> resetAllData();
+
+  /// Drops every cached record of the previous staff session.
+  void clearCache();
 
   void dispose();
 }

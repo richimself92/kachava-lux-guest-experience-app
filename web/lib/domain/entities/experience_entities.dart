@@ -1,4 +1,4 @@
-/// Artisanal larder / pantry item for Villa 102 (`FR-08`).
+/// Artisanal larder / pantry item for the guest's villa (`FR-08`).
 class LarderItem {
   const LarderItem({
     required this.id,

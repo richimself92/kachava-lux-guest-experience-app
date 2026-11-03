@@ -16,6 +16,7 @@ import {
   StaffMember,
   StayLifecycleStatus,
 } from '../../domain/models/domain.models';
+import { AdminSyncService } from './admin-sync.service';
 import { AdminService } from './admin.service';
 import {
   AdminLoginDto,
@@ -33,17 +34,30 @@ import {
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly adminSyncService: AdminSyncService,
+  ) {}
 
+  /** Email-only login, pending owner decision (Firebase Auth vs passcodes); see AdminService.loginStaff. */
   @Post('auth/login')
   login(@Body() dto: AdminLoginDto) {
     return this.adminService.loginStaff(dto);
   }
 
+  /** Local/E2E only: HOST_ADMIN, and refused (403) in production or Firestore mode. */
   @Post('reset')
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN')
   resetAllData() {
     return this.adminService.resetAllData();
+  }
+
+  @Get('sync')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN', 'CONCIERGE_STAFF')
+  sync() {
+    return this.adminSyncService.snapshot();
   }
 
   @Get('alerts')
@@ -125,13 +139,15 @@ export class AdminController {
   }
 
   @Post('catalog/experiences')
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN')
   createCatalogExperience(@Body() dto: CreateExperienceCatalogDto) {
     return this.adminService.createCatalogExperience(dto);
   }
 
   @Delete('catalog/experiences/:id')
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN')
   deleteCatalogExperience(@Param('id') id: string) {
     return this.adminService.deleteCatalogExperience(id);
   }
@@ -143,13 +159,15 @@ export class AdminController {
   }
 
   @Post('catalog/larder')
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN')
   createCatalogLarder(@Body() dto: CreateLarderCatalogDto) {
     return this.adminService.createCatalogLarder(dto);
   }
 
   @Delete('catalog/larder/:id')
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('HOST_ADMIN')
   deleteCatalogLarder(@Param('id') id: string) {
     return this.adminService.deleteCatalogLarder(id);
   }

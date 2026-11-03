@@ -11,13 +11,6 @@ const _dialogTitleStyle = TextStyle(
   color: KachavaAdminColors.obsidian,
 );
 
-/// Opens the modal dialog to register a new Sanctuary Villa.
-Future<void> showNewVillaDialog(
-        BuildContext context, AdminDashboardController controller) =>
-    showDialog<void>(
-        context: context,
-        builder: (_) => _NewVillaDialog(controller: controller));
-
 /// Opens the modal dialog to create a new Guest Stay & generate a Magic Link.
 Future<void> showNewStayDialog(
         BuildContext context, AdminDashboardController controller,
@@ -43,94 +36,6 @@ Future<void> showConfigureWifiDialog(BuildContext context,
         builder: (_) =>
             _ConfigureWifiDialog(controller: controller, stay: stay));
 
-class _NewVillaDialog extends StatefulWidget {
-  const _NewVillaDialog({required this.controller});
-  final AdminDashboardController controller;
-  @override
-  State<_NewVillaDialog> createState() => _NewVillaDialogState();
-}
-
-class _NewVillaDialogState extends State<_NewVillaDialog> {
-  final _nameCtrl = TextEditingController(),
-      _suiteCtrl = TextEditingController(),
-      _guestsCtrl = TextEditingController();
-  final _ssidCtrl = TextEditingController(),
-      _passCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    for (final c in [
-      _nameCtrl,
-      _suiteCtrl,
-      _guestsCtrl,
-      _ssidCtrl,
-      _passCtrl
-    ]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _nameCtrl.text.trim(), guests = _guestsCtrl.text.trim();
-    if (name.isEmpty) return;
-    widget.controller.createVilla(
-        villaName: name,
-        suiteType: _suiteCtrl.text.trim(),
-        maxGuests: guests.isEmpty ? '2 Guests' : guests,
-        wifiSsid: _ssidCtrl.text.trim(),
-        wifiPasscode: _passCtrl.text.trim());
-    Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isEs = widget.controller.isEs;
-    return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(
-          AdminI18n.tr(
-              isEs, 'Register New Sanctuary Villa', 'Registrar Nueva Villa'),
-          style: _dialogTitleStyle),
-      content: SizedBox(
-        width: 420,
-        child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _field(
-                const Key('new-villa-name-input'),
-                _nameCtrl,
-                AdminI18n.tr(
-                    isEs, 'Villa Name / Number', 'Nombre / Número de Villa'),
-                AdminI18n.tr(isEs, 'e.g. Villa 110', 'Ej. Villa 110')),
-            const SizedBox(height: 10),
-            _field(
-                const Key('new-villa-suite-input'),
-                _suiteCtrl,
-                AdminI18n.tr(isEs, 'Suite / Category', 'Categoría / Suite'),
-                AdminI18n.tr(
-                    isEs, 'e.g. Mayan Sanctuary', 'Ej. Mayan Sanctuary')),
-            const SizedBox(height: 10),
-            _field(
-                const Key('new-villa-guests-input'),
-                _guestsCtrl,
-                AdminI18n.tr(isEs, 'Capacity', 'Capacidad'),
-                AdminI18n.tr(isEs, 'e.g. 4 Guests', 'Ej. 4 Huéspedes')),
-            const SizedBox(height: 10),
-            _wifiInputsRow(isEs, const Key('new-villa-wifi-ssid-input'),
-                _ssidCtrl, const Key('new-villa-wifi-pass-input'), _passCtrl),
-          ]),
-        ),
-      ),
-      actions: _dialogActions(
-          context,
-          isEs,
-          const Key('confirm-create-villa-btn'),
-          AdminI18n.tr(isEs, 'Save Villa', 'Guardar Villa'),
-          _submit),
-    );
-  }
-}
-
 class _NewStayDialog extends StatefulWidget {
   const _NewStayDialog({required this.controller, this.initialVilla});
   final AdminDashboardController controller;
@@ -140,7 +45,7 @@ class _NewStayDialog extends StatefulWidget {
 }
 
 class _NewStayDialogState extends State<_NewStayDialog> {
-  late String _selectedVilla;
+  String? _selectedVilla;
   final _guestCtrl = TextEditingController(),
       _checkInCtrl = TextEditingController();
   final _checkOutCtrl = TextEditingController(),
@@ -161,9 +66,7 @@ class _NewStayDialogState extends State<_NewStayDialog> {
         villas.where((v) => !widget.controller.isVillaOccupied(v.displayLabel));
     _selectedVilla = free.isNotEmpty
         ? free.first.displayLabel
-        : (villas.isNotEmpty
-            ? villas.first.displayLabel
-            : 'Villa 101 — Palm Sanctuary');
+        : (villas.isNotEmpty ? villas.first.displayLabel : null);
   }
 
   @override
@@ -207,18 +110,22 @@ class _NewStayDialogState extends State<_NewStayDialog> {
         ctrl.text = '${m[picked.month - 1]} ${picked.day}, ${picked.year}');
   }
 
+  /// Villa, guest name, and both dates are required; nothing is defaulted.
+  bool get _isComplete =>
+      _selectedVilla != null &&
+      [_guestCtrl, _checkInCtrl, _checkOutCtrl]
+          .every((c) => c.text.trim().isNotEmpty);
+
+  void _onFieldChanged(String _) => setState(() {});
+
   Future<void> _submit() async {
-    final guestNames = _guestCtrl.text.trim();
-    if (guestNames.isEmpty) return;
+    final villa = _selectedVilla;
+    if (!_isComplete || villa == null) return;
     await widget.controller.createNewStay(
-        villaName: _selectedVilla,
-        guestNames: guestNames,
-        checkInDate: _checkInCtrl.text.trim().isEmpty
-            ? 'Nov 20, 2026'
-            : _checkInCtrl.text.trim(),
-        checkOutDate: _checkOutCtrl.text.trim().isEmpty
-            ? 'Nov 25, 2026'
-            : _checkOutCtrl.text.trim(),
+        villaName: villa,
+        guestNames: _guestCtrl.text.trim(),
+        checkInDate: _checkInCtrl.text.trim(),
+        checkOutDate: _checkOutCtrl.text.trim(),
         occasion: _occasionCtrl.text.trim(),
         wifiSsid: _ssidCtrl.text.trim(),
         wifiPasscode: _passCtrl.text.trim());
@@ -228,7 +135,7 @@ class _NewStayDialogState extends State<_NewStayDialog> {
   @override
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs,
-        occ = widget.controller.activeStayForVilla(_selectedVilla);
+        occ = widget.controller.activeStayForVilla(_selectedVilla ?? '');
     return AlertDialog(
       backgroundColor: KachavaAdminColors.surfacePaper,
       title: Text(
@@ -243,7 +150,7 @@ class _NewStayDialogState extends State<_NewStayDialog> {
           isEs,
           const Key('confirm-create-stay-btn'),
           AdminI18n.tr(isEs, 'Create & Generate Link', 'Crear y Generar Link'),
-          occ != null ? null : _submit),
+          (occ != null || !_isComplete) ? null : _submit),
     );
   }
 
@@ -258,28 +165,31 @@ class _NewStayDialogState extends State<_NewStayDialog> {
       _field(
           const Key('new-stay-guest-input'),
           _guestCtrl,
-          AdminI18n.tr(isEs, 'Guest Name(s)', 'Nombre(s) del Huésped'),
+          AdminI18n.tr(isEs, 'Guest Name(s) *', 'Nombre(s) del Huésped *'),
           AdminI18n.tr(isEs, 'e.g. Marcus & Elena Sterling',
-              'Ej. Marcus y Elena Sterling')),
+              'Ej. Marcus y Elena Sterling'),
+          onChanged: _onFieldChanged),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(
             child: _field(
                 const Key('new-stay-checkin-input'),
                 _checkInCtrl,
-                AdminI18n.tr(isEs, 'Check-In Date', 'Fecha Check-In'),
+                AdminI18n.tr(isEs, 'Check-In Date *', 'Fecha Check-In *'),
                 AdminI18n.tr(isEs, 'e.g. Nov 20, 2026', 'Ej. Nov 20, 2026'),
                 suffixIcon: const Icon(Icons.calendar_today, size: 16),
-                onTap: () => _pickDate(_checkInCtrl))),
+                onTap: () => _pickDate(_checkInCtrl),
+                onChanged: _onFieldChanged)),
         const SizedBox(width: 10),
         Expanded(
             child: _field(
                 const Key('new-stay-checkout-input'),
                 _checkOutCtrl,
-                AdminI18n.tr(isEs, 'Check-Out Date', 'Fecha Check-Out'),
+                AdminI18n.tr(isEs, 'Check-Out Date *', 'Fecha Check-Out *'),
                 AdminI18n.tr(isEs, 'e.g. Nov 25, 2026', 'Ej. Nov 25, 2026'),
                 suffixIcon: const Icon(Icons.calendar_today, size: 16),
-                onTap: () => _pickDate(_checkOutCtrl))),
+                onTap: () => _pickDate(_checkOutCtrl),
+                onChanged: _onFieldChanged)),
       ]),
       const SizedBox(height: 10),
       _field(
@@ -299,6 +209,9 @@ class _NewStayDialogState extends State<_NewStayDialog> {
       key: const Key('new-stay-villa-dropdown'),
       initialValue: _selectedVilla,
       isExpanded: true,
+      disabledHint: Text(
+          AdminI18n.tr(isEs, 'No villas yet', 'Aún no hay villas'),
+          style: const TextStyle(fontSize: 12)),
       decoration: InputDecoration(
           labelText: AdminI18n.tr(isEs, 'Select Villa', 'Seleccionar Villa'),
           border: const OutlineInputBorder()),
@@ -521,11 +434,14 @@ List<Widget> _dialogActions(BuildContext context, bool isEs, Key btnKey,
 
 Widget _field(
         Key fieldKey, TextEditingController ctrl, String label, String hint,
-        {Widget? suffixIcon, VoidCallback? onTap}) =>
+        {Widget? suffixIcon,
+        VoidCallback? onTap,
+        ValueChanged<String>? onChanged}) =>
     TextField(
         key: fieldKey,
         controller: ctrl,
         onTap: onTap,
+        onChanged: onChanged,
         decoration: InputDecoration(
             labelText: label,
             hintText: hint,

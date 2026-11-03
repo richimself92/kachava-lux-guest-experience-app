@@ -15,53 +15,12 @@ import {
   createSeededOperationalAlerts,
   createSeededStayAggregate,
 } from '../infrastructure/seed/sanctuary-seed.data';
+import { toFirestoreDocument } from '../infrastructure/repositories/firestore-document.mapper';
+import { STAYS_COLLECTION } from '../infrastructure/repositories/firestore-stay.repository';
 
-async function seedStayWithSubcollections(
-  db: Firestore,
-  stayDocId: string,
-  stay: StayAggregate,
-): Promise<void> {
-  const {
-    larderOrders,
-    experienceBookings,
-    conciergeRequests,
-    midstayFeedback,
-    folioItems,
-    ...rootFields
-  } = stay;
-
-  const stayRef = db.collection('stays').doc(stayDocId);
-  await stayRef.set({ ...rootFields, stayId: stayDocId }, { merge: true });
-
-  const batch = db.batch();
-  for (const item of larderOrders) {
-    batch.set(stayRef.collection('larder_orders').doc(item.orderItemId), {
-      ...item,
-      stayId: stayDocId,
-    });
-  }
-  for (const bk of experienceBookings) {
-    batch.set(stayRef.collection('experience_bookings').doc(bk.bookingId), {
-      ...bk,
-      stayId: stayDocId,
-    });
-  }
-  for (const req of conciergeRequests) {
-    batch.set(stayRef.collection('concierge_requests').doc(req.requestId), {
-      ...req,
-      stayId: stayDocId,
-    });
-  }
-  for (const fb of midstayFeedback) {
-    batch.set(stayRef.collection('midstay_feedback').doc(fb.feedbackId), {
-      ...fb,
-      stayId: stayDocId,
-    });
-  }
-  for (const fi of folioItems) {
-    batch.set(stayRef.collection('folio_items').doc(fi.folioItemId), fi);
-  }
-  await batch.commit();
+/** Stays are stored as one aggregate document per stay (see FirestoreStayRepository). */
+async function seedStayDocument(db: Firestore, stay: StayAggregate): Promise<void> {
+  await db.collection(STAYS_COLLECTION).doc(stay.stayId).set(toFirestoreDocument(stay));
 }
 
 async function seedRootCollections(db: Firestore): Promise<void> {
@@ -104,17 +63,11 @@ export async function runFirestoreSeed(): Promise<void> {
   const app = ensureFirebaseAdminApp();
   const db = getFirestore(app, databaseId);
 
-  const stayTemplate = createSeededStayAggregate();
-  await seedStayWithSubcollections(db, 'stay_villa_102_2026_10', stayTemplate);
-  await seedStayWithSubcollections(
-    db,
-    'stay_2026_11_villa102_miller',
-    stayTemplate,
-  );
+  await seedStayDocument(db, createSeededStayAggregate());
   await seedRootCollections(db);
 
   process.stdout.write(
-    `[Firestore Seed] Successfully seeded projects/${projectId}/databases/${databaseId} (stays, subcollections, staff_members, operational_alerts, catalogs).\n`,
+    `[Firestore Seed] Successfully seeded projects/${projectId}/databases/${databaseId} (stays, staff_members, operational_alerts, catalogs).\n`,
   );
 }
 

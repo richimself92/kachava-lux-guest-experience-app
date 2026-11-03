@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 
 void main() {
@@ -15,7 +16,8 @@ void main() {
       tester.binding.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, null);
     });
-    await tester.pumpWidget(const KachavaAdminApp());
+    await tester
+        .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
     await tester.pumpAndSettle();
   }
 
@@ -26,7 +28,8 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    await tester.pumpWidget(const KachavaAdminApp());
+    await tester
+        .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
     await tester.pumpAndSettle();
   }
 
@@ -171,6 +174,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('new-stay-guest-input')),
           'Marcus & Elena Sterling');
+      await tester.enterText(
+          find.byKey(const Key('new-stay-checkin-input')), 'Dec 1, 2026');
+      await tester.enterText(
+          find.byKey(const Key('new-stay-checkout-input')), 'Dec 4, 2026');
+      await tester.pump();
       await tester.tap(find.byKey(const Key('confirm-create-stay-btn')));
       await tester.pumpAndSettle();
       expect(find.textContaining('Marcus & Elena Sterling'), findsWidgets);
@@ -184,26 +192,19 @@ void main() {
       expect(find.text('FREE VILLA / CHECKED OUT'), findsWidgets);
     });
 
-    testWidgets('test_admin_stays_create_villa_locale_toggle_and_chime',
+    testWidgets('test_admin_stays_no_local_villa_creation_locale_and_chime',
         (tester) async {
       await pumpDesktopApp(tester);
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('create-new-villa-btn')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-          find.byKey(const Key('new-villa-name-input')), 'Villa 110');
-      await tester.enterText(
-          find.byKey(const Key('new-villa-suite-input')), 'Mayan Sanctuary');
-      await tester.tap(find.byKey(const Key('confirm-create-villa-btn')));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Villa 110 — Mayan Sanctuary'), findsWidgets);
+      // No villas endpoint yet: creating a villa locally would fake success.
+      expect(find.byKey(const Key('create-new-villa-btn')), findsNothing);
 
       await tester.tap(find.byKey(const Key('admin-locale-toggle-btn')));
       await tester.pumpAndSettle();
       expect(find.text('✓ ES'), findsOneWidget);
-      expect(find.text('+ Nueva Villa'), findsOneWidget);
+      expect(find.text('INVENTARIO DE VILLAS (8 VILLAS)'), findsOneWidget);
       expect(find.text('HOST ADMIN · PANEL DE CONTROL'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('test-alert-sound-btn')));
@@ -309,7 +310,8 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      await tester.pumpWidget(const KachavaAdminApp());
+      await tester
+          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('workspace-admin-overview')), findsOneWidget);
       for (final tabId in [

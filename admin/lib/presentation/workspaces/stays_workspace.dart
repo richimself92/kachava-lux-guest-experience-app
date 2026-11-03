@@ -83,27 +83,17 @@ class StaysWorkspace extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: KachavaAdminColors.borderLimestone)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                  AdminI18n.tr(isEs, 'SANCTUARY VILLAS INVENTORY (8 VILLAS)',
-                      'INVENTARIO DE VILLAS (8 VILLAS)'),
-                  style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: KachavaAdminColors.mutedBronze)),
-              OutlinedButton.icon(
-                key: const Key('create-new-villa-btn'),
-                onPressed: () => showNewVillaDialog(context, controller),
-                icon: const Icon(Icons.add_home_work_outlined, size: 15),
-                label: Text(AdminI18n.tr(isEs, '+ New Villa', '+ Nueva Villa')),
-              ),
-            ]),
+        // Villas cannot be created until the API exposes a villas endpoint.
+        Text(
+            AdminI18n.tr(
+                isEs,
+                'SANCTUARY VILLAS INVENTORY (${controller.villas.length} VILLAS)',
+                'INVENTARIO DE VILLAS (${controller.villas.length} VILLAS)'),
+            style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: KachavaAdminColors.mutedBronze)),
         const SizedBox(height: 10),
         Wrap(
             spacing: 8,
@@ -171,7 +161,8 @@ class StaysWorkspace extends StatelessWidget {
     final isEs = controller.isEs;
     final titleColumn =
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('${stay.villaName} · ${stay.guestNames}',
+      Text(
+          '${AdminI18n.orDash(stay.villaName)} · ${AdminI18n.orDash(stay.guestNames)}',
           style: const TextStyle(
               fontFamily: 'Libre Baskerville',
               fontSize: 17,
@@ -179,7 +170,7 @@ class StaysWorkspace extends StatelessWidget {
               color: KachavaAdminColors.obsidian)),
       const SizedBox(height: 4),
       Text(
-          '${stay.checkInDate} – ${stay.checkOutDate} (${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")}) · HOST ADMIN',
+          '${AdminI18n.orDash(stay.checkInDate)} – ${AdminI18n.orDash(stay.checkOutDate)} (${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")}) · HOST ADMIN',
           style: const TextStyle(
               fontSize: 12, color: KachavaAdminColors.neutralMuted)),
     ]);
@@ -231,7 +222,8 @@ class StaysWorkspace extends StatelessWidget {
               onPressed: () => controller.openInspector(AdminDrawerSelection(
                   type: InspectorRecordType.stay,
                   recordId: stay.stayId,
-                  title: '${stay.villaName} — ${stay.guestNames}',
+                  title:
+                      '${AdminI18n.orDash(stay.villaName)} — ${AdminI18n.orDash(stay.guestNames)}',
                   subtitle: 'Flight ${stay.transfer.inboundFlight}')),
               child:
                   Text(AdminI18n.tr(isEs, 'Assign Drawer', 'Cambiar Estado'))),
@@ -253,20 +245,22 @@ class StaysWorkspace extends StatelessWidget {
           children: [
             const Icon(Icons.vpn_key,
                 size: 16, color: KachavaAdminColors.zapotePrimary),
-            SelectableText(stay.magicLinkUrl,
-                key: Key('magic-link-text-${stay.stayId}'),
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: KachavaAdminColors.zapotePrimary)),
-            ElevatedButton(
-                key: Key('copy-magic-link-${stay.stayId}'),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: KachavaAdminColors.zapotePrimary,
-                    foregroundColor: Colors.white),
-                onPressed: () => controller.copyMagicLink(stay),
-                child:
-                    Text(AdminI18n.tr(isEs, 'Copy Magic Link', 'Copiar Link'))),
+            if (stay.hasGuestLink) ...[
+              SelectableText(stay.magicLinkUrl,
+                  key: Key('magic-link-text-${stay.stayId}'),
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: KachavaAdminColors.zapotePrimary)),
+              ElevatedButton(
+                  key: Key('copy-magic-link-${stay.stayId}'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: KachavaAdminColors.zapotePrimary,
+                      foregroundColor: Colors.white),
+                  onPressed: () => controller.copyMagicLink(stay),
+                  child: Text(
+                      AdminI18n.tr(isEs, 'Copy Magic Link', 'Copiar Link'))),
+            ],
             OutlinedButton(
                 key: Key('rotate-magic-link-${stay.stayId}'),
                 onPressed: () => controller.regenerateMagicLink(stay.stayId),
@@ -362,12 +356,13 @@ class StaysWorkspace extends StatelessWidget {
         runSpacing: 6,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-              '📶 Wi-Fi: ${stay.wifiSsid}  (${AdminI18n.tr(isEs, "Passcode", "Contraseña")}: ${stay.wifiPasscode})',
-              style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: KachavaAdminColors.zapotePrimary)),
+          if (stay.wifiSsid.isNotEmpty)
+            Text(
+                '📶 Wi-Fi: ${stay.wifiSsid}  (${AdminI18n.tr(isEs, "Passcode", "Contraseña")}: ${stay.wifiPasscode})',
+                style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: KachavaAdminColors.zapotePrimary)),
           OutlinedButton.icon(
             key: Key('edit-wifi-btn-${stay.stayId}'),
             onPressed: () => showConfigureWifiDialog(context, controller, stay),
@@ -397,7 +392,7 @@ class StaysWorkspace extends StatelessWidget {
                   isEs,
                   '✈️ Airport Transfer: Guest has not registered flight details yet',
                   '✈️ Traslado: El huésped aún no ha registrado datos de su vuelo')
-              : '${AdminI18n.tr(isEs, "Airport Transfer", "Traslado Aeropuerto")} · ${t.assignedChauffeurName.isEmpty ? "HOST ADMIN" : t.assignedChauffeurName} · ${AdminI18n.statusLabel(t.transferStatus, isEs)}',
+              : '${AdminI18n.tr(isEs, "Airport Transfer", "Traslado Aeropuerto")} · ${AdminI18n.staffLabel(t.assignedChauffeurName, isEs)} · ${AdminI18n.statusLabel(t.transferStatus, isEs)}',
           style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,

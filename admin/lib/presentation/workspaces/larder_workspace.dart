@@ -118,16 +118,22 @@ class LarderWorkspace extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildOrderHeader(order),
         const SizedBox(height: 6),
-        Text('${order.targetDeadline} · ${order.assignedStaffName}',
+        Text(
+            [
+              order.targetDeadline,
+              AdminI18n.staffLabel(order.assignedStaffName, isEs)
+            ].where((p) => p.isNotEmpty).join(' · '),
             style: const TextStyle(
                 fontSize: 12, color: KachavaAdminColors.neutralMuted)),
         const SizedBox(height: 12),
         ...order.items.map((item) => _buildPlacementItemRow(item, isEs)),
-        const SizedBox(height: 10),
-        Text(
-            '${AdminI18n.tr(isEs, "Complimentary Staples", "Cortesías Incluidas")}: ${order.complimentaryStaples.join(' · ')}',
-            style: const TextStyle(
-                fontSize: 11, color: KachavaAdminColors.neutralMuted)),
+        if (order.complimentaryStaples.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+              '${AdminI18n.tr(isEs, "Complimentary Staples", "Cortesías Incluidas")}: ${order.complimentaryStaples.join(' · ')}',
+              style: const TextStyle(
+                  fontSize: 11, color: KachavaAdminColors.neutralMuted)),
+        ],
         const SizedBox(height: 14),
         _buildOrderActions(order, isEs),
       ]),
@@ -143,7 +149,8 @@ class LarderWorkspace extends StatelessWidget {
           alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('${order.villaName} · ${order.guestNames}',
+            Text(
+                '${AdminI18n.orDash(order.villaName)} · ${AdminI18n.orDash(order.guestNames)}',
                 style: const TextStyle(
                     fontFamily: 'Libre Baskerville',
                     fontSize: 16,
@@ -171,7 +178,9 @@ class LarderWorkspace extends StatelessWidget {
       OutlinedButton(
         key: Key('assign-larder-${order.orderId}'),
         onPressed: () => controller.updateLarderOrderStatus(
-            orderId: order.orderId, status: 'Assigned', staffId: 'staff_sofia'),
+            orderId: order.orderId,
+            status: 'Assigned',
+            staffId: controller.activeStaff?.staffId ?? ''),
         child:
             Text(AdminI18n.tr(isEs, 'Assign HOST ADMIN', 'Asignar HOST ADMIN')),
       ),

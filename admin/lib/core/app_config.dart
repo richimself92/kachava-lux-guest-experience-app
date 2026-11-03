@@ -12,13 +12,8 @@ class AdminAppConfig {
     defaultValue: 'http://localhost:3001/api/v1/admin',
   );
 
+  /// Required: no default. Validated at startup by `GuestPortalLink.configure`.
   static const String guestPortalUrl = String.fromEnvironment(
     'GUEST_PORTAL_URL',
-    defaultValue: 'http://localhost:3000',
-  );
-
-  static const String sanctuaryPortalUrl = String.fromEnvironment(
-    'SANCTUARY_PORTAL_URL',
-    defaultValue: 'http://localhost:3000',
   );
 }

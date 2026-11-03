@@ -9,6 +9,10 @@ import 'package:kachava_guest_portal/core/constants/screen_id.dart';
 import 'package:kachava_guest_portal/data/repositories/api_sanctuary_repository.dart';
 import 'package:kachava_guest_portal/domain/entities/concierge_folio_entities.dart';
 import 'package:kachava_guest_portal/domain/entities/stay_entities.dart';
+import 'package:kachava_guest_portal/domain/repositories/sanctuary_repository.dart';
+
+import 'support/catalog_fixture.dart';
+import 'support/fake_sanctuary_repository.dart';
 
 void main() {
   group('MagicLinkParser Unit Tests', () {
@@ -40,7 +44,9 @@ void main() {
 
     setUp(() async {
       controller = SanctuaryController(
-        repository: ApiSanctuaryRepository(enableNetwork: false),
+        repository: FakeSanctuaryRepository.villa102()
+          ..onStepUp =
+              (answer) async => answer == 'Miller' ? 'srv-token' : null,
         soundscape: SanctuarySoundscapeSynthesizer(),
         initialUri: Uri.parse(
           'https://kachavalux.com/?guestId=550e8400-e29b-41d4-a716-446655440000',
@@ -95,7 +101,8 @@ void main() {
       noParamCtrl.dispose();
 
       final missingBackendCtrl = SanctuaryController(
-        repository: ApiSanctuaryRepository(enableNetwork: false),
+        repository: ApiSanctuaryRepository(
+            httpClient: MockClient((_) async => http.Response('{}', 404))),
         soundscape: SanctuarySoundscapeSynthesizer(),
         requireExplicitGuestId: true,
         initialUri: Uri.parse(
@@ -145,7 +152,7 @@ void main() {
         equals(ConciergeStage.assigned),
       );
 
-      controller.sendChatMessage('Thank you HOST ADMIN!');
+      expect(await controller.sendChatMessage('Thank you HOST ADMIN!'), isTrue);
       expect(
           controller.chatMessages.last.text, equals('Thank you HOST ADMIN!'));
     });
@@ -173,8 +180,8 @@ void main() {
       final unverifiedCheckout = await controller.completeExpressCheckout();
       expect(unverifiedCheckout, isFalse);
 
-      expect(controller.verifyStepUp('999'), isFalse);
-      expect(controller.verifyStepUp('Miller'), isTrue);
+      expect(await controller.verifyStepUp('999'), isFalse);
+      expect(await controller.verifyStepUp('Miller'), isTrue);
       expect(controller.isStepUpVerified, isTrue);
 
       final verifiedCheckout = await controller.completeExpressCheckout();
@@ -234,11 +241,13 @@ void main() {
 
       final repo = ApiSanctuaryRepository(
           baseUrl: 'http://localhost:3001/api/v1', httpClient: mockClient);
-      final snapshot = await repo.loadSanctuary('uuid-102');
+      final snapshot =
+          ((await repo.fetchLiveSanctuary('uuid-102')) as SanctuaryFetched)
+              .snapshot;
       expect(snapshot.stay.lifecycleStatus,
           equals(StayLifecycleStatus.preArrival));
       expect(snapshot.transport.flightNumber, equals('AA 999'));
-      expect(await repo.verifyStepUpChallenge('uuid-102', lastName: 'Miller'),
+      expect(await repo.verifyStepUpChallenge('uuid-102', 'Miller'),
           equals('hmac-token-102'));
 
       await repo.saveLarderOrder('uuid-102', snapshot.larderItems);
@@ -281,7 +290,9 @@ void main() {
           ));
       final repo = ApiSanctuaryRepository(
           baseUrl: 'http://localhost:3001/api/v1', httpClient: mockClient);
-      final snapshot = await repo.loadSanctuary('uuid-106');
+      final snapshot =
+          ((await repo.fetchLiveSanctuary('uuid-106')) as SanctuaryFetched)
+              .snapshot;
       expect(snapshot.stay.guestNames, equals('Juan & Sofia'));
       expect(snapshot.stay.primaryGuestName, equals('Juan'));
       expect(snapshot.stay.lastName, equals('sofia'));
@@ -400,7 +411,9 @@ void main() {
     test(
         'test_milestone11_exactNightsAndStayBounds_parsesOct19ToOct22As3Nights',
         () async {
-      final mockClient = MockClient((request) async => http.Response(
+      final mockClient = MockClient((request) async =>
+          villa102CatalogResponse(request) ??
+          http.Response(
             jsonEncode({
               'success': true,
               'data': {
@@ -512,6 +525,8 @@ void main() {
         () async {
       var orderDelivered = false;
       final mockClient = MockClient((request) async {
+        final catalog = villa102CatalogResponse(request);
+        if (catalog != null) return catalog;
         if (request.method == 'PUT' && request.url.path.endsWith('/larder')) {
           return http.Response(
             jsonEncode({'success': true, 'data': {}}),
@@ -585,7 +600,7 @@ void main() {
     test('test_milestone11_bookingsLockOnceRequestedAndWaitForHostApproval',
         () async {
       final ctrl = SanctuaryController(
-        repository: ApiSanctuaryRepository(enableNetwork: false),
+        repository: FakeSanctuaryRepository.villa102(),
         soundscape: SanctuarySoundscapeSynthesizer(),
       );
       await ctrl.initialize();

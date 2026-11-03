@@ -1,7 +1,31 @@
-import '../../domain/entities/experience_entities.dart';
+import 'package:kachava_guest_portal/domain/entities/experience_entities.dart';
 
-/// Seeded experiences, yacht packages, and chef tasting menus for Villa 102.
+/// Test-only fixture: experiences, yacht packages and chef tasting menus of
+/// the fictitious Villa 102 stay. Never used by production code.
 abstract final class Villa102ExperiencesSeed {
+  /// Pre-selected yacht request form values (no guest data).
+  static const YachtCharterConfig defaultYachtCharter = YachtCharterConfig(
+    vesselModel: 'Galeon 470 Sky / 500 FLY',
+    selectedPackageId: 'half-day',
+    selectedDestinationId: 'isla-mujeres',
+    selectedDate: '',
+    departureWindow: 'Morning Sail · 09:30 AM – 1:30 PM',
+    guestCount: 2,
+    selectedAddOns: ['Chef Ceviche & Open Bar'],
+    isConfirmed: false,
+  );
+
+  /// Pre-selected private dining request form values (no guest data).
+  static const DiningReservation defaultDiningReservation = DiningReservation(
+    selectedMenuId: 'fuego',
+    selectedEvening: '',
+    serviceTime: 'Degustation 8:00 PM',
+    guestCount: 2,
+    tableSetting: 'Oceanfront Pool Terrace',
+    dietaryNotes: '',
+    isConfirmed: false,
+  );
+
   static List<ExperienceItem> buildExperiences() {
     return const [
       ExperienceItem(

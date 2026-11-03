@@ -5,6 +5,7 @@ import '../../core/admin_i18n.dart';
 import '../../core/admin_theme.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
+import 'drawer_staff_dropdown.dart';
 
 /// Right 420px Slide-Over Inspector & Status Update Drawer (or mobile bottom sheet).
 class SlideOverInspectorDrawer extends StatefulWidget {
@@ -23,7 +24,7 @@ class SlideOverInspectorDrawer extends StatefulWidget {
 }
 
 class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
-  late String _selectedStaffId;
+  String? _selectedStaffId;
   late String _selectedStatus;
 
   @override
@@ -41,28 +42,25 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
   }
 
   void _syncDefaults() {
-    final staffList = widget.controller.staffDirectory;
+    final sel = widget.selection;
     _selectedStaffId =
-        staffList.isNotEmpty ? staffList.first.staffId : 'staff_eduardo';
-    _selectedStatus = 'Confirmed';
+        DrawerStaffDropdown.assignedStaffId(widget.controller, sel);
+    _selectedStatus = switch (sel.type) {
+      InspectorRecordType.booking => _bookingStatusDefault(sel.recordId),
+      InspectorRecordType.larder => 'Stocked in Villa',
+      InspectorRecordType.stay => 'En Route',
+      InspectorRecordType.alert ||
+      InspectorRecordType.concierge =>
+        'In Progress',
+    };
+  }
 
-    if (widget.selection.type == InspectorRecordType.booking) {
-      final bkg = widget.controller.bookings.firstWhere(
-        (b) => b.bookingId == widget.selection.recordId,
-        orElse: () => widget.controller.bookings.first,
-      );
-      _selectedStaffId = bkg.assignedStaffId;
-      _selectedStatus = bkg.status == 'Requested' ? 'Confirmed' : bkg.status;
-    } else if (widget.selection.type == InspectorRecordType.larder) {
-      _selectedStaffId = 'staff_sofia';
-      _selectedStatus = 'Stocked in Villa';
-    } else if (widget.selection.type == InspectorRecordType.stay) {
-      _selectedStaffId = 'staff_carlos';
-      _selectedStatus = 'En Route';
-    } else if (widget.selection.type == InspectorRecordType.alert ||
-        widget.selection.type == InspectorRecordType.concierge) {
-      _selectedStatus = 'In Progress';
-    }
+  String _bookingStatusDefault(String bookingId) {
+    final status = widget.controller.bookings
+        .where((b) => b.bookingId == bookingId)
+        .firstOrNull
+        ?.status;
+    return (status == null || status == 'Requested') ? 'Confirmed' : status;
   }
 
   List<String> _statusOptionsForType(InspectorRecordType type) {
@@ -94,13 +92,13 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
         await ctrl.updateLarderOrderStatus(
           orderId: sel.recordId,
           status: _selectedStatus,
-          staffId: _selectedStaffId,
+          staffId: _selectedStaffId ?? '',
         );
         break;
       case InspectorRecordType.stay:
         await ctrl.updateTransferDispatch(
           stayId: sel.recordId,
-          chauffeurId: _selectedStaffId,
+          chauffeurId: _selectedStaffId ?? '',
           transferStatus: _selectedStatus,
         );
         break;
@@ -185,35 +183,13 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            key: const Key('drawer-staff-dropdown'),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: KachavaAdminColors.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: KachavaAdminColors.borderLimestone),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.verified_user_outlined,
-                  size: 16,
-                  color: KachavaAdminColors.zapotePrimary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  AdminI18n.tr(
-                    isEs,
-                    'Assigned to: HOST ADMIN',
-                    'Responsable: HOST ADMIN',
-                  ),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: KachavaAdminColors.obsidian,
-                  ),
-                ),
-              ],
+          KeyedSubtree(
+            key: ValueKey('drawer-staff-${widget.selection.recordId}'),
+            child: DrawerStaffDropdown(
+              staff: widget.controller.staffDirectory,
+              value: _selectedStaffId,
+              isEs: isEs,
+              onChanged: (id) => setState(() => _selectedStaffId = id),
             ),
           ),
           const SizedBox(height: 14),

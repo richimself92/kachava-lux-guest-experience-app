@@ -158,7 +158,7 @@ class ExperiencesWorkspace extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${booking.villaName} · ${booking.guestNames} · ${booking.scheduledTime}',
+            '${AdminI18n.orDash(booking.villaName)} · ${AdminI18n.orDash(booking.guestNames)} · ${AdminI18n.orDash(booking.scheduledTime)}',
             style: const TextStyle(
                 fontSize: 12, color: KachavaAdminColors.neutralMuted),
           ),
@@ -241,7 +241,7 @@ class ExperiencesWorkspace extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          '${AdminI18n.tr(isEs, "Assigned", "Asignado")}: ${booking.assignedStaffName}',
+          '${AdminI18n.tr(isEs, "Assigned", "Asignado")}: ${AdminI18n.staffLabel(booking.assignedStaffName, isEs)}',
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         ElevatedButton.icon(
@@ -252,7 +252,6 @@ class ExperiencesWorkspace extends StatelessWidget {
           ),
           onPressed: () => controller.assignAndNotifyBooking(
             bookingId: booking.bookingId,
-            staffId: controller.activeStaff.staffId,
             status: 'CONFIRMED',
           ),
           icon: const Icon(Icons.check_circle_outline, size: 15),
@@ -319,7 +318,6 @@ class _CancelBookingDialogState extends State<_CancelBookingDialog> {
     final reason = _reasonCtrl.text.trim();
     await widget.controller.assignAndNotifyBooking(
       bookingId: widget.booking.bookingId,
-      staffId: widget.controller.activeStaff.staffId,
       status: 'CANCELLED',
       cancellationReason: reason.isEmpty
           ? AdminI18n.tr(

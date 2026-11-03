@@ -1,17 +1,22 @@
 import { expect, Page, test } from '@playwright/test';
 import {
   ADMIN_DASHBOARD_URL,
+  ADMIN_STAFF_EMAIL,
   API_BASE_URL,
   assertNoHorizontalOverflow,
   attachErrorMonitor,
   browserFetchJson,
   captureDualScreenshot,
   clickSemanticsByText,
+  clickSemanticsExact,
   ensureActiveVilla102Stay,
   fetchAdminAuthToken,
   fillSemanticsTextField,
   GUEST_PORTAL_URL,
-  installAdminLoginNormalizer,
+  prepareFreeVilla,
+  signInAsStaff,
+  waitForAdminSyncCycles,
+  submitNewStayDialog,
   readSemanticsSnapshot,
   waitForFlutterSemantics,
 } from './e2e-helpers';
@@ -28,36 +33,50 @@ async function selectAdminTabAndVerify(
 }
 
 test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002)', () => {
-  test('E2E-A01: Desktop 1440x900 Command Center & Zero-401 Live Backend Handshake', async ({
+  test('E2E-A01: Staff Sign-In gate, single /admin/sync poll every 5s & Command Center', async ({
     page,
   }) => {
     // Arrange
     await page.setViewportSize({ width: 1440, height: 900 });
-    await installAdminLoginNormalizer(page);
     const monitor = attachErrorMonitor(page);
-    const adminStatuses: Record<string, number> = {};
+    const adminHits: Array<{ endpoint: string; status: number; at: number }> = [];
     page.on('response', (res) => {
       if (res.url().includes('/api/v1/admin/')) {
-        const endpoint = res.url().split('/api/v1/admin/')[1].split('?')[0];
-        adminStatuses[endpoint] = res.status();
+        adminHits.push({
+          endpoint: res.url().split('/api/v1/admin/')[1].split('?')[0],
+          status: res.status(),
+          at: Date.now(),
+        });
       }
     });
-    // Act
+    // Act — the app opens on the Staff Sign-In screen, not on the dashboard
     await page.goto(ADMIN_DASHBOARD_URL);
-    const initialSemantics = await waitForFlutterSemantics(page, 'KACHAVA LUX');
-    await expect.poll(() => Object.keys(adminStatuses).length, { timeout: 15000 }).toBeGreaterThanOrEqual(7);
-    // Assert
+    const gate = await waitForFlutterSemantics(page, 'Staff Sign-In');
+    expect(gate).toContain('Staff email');
+    expect(gate).not.toContain('COMMAND CENTER');
+    expect(adminHits.filter((h) => h.endpoint !== 'auth/login')).toEqual([]);
+    await captureDualScreenshot(page, 'e2e-admin-sign-in.png');
+    expect(await fillSemanticsTextField(page, 'Staff email', ADMIN_STAFF_EMAIL)).toBe(true);
+    expect(await clickSemanticsExact(page, 'Sign in')).toBe(true);
+    const initialSemantics = await waitForFlutterSemantics(page, 'HOST ADMIN · COMMAND CENTER');
+    // Assert — login 201, then ONE aggregated sync request every ~5s
+    await expect.poll(() => adminHits.filter((h) => h.endpoint === 'sync').length, { timeout: 30000 }).toBeGreaterThanOrEqual(3);
     expect(initialSemantics).toContain('HOST ADMIN');
     expect(initialSemantics).toContain('EN | ES');
-    expect(initialSemantics).toContain('🔔 Test 10s');
-    expect(adminStatuses['auth/login']).toBe(201);
-    for (const key of ['staff', 'alerts', 'stays', 'bookings', 'larder-orders', 'concierge-requests']) {
-      expect(adminStatuses[key]).toBe(200);
+    expect(adminHits.find((h) => h.endpoint === 'auth/login')?.status).toBe(201);
+    const syncs = adminHits.filter((h) => h.endpoint === 'sync');
+    expect(syncs.every((h) => h.status === 200)).toBe(true);
+    const gaps = syncs.slice(1).map((h, i) => h.at - syncs[i].at);
+    for (const gap of gaps) {
+      expect(gap).toBeGreaterThanOrEqual(3500);
+      expect(gap).toBeLessThanOrEqual(8000);
     }
-    expect(Object.values(adminStatuses).filter((s) => s === 401)).toEqual([]);
+    const legacyPolled = adminHits.filter((h) => ['alerts', 'stays', 'bookings', 'larder-orders', 'concierge-requests'].includes(h.endpoint));
+    expect(legacyPolled).toEqual([]);
+    expect(adminHits.filter((h) => h.endpoint === 'staff').length).toBeLessThanOrEqual(1); // one-time roster load, not polled
+    expect(adminHits.filter((h) => h.status === 401 || h.status === 429)).toEqual([]);
     await assertNoHorizontalOverflow(page);
     await captureDualScreenshot(page, 'e2e-admin-overview-desktop.png');
-    // Verify EN | ES bilingual toggle & 10s Alert button in Top Command Bar
     expect(await clickSemanticsByText(page, 'EN | ES')).toBe(true);
     await waitForFlutterSemantics(page, 'Villas Ocupadas');
     expect(await clickSemanticsByText(page, 'ES | EN')).toBe(true);
@@ -68,15 +87,26 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     expect([...monitor.pageErrors, ...monitor.consoleErrors, ...monitor.overflowErrors]).toEqual([]);
   });
 
-  test('E2E-A02: Zero-State Reset, Empty Dialogs, 2s Poll Persistence & All 6 Admin Workspaces', async ({
+  test('E2E-A01b: Staff Sign-In rejects an unknown staff email and stays on the gate', async ({ page }) => {
+    // Arrange
+    await page.goto(ADMIN_DASHBOARD_URL);
+    await waitForFlutterSemantics(page, 'Staff Sign-In');
+    // Act
+    expect(await fillSemanticsTextField(page, 'Staff email', 'intruder@example.com')).toBe(true);
+    expect(await clickSemanticsExact(page, 'Sign in')).toBe(true);
+    // Assert
+    const snap = await waitForFlutterSemantics(page, 'Sign-in rejected');
+    expect(snap).toContain('Staff Sign-In');
+    expect(snap).not.toContain('COMMAND CENTER');
+  });
+
+  test('E2E-A02: Zero-State Reset, UI Stay Creation, Poll Persistence & All 6 Admin Workspaces', async ({
     page,
   }) => {
     // Arrange — Reset backend to clean zero-state (0 stays, 0 alerts, 8 FREE villas)
     await page.setViewportSize({ width: 1440, height: 900 });
-    await installAdminLoginNormalizer(page);
     const monitor = attachErrorMonitor(page);
-    await page.goto(ADMIN_DASHBOARD_URL);
-    await waitForFlutterSemantics(page, 'KACHAVA LUX');
+    await signInAsStaff(page);
     const token = await fetchAdminAuthToken(page);
     const authHeader = { Authorization: `Bearer ${token}` };
     const resetRes = await browserFetchJson(page, `${API_BASE_URL}/admin/reset`, 'POST', {}, authHeader);
@@ -87,25 +117,17 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     expect(((alertsAfterReset.body.data as Record<string, unknown>).alerts as unknown[]).length).toBe(0);
     // Act & Assert — Navigate to Tab 2 (2. Villas, Guests & Magic Links) & verify 8 FREE villas
     await selectAdminTabAndVerify(page, '2. Villas, Guests & Magic Links', 'All 8 Villas are FREE');
-    expect(await clickSemanticsByText(page, '+ New Villa')).toBe(true);
-    await waitForFlutterSemantics(page, 'Register New Sanctuary Villa');
-    expect(await fillSemanticsTextField(page, 'Villa Name / Number', 'Villa 110')).toBe(true);
-    expect(await fillSemanticsTextField(page, 'Suite / Category', 'Mayan Sanctuary')).toBe(true);
-    expect(await clickSemanticsByText(page, 'Save Villa')).toBe(true);
-    await waitForFlutterSemantics(page, 'Villa 110 — Mayan Sanctuary');
-    expect(await clickSemanticsByText(page, '+ New Guest Stay')).toBe(true);
-    await waitForFlutterSemantics(page, 'New Guest Stay & Magic Link');
-    expect(await fillSemanticsTextField(page, 'Guest Name(s)', 'Marcus & Elena Sterling')).toBe(true);
-    expect(await clickSemanticsByText(page, 'Create & Generate Link')).toBe(true);
+    // The console lists only server-known villas: prepare one free villa, then create the stay through the UI
+    await prepareFreeVilla(page, 'villa-110', 'Villa-110');
+    await submitNewStayDialog(page, 'Villa-110', 'Marcus & Elena Sterling');
     const staySemantics = await waitForFlutterSemantics(page, 'Marcus & Elena Sterling');
-    expect(staySemantics).toContain('OPERATIONS NOTIFICATION · HOST ADMIN');
-    expect(staySemantics).not.toContain('INCOMING GUEST UPDATE · LIVE ALERT (10S CHIME ACTIVE)');
     expect(staySemantics).toContain('GUEST COMFORT, SCENT, DIET, ALLERGIES & NOTES');
     expect(staySemantics).toContain('Edit Wi-Fi');
     expect(staySemantics).toContain('Airport Transfer: Guest has not registered flight details yet');
-    expect(await clickSemanticsByText(page, 'Mute / Dismiss')).toBe(true);
-    // Verify stay persists across 2-second background poll with 0 self-alerts
-    await page.waitForTimeout(2500);
+    expect(staySemantics).not.toContain('Alex & Sarah');
+    expect(staySemantics).not.toContain('Miller');
+    // Verify the stay persists across two 5-second /admin/sync cycles with 0 self-alerts
+    await waitForAdminSyncCycles(page, 2);
     expect(await readSemanticsSnapshot(page)).toContain('Marcus & Elena Sterling');
     const postCreateAlerts = await browserFetchJson(page, `${API_BASE_URL}/admin/alerts`, 'GET', undefined, authHeader);
     expect(((postCreateAlerts.body.data as Record<string, unknown>).alerts as unknown[]).length).toBe(0);
@@ -127,11 +149,9 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     // Arrange — Create fresh stay & open both Admin and Guest contexts
     const adminPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     const guestPage = await browser.newPage({ viewport: { width: 430, height: 932 } });
-    await installAdminLoginNormalizer(adminPage);
     const adminMon = attachErrorMonitor(adminPage);
     const guestMon = attachErrorMonitor(guestPage);
-    await adminPage.goto(ADMIN_DASHBOARD_URL);
-    await waitForFlutterSemantics(adminPage, 'KACHAVA LUX');
+    await signInAsStaff(adminPage);
     const token = await fetchAdminAuthToken(adminPage);
     const authHeader = { Authorization: `Bearer ${token}` };
     const createRes = await browserFetchJson(
@@ -227,10 +247,9 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     // Arrange — Open Guest & Admin Browser Contexts at 768x1024 Tablet Breakpoint
     const guestPage = await browser.newPage({ viewport: { width: 768, height: 1024 } });
     const adminPage = await browser.newPage({ viewport: { width: 768, height: 1024 } });
-    await installAdminLoginNormalizer(adminPage);
     const guestMon = attachErrorMonitor(guestPage);
     const adminMon = attachErrorMonitor(adminPage);
-    await adminPage.goto(ADMIN_DASHBOARD_URL);
+    await signInAsStaff(adminPage);
     await waitForFlutterSemantics(adminPage, 'SANCTUARY COMMAND CENTER');
     const active102 = await ensureActiveVilla102Stay(adminPage);
     await guestPage.goto(`${GUEST_PORTAL_URL}/?guestId=${active102.guestUuid}`);

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
+import '../../core/i18n/guest_feedback_i18n.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 
-/// Zero-Password Step-Up Verification Modal confirming Villa Number (`102`)
-/// or Primary Guest Last Name (`Miller`) prior to sensitive actions.
+/// Zero-password step-up modal: the server checks the guest's villa number or
+/// last name and issues a step-up token before sensitive actions.
 class StepUpVerificationDialog extends StatefulWidget {
   const StepUpVerificationDialog({
     super.key,
@@ -41,6 +42,7 @@ class StepUpVerificationDialog extends StatefulWidget {
 class _StepUpVerificationDialogState extends State<StepUpVerificationDialog> {
   final TextEditingController _inputController = TextEditingController();
   String? _errorText;
+  bool _isVerifying = false;
 
   @override
   void dispose() {
@@ -49,23 +51,30 @@ class _StepUpVerificationDialogState extends State<StepUpVerificationDialog> {
   }
 
   Future<void> _handleVerify() async {
-    final stay = widget.controller.stay;
-    final verified = widget.controller.verifyStepUp(_inputController.text);
+    setState(() => _isVerifying = true);
+    final verified = await _verifyOrFalse();
+    if (!mounted) return;
     if (!verified) {
-      setState(() {
-        _errorText =
-            'Please enter Villa Number (${stay.villaNumber}) or Last Name (${stay.lastName}).';
-      });
+      setState(() => _errorText = widget.controller.i18n.stepUpFailed);
       return;
     }
-    if (!mounted) return;
     Navigator.of(context).pop();
     await widget.onVerified();
   }
 
+  /// An error counts as a failed check; the button is always re-enabled.
+  Future<bool> _verifyOrFalse() async {
+    try {
+      return await widget.controller.verifyStepUp(_inputController.text);
+    } catch (_) {
+      return false;
+    } finally {
+      if (mounted) setState(() => _isVerifying = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final stay = widget.controller.stay;
     final i18n = widget.controller.i18n;
     return AlertDialog(
       backgroundColor: KachavaColors.surface,
@@ -79,55 +88,60 @@ class _StepUpVerificationDialogState extends State<StepUpVerificationDialog> {
           color: KachavaColors.primary,
         ),
       ),
-      content: _buildDialogContent(stay.villaNumber, stay.lastName),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(i18n.t('Cancel', 'Cancelar')),
-        ),
-        ElevatedButton(
-          key: const Key('step-up-confirm-btn'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KachavaColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: _handleVerify,
-          child: Text(i18n.t('Confirm & Proceed', 'Confirmar y Continuar')),
-        ),
-      ],
+      content: _buildDialogContent(),
+      actions: _buildActions(),
     );
   }
 
-  Widget _buildDialogContent(String villaNum, String lastName) {
+  List<Widget> _buildActions() {
     final i18n = widget.controller.i18n;
+    return [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(i18n.t('Cancel', 'Cancelar')),
+      ),
+      ElevatedButton(
+        key: const Key('step-up-confirm-btn'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: KachavaColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        onPressed: _isVerifying ? null : _handleVerify,
+        child: Text(i18n.t('Confirm & Proceed', 'Confirmar y Continuar')),
+      ),
+    ];
+  }
+
+  Widget _buildDialogContent() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          i18n.t(
-            'To protect your Villa $villaNum folio, please confirm your Villa Number ($villaNum) or Last Name ($lastName):',
-            'Para proteger tu cuenta de Villa $villaNum, confirma tu Número de Villa ($villaNum) o Apellido ($lastName):',
-          ),
+          widget.controller.i18n.stepUpPrompt,
           style: const TextStyle(
               fontSize: 13, color: KachavaColors.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('step-up-input-field'),
-          controller: _inputController,
-          decoration: InputDecoration(
-            hintText: 'Enter $villaNum or $lastName',
-            errorText: _errorText,
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: KachavaColors.inputBorder),
-            ),
-          ),
-        ),
+        _buildAnswerField(),
       ],
+    );
+  }
+
+  Widget _buildAnswerField() {
+    return TextField(
+      key: const Key('step-up-input-field'),
+      controller: _inputController,
+      decoration: InputDecoration(
+        hintText: widget.controller.i18n.stepUpHint,
+        errorText: _errorText,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: KachavaColors.inputBorder),
+        ),
+      ),
     );
   }
 }

@@ -22,8 +22,10 @@ class ProfileScreen extends StatelessWidget {
       children: [
         _buildGuestReservationSummaryCard(stay),
         const SizedBox(height: 10),
-        _buildWifiCard(stay.wifiSsid, stay.wifiPassphrase),
-        const SizedBox(height: 10),
+        if (stay.wifiSsid.isNotEmpty) ...[
+          _buildWifiCard(stay.wifiSsid, stay.wifiPassphrase),
+          const SizedBox(height: 10),
+        ],
         _buildDietaryAndAllergyCard(prefs.dietaryRegimen, prefs.allergyAlerts),
         const SizedBox(height: 10),
         _buildPaymentAndEmergencyCard(
@@ -216,8 +218,8 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Text(
               i18n.t(
-                '24/7 Sanctuary Security & Medical Escort · Host: $hostName (+1 415-890-4412)',
-                'Seguridad y Asistencia 24/7 · Anfitrión: $hostName (+1 415-890-4412)',
+                '24/7 Sanctuary Security & Medical Escort · Host: $hostName',
+                'Seguridad y Asistencia 24/7 · Anfitrión: $hostName',
               ),
               style: const TextStyle(fontSize: 11.5),
             ),

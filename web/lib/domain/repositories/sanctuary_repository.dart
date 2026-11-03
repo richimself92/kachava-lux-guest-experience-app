@@ -2,7 +2,11 @@ import '../entities/concierge_folio_entities.dart';
 import '../entities/experience_entities.dart';
 import '../entities/stay_entities.dart';
 
-/// Aggregate snapshot of the guest's residency state in Villa 102.
+import 'sanctuary_results.dart';
+
+export 'sanctuary_results.dart';
+
+/// Aggregate snapshot of the guest's residency state.
 class SanctuarySnapshot {
   const SanctuarySnapshot({
     required this.stay,
@@ -39,41 +43,39 @@ class SanctuarySnapshot {
 
 /// Clean Architecture repository port for guest portal operations.
 abstract interface class SanctuaryRepository {
-  Future<SanctuarySnapshot> loadSanctuary(String guestUuid);
+  Future<SanctuaryFetchResult> fetchLiveSanctuary(String guestUuid);
 
-  Future<SanctuarySnapshot?> fetchLiveSanctuary(String guestUuid);
-
-  Future<void> syncFlightTransport(
+  Future<MutationResult> syncFlightTransport(
     String guestUuid,
     FlightTransport transport, {
     String? stepUpSession,
   });
 
-  Future<void> savePersonalization(
+  Future<MutationResult> savePersonalization(
     String guestUuid,
     PersonalizationPreferences preferences, {
     String? stepUpSession,
   });
 
-  Future<void> saveLarderOrder(
+  Future<MutationResult> saveLarderOrder(
     String guestUuid,
     List<LarderItem> items, {
     String? stepUpSession,
   });
 
-  Future<void> saveYachtCharter(
+  Future<MutationResult> saveYachtCharter(
     String guestUuid,
     YachtCharterConfig charter, {
     String? stepUpSession,
   });
 
-  Future<void> saveDiningReservation(
+  Future<MutationResult> saveDiningReservation(
     String guestUuid,
     DiningReservation reservation, {
     String? stepUpSession,
   });
 
-  Future<void> saveExperienceBooking(
+  Future<MutationResult> saveExperienceBooking(
     String guestUuid,
     ExperienceItem experience,
     String slot, {
@@ -81,19 +83,17 @@ abstract interface class SanctuaryRepository {
     String? stepUpSession,
   });
 
-  Future<void> submitConciergeRequest(
+  Future<MutationResult> submitConciergeRequest(
     String guestUuid,
     ConciergeRequest request, {
     String? stepUpSession,
   });
 
-  Future<String?> verifyStepUpChallenge(
-    String guestUuid, {
-    String? villaNumber,
-    String? lastName,
-  });
+  /// Sends the guest's answer (villa number or last name) to the server.
+  /// Returns the server-issued step-up token, or `null` when not verified.
+  Future<String?> verifyStepUpChallenge(String guestUuid, String answer);
 
-  Future<void> appendConciergeMessage(
+  Future<MutationResult> appendConciergeMessage(
     String guestUuid,
     String requestId,
     String text, {
@@ -101,13 +101,13 @@ abstract interface class SanctuaryRepository {
     String? stepUpSession,
   });
 
-  Future<void> submitMidStayCheckIn(
+  Future<MutationResult> submitMidStayCheckIn(
     String guestUuid,
     MidStayCheckIn checkIn, {
     String? stepUpSession,
   });
 
-  Future<void> completeCheckout(
+  Future<MutationResult> completeCheckout(
     String guestUuid, {
     required String stepUpToken,
   });

@@ -156,7 +156,7 @@ class ChecklistTask {
   }
 }
 
-/// Core residency summary for Villa 102 — Ceiba Suite (`FR-01`, `FR-13`).
+/// Core residency summary for the guest's stay (`FR-01`, `FR-13`).
 class StaySummary {
   const StaySummary({
     required this.guestUuid,
@@ -194,19 +194,26 @@ class StaySummary {
   final bool isDigitalKeyEnabled;
   final StayLifecycleStatus lifecycleStatus;
 
-  DateTime get checkInDateTime =>
-      parseStayDateBounds(stayDates, fallbackNights: nights).$1;
+  /// Check-in and check-out parsed from [stayDates]; `null` when the stay has
+  /// no parseable dates, so nothing date-dependent is shown.
+  (DateTime, DateTime)? get stayDateBounds =>
+      parseStayDateBounds(stayDates, fallbackNights: nights);
 
-  DateTime get checkOutDateTime =>
-      parseStayDateBounds(stayDates, fallbackNights: nights).$2;
+  DateTime? get checkInDateTime => stayDateBounds?.$1;
 
-  String get defaultStayDateLabel => formatShortDate(checkInDateTime);
+  DateTime? get checkOutDateTime => stayDateBounds?.$2;
+
+  /// Check-in as `Mon D, YYYY`, or empty when the stay has no dates.
+  String get defaultStayDateLabel {
+    final start = checkInDateTime;
+    return start == null ? '' : formatShortDate(start);
+  }
 
   bool isDateWithinStay(DateTime date) {
+    final bounds = stayDateBounds;
+    if (bounds == null) return false;
     final target = DateTime(date.year, date.month, date.day);
-    final start = checkInDateTime;
-    final end = checkOutDateTime;
-    return !target.isBefore(start) && !target.isAfter(end);
+    return !target.isBefore(bounds.$1) && !target.isAfter(bounds.$2);
   }
 
   static String formatShortDate(DateTime d) {
@@ -235,17 +242,17 @@ class StaySummary {
     return diff > 0 ? diff : null;
   }
 
-  static (DateTime, DateTime) parseStayDateBounds(
+  /// `null` when [raw] holds no date range; a range without nights spans
+  /// [fallbackNights] (the server's night count) from check-in.
+  static (DateTime, DateTime)? parseStayDateBounds(
     String raw, {
-    int fallbackNights = 4,
+    int fallbackNights = 0,
   }) {
     final parsed = _tryParseDateRange(raw);
-    if (parsed != null && parsed.$2.difference(parsed.$1).inDays > 0) {
-      return parsed;
-    }
-    final start = parsed?.$1 ?? DateTime(2026, 11, 12);
-    final safeNights = fallbackNights > 0 ? fallbackNights : 3;
-    return (start, start.add(Duration(days: safeNights)));
+    if (parsed == null) return null;
+    if (parsed.$2.difference(parsed.$1).inDays > 0) return parsed;
+    final nights = fallbackNights > 0 ? fallbackNights : 0;
+    return (parsed.$1, parsed.$1.add(Duration(days: nights)));
   }
 
   static (DateTime, DateTime)? _tryParseDateRange(String raw) {
@@ -326,6 +333,7 @@ class StaySummary {
   StaySummary copyWith({
     String? guestNames,
     String? primaryGuestName,
+    String? partnerName,
     String? lastName,
     String? villaNumber,
     String? villaTitle,
@@ -333,10 +341,12 @@ class StaySummary {
     String? celebrationTitle,
     String? stayDates,
     int? nights,
+    int? guestsCount,
     String? privateHostName,
     String? privateHostRole,
     String? wifiSsid,
     String? wifiPassphrase,
+    String? folioCardLabel,
     String? selectedSignaturePrivilege,
     bool? isDigitalKeyEnabled,
     StayLifecycleStatus? lifecycleStatus,
@@ -346,7 +356,7 @@ class StaySummary {
         guestUuid: guestUuid,
         guestNames: guestNames ?? this.guestNames,
         primaryGuestName: primaryGuestName ?? this.primaryGuestName,
-        partnerName: partnerName,
+        partnerName: partnerName ?? this.partnerName,
         lastName: lastName ?? this.lastName,
         villaNumber: villaNumber ?? this.villaNumber,
         villaTitle: villaTitle ?? this.villaTitle,
@@ -354,14 +364,14 @@ class StaySummary {
         celebrationTitle: celebrationTitle ?? this.celebrationTitle,
         stayDates: stayDates ?? this.stayDates,
         nights: nights ?? this.nights,
-        guestsCount: guestsCount,
+        guestsCount: guestsCount ?? this.guestsCount,
         villaClimateCelsius: villaClimateCelsius ?? this.villaClimateCelsius,
         weatherSummary: weatherSummary,
         privateHostName: privateHostName ?? this.privateHostName,
         privateHostRole: privateHostRole ?? this.privateHostRole,
         wifiSsid: wifiSsid ?? this.wifiSsid,
         wifiPassphrase: wifiPassphrase ?? this.wifiPassphrase,
-        folioCardLabel: folioCardLabel,
+        folioCardLabel: folioCardLabel ?? this.folioCardLabel,
         selectedSignaturePrivilege:
             selectedSignaturePrivilege ?? this.selectedSignaturePrivilege,
         isDigitalKeyEnabled: isDigitalKeyEnabled ?? this.isDigitalKeyEnabled,

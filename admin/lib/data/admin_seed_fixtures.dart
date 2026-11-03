@@ -148,6 +148,10 @@ class AdminSeedFixtures {
         lifecycleStatus: StayLifecycleStatus.activeStay,
         assignedMajordomoName: 'HOST ADMIN',
         cardReference: 'Visa •••• 8412',
+        nights: 3,
+        wifiSsid: 'Kachava_Sanctuary_102',
+        wifiPasscode: 'stillness2026',
+        paymentStatus: 'PRE_AUTHORIZED',
         personalization: GuestPersonalizationProfile(
             pillowType: 'Plush Goose Down',
             dayTemp: '70°F Day',
@@ -187,6 +191,10 @@ class AdminSeedFixtures {
         lifecycleStatus: StayLifecycleStatus.preArrival,
         assignedMajordomoName: 'HOST ADMIN',
         cardReference: 'Amex •••• 3091',
+        nights: 3,
+        wifiSsid: 'Kachava_Sanctuary_102',
+        wifiPasscode: 'stillness2026',
+        paymentStatus: 'PRE_AUTHORIZED',
         personalization: GuestPersonalizationProfile(
             pillowType: 'Organic Buckwheat & Memory Foam',
             dayTemp: '72°F Day',
@@ -226,6 +234,10 @@ class AdminSeedFixtures {
         lifecycleStatus: StayLifecycleStatus.activeStay,
         assignedMajordomoName: 'HOST ADMIN',
         cardReference: 'Mastercard •••• 5510',
+        nights: 3,
+        wifiSsid: 'Kachava_Sanctuary_102',
+        wifiPasscode: 'stillness2026',
+        paymentStatus: 'PRE_AUTHORIZED',
         personalization: GuestPersonalizationProfile(
             pillowType: 'Hypoallergenic Micro-Down',
             dayTemp: '69°F Day',
@@ -276,6 +288,8 @@ class AdminSeedFixtures {
         lifecycleStatus: StayLifecycleStatus.preArrival,
         assignedMajordomoName: 'HOST ADMIN',
         cardReference: 'Visa •••• 9012',
+        nights: 3,
+        paymentStatus: 'PRE_AUTHORIZED',
         wifiSsid: (wifiSsid != null && wifiSsid.trim().isNotEmpty)
             ? wifiSsid.trim()
             : 'Kachava_Sanctuary_102',
