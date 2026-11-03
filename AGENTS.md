@@ -40,6 +40,6 @@ Flutter builds use `--dart-define-from-file=config/<env>.json` in `web/` and `ad
 - Keep admin widget keys `nav-tab-<id>` / `workspace-<id>` stable for tests.
 
 ## 5. Design and memory
-- Admin UI/UX: [`DESIGN.md`](DESIGN.md) (client mockups in `doc/improvements/*.jpeg` define only menu/dashboard structure and order; colors always come from DESIGN.md).
+- Admin UI/UX: [`DESIGN.md`](DESIGN.md) is **owned by the client — agents must NEVER edit it**; implementation notes go in `doc/kachava-command-center/`. Client mockups in `doc/improvements/*.jpeg` define only menu/dashboard structure and order; colors, radii and type always come from DESIGN.md (e.g. selected nav = restrained brown, radii 4–12px).
 - Clean UI principle for both apps: minimal text, explanations in `InfoTooltip`, one-line empty states.
 - ADRs: [`doc/adr/`](doc/adr/) (001-003) and [`doc/kachava-command-center/`](doc/kachava-command-center/) (adr-004+). Persistent agent memory: `context/memory/MEMORY.md` (local, gitignored).

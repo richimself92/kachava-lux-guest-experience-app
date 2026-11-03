@@ -1,104 +1,144 @@
-# Kachava Lux — DESIGN.md (Staff Command Center)
-Version: 1.1 | 2 November 2026
-Scope: look and feel of the **admin** Flutter Web app (`admin/`). Functional scope lives in
-[`doc/improvements/spec.md`](doc/improvements/spec.md); the delivery plan in [`doc/kachava-command-center/plan.md`](doc/kachava-command-center/plan.md).
-The guest portal (`web/`) keeps its brand-led direction (Libre Baskerville / Libre Franklin) but follows the
-clean-UI principle below. Precedence: security and accessibility > working functionality > client mockups
-(`doc/improvements/*.jpeg`) > this file > Material Design 3.
+# Kachava Lux — DESIGN.md
+Version: 1.0 | 31 October 2026
+Status: Approved design direction for Staff Command Center; implementation subject to repository audit.
+
+## Scope and precedence
+This file governs the **Staff Command Center**. The Guest Experience App retains its own brand-led, editorial design direction. Material Design 3 is the reference for interaction, accessibility, states, navigation and components; this file defines Kachava-specific choices. Do not assume this is a Google-authored specification or that Google Labs DESIGN.md mandates this schema.
+
+Priority: security and accessibility > existing working functionality > this file > design references. The approved Digital Product Library governs names, copy, photography and operational facts. If sources conflict, stop and ask the product owner.
 
 ## Design philosophy
-Calm, efficient operations tool inspired by Google Workspace: white canvas, subtle gray surfaces, restrained
-Kachava identity, high information clarity and low visual noise.
+Build a calm, efficient operations tool inspired by Google Workspace: high information clarity, low visual noise, consistent components and predictable workflows. Avoid recreating the marketing website inside the admin interface. Use a predominantly white canvas, subtle gray surfaces and restrained Kachava identity.
 
-## Clean UI principle (admin and guest portal)
-- Nothing should feel overwhelming: one primary goal and one primary action per screen.
-- Minimal on-screen text: short titles, 1-3 word labels. No explanatory paragraphs, instruction banners,
-  decorative subtitles or eyebrows.
-- Explanations go in an `InfoTooltip` (ⓘ) next to the value: hover/keyboard focus on desktop, tap on mobile,
-  exposed to screen readers via `Tooltip`/`Semantics`.
-- Empty states are one line plus an action. Confirmations are one line and dismiss themselves.
-- Generous whitespace, few cards, no extra borders or colors. Icons always have labels.
+## Design tokens (Command Center)
+Use these values as the **current app palette**, sampled from the four approved swatches supplied for this implementation. Do not silently replace them with the older print/marketing palette.
 
-## Design tokens
 ```css
 :root {
-  --kl-color-background: #FFFFFF;   --kl-color-surface: #F3F3F1;
-  --kl-color-primary: #6D4627;      --kl-color-accent: #989166;
-  --kl-color-text: #202124;         --kl-color-text-secondary: #5F6368;
-  --kl-color-border: #DADCE0;       --kl-color-input-border: #80868B;
-  --kl-color-on-primary: #FFFFFF;   --kl-color-focus: #1A73E8;
-  --kl-radius-sm: 4px; --kl-radius-md: 8px; --kl-radius-lg: 12px; --kl-radius-tile: 16px;
-  --kl-space-1: 4px; --kl-space-2: 8px; --kl-space-3: 12px; --kl-space-4: 16px;
-  --kl-space-6: 24px; --kl-space-8: 32px;
+  --kl-color-background: #FFFFFF;
+  --kl-color-surface: #F3F3F1;
+  --kl-color-primary: #6D4627;
+  --kl-color-accent: #989166;
+  --kl-color-text: #202124;
+  --kl-color-text-secondary: #5F6368;
+  --kl-color-border: #DADCE0;
+  --kl-color-on-primary: #FFFFFF;
+  --kl-color-focus: #1A73E8;
+  --kl-radius-sm: 4px;
+  --kl-radius-md: 8px;
+  --kl-radius-lg: 12px;
+  --kl-space-1: 4px;
+  --kl-space-2: 8px;
+  --kl-space-3: 12px;
+  --kl-space-4: 16px;
+  --kl-space-6: 24px;
+  --kl-space-8: 32px;
   --kl-font-ui: "Roboto", Arial, sans-serif;
 }
 ```
-Status chips (light background + dark text, AA contrast): In-house green, Arrival blue, Departure gray,
-overstay / urgent red. Semantic colors are defined and contrast-tested in code; never brown/olive for errors.
 
 ### Color roles
-- White: page background and tables. Soft gray `#F3F3F1`: selected nav item, KPI tiles, filters, hover.
-- Brown: primary buttons and restrained brand emphasis (white text). **Not** used for selected navigation.
-- Olive: rare accent, never text and never the only carrier of status.
-- Input borders `#80868B` (3:1 non-text contrast); hairline `#DADCE0` for separators only.
-- Focus: double ring (2px `#1A73E8` + 2px white) always visible on keyboard focus.
+- White: page background and main table surfaces.
+- Brown: primary actions, selected navigation, restrained brand emphasis. White text on brown.
+- Soft gray: filters, secondary panels, subtle hover backgrounds. Do not turn every region into a card.
+- Olive: rare secondary brand accent, never the only carrier of status or essential information.
+- Near-black: primary text; medium gray: secondary text; hairline gray: separators.
+- Semantic success, warning, error and info colors: use accessible existing component-library tokens; define and test them in code before deployment. Never substitute brown/olive for an error state.
+- Focus outline must remain clearly visible; blue above is an implementation proposal for focus visibility, not a Kachava brand color.
 
 ## Typography
-Roboto (bundled) with Arial fallback. Page title 24/32 w500; section 18/26 w500; body and table cells
-14/20 w400; labels and nav 14/20 w500 (selected nav w700); supporting 12/16, only where legible; KPI value
-~40px w400. No Libre Baskerville in admin tables or controls.
+**Staff Command Center:** Roboto (Google's open-source UI typeface) with Arial/system sans-serif fallback. Use installed/authorized font files or a reputable font delivery method consistent with privacy and performance requirements. Do not assume Google Sans is freely licensed for third-party use. Avoid Libre Baskerville in operational tables and controls.
 
-## Navigation (client mockup is binding)
-- Header: "KACHAVA LUX" left, gray pill "COMMAND CENTER" right, hairline divider below.
-- Dashboard item with a grid icon. Selected item: light gray rounded background + bold text.
-- Section labels: small, uppercase, gray, not clickable.
-- Items: no icons, regular weight, gray chevron ">" right, generous vertical spacing. When the list
-  overflows, a circular "scroll down" button appears at the bottom.
-- Information architecture, no numeric prefixes:
-  - Dashboard
-  - GUEST OPERATIONS: Reservations, Guests, Villas
-  - HOSPITALITY: Services, Experiences, Dining, Transportation, Wellness
-  - OPERATIONS: Tasks, Notifications
-- TEAM (Resort Hosts, Staff) is deferred. Folio is not a menu item: it is the "Stay summary" tab inside
-  Guest / Reservation detail. Modules not yet built are hidden, never shown disabled.
-- Desktop: persistent sidebar. Tablet: navigation rail. Mobile: drawer. Keep keys `nav-tab-<id>` / `workspace-<id>`.
+Recommended starting hierarchy (adjust to existing component framework):
+- Page title: 24px / 32px, weight 500
+- Section heading: 18px / 26px, weight 500
+- Body and table cells: 14px / 20px, weight 400
+- Field labels and navigation: 14px / 20px, weight 500
+- Supporting text: 12px / 16px, weight 400, only where legible
+- Primary controls: minimum 14px text; target sizes and spacing should meet accessibility standards.
 
-## Dashboard (client mockup is binding)
-1. Title "Kachava Lux · Overview" with a "Today" pill (resort date, America/Cancun).
-2. 3x2 grid of light-gray `KpiTile`s (radius 16, big number, gray label): Occupied villas, Available villas,
-   Occupancy, Arrivals, Departures, Open requests. Formulas in an ⓘ tooltip.
-3. "Today's guest activity": table with exactly 3 columns — Guest, Villa, Status — thin separators, no card
-   border. A row opens the detail (assigned Resort Host, internal notes, Stay summary tab).
-4. No alerts on the dashboard: they live in Notifications. Unavailable data shows `UnavailableValue` ("—" with
-   tooltip), never simulated numbers.
+**Guest Experience App:** separate design direction using approved Libre Baskerville and Libre Franklin. Do not apply admin typography wholesale to guest-facing screens.
+
+## Navigation
+Use this exact information architecture; no numeric prefixes:
+
+- Dashboard
+- GUEST OPERATIONS: Reservations, Guests, Residences
+- HOSPITALITY: Services, Experiences, Dining, Transportation, Wellness
+- OPERATIONS: Tasks, Notifications
+- TEAM: Resort Hosts, Staff
+
+Use a persistent desktop sidebar and an accessible compact/mobile navigation pattern. Selected item uses a restrained brown treatment. Section headings are labels, not clickable duplicate destinations. Badges only for actionable counts.
+
+## Dashboard
+Place operational overview first, then activity and exceptions:
+1. Current local property date and selected reporting period.
+2. Arrivals, Departures, In House, Villa Nights, Reservations, Cancellations, Overbookings.
+3. Occupancy %, Available Units, Reserved Units, Out of Service and Blocked Dates.
+4. Today's guest activity table: Guest, Residence, Stay, Status, Assigned Resort Host, Notes.
+5. Open Requests and Tasks, then Notifications and urgent Alerts.
+
+Do not fabricate metrics. Use existing verified data sources; if Cloudbeds integration is unavailable, label metrics unavailable rather than simulating live production values. Clearly define metric formulas and date boundaries with Juan.
 
 ## Module responsibilities
-Reservations (table + villa x day calendar; origin and payments show "No PMS integration"), Guests (profile
-per stay, preferences, allergies, request history, internal notes, chat), Villas (eight units, occupancy,
-housekeeping, maintenance), Services (master catalog: EN/ES copy, pricing, lead time, provider, status
-DRAFT/ACTIVE/DISABLED, request type ORDER/BOOKING/PREFERENCE/TRIP), Experiences / Dining / Transportation /
-Wellness (one `ServiceCategoryWorkspace(category)`: filtered catalog on top, its requests below; Transportation
-adds providers and trips ARRIVAL/DEPARTURE/LOCAL), Tasks (owner, villa, priority, due, state, completion),
-Notifications (Info / Action needed / Urgent, "Open record" link; sound only for urgent).
+**Reservations:** search, filter, arrival/departure, reservation state, assigned Resort Host; source of truth must be confirmed before editing.
+**Guests:** guest profile, communication, language, approved preferences, linked stays and requests; protect sensitive information.
+**Residences:** eight-unit inventory, category, occupancy, housekeeping status, out-of-service/blocked periods.
+**Services:** shared catalog, approval/visibility, bilingual copy, inclusion/pricing and request rules.
+**Experiences:** guest-facing curated experiences and operational bookings.
+**Dining:** breakfast and special dining requests, scheduling and dietary needs with appropriate access controls.
+**Transportation:** airport/local transfers, timing, flight details where needed, assigned driver and status.
+**Wellness:** treatment requests, practitioners, availability and confirmation.
+**Tasks:** owner, residence, priority, due time, state, completion evidence.
+**Notifications:** event-driven alerts with links to originating records; sound reserved for genuinely urgent guest actions.
+**Resort Hosts:** assignment, availability, workload, linked guest conversations.
+**Staff:** role and access administration, active status, assigned operational tasks.
 
-## Components
-`AdminDataTable`, `StatusChip`, `KpiTile`, `AsyncStateView` (loading/empty/error), `ConfirmDialog` for
-destructive actions, `UnavailableValue`, `InfoTooltip`. Tables over cards for dense data; radii 4-16px;
-borders over shadows; Material Symbols icons only. Never show fake success.
+Services/Experiences/Dining/Transportation/Wellness should share a coherent service/request data model rather than duplicate unrelated catalogs.
+
+## Interaction and components
+- Prefer existing React/UI infrastructure and reusable components. Do not install a new Material UI library without an impact estimate.
+- Use consistent top app bar, sidebar, tables, search, filters, dialogs, forms, tabs, buttons, menus and status chips.
+- Favor tables for dense operational information; reserve cards for a small number of KPI summaries.
+- Keep corner radii restrained (4–12px); use borders over large shadows.
+- Provide loading, empty, success, error and disabled states; never show fake success.
+- Confirm destructive actions. Support keyboard focus and navigation.
+- Meet WCAG 2.2 AA where applicable; test contrast, focus visibility, keyboard operation, zoom and mobile responsiveness.
+- Use Lucide icons or the project's existing icon set consistently; do not mix unrelated icon families. Icons must have accessible labels when used without text.
 
 ## Content and terminology
-- "Resort Host", never "Concierge"; "Villas", never "Residences".
-- EN/ES via `AdminI18n`; never machine-invent Spanish, names, prices, providers, amenities or lead times.
-  Missing Spanish catalog copy shows "translation pending".
-- Everything hospitality-related is configured in the admin; no hardcoded service lists in either app.
+- Use **Resort Host**, not **Concierge**, throughout guest- and staff-facing product UI.
+- Use approved EN/ES strings; do not machine-invent Spanish translations or copy.
+- Do not invent residence names, amenities, guest profiles, providers, service inclusions, prices, lead times or booking guarantees.
+- Photography and logos must come from the approved Digital Product Library with confirmed usage rights.
+- Display only production-approved catalog items to guests.
 
 ## Roles and security
-Role-based access (Master Admin, Resort Host, Housekeeping). Guest profiles and internal notes are visible
-only to HOST_ADMIN and CONCIERGE_STAFF. Guests receive a guest-safe stay projection (ADR-007).
+Preserve role-based access: Master Admin, Resort Host and Housekeeping for current scope. Resort Host assignment may use round-robin among available hosts, subject to backend design and admin override. This is a **functional requirement**, not a styling change. Do not expose all guest data to every staff user.
+
+## Engineering workflow for Juan
+1. Audit frontend stack, current tokens/components, existing data sources and deployment architecture.
+2. Create a dedicated branch (suggested `feature/kachava-command-center-design`) and add this file at repository root.
+3. Map these tokens to the existing styling solution; do not create competing token systems.
+4. Implement a narrow pilot: sidebar and Dashboard visual structure using existing functionality.
+5. Share desktop/mobile screenshots and a concise list of changed files for approval.
+6. After approval, extend reusable components to other modules. Estimate backend-dependent work separately.
+
+### Explicit non-goals
+Do not migrate Firebase/GCP, alter IAM/security rules, change API contracts, rewrite reservation logic, change database schema, or deploy to production as part of a design-only pull request. These require separate scoped approval.
 
 ## Acceptance checklist
-- [ ] Navigation hierarchy and visuals match the client mockup; no numeric prefixes
-- [ ] Roboto bundled; tokens applied by role; AA contrast and visible focus
-- [ ] Dashboard: 6 KPI tiles + 3-column activity table, no alerts
-- [ ] Loading / empty / error states; no fabricated data or success
-- [ ] Screenshots at 1440, 800 and 375 px reviewed ("is any text unnecessary?")
+- [ ] Exact navigation hierarchy and no numeric prefixes
+- [ ] Roboto in admin UI, appropriate fallback
+- [ ] Four core colors applied consistently by role
+- [ ] White canvas, restrained borders/cards, readable tables
+- [ ] Resort Host terminology in UI
+- [ ] EN/ES strings preserve approved wording
+- [ ] Keyboard, contrast, mobile and empty/error states reviewed
+- [ ] Existing business logic and production configuration unchanged
+- [ ] Before/after screenshots approved by Kachava
+
+## References
+- Material Design 3: https://m3.material.io/
+- Google Labs design.md: https://github.com/google-labs-code/design.md
+- Kachava Lux Digital Product Library: company-controlled Google Drive folder (link to be added by owner)

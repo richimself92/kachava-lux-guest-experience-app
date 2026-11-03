@@ -86,7 +86,7 @@ void main() {
       await pumpApp(tester, const Size(1440, 900));
       final dashText = tester.widget<Text>(inSidebar(find.text('Dashboard')));
       expect(dashText.style?.fontWeight, FontWeight.w700);
-      expect(dashText.style?.color, KachavaTokens.text);
+      expect(dashText.style?.color, KachavaTokens.primary);
       final resText = tester.widget<Text>(inSidebar(find.text('Reservations')));
       expect(resText.style?.fontWeight, isNot(FontWeight.w700));
       expect(resText.style?.color, KachavaTokens.text);
@@ -95,8 +95,8 @@ void main() {
           of: find.byKey(const Key('nav-tab-admin-overview')),
           matching: find.byType(Ink)));
       final decoration = selectedBox.decoration! as BoxDecoration;
-      // DESIGN.md v1.1: soft gray selected item; brown is not used for nav.
-      expect(decoration.color, KachavaTokens.surface);
+      // DESIGN.md: "Selected item uses a restrained brown treatment".
+      expect(decoration.color, KachavaTokens.primarySelected);
       expect(decoration.color, isNot(KachavaTokens.primary));
 
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));

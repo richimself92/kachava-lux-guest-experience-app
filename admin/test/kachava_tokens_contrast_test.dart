@@ -34,17 +34,18 @@ void main() {
           greaterThanOrEqualTo(4.5));
     });
 
-    test('test_selectedNav_text_meetsAA_onSoftGray', () {
-      expect(contrastRatio(KachavaTokens.text, KachavaTokens.surface),
+    test('test_selectedNav_brownText_meetsAA_onBrownTint', () {
+      expect(
+          contrastRatio(KachavaTokens.primary, KachavaTokens.primarySelected),
           greaterThanOrEqualTo(4.5));
     });
 
     test('test_radii_matchDesignMd', () {
-      // DESIGN.md: --kl-radius-sm 4, md 8, lg 12, tile 16.
+      // DESIGN.md: --kl-radius-sm 4, md 8, lg 12; corner radii restrained 4–12px.
       expect(KachavaTokens.radiusSm, 4);
       expect(KachavaTokens.radiusMd, 8);
       expect(KachavaTokens.radiusLg, 12);
-      expect(KachavaTokens.radiusTile, 16);
+      expect(KachavaTokens.radiusTile, inInclusiveRange(4, 12));
     });
   });
 }

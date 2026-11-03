@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show Color;
 
-/// Kachava Lux admin design tokens (root `DESIGN.md` v1.1). Colors, radii,
+/// Kachava Lux admin design tokens (root `DESIGN.md` v1.0, owned by the client). Colors, radii,
 /// spacing and type come only from there; status tone pairs are the
 /// AA-tested semantic colors DESIGN.md delegates to code.
 ///
@@ -14,6 +14,10 @@ abstract final class KachavaTokens {
   static const Color surfaceHover = Color(0xFFEBEBE8);
   static const Color primary = Color(0xFF6D4627);
   static const Color onPrimary = Color(0xFFFFFFFF);
+
+  /// DESIGN.md: "Selected item uses a restrained brown treatment" — primary
+  /// blended at 12% over white, paired with primary-colored bold text.
+  static const Color primarySelected = Color(0xFFEEE9E5);
 
   /// Rare accent; never text and never the only carrier of status.
   static const Color accent = Color(0xFF989166);
@@ -41,7 +45,7 @@ abstract final class KachavaTokens {
   static const double radiusSm = 4;
   static const double radiusMd = 8;
   static const double radiusLg = 12;
-  static const double radiusTile = 16;
+  static const double radiusTile = 12; // DESIGN.md radii stay within 4–12px
   static const double radiusPill = 999;
 
   // Spacing.
