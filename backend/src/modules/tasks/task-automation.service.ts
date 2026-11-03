@@ -8,8 +8,15 @@ import {
   TASK_REPOSITORY_PORT,
   TaskRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { bookingTaskFor, orderTaskFor, TaskSchedule, tripTaskFor } from '../../domain/tasks/task-sources';
-import { Task } from '../../domain/tasks/task.models';
+import {
+  bookingTaskFor,
+  orderTaskFor,
+  resortWallTimeIso,
+  TaskSchedule,
+  tripTaskFor,
+} from '../../domain/tasks/task-sources';
+import { applyTaskPatch, transitionTask } from '../../domain/tasks/task-transitions';
+import { isFinalTaskStatus, sourceTaskId, Task, TaskSourceType } from '../../domain/tasks/task.models';
 import { Trip } from '../../domain/trips/trip.models';
 
 /**
@@ -37,6 +44,27 @@ export class TaskAutomation {
 
   forTrip(trip: Trip, actor: string): Promise<Task> {
     return this.ensure(tripTaskFor(trip, actor, this.now()));
+  }
+
+  /** Cancels the open task of a source the guest cancelled (no task or a closed one: no-op). */
+  async cancelForSource(type: TaskSourceType, refId: string, reason: string, actor: string): Promise<void> {
+    const at = this.now();
+    await this.updateOpen(sourceTaskId(type, refId), (task) => transitionTask(task, { to: 'CANCELLED', reason }, actor, at));
+  }
+
+  /** A changed booking moves the deadline of its open confirmation task to the new slot. */
+  async rescheduleBooking(booking: ExperienceBooking, actor: string): Promise<void> {
+    if (booking.usageType !== 'BOOKING') return;
+    const { timeZone } = await this.schedule();
+    const dueAt = resortWallTimeIso(booking.scheduledDate, booking.scheduledTimeSlot, timeZone);
+    const at = this.now();
+    await this.updateOpen(sourceTaskId('BOOKING', booking.bookingId), (task) => applyTaskPatch(task, { dueAt }, actor, at));
+  }
+
+  private async updateOpen(taskId: string, change: (task: Task) => Task): Promise<void> {
+    const task = await this.tasks.findById(taskId);
+    if (!task || isFinalTaskStatus(task.status)) return;
+    await this.tasks.update(taskId, (current) => (isFinalTaskStatus(current.status) ? current : change(current)));
   }
 
   private async ensure(task: Task): Promise<Task> {

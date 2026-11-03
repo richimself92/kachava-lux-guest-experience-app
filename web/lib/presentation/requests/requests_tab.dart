@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import '../../application/portal_controller.dart';
 import '../../core/i18n/l10n.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../data/guest_api.dart';
+import '../../domain/catalog.dart';
 import '../../domain/journey.dart';
 import '../../domain/requests.dart';
 import '../common/labels.dart';
 import '../common/widgets.dart';
+import '../forms/booking_form.dart';
 
 enum RequestsFilter { all, active, done }
 
@@ -217,22 +220,100 @@ class _RequestsTabState extends State<RequestsTab> {
                 ]),
               ),
             const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
-                child: FilledButton.tonal(
-                  key: const Key('request-ask-host'),
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    widget.onAskHost(title);
-                  },
-                  child: Text(l10n.askHost),
-                ),
-              ),
-              if (r.status == RequestStatus.received) InfoTip(l10n.changeInfo),
-            ]),
+            _actions(ctx, l10n, r, title),
           ],
         ),
       ),
     );
+  }
+
+  /// While the server still holds the initial status: Change (bookings)
+  /// and Cancel; afterwards Ask Host.
+  Widget _actions(BuildContext sheet, L10n l10n, GuestRequest r, String title) {
+    if (!r.canCancel) {
+      return Row(children: [
+        Expanded(
+          child: FilledButton.tonal(
+            key: const Key('request-ask-host'),
+            onPressed: () {
+              Navigator.of(sheet).pop();
+              widget.onAskHost(title);
+            },
+            child: Text(l10n.askHost),
+          ),
+        ),
+      ]);
+    }
+    final service = r.canChange
+        ? widget.controller.catalog
+            .where((s) => s.id == r.serviceId)
+            .firstOrNull
+        : null;
+    return Row(children: [
+      if (service != null) ...[
+        Expanded(
+          child: FilledButton.tonal(
+            key: const Key('request-change'),
+            onPressed: () {
+              Navigator.of(sheet).pop();
+              _openChange(service, r, title);
+            },
+            child: Text(l10n.change),
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
+      Expanded(
+        child: OutlinedButton(
+          key: const Key('request-cancel'),
+          onPressed: () => _confirmCancel(sheet, l10n, r, title),
+          child: Text(l10n.cancelRequest),
+        ),
+      ),
+      InfoTip(l10n.changeInfo),
+    ]);
+  }
+
+  void _openChange(CatalogService service, GuestRequest r, String title) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => BookingForm(
+        controller: widget.controller,
+        service: service,
+        title: title,
+        changing: r.booking,
+      ),
+    ));
+  }
+
+  Future<void> _confirmCancel(
+      BuildContext sheet, L10n l10n, GuestRequest r, String title) async {
+    final confirmed = await showDialog<bool>(
+      context: sheet,
+      builder: (dialog) => AlertDialog(
+        content: Text(l10n.cancelConfirm(title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(false),
+            child: Text(l10n.keepRequest),
+          ),
+          FilledButton(
+            key: const Key('request-cancel-confirm'),
+            autofocus: true,
+            onPressed: () => Navigator.of(dialog).pop(true),
+            child: Text(l10n.cancelRequest),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !sheet.mounted) return;
+    Navigator.of(sheet).pop();
+    final result = await widget.controller.cancelRequest(r);
+    if (!mounted) return;
+    switch (result) {
+      case ApiOk():
+        showPortalToast(context, l10n.requestCancelled);
+      case ApiFailed():
+        showPortalToast(context, failureMessage(l10n, result), error: true);
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'catalog.dart';
 import 'json_read.dart';
 import 'resort_clock.dart';
+import 'stay.dart';
 import 'trip.dart';
 
 /// Inline validation problems; the UI turns each into <= 5 words.
@@ -284,6 +285,35 @@ Map<BookingField, FormIssue> validateBooking(
 }
 
 /// `POST /stays/:uuid/bookings` body.
+/// What a guest may change on a REQUESTED booking: date, time and people.
+List<BookingFieldSpec> changeableBookingFields(CatalogService s) => [
+      for (final f in bookingFields(s))
+        if (f.field == BookingField.date ||
+            f.field == BookingField.time ||
+            f.field == BookingField.guests)
+          f,
+    ];
+
+/// Prefills the change form with the booking as the server holds it.
+void prefillBookingDraft(BookingDraft d, GuestBooking b) {
+  final day = DateTime.tryParse(b.scheduledDate);
+  d.day = day == null ? null : DateTime.utc(day.year, day.month, day.day);
+  d.time = b.scheduledTimeSlot;
+  d.guests = b.partySize;
+}
+
+/// `PATCH /stays/:uuid/bookings/:id` body for the asked [fields].
+Json bookingChangePayload(BookingDraft d, List<BookingFieldSpec> fields) {
+  final asked = fields.map((f) => f.field).toSet();
+  return {
+    'scheduledDate': ResortClock.isoDay(d.day!),
+    if (asked.contains(BookingField.time) && d.time.isNotEmpty)
+      'scheduledTimeSlot': d.time,
+    if (asked.contains(BookingField.guests) && d.guests > 0)
+      'partySize': d.guests,
+  };
+}
+
 Json bookingPayload(BookingDraft d, CatalogService s, {String? itemId}) {
   final fields = bookingFields(s);
   final health = <String, String>{};

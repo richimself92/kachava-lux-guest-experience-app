@@ -41,8 +41,23 @@ abstract interface class GuestApi {
   Future<ApiResult<List<CatalogService>>> fetchCatalog();
   Future<ApiResult<List<GuestTrip>>> fetchTrips(String guestUuid);
 
-  /// `PUT /stays/:uuid/larder` with `{serviceId, items}`.
+  /// `PUT /stays/:uuid/orders/:serviceId` with `{items}` from a
+  /// `{serviceId, items}` payload; other services' orders are kept.
   Future<ApiResult<void>> saveOrder(String guestUuid, Json payload);
+
+  /// `PUT /stays/:uuid/journey`: replaces only the lists that are given.
+  Future<ApiResult<void>> saveJourney(String guestUuid,
+      {Set<String>? skippedTaskIds, Set<String>? completedTaskIds});
+
+  /// `POST /stays/:uuid/bookings/:id/cancel` (only while REQUESTED).
+  Future<ApiResult<void>> cancelBooking(String guestUuid, String bookingId);
+
+  /// `PATCH /stays/:uuid/bookings/:id` with date, time and/or party size.
+  Future<ApiResult<void>> changeBooking(
+      String guestUuid, String bookingId, Json change);
+
+  /// `POST /stays/:uuid/trips/:id/cancel` (only while REQUESTED).
+  Future<ApiResult<void>> cancelTrip(String guestUuid, String tripId);
 
   /// `POST /stays/:uuid/bookings` (BOOKING and PREFERENCE services).
   Future<ApiResult<void>> createBooking(String guestUuid, Json payload);
@@ -61,11 +76,15 @@ abstract interface class GuestApi {
   Future<ApiResult<String>> startHostThread(String guestUuid,
       {required String text, String? photoStoragePath});
 
+  /// Appends text and/or a photo (storage path from [uploadPhoto]).
   Future<ApiResult<void>> sendHostMessage(
-      String guestUuid, String threadId, String text);
+      String guestUuid, String threadId, String text,
+      {String? photoStoragePath});
 
-  /// Signed upload of a real photo; returns its storage path.
-  Future<ApiResult<String>> uploadPhoto(String guestUuid, PickedPhoto photo);
+  /// Signed upload of a real photo (into [threadId]'s folder when given);
+  /// returns its storage path.
+  Future<ApiResult<String>> uploadPhoto(String guestUuid, PickedPhoto photo,
+      {String? threadId});
 
   void dispose();
 }

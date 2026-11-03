@@ -249,9 +249,15 @@ class L10n {
   String get departureTrip => _t('Departure transfer', 'Traslado de salida');
   String get localTrip => _t('Local trip', 'Viaje local');
   String get total => 'Total';
-  String get changeInfo => _t('To change or cancel, ask your Resort Host.',
-      'Para cambiar o cancelar, pregunta a tu Resort Host.');
+  String get changeInfo => _t(
+      'Change or cancel until the resort confirms; then ask your Resort Host.',
+      'Cambia o cancela hasta que el resort confirme; luego pregunta a tu Resort Host.');
   String get change => _t('Change', 'Cambiar');
+  String get cancelRequest => _t('Cancel', 'Cancelar');
+  String get keepRequest => _t('Keep', 'Mantener');
+  String cancelConfirm(String name) => _t('Cancel $name?', '¿Cancelar $name?');
+  String get requestCancelled => _t('Request cancelled', 'Solicitud cancelada');
+  String get requestChanged => _t('Request changed', 'Solicitud cambiada');
 
   String status(RequestStatus s) => switch (s) {
         RequestStatus.received => _t('Received', 'Recibida'),

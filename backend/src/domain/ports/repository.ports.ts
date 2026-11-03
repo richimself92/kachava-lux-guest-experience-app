@@ -18,6 +18,7 @@ import {
   StayRecord,
 } from '../models/domain.models';
 import { FolioSettlement, LarderCharge, SettledFolio } from '../folio-ledger';
+import { BookingChange, JourneyMarks } from '../stays/guest-request-rules';
 import { PaginatedResult, SortDirection } from '../../common/listing/list-query';
 import { CatalogItem, CatalogService } from '../catalog/catalog.models';
 import { ResortSettings, TransportProvider, Villa } from '../models/resort-config.models';
@@ -179,13 +180,29 @@ export interface StayRepositoryPort {
     stayId: string,
     privilege: 'massage' | 'golf',
   ): Promise<StayRecord>;
-  /** Replaces the larder order; the larder folio line is re-priced from the stored folio. */
-  replaceLarderOrders(
+  /** Replaces the lines of ONE order service (others untouched) and re-prices its folio line. */
+  replaceServiceOrder(
     stayId: string,
-    orders: LarderOrderItem[],
+    serviceId: string,
+    lines: LarderOrderItem[],
     charge: LarderCharge,
     alertOf?: StayAlertFactory<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>;
+  /** Guest cancel of a REQUESTED booking (404 unknown, 422 later status); drops its folio line. */
+  cancelGuestBooking(
+    stayId: string,
+    bookingId: string,
+    alertOf?: StayAlertFactory<ExperienceBooking>,
+  ): Promise<ExperienceBooking>;
+  /** Guest change of a REQUESTED booking's date, time or party; re-prices its folio line. */
+  changeGuestBooking(
+    stayId: string,
+    bookingId: string,
+    change: BookingChange,
+    alertOf?: StayAlertFactory<ExperienceBooking>,
+  ): Promise<ExperienceBooking>;
+  /** Replaces the guest's skipped / self-completed journey task lists that are given. */
+  setJourneyMarks(stayId: string, marks: Partial<JourneyMarks>): Promise<JourneyMarks>;
   listLarderOrdersAcrossStays(
     filter?: LarderFilterCriteria,
   ): Promise<LarderOrderItem[]>;
@@ -275,6 +292,12 @@ export interface SignedUrlResult {
   contentType?: string;
 }
 
+/** A direct-to-Storage upload: send the bytes with `method` and exactly these `headers`. */
+export interface SignedPhotoUpload extends SignedUpload {
+  storagePath: string;
+  maxBytes: number;
+}
+
 export interface StorageSignerPort {
   generateSignedPutUrl(params: {
     stayId: string;
@@ -282,7 +305,7 @@ export interface StorageSignerPort {
     fileName: string;
     contentType: string;
     fileSizeBytes: number;
-  }): Promise<SignedUrlResult>;
+  }): Promise<SignedPhotoUpload>;
   generateSignedGetUrl(storagePath: string): Promise<SignedUrlResult>;
 }
 

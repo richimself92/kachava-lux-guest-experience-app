@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_guest_portal/core/storage/device_prefs.dart';
+import 'package:kachava_guest_portal/data/guest_api.dart';
 
 import 'support/fake_guest_api.dart';
 import 'support/fixtures.dart';
@@ -41,15 +42,47 @@ void main() {
     await unmount(tester);
   });
 
-  testWidgets('Not now skips the task, which leaves the count', (tester) async {
+  testWidgets('Not now skips the task on the stay, which leaves the count',
+      (tester) async {
     final prefs = MemoryDevicePrefs();
-    await pumpPortal(tester, api: _api(), prefs: prefs);
+    final api = await pumpPortal(tester, api: _api(), prefs: prefs);
     await tester.tap(find.byKey(const Key('journey-not-now')));
     await tester.pumpAndSettle();
+    expect(api.writes.single.$1, 'journey');
+    expect(api.writes.single.$2, {
+      'skippedTaskIds': ['1:core:flight']
+    });
     expect(find.text('0 of 3'), findsOneWidget);
     expect(find.text('Skipped'), findsOneWidget);
     expect(find.text('Next: 1.2 Preferences'), findsOneWidget);
-    expect(prefs.read('kachava_skips_$guestUuid'), contains('1:core:flight'));
+    expect(prefs.read('kachava_skips_$guestUuid'), isNull,
+        reason: 'skips live on the stay, not on the device');
+    await unmount(tester);
+  });
+
+  testWidgets('skips stored on the stay show on any device', (tester) async {
+    await pumpPortal(tester,
+        api: FakeGuestApi(
+          stay: stayJson(
+              checkIn: '2026-11-03',
+              checkOut: '2026-11-08',
+              skipped: ['1:core:flight']),
+          catalog: fullCatalog(),
+        ));
+    expect(find.text('Skipped'), findsOneWidget);
+    expect(find.text('Next: 1.2 Preferences'), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets('a failed skip keeps the task pending and says so',
+      (tester) async {
+    final api = _api()..writeFailure = FailureKind.unreachable;
+    await pumpPortal(tester, api: api);
+    await tester.tap(find.byKey(const Key('journey-not-now')));
+    await tester.pumpAndSettle();
+    expect(find.text('Skipped'), findsNothing);
+    expect(find.text('Next: 1.1 Flight & transfer'), findsOneWidget);
+    expect(find.text("Couldn't send"), findsOneWidget);
     await unmount(tester);
   });
 

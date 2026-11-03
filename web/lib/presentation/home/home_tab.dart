@@ -6,6 +6,7 @@ import '../../core/i18n/l10n.dart';
 import '../../core/pwa/install_prompt_port.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
+import '../../data/guest_api.dart';
 import '../../domain/journey.dart';
 import '../common/labels.dart';
 import '../common/widgets.dart';
@@ -34,6 +35,22 @@ class _HomeTabState extends State<HomeTab> {
   int? _lastOpenStep;
   final Set<int> _showAll = {};
   bool _wifiShown = false;
+  bool _skipping = false;
+
+  /// "Not now" is stored on the stay; the row moves only after the server
+  /// confirms, otherwise a one-line error with Retry.
+  Future<void> _skip(JourneyTask task) async {
+    if (_skipping) return;
+    setState(() => _skipping = true);
+    final result = await widget.controller.skip(task);
+    if (!mounted) return;
+    setState(() => _skipping = false);
+    if (result is ApiFailed) {
+      final l10n = widget.controller.l10n;
+      showPortalToast(context, failureMessage(l10n, result),
+          error: true, onRetry: () => _skip(task), retryLabel: l10n.retry);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +90,7 @@ class _HomeTabState extends State<HomeTab> {
           StickyAction(
             secondary: TextButton(
               key: const Key('journey-not-now'),
-              onPressed: () => c.skip(next),
+              onPressed: _skipping ? null : () => _skip(next),
               child: Text(l10n.notNow),
             ),
             child: FilledButton(

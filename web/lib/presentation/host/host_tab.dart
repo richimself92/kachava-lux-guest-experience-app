@@ -143,18 +143,11 @@ class _HostTabState extends State<HostTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (m.hasPhoto)
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.photo_outlined,
-                      size: 18, color: KachavaColors.primary),
-                  const SizedBox(width: 4),
-                  Text(l10n.photo,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
-                ]),
-              Text(m.text,
-                  style: const TextStyle(
-                      fontSize: 16, color: KachavaColors.onSurface)),
+              if (m.photoUrl != null) _chatPhoto(l10n, m.photoUrl!),
+              if (m.text.isNotEmpty)
+                Text(m.text,
+                    style: const TextStyle(
+                        fontSize: 16, color: KachavaColors.onSurface)),
               Text(
                 [
                   mine
@@ -166,6 +159,33 @@ class _HostTabState extends State<HostTab> {
                     fontSize: 14, color: KachavaColors.tertiary),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The photo sent in the thread (signed URL from the server). A load
+  /// failure shows the word "Photo" instead of a broken image.
+  Widget _chatPhoto(L10n l10n, String url) {
+    final label = Row(mainAxisSize: MainAxisSize.min, children: [
+      const Icon(Icons.photo_outlined, size: 18, color: KachavaColors.primary),
+      const SizedBox(width: 4),
+      Text(l10n.photo,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+    ]);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 180,
+          child: Image.network(
+            url,
+            key: const Key('chat-photo'),
+            fit: BoxFit.cover,
+            semanticLabel: l10n.photo,
+            errorBuilder: (_, __, ___) => label,
           ),
         ),
       ),

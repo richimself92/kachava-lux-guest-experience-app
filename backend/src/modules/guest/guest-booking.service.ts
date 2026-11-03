@@ -22,7 +22,9 @@ import {
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { CreateBookingDto, UpdateLarderOrderDto } from './dto/guest.dto';
+import { CreateBookingDto, LarderCartLineDto } from './dto/guest.dto';
+
+type OrderLineRequest = Pick<LarderCartLineDto, 'itemId' | 'quantity'>;
 import { TaskAutomation } from '../tasks/task-automation.service';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
 
@@ -53,20 +55,22 @@ export class GuestBookingService {
     private readonly taskAutomation: TaskAutomation,
   ) {}
 
-  async updateLarderOrder(
+  /** Replaces the guest's order for ONE ORDER service; other services' orders are kept. */
+  async updateServiceOrder(
     stay: StayAggregate,
-    dto: UpdateLarderOrderDto,
+    serviceId: string,
+    requestedLines: OrderLineRequest[],
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
-    const { service, items } = await this.loadService(dto.serviceId);
+    const { service, items } = await this.loadService(serviceId);
     if (service.usageType !== 'ORDER') {
       throw new BusinessRuleError(`Service ${service.serviceId} does not take orders`);
     }
-    const requested = dto.items.filter((line) => line.quantity > 0);
+    const requested = requestedLines.filter((line) => line.quantity > 0);
     const lines = resolveOrderLines(service, items, requested);
     const snapshot = buildServiceSnapshot(service, lines, 1, new Date().toISOString());
     const orders = this.toLarderLines(stay, service, lines, snapshot);
     const charge = { title: service.name.en, chargeToFolio: service.pricing.chargeToFolio };
-    const result = await this.stayRepo.replaceLarderOrders(stay.stayId, orders, charge, () => ({
+    const result = await this.stayRepo.replaceServiceOrder(stay.stayId, service.serviceId, orders, charge, () => ({
       ...this.alerts.buildAlert(stay, {
         category: 'LARDER',
         severity: 'NORMAL',
@@ -109,6 +113,14 @@ export class GuestBookingService {
     }));
     await this.taskAutomation.forBooking(stay, created, service, guestActor(stay));
     return created;
+  }
+
+  /** The service must exist (404); min/max guests and blocked dates are checked (422). */
+  async assertBookingFits(serviceId: string, date: string, partySize: number): Promise<CatalogService> {
+    const { service } = await this.loadService(serviceId);
+    if (service.status !== 'ACTIVE') throw new BusinessRuleError(`Service ${serviceId} is not available`);
+    this.assertBookable(service, date, partySize);
+    return service;
   }
 
   private async loadService(serviceId: string): Promise<OrderableService> {
@@ -201,6 +213,7 @@ export class GuestBookingService {
       notifiedAt: null,
       adminNotes: '',
       createdAt: now,
+      updatedAt: now,
     };
   }
 }

@@ -18,8 +18,9 @@ import '../domain/trip.dart';
 
 enum PortalPhase { loading, linkMissing, linkInvalid, linkExpired, ready }
 
-/// App state for one guest link: server data, the derived journey and the
-/// device-only bits (language, skipped tasks, drafts, last seen message).
+/// App state for one guest link: server data (stay, journey marks, requests),
+/// the derived journey and the device-only bits (language, form drafts,
+/// last seen message).
 class PortalController extends ChangeNotifier {
   PortalController({
     required this.api,
@@ -35,8 +36,6 @@ class PortalController extends ChangeNotifier {
       GuestLinkStatus.invalid => PortalPhase.linkInvalid,
       GuestLinkStatus.valid => PortalPhase.loading,
     };
-    _skips = _readSet('skips');
-    _own = _readSet('own');
   }
 
   static const String langKey = 'kachava_lang';
@@ -66,8 +65,6 @@ class PortalController extends ChangeNotifier {
   bool _reconnecting = false;
   bool get isReconnecting => _reconnecting;
 
-  late Set<String> _skips;
-  late Set<String> _own;
   bool _refreshing = false;
   bool _disposed = false;
   Timer? _timer;
@@ -85,10 +82,10 @@ class PortalController extends ChangeNotifier {
       stay: s,
       catalog: _catalog,
       requests: requests,
-      skips: _skips,
+      skips: s.skippedTaskIds,
       resortToday: clock.today(),
       drafts: _draftTaskIds(),
-      ownArrangements: _own,
+      ownArrangements: s.completedTaskIds,
     );
   }
 
@@ -167,6 +164,20 @@ class PortalController extends ChangeNotifier {
   Future<ApiResult<void>> createBooking(Json payload) =>
       _write(() => api.createBooking(_guestUuid, payload));
 
+  /// New date, time or party of a REQUESTED booking.
+  Future<ApiResult<void>> changeBooking(String bookingId, Json change) =>
+      _write(() => api.changeBooking(_guestUuid, bookingId, change));
+
+  /// Cancels a request the server still holds in its initial status.
+  Future<ApiResult<void>> cancelRequest(GuestRequest request) {
+    final booking = request.booking, trip = request.trip;
+    if (booking != null) {
+      return _write(() => api.cancelBooking(_guestUuid, booking.id));
+    }
+    if (trip != null) return _write(() => api.cancelTrip(_guestUuid, trip.id));
+    return Future.value(const ApiFailed(FailureKind.invalid));
+  }
+
   Future<ApiResult<GuestTrip>> createTrip(Json payload) =>
       _write(() => api.createTrip(_guestUuid, payload));
 
@@ -178,26 +189,27 @@ class PortalController extends ChangeNotifier {
   Future<ApiResult<void>> sendRating(int rating, String note) =>
       _write(() => api.sendRating(_guestUuid, rating, note));
 
-  /// Sends a chat message (and optional real photo) to the Resort Host.
+  /// Sends a chat message and/or a real photo to the Resort Host, inside the
+  /// open thread when there is one.
   Future<ApiResult<void>> sendToHost(String text, {PickedPhoto? photo}) {
     return _write<void>(() async {
       final body = text.trim();
+      final open = openChatThread;
+      String? path;
       if (photo != null) {
-        final upload = await api.uploadPhoto(_guestUuid, photo);
+        final upload =
+            await api.uploadPhoto(_guestUuid, photo, threadId: open?.id);
         if (upload case ApiFailed(:final kind, :final message)) {
           return ApiFailed(kind, message);
         }
-        final path = (upload as ApiOk<String>).value;
-        final started = await api.startHostThread(_guestUuid,
-            text: body.isEmpty ? 'Photo' : body, photoStoragePath: path);
-        return switch (started) {
-          ApiOk() => const ApiOk(null),
-          ApiFailed(:final kind, :final message) => ApiFailed(kind, message),
-        };
+        path = (upload as ApiOk<String>).value;
       }
-      final open = openChatThread;
-      if (open != null) return api.sendHostMessage(_guestUuid, open.id, body);
-      final started = await api.startHostThread(_guestUuid, text: body);
+      if (open != null) {
+        return api.sendHostMessage(_guestUuid, open.id, body,
+            photoStoragePath: path);
+      }
+      final started = await api.startHostThread(_guestUuid,
+          text: body, photoStoragePath: path);
       return switch (started) {
         ApiOk() => const ApiOk(null),
         ApiFailed(:final kind, :final message) => ApiFailed(kind, message),
@@ -229,6 +241,23 @@ class PortalController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ------------------------------------------------------------ journey marks
+
+  /// "Not now": stored on the stay; the task then leaves the count and sinks
+  /// as Skipped (after the server confirms).
+  Future<ApiResult<void>> skip(JourneyTask task) {
+    final current = _stay?.skippedTaskIds ?? const <String>{};
+    return _write(() => api
+        .saveJourney(_guestUuid, skippedTaskIds: {...current, task.skipKey}));
+  }
+
+  /// "I arrange my own" transfer, stored on the stay.
+  Future<ApiResult<void>> markOwnArrangement(CoreTask core) {
+    final current = _stay?.completedTaskIds ?? const <String>{};
+    return _write(() =>
+        api.saveJourney(_guestUuid, completedTaskIds: {...current, core.id}));
+  }
+
   // ------------------------------------------------------------ device state
 
   void setLang(Lang value) {
@@ -245,20 +274,6 @@ class PortalController extends ChangeNotifier {
     return prefs.browserLanguage.toLowerCase().startsWith('es')
         ? Lang.es
         : Lang.en;
-  }
-
-  /// "Not now": the task leaves the count and sinks as Skipped.
-  void skip(JourneyTask task) {
-    _skips = {..._skips, task.skipKey};
-    _writeSet('skips', _skips);
-    notifyListeners();
-  }
-
-  /// "I arrange my own" transfer.
-  void markOwnArrangement(CoreTask core) {
-    _own = {..._own, core.id};
-    _writeSet('own', _own);
-    notifyListeners();
   }
 
   String _key(String name) => 'kachava_${name}_$_guestUuid';

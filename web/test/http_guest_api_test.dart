@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:kachava_guest_portal/data/guest_api.dart';
 import 'package:kachava_guest_portal/data/http_guest_api.dart';
 import 'package:kachava_guest_portal/domain/catalog.dart';
+import 'package:kachava_guest_portal/domain/json_read.dart';
 import 'package:kachava_guest_portal/domain/stay.dart';
 
 import 'support/fake_guest_api.dart';
@@ -129,11 +130,19 @@ void main() {
             'success': true,
             'data': {
               'uploadUrl': 'https://storage.test/bucket/obj?X-Goog-Signature=1',
-              'storagePath': '/private/p.jpg'
+              'method': 'PUT',
+              'headers': {
+                'Content-Type': 'image/jpeg',
+                'x-goog-content-length-range': '0,10485760'
+              },
+              'storagePath': '/private/p.jpg',
+              'expiresAt': '2026-11-03T10:15:00.000Z',
+              'maxBytes': 10485760,
             },
           });
         }
         expect(r.headers['Content-Type'], 'image/jpeg');
+        expect(r.headers['x-goog-content-length-range'], '0,10485760');
         expect(r.bodyBytes.length, 32);
         return http.Response('', 200);
       }),
@@ -146,7 +155,7 @@ void main() {
     ]);
   });
 
-  test('photo: Storage emulator takes a media POST', () async {
+  test('photo: the method comes from the signer, never guessed', () async {
     String? method;
     final api = HttpGuestApi(
       baseUrl: _base,
@@ -154,9 +163,11 @@ void main() {
         if (r.url.path.endsWith('/upload-url')) {
           return _json({
             'data': {
-              'uploadUrl':
-                  'http://localhost:9199/upload/storage/v1/b/x/o?uploadType=media&name=p',
+              'uploadUrl': 'http://storage.test/any/path',
+              'method': 'POST',
+              'headers': {'Content-Type': 'image/jpeg'},
               'storagePath': '/private/p.jpg',
+              'maxBytes': 10485760,
             },
           });
         }
@@ -173,12 +184,143 @@ void main() {
       baseUrl: _base,
       client: MockClient((r) async => r.url.path.endsWith('/upload-url')
           ? _json({
-              'data': {'uploadUrl': 'https://s.test/o', 'storagePath': '/p'}
+              'data': {
+                'uploadUrl': 'https://s.test/o',
+                'method': 'PUT',
+                'headers': {'Content-Type': 'image/jpeg'},
+                'storagePath': '/p',
+                'maxBytes': 10485760,
+              }
             })
           : http.Response('denied', 403)),
     );
     expect(await api.uploadPhoto(guestUuid, samplePhoto),
         isA<ApiFailed<String>>());
+  });
+
+  test('photo: a ticket without method or a too large photo is refused',
+      () async {
+    var uploads = 0;
+    HttpGuestApi apiWith(Json ticket) => HttpGuestApi(
+          baseUrl: _base,
+          client: MockClient((r) async {
+            if (r.url.path.endsWith('/upload-url')) {
+              return _json({'data': ticket});
+            }
+            uploads++;
+            return http.Response('', 200);
+          }),
+        );
+    final noMethod = apiWith(
+        {'uploadUrl': 'https://s.test/o', 'storagePath': '/p', 'maxBytes': 99});
+    final tooSmall = apiWith({
+      'uploadUrl': 'https://s.test/o',
+      'method': 'PUT',
+      'headers': const {},
+      'storagePath': '/p',
+      'maxBytes': 8,
+    });
+    expect(await noMethod.uploadPhoto(guestUuid, samplePhoto),
+        isA<ApiFailed<String>>());
+    expect(await tooSmall.uploadPhoto(guestUuid, samplePhoto),
+        isA<ApiFailed<String>>());
+    expect(uploads, 0);
+  });
+
+  test('photo upload asks for the open thread folder', () async {
+    late Map<String, dynamic> body;
+    final api = HttpGuestApi(
+      baseUrl: _base,
+      client: MockClient((r) async {
+        if (r.url.path.endsWith('/upload-url')) {
+          body = jsonDecode(r.body) as Map<String, dynamic>;
+          return _json({
+            'data': {
+              'uploadUrl': 'https://s.test/o',
+              'method': 'PUT',
+              'headers': {'Content-Type': 'image/jpeg'},
+              'storagePath': '/p',
+              'maxBytes': 1000,
+            }
+          });
+        }
+        return http.Response('', 200);
+      }),
+    );
+    await api.uploadPhoto(guestUuid, samplePhoto, threadId: 'req_7');
+    expect(body['requestId'], 'req_7');
+  });
+
+  test('stay: journey marks, request timestamps and chat photo URLs', () async {
+    final api = HttpGuestApi(
+      baseUrl: _base,
+      client: MockClient((_) async => _json({
+            'data': stayJson(
+              skipped: ['1:core:flight'],
+              completed: ['core:departure'],
+              bookings: [
+                bookingJson('b1', 'spa', createdAt: '2026-11-01T09:00:00Z')
+              ],
+              threads: const [
+                {
+                  'requestId': 'c1',
+                  'type': 'ask',
+                  'messages': [
+                    {
+                      'sender': 'GUEST',
+                      'text': '',
+                      'sentAt': '2026-11-01T10:00:00Z',
+                      'photoUrl': 'https://signed.test/read/p.jpg'
+                    }
+                  ],
+                }
+              ],
+            )
+          })),
+    );
+    final stay = (await api.fetchStay(guestUuid) as ApiOk<GuestStay>).value;
+    expect(stay.skippedTaskIds, {'1:core:flight'});
+    expect(stay.completedTaskIds, {'core:departure'});
+    expect(stay.bookings.single.createdAt, DateTime.utc(2026, 11, 1, 9));
+    expect(stay.chatMessages.single.photoUrl, 'https://signed.test/read/p.jpg');
+    expect(stay.chatMessages.single.hasPhoto, isTrue);
+  });
+
+  test('guest self-service routes', () async {
+    final calls = <String>[];
+    final api = HttpGuestApi(
+      baseUrl: _base,
+      client: MockClient((r) async {
+        calls.add('${r.method} ${r.url.path} ${r.body}');
+        return _json({'data': const {}});
+      }),
+    );
+    final results = [
+      await api.saveOrder(guestUuid, {
+        'serviceId': 'bar',
+        'items': [
+          {'itemId': 'i1', 'quantity': 2}
+        ]
+      }),
+      await api.saveJourney(guestUuid, skippedTaskIds: {'1:core:flight'}),
+      await api.saveJourney(guestUuid, completedTaskIds: {'core:flight'}),
+      await api.cancelBooking(guestUuid, 'b1'),
+      await api.changeBooking(guestUuid, 'b1', {'partySize': 3}),
+      await api.cancelTrip(guestUuid, 't1'),
+      await api.sendHostMessage(guestUuid, 'c1', '',
+          photoStoragePath: '/private/p.jpg'),
+    ];
+    expect(results, everyElement(isA<ApiOk<void>>()));
+    const p = '/api/v1/stays/$guestUuid';
+    expect(calls, [
+      'PUT $p/orders/bar {"items":[{"itemId":"i1","quantity":2}]}',
+      'PUT $p/journey {"skippedTaskIds":["1:core:flight"]}',
+      'PUT $p/journey {"completedTaskIds":["core:flight"]}',
+      'POST $p/bookings/b1/cancel ',
+      'PATCH $p/bookings/b1 {"partySize":3}',
+      'POST $p/trips/t1/cancel ',
+      'POST $p/concierge-requests/c1/messages {"photoStoragePath":"/private/p.jpg"}',
+    ]);
   });
 
   test('chat thread is type ask in the Resort Host chat category', () async {

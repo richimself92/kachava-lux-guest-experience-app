@@ -76,4 +76,10 @@ export class GuestTripsController {
   create(@CurrentStay() stay: StayAggregate, @Body() dto: CreateGuestTripDto) {
     return this.trips.create(stay, dto);
   }
+
+  @Post(':tripId/cancel')
+  @HttpCode(HttpStatus.OK)
+  cancel(@CurrentStay() stay: StayAggregate, @Param('tripId') tripId: string) {
+    return this.trips.cancel(stay, tripId);
+  }
 }

@@ -33,6 +33,8 @@ export interface LarderOrderItem {
   assignedStaffName: string | null;
   assignedDepartment: Department | null;
   assignedAt: string | null;
+  /** When the guest first ordered from this service (absent on older lines). */
+  createdAt?: string;
   updatedAt: string;
 }
 
@@ -72,6 +74,8 @@ export interface ExperienceBooking {
   notifiedAt: string | null;
   adminNotes: string;
   createdAt: string;
+  /** Last guest or staff change (absent on older bookings). */
+  updatedAt?: string;
 }
 
 export interface ConciergeMessage {
@@ -80,6 +84,8 @@ export interface ConciergeMessage {
   senderName: string;
   text: string;
   sentAt: string;
+  /** Private photo sent with this message (`private/stays/{stayId}/concierge/...`). */
+  photoStoragePath?: string | null;
 }
 
 export interface ConciergeRequest {

@@ -70,7 +70,8 @@ RequestStatus hostStatusOf(String raw, bool isCompleted) {
   };
 }
 
-/// One row of My requests, composed client-side from the guest endpoints.
+/// One row of My requests, composed client-side from the guest endpoints and
+/// ordered by the server `createdAt`.
 class GuestRequest {
   const GuestRequest({
     required this.id,
@@ -87,6 +88,7 @@ class GuestRequest {
     this.lines = const [],
     this.totalUSD,
     this.trip,
+    this.booking,
   });
 
   final String id;
@@ -109,6 +111,15 @@ class GuestRequest {
   final List<SnapshotLine> lines;
   final double? totalUSD;
   final GuestTrip? trip;
+  final GuestBooking? booking;
+
+  /// The guest may cancel while the server status is still the initial one.
+  bool get canCancel =>
+      (booking?.isInitial ?? false) || (trip?.isInitial ?? false);
+
+  /// Date, time and party can be changed on a REQUESTED booking (not choices).
+  bool get canChange =>
+      kind == RequestKind.booking && (booking?.isInitial ?? false);
 }
 
 /// Builds My requests: orders (grouped per service), bookings, preferences,
@@ -148,6 +159,10 @@ Iterable<GuestRequest> _larderRequests(
         ? RequestStatus.cancelled
         : live.reduce((a, b) => a.trackIndex <= b.trackIndex ? a : b);
     final service = byId[serviceId];
+    final created = group
+        .map((l) => l.createdAt)
+        .whereType<DateTime>()
+        .fold<DateTime?>(null, (a, b) => a == null || b.isBefore(a) ? b : a);
     yield GuestRequest(
       id: 'order:$serviceId',
       kind: RequestKind.order,
@@ -161,6 +176,7 @@ Iterable<GuestRequest> _larderRequests(
               name: l.name, quantity: l.quantity, lineTotalUSD: l.lineTotalUSD),
       ],
       totalUSD: group.fold<double>(0, (sum, l) => sum + l.lineTotalUSD),
+      sortAt: created,
     );
   }
 }
@@ -183,9 +199,10 @@ GuestRequest _bookingRequest(GuestBooking b) {
     day: _parseDay(b.scheduledDate),
     time: b.scheduledTimeSlot,
     people: b.usageType == UsageType.preference ? 0 : b.partySize,
-    sortAt: b.snapshot.capturedAt,
+    sortAt: b.createdAt ?? b.snapshot.capturedAt,
     lines: b.snapshot.lines,
     totalUSD: b.snapshot.totalUSD,
+    booking: b,
   );
 }
 

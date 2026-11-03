@@ -1,7 +1,7 @@
 import 'device_prefs_stub.dart'
     if (dart.library.js_interop) 'device_prefs_web.dart';
 
-/// Small per-device key/value store (language, skipped tasks, drafts,
+/// Small per-device key/value store (language, form drafts,
 /// last seen Host message). Every access fails soft.
 abstract interface class DevicePrefs {
   String? read(String key);

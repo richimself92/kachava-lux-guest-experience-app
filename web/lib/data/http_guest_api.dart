@@ -136,12 +136,44 @@ class HttpGuestApi implements GuestApi {
         (data) => asJsonList(data).map(GuestTrip.fromJson).toList(),
       );
 
+  Future<ApiResult<void>> _command(String method, String path,
+          {required String guestUuid, Object? body}) async =>
+      _map(await _send(method, path, guestUuid: guestUuid, body: body), (_) {});
+
   @override
-  Future<ApiResult<void>> saveOrder(String guestUuid, Json payload) async =>
-      _map(
-          await _send('PUT', 'stays/$guestUuid/larder',
-              guestUuid: guestUuid, body: payload),
-          (_) {});
+  Future<ApiResult<void>> saveOrder(String guestUuid, Json payload) {
+    final serviceId = Uri.encodeComponent(asString(payload['serviceId']));
+    return _command('PUT', 'stays/$guestUuid/orders/$serviceId',
+        guestUuid: guestUuid, body: {'items': payload['items'] ?? const []});
+  }
+
+  @override
+  Future<ApiResult<void>> saveJourney(String guestUuid,
+          {Set<String>? skippedTaskIds, Set<String>? completedTaskIds}) =>
+      _command('PUT', 'stays/$guestUuid/journey', guestUuid: guestUuid, body: {
+        if (skippedTaskIds != null) 'skippedTaskIds': skippedTaskIds.toList(),
+        if (completedTaskIds != null)
+          'completedTaskIds': completedTaskIds.toList(),
+      });
+
+  @override
+  Future<ApiResult<void>> cancelBooking(String guestUuid, String bookingId) =>
+      _command('POST',
+          'stays/$guestUuid/bookings/${Uri.encodeComponent(bookingId)}/cancel',
+          guestUuid: guestUuid);
+
+  @override
+  Future<ApiResult<void>> changeBooking(
+          String guestUuid, String bookingId, Json change) =>
+      _command('PATCH',
+          'stays/$guestUuid/bookings/${Uri.encodeComponent(bookingId)}',
+          guestUuid: guestUuid, body: change);
+
+  @override
+  Future<ApiResult<void>> cancelTrip(String guestUuid, String tripId) =>
+      _command('POST',
+          'stays/$guestUuid/trips/${Uri.encodeComponent(tripId)}/cancel',
+          guestUuid: guestUuid);
 
   @override
   Future<ApiResult<void>> createBooking(String guestUuid, Json payload) async =>
@@ -200,17 +232,18 @@ class HttpGuestApi implements GuestApi {
 
   @override
   Future<ApiResult<void>> sendHostMessage(
-          String guestUuid, String threadId, String text) async =>
-      _map(
-        await _send(
-            'POST', 'stays/$guestUuid/concierge-requests/$threadId/messages',
-            guestUuid: guestUuid, body: {'text': text}),
-        (_) {},
-      );
+          String guestUuid, String threadId, String text,
+          {String? photoStoragePath}) =>
+      _command('POST', 'stays/$guestUuid/concierge-requests/$threadId/messages',
+          guestUuid: guestUuid,
+          body: {
+            if (text.isNotEmpty) 'text': text,
+            if (photoStoragePath != null) 'photoStoragePath': photoStoragePath,
+          });
 
   @override
-  Future<ApiResult<String>> uploadPhoto(
-      String guestUuid, PickedPhoto photo) async {
+  Future<ApiResult<String>> uploadPhoto(String guestUuid, PickedPhoto photo,
+      {String? threadId}) async {
     final signed = await _send(
         'POST', 'stays/$guestUuid/concierge-requests/upload-url',
         guestUuid: guestUuid,
@@ -218,29 +251,32 @@ class HttpGuestApi implements GuestApi {
           'fileName': photo.fileName,
           'contentType': photo.contentType,
           'fileSizeBytes': photo.bytes.length,
+          if (threadId != null) 'requestId': threadId,
         });
     if (signed is ApiFailed<Object?>) {
       return ApiFailed(signed.kind, signed.message);
     }
-    final data = asJson((signed as ApiOk<Object?>).value);
-    final uploadUrl = asString(data['uploadUrl']);
-    final storagePath = asString(data['storagePath']);
-    if (uploadUrl.isEmpty || storagePath.isEmpty) {
-      return const ApiFailed(FailureKind.unreachable);
+    final ticket = UploadTicket.fromJson(asJson((signed as ApiOk).value));
+    if (ticket == null) return const ApiFailed(FailureKind.unreachable);
+    if (photo.bytes.length > ticket.maxBytes) {
+      return const ApiFailed(FailureKind.invalid);
     }
+    return _putBytes(ticket, photo);
+  }
+
+  /// Sends the bytes exactly as signed: the ticket's method and headers.
+  Future<ApiResult<String>> _putBytes(
+      UploadTicket ticket, PickedPhoto photo) async {
     try {
-      // The Storage emulator takes a media POST; Cloud Storage a signed PUT.
-      final usePost = uploadUrl.contains('/upload/storage/v1/');
-      final request =
-          http.Request(usePost ? 'POST' : 'PUT', Uri.parse(uploadUrl))
-            ..headers['Content-Type'] = photo.contentType
-            ..bodyBytes = photo.bytes;
+      final request = http.Request(ticket.method, Uri.parse(ticket.uploadUrl))
+        ..headers.addAll(ticket.headers)
+        ..bodyBytes = photo.bytes;
       final response = await _client.send(request).timeout(timeout);
       await response.stream.drain<void>();
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return const ApiFailed(FailureKind.unreachable);
       }
-      return ApiOk(storagePath);
+      return ApiOk(ticket.storagePath);
     } on TimeoutException {
       return const ApiFailed(FailureKind.unreachable);
     } on http.ClientException {
@@ -252,4 +288,42 @@ class HttpGuestApi implements GuestApi {
   void dispose() {
     if (_ownsClient) _client.close();
   }
+}
+
+/// Signed direct-to-Storage upload returned by `upload-url`.
+class UploadTicket {
+  const UploadTicket({
+    required this.uploadUrl,
+    required this.method,
+    required this.headers,
+    required this.storagePath,
+    required this.maxBytes,
+  });
+
+  /// Null when the server ticket is incomplete (nothing is guessed).
+  static UploadTicket? fromJson(Json json) {
+    final method = asString(json['method']).toUpperCase();
+    final uploadUrl = asString(json['uploadUrl']);
+    final storagePath = asString(json['storagePath']);
+    final maxBytes = asInt(json['maxBytes']);
+    if (uploadUrl.isEmpty || storagePath.isEmpty || maxBytes == null) {
+      return null;
+    }
+    if (method != 'PUT' && method != 'POST') return null;
+    return UploadTicket(
+      uploadUrl: uploadUrl,
+      method: method,
+      headers: {
+        for (final e in asJson(json['headers']).entries) e.key: '${e.value}'
+      },
+      storagePath: storagePath,
+      maxBytes: maxBytes,
+    );
+  }
+
+  final String uploadUrl;
+  final String method;
+  final Map<String, String> headers;
+  final String storagePath;
+  final int maxBytes;
 }

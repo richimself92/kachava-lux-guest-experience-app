@@ -1,4 +1,4 @@
-import { ConciergeMessage, StayAggregate } from '../models/domain.models';
+import { ConciergeMessage, ConciergeRequest, StayAggregate } from '../models/domain.models';
 
 /**
  * Messages inbox (ADR-011): one conversation per stay, merged from the messages of the stay's
@@ -15,7 +15,7 @@ export interface ConversationMessage {
   senderName: string;
   text: string;
   at: string;
-  /** The thread photo, carried by the thread's opening message. */
+  /** The message photo (the thread photo is carried by the opening message). */
   photoStoragePath: string | null;
 }
 
@@ -40,6 +40,13 @@ export interface ConversationRow {
   awaitingReply: boolean;
 }
 
+/** The photo of message `index`: its own, else (opening message) the photo the thread was opened with. */
+export function messagePhotoPath(request: ConciergeRequest, index: number): string | null {
+  const own = request.messages?.[index]?.photoStoragePath;
+  if (own) return own;
+  return index === 0 ? request.photoStoragePath ?? null : null;
+}
+
 function authorOf(message: ConciergeMessage): MessageAuthor {
   return message.sender === 'GUEST' ? 'GUEST' : 'STAFF';
 }
@@ -54,7 +61,7 @@ export function conversationMessages(stay: StayAggregate): ConversationMessage[]
       senderName: message.senderName,
       text: message.text,
       at: message.sentAt,
-      photoStoragePath: index === 0 ? request.photoStoragePath ?? null : null,
+      photoStoragePath: messagePhotoPath(request, index),
     })),
   );
   return messages

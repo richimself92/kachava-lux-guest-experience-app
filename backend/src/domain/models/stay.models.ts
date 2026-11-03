@@ -168,6 +168,10 @@ export interface StayRecord {
   cancellationReason?: string | null;
   /** When staff last read the guest conversation (Messages inbox); absent = never. */
   conversationReadAt?: string | null;
+  /** Guest journey tasks skipped with "Not now" (`<step>:<taskId>`); absent on older stays. */
+  skippedTaskIds?: string[];
+  /** Guest journey tasks the guest marked done without a request (e.g. "I arrange my own"). */
+  completedTaskIds?: string[];
   createdAt: string;
   updatedAt: string;
 }

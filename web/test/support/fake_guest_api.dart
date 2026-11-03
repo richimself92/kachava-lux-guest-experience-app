@@ -65,6 +65,52 @@ class FakeGuestApi implements GuestApi {
       _write('order', payload, null);
 
   @override
+  Future<ApiResult<void>> saveJourney(String guestUuid,
+      {Set<String>? skippedTaskIds, Set<String>? completedTaskIds}) async {
+    final body = {
+      if (skippedTaskIds != null) 'skippedTaskIds': skippedTaskIds.toList(),
+      if (completedTaskIds != null)
+        'completedTaskIds': completedTaskIds.toList(),
+    };
+    final r = await _write('journey', body, null);
+    if (r is ApiOk) stayJsonValue = {...stayJsonValue, ...body};
+    return r;
+  }
+
+  @override
+  Future<ApiResult<void>> cancelBooking(
+      String guestUuid, String bookingId) async {
+    final r = await _write('cancelBooking', bookingId, null);
+    if (r is ApiOk) {
+      stayJsonValue = {
+        ...stayJsonValue,
+        'experienceBookings': [
+          for (final b in asJsonList(stayJsonValue['experienceBookings']))
+            b['bookingId'] == bookingId ? {...b, 'status': 'CANCELLED'} : b,
+        ],
+      };
+    }
+    return r;
+  }
+
+  @override
+  Future<ApiResult<void>> changeBooking(
+          String guestUuid, String bookingId, Json change) =>
+      _write('changeBooking', {'bookingId': bookingId, ...change}, null);
+
+  @override
+  Future<ApiResult<void>> cancelTrip(String guestUuid, String tripId) async {
+    final r = await _write('cancelTrip', tripId, null);
+    if (r is ApiOk) {
+      tripsJson = [
+        for (final t in tripsJson)
+          t['id'] == tripId ? {...t, 'status': 'CANCELLED'} : t,
+      ];
+    }
+    return r;
+  }
+
+  @override
   Future<ApiResult<void>> createBooking(String guestUuid, Json payload) =>
       _write('booking', payload, null);
 
@@ -105,13 +151,22 @@ class FakeGuestApi implements GuestApi {
 
   @override
   Future<ApiResult<void>> sendHostMessage(
-          String guestUuid, String threadId, String text) =>
-      _write('message', {'thread': threadId, 'text': text}, null);
+          String guestUuid, String threadId, String text,
+          {String? photoStoragePath}) =>
+      _write(
+          'message',
+          {
+            'thread': threadId,
+            'text': text,
+            if (photoStoragePath != null) 'photo': photoStoragePath,
+          },
+          null);
 
   @override
-  Future<ApiResult<String>> uploadPhoto(String guestUuid, PickedPhoto photo) =>
+  Future<ApiResult<String>> uploadPhoto(String guestUuid, PickedPhoto photo,
+          {String? threadId}) =>
       _write('upload', photo.fileName,
-          '/private/stays/s1/concierge/x/${photo.fileName}');
+          '/private/stays/s1/concierge/${threadId ?? 'x'}/${photo.fileName}');
 
   @override
   void dispose() {}

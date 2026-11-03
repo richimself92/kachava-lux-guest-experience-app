@@ -66,6 +66,8 @@ class LarderOrderLine {
     this.unitPriceUSD = 0,
     this.lineTotalUSD = 0,
     this.status = '',
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory LarderOrderLine.fromJson(Json json) => LarderOrderLine(
@@ -80,6 +82,8 @@ class LarderOrderLine {
         unitPriceUSD: asDouble(json['unitPriceUSD']) ?? 0,
         lineTotalUSD: asDouble(json['lineTotalUSD']) ?? 0,
         status: asString(json['provisioningStatus']),
+        createdAt: asDateTime(json['createdAt']),
+        updatedAt: asDateTime(json['updatedAt']),
       );
 
   final String orderItemId;
@@ -90,6 +94,10 @@ class LarderOrderLine {
   final double unitPriceUSD;
   final double lineTotalUSD;
   final String status;
+
+  /// When the guest first ordered from this service (server time).
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 }
 
 class GuestBooking {
@@ -105,7 +113,12 @@ class GuestBooking {
     this.scheduledTimeSlot = '',
     this.partySize = 0,
     this.status = 'REQUESTED',
+    this.createdAt,
+    this.updatedAt,
   });
+
+  /// The only status in which the guest may cancel or change it.
+  static const String initialStatus = 'REQUESTED';
 
   factory GuestBooking.fromJson(Json json) {
     final snapshot = ServiceSnapshot.fromJson(json['snapshot']);
@@ -123,6 +136,8 @@ class GuestBooking {
       scheduledTimeSlot: asString(json['scheduledTimeSlot']),
       partySize: asInt(json['partySize']) ?? 0,
       status: asString(json['status']),
+      createdAt: asDateTime(json['createdAt']),
+      updatedAt: asDateTime(json['updatedAt']),
     );
   }
 
@@ -137,6 +152,10 @@ class GuestBooking {
   final String scheduledTimeSlot;
   final int partySize;
   final String status;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  bool get isInitial => status == initialStatus;
 }
 
 enum MessageSender { guest, host }
@@ -147,7 +166,7 @@ class ChatMessage {
     required this.text,
     required this.sentAt,
     this.senderName = '',
-    this.hasPhoto = false,
+    this.photoUrl,
   });
 
   final MessageSender sender;
@@ -155,8 +174,9 @@ class ChatMessage {
   final String text;
   final DateTime? sentAt;
 
-  /// The thread this message opened was sent with a photo.
-  final bool hasPhoto;
+  /// Short-lived signed read URL of the photo sent with this message.
+  final String? photoUrl;
+  bool get hasPhoto => photoUrl != null;
 }
 
 /// A Resort Host thread (`concierge-requests`).
@@ -179,27 +199,25 @@ class HostThread {
   static const String photoCategory = 'Resort Host photo';
 
   factory HostThread.fromJson(Json json) {
-    final category = asString(json['category']);
-    final withPhoto = category == photoCategory;
     final messages = asJsonList(json['messages']);
     return HostThread(
       id: asString(json['requestId']),
       type: asString(json['type']),
-      category: category,
+      category: asString(json['category']),
       title: asString(json['title']),
       status: asString(json['status']),
       isCompleted: asBool(json['isCompleted']),
       createdAt: asDateTime(json['createdAt']),
       messages: [
-        for (var i = 0; i < messages.length; i++)
+        for (final m in messages)
           ChatMessage(
-            sender: asString(messages[i]['sender']) == 'GUEST'
+            sender: asString(m['sender']) == 'GUEST'
                 ? MessageSender.guest
                 : MessageSender.host,
-            senderName: asString(messages[i]['senderName']),
-            text: asString(messages[i]['text']),
-            sentAt: asDateTime(messages[i]['sentAt']),
-            hasPhoto: withPhoto && i == 0,
+            senderName: asString(m['senderName']),
+            text: asString(m['text']),
+            sentAt: asDateTime(m['sentAt']),
+            photoUrl: asStringOrNull(m['photoUrl']),
           ),
       ],
     );
@@ -239,6 +257,8 @@ class GuestStay {
     this.bookings = const [],
     this.threads = const [],
     this.ratingsSent = 0,
+    this.skippedTaskIds = const {},
+    this.completedTaskIds = const {},
   });
 
   factory GuestStay.fromJson(String guestUuid, Json json) {
@@ -274,6 +294,8 @@ class GuestStay {
           .map(HostThread.fromJson)
           .toList(),
       ratingsSent: asJsonList(json['midstayFeedback']).length,
+      skippedTaskIds: asStringList(json['skippedTaskIds']).toSet(),
+      completedTaskIds: asStringList(json['completedTaskIds']).toSet(),
     );
   }
 
@@ -297,8 +319,8 @@ class GuestStay {
   final String wifiSsid;
   final String wifiPassword;
 
-  /// Resort calendar days (UTC midnight). The guest view does not publish
-  /// them yet; when null the phase comes from [phase].
+  /// Resort calendar days (UTC midnight) from `checkInDate`/`checkOutDate`;
+  /// when absent (older stays) the open step comes from [phase].
   final DateTime? checkIn;
   final DateTime? checkOut;
   final String dietary;
@@ -307,6 +329,12 @@ class GuestStay {
   final List<GuestBooking> bookings;
   final List<HostThread> threads;
   final int ratingsSent;
+
+  /// Journey tasks skipped with "Not now" (`<step>:<taskId>`), stored on the stay.
+  final Set<String> skippedTaskIds;
+
+  /// Journey tasks the guest marked done without a request ("I arrange my own").
+  final Set<String> completedTaskIds;
 
   /// Resort Host chat threads (type `ask`).
   List<HostThread> get chatThreads => threads.where((t) => t.isChat).toList();

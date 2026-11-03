@@ -1,10 +1,9 @@
-import { chargeBooking, chargeLarderOrder, LarderCharge } from '../../domain/folio-ledger';
+import { chargeBooking } from '../../domain/folio-ledger';
 import {
   ConciergeMessage,
   ConciergeRequest,
   ExperienceBooking,
   FlightTransfer,
-  FolioSummary,
   LarderOrderItem,
   MidStayFeedback,
   Personalization,
@@ -87,18 +86,6 @@ export function selectSignaturePrivilege(
   return structuredClone(stay);
 }
 
-/** Replaces the larder order and re-prices its folio line from the stored folio. */
-export function replaceLarderAndFolio(
-  stay: StayAggregate,
-  orders: LarderOrderItem[],
-  charge: LarderCharge,
-): { orders: LarderOrderItem[]; folioSummary: FolioSummary } {
-  stay.larderOrders = structuredClone(orders);
-  touch(stay);
-  chargeLarderOrder(stay, stay.larderOrders, stay.updatedAt, charge);
-  return { orders: structuredClone(stay.larderOrders), folioSummary: structuredClone(stay.folioSummary) };
-}
-
 /** Stores the booking and charges it to the stored folio. */
 export function addBooking(stay: StayAggregate, booking: ExperienceBooking): ExperienceBooking {
   assertRoomFor(stay.experienceBookings, MAX_BOOKINGS_PER_STAY, 'bookings');
@@ -171,7 +158,7 @@ export function applyBookingAssignmentUpdate(
 ): ExperienceBooking | null {
   const target = stay.experienceBookings.find((b) => b.bookingId === bookingId);
   if (!target) return null;
-  Object.assign(target, patch);
+  Object.assign(target, patch, { updatedAt: new Date().toISOString() });
   return structuredClone(target);
 }
 

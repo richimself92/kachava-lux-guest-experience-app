@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import { OperationalAlert } from '../models/domain.models';
 import { Trip } from './trip.models';
 
-export type TripAlertReason = 'REQUESTED' | 'FLIGHT_CHANGED';
+export type TripAlertReason = 'REQUESTED' | 'FLIGHT_CHANGED' | 'GUEST_CANCELLED';
 
 export function newAlertId(): string {
   return `alt_${crypto.randomUUID()}`;
@@ -11,6 +11,7 @@ export function newAlertId(): string {
 const TITLES: Record<TripAlertReason, (trip: Trip) => string> = {
   REQUESTED: (trip) => `${trip.villaName}: ${trip.type} trip requested`,
   FLIGHT_CHANGED: (trip) => `${trip.villaName}: flight changed`,
+  GUEST_CANCELLED: (trip) => `${trip.villaName}: ${trip.type} trip cancelled by guest`,
 };
 
 function summaryOf(trip: Trip): string {
@@ -39,6 +40,6 @@ export function tripAlert(trip: Trip, reason: TripAlertReason, alertId: string, 
     acknowledgedAt: null,
     createdAt,
     targetRef: { type: 'TRIP', id: trip.tripId },
-    event: reason === 'FLIGHT_CHANGED' ? 'ITINERARY_CHANGE' : 'GUEST_REQUEST',
+    event: reason === 'REQUESTED' ? 'GUEST_REQUEST' : 'ITINERARY_CHANGE',
   };
 }

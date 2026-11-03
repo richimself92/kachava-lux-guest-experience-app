@@ -97,7 +97,7 @@ describe('Stay mutations under concurrency (fake Firestore with transaction conf
     const { repo, stay, booking } = await seedStay(fake);
     const staleSnapshot = (await repo.findByStayId(stay.stayId)) as StayAggregate;
     await booking.createBooking(staleSnapshot, paidBooking(1));
-    await booking.updateLarderOrder(staleSnapshot, { serviceId: 'svc-stock', items: [{ itemId: 'item-1', quantity: 3 }] });
+    await booking.updateServiceOrder(staleSnapshot, 'svc-stock', [{ itemId: 'item-1', quantity: 3 }]);
 
     const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
     expect(bookingFolioLines(stored)).toBe(1);

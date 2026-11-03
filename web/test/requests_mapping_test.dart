@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kachava_guest_portal/domain/json_read.dart';
 import 'package:kachava_guest_portal/domain/requests.dart';
 import 'package:kachava_guest_portal/domain/stay.dart';
 import 'package:kachava_guest_portal/domain/trip.dart';
@@ -141,6 +142,71 @@ void main() {
       expect(list.single.time, '14:30');
       expect(list.single.day, DateTime.utc(2026, 11, 3));
       expect(list.single.people, 3);
+    });
+  });
+
+  group('server timestamps and guest actions', () {
+    Json line(String id, String serviceId, String createdAt) => {
+          'orderItemId': id,
+          'serviceId': serviceId,
+          'catalogItemId': 'i-$id',
+          'itemName': {'en': 'Water', 'es': 'Agua'},
+          'quantity': 1,
+          'lineTotalUSD': 4,
+          'provisioningStatus': 'Pending',
+          'createdAt': createdAt,
+          'updatedAt': createdAt,
+        };
+
+    test('bookings and orders sort by createdAt, newest first', () {
+      final s = GuestStay.fromJson(
+          guestUuid,
+          stayJson(
+            larder: [line('l1', 'stock', '2026-11-02T09:00:00Z')],
+            bookings: [
+              bookingJson('b1', 'spa',
+                  capturedAt: '2026-11-05T10:00:00Z',
+                  createdAt: '2026-11-01T09:00:00Z'),
+              bookingJson('b2', 'spa', createdAt: '2026-11-03T09:00:00Z'),
+            ],
+          ));
+      final list = composeRequests(stay: s, trips: const [], catalog: const []);
+      expect(
+          list.map((r) => r.id), ['booking:b2', 'order:stock', 'booking:b1']);
+      expect(s.bookings.first.createdAt, DateTime.utc(2026, 11, 1, 9));
+      expect(s.larderOrders.single.createdAt, DateTime.utc(2026, 11, 2, 9));
+    });
+
+    test('Cancel / Change only while the server status is the initial one', () {
+      final s = GuestStay.fromJson(
+          guestUuid,
+          stayJson(
+            larder: [line('l1', 'stock', '2026-11-02T09:00:00Z')],
+            bookings: [
+              bookingJson('b1', 'spa'),
+              bookingJson('b2', 'spa', status: 'CONFIRMED'),
+              bookingJson('p1', 'pillow', usageType: 'PREFERENCE'),
+            ],
+          ));
+      final trips = [
+        GuestTrip.fromJson(tripJson('t1')),
+        GuestTrip.fromJson(tripJson('t2', status: 'SENT_TO_PROVIDER')),
+      ];
+      final byId = {
+        for (final r
+            in composeRequests(stay: s, trips: trips, catalog: const []))
+          r.id: r
+      };
+      String actions(String id) =>
+          '${byId[id]!.canCancel}/${byId[id]!.canChange}';
+      expect(actions('booking:b1'), 'true/true');
+      expect(actions('booking:b2'), 'false/false');
+      expect(actions('booking:p1'), 'true/false');
+      expect(actions('trip:t1'), 'true/false');
+      expect(actions('trip:t2'), 'false/false',
+          reason: 'already with the provider');
+      expect(actions('order:stock'), 'false/false');
+      expect(byId['booking:b1']!.booking!.id, 'b1');
     });
   });
 }

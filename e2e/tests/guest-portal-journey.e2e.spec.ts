@@ -7,8 +7,9 @@ import { attachErrorMonitor, readSemanticsSnapshot, waitForFlutterSemantics } fr
  * Phase 9 (plan v2): guest portal guided journey against the real backend (Firestore + Storage
  * emulators, `run-local.sh`). Settings, a villa, a stay and ACTIVE catalog services (ORDER, BOOKING,
  * TRIP) are created through the admin API with a per-run tag; the guest then follows the numbered
- * journey, orders from the catalog, sees the request in My requests and writes to the Resort Host.
- * Nothing is seeded: everything the portal shows comes from these API calls.
+ * journey (skips stored on the stay), orders from the catalog (per-service `PUT /orders/:serviceId`),
+ * sees the request in My requests and writes to the Resort Host. Nothing is seeded: everything the
+ * portal shows comes from these API calls. Cancel/change and chat photos: `guest-portal.e2e.spec.ts`.
  */
 const GUEST_URL = process.env.E2E_GUEST_URL ?? 'http://localhost:3000';
 const API = process.env.E2E_API_BASE_URL ?? 'http://localhost:3011/api/v1';
@@ -59,7 +60,7 @@ async function createService(api: Api, body: Json, items: Json[]): Promise<strin
   return id;
 }
 
-/** Settings airport, three ACTIVE services and an upcoming stay; returns the guest link id. */
+/** Settings airport, three ACTIVE services and an upcoming stay (check-in in 3 days); returns the guest link id. */
 async function prepare(api: Api): Promise<string> {
   const settings = (await api.get('/settings')).data;
   const airports = (settings.airports ?? []).filter((a: Json) => a.code !== 'CUN');
@@ -129,9 +130,14 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     expect(snapshot).not.toMatch(/yacht|Cenote|Tulum|Philosophy|Concierge/i);
     await shot(page, 'home-375');
 
-    // Not now: 1.1 leaves the count and Next moves to 1.2.
+    // Not now: stored on the stay (PUT /journey), 1.1 leaves the count and Next moves to 1.2.
+    const skipSaved = page.waitForResponse((res) => res.url().endsWith(`/stays/${guestId}/journey`) && res.request().method() === 'PUT');
     await button(page, 'Not now').click();
+    expect((await skipSaved).status()).toBe(200);
     await waitForFlutterSemantics(page, 'Next: 1.2 Preferences');
+    await page.reload();
+    snapshot = await waitForFlutterSemantics(page, 'Skipped');
+    expect(snapshot).toMatch(/Next: 1\.2 Preferences/);
 
     // 1.2 Preferences: explicit "None", saved only after the server answers.
     await button(page, /Next: 1\.2 Preferences/).click();
@@ -154,7 +160,9 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     await button(page, '+ Water').click();
     await waitForFlutterSemantics(page, '2 items · $8 USD');
     await button(page, 'Review').click();
+    const orderSaved = page.waitForResponse((res) => res.url().includes(`/stays/${guestId}/orders/`) && res.request().method() === 'PUT');
     await button(page, 'Order').click();
+    expect((await orderSaved).status()).toBe(200);
     await waitForFlutterSemantics(page, 'Order sent');
 
     // My requests: plain status word, never a raw enum.
@@ -177,7 +185,9 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     // The backend holds what the guest sent.
     const stay = await request.get(`${API}/stays/${guestId}`, { headers: { Authorization: `Bearer ${guestId}` } });
     const body = (await stay.json()).data;
-    expect(body.larderOrders.some((o: Json) => o.quantity === 2)).toBe(true);
+    expect(body).toMatchObject({ checkInDate: resortDay(3), checkOutDate: resortDay(8) });
+    expect(body.skippedTaskIds).toContain('1:core:flight');
+    expect(body.larderOrders.some((o: Json) => o.quantity === 2 && typeof o.createdAt === 'string')).toBe(true);
     expect(body.personalization.dietary).toBe('None');
     expect(body.conciergeRequests.some((r: Json) => r.details?.includes(RUN))).toBe(true);
     expect(errors.pageErrors).toEqual([]);

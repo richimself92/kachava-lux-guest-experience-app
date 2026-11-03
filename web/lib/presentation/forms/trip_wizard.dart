@@ -124,9 +124,25 @@ class _TripWizardState extends State<TripWizard> {
     Navigator.of(context).pop();
   }
 
-  void _ownArrangement() {
-    widget.controller.markOwnArrangement(widget.core!);
-    Navigator.of(context).pop();
+  /// "I arrange my own" is stored on the stay; the wizard closes only after
+  /// the server confirms.
+  Future<void> _ownArrangement() async {
+    final l10n = widget.controller.l10n;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final result = await widget.controller.markOwnArrangement(widget.core!);
+    if (!mounted) return;
+    switch (result) {
+      case ApiOk():
+        Navigator.of(context).pop();
+      case ApiFailed():
+        setState(() {
+          _busy = false;
+          _error = failureMessage(l10n, result);
+        });
+    }
   }
 
   Future<void> _send() async {
@@ -263,7 +279,7 @@ class _TripWizardState extends State<TripWizard> {
       if (widget.core != null)
         TextButton(
           key: const Key('trip-own'),
-          onPressed: _ownArrangement,
+          onPressed: _busy ? null : _ownArrangement,
           child: Text(l10n.arrangeOwn),
         ),
     ];

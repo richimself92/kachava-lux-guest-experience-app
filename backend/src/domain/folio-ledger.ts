@@ -61,27 +61,54 @@ export interface LarderCharge {
   chargeToFolio: boolean;
 }
 
-/** Sets the single larder line to the order total (creating it when needed) and refreshes totals. */
-export function chargeLarderOrder(
-  stay: StayAggregate,
-  orders: LarderOrderItem[],
-  now: string,
-  charge: LarderCharge,
-): void {
-  const total = charge.chargeToFolio ? orders.reduce((acc, o) => acc + o.lineTotalUSD, 0) : 0;
-  const existing = stay.folioItems.find((fi) => fi.category === 'LARDER');
-  if (existing) {
-    existing.title = charge.title;
-    existing.subtitle = `${orders.length} items`;
-    existing.originalValuationUSD = total;
-    existing.chargedAmountUSD = total;
-  } else if (total > 0) {
-    stay.folioItems.push(larderFolioLine(stay.folioItems.length + 1, total, orders.length, now, charge.title));
+/** Folio line of one ORDER service (one line per service). */
+export function orderFolioItemId(serviceId: string): string {
+  return `folio_order_${serviceId}`;
+}
+
+function sumLines(lines: LarderOrderItem[]): number {
+  return lines.reduce((acc, line) => acc + line.lineTotalUSD, 0);
+}
+
+/**
+ * Sets the folio line of `serviceId` to its order total (created when charged, removed when
+ * nothing is charged) and refreshes totals. `stay.larderOrders` must already hold the new lines.
+ */
+export function chargeServiceOrder(stay: StayAggregate, serviceId: string, now: string, charge: LarderCharge): void {
+  const lines = stay.larderOrders.filter((line) => line.serviceId === serviceId);
+  const total = charge.chargeToFolio ? sumLines(lines) : 0;
+  const lineId = orderFolioItemId(serviceId);
+  const existing = stay.folioItems.find((item) => item.folioItemId === lineId);
+  if (total <= 0) {
+    stay.folioItems = stay.folioItems.filter((item) => item.folioItemId !== lineId);
+  } else if (existing) {
+    Object.assign(existing, { title: charge.title, subtitle: `${lines.length} items`, originalValuationUSD: total, chargedAmountUSD: total });
+  } else {
+    stay.folioItems.push(orderFolioLine(lineId, serviceId, stay.folioItems.length + 1, total, lines.length, now, charge.title));
   }
+  rechargeLegacyLarderLine(stay);
   stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
 }
 
-function larderFolioLine(
+/**
+ * Older stays hold one larder line for the whole cart. It keeps charging only the lines written
+ * before per-service ordering (they carry no `createdAt`) and is removed once none is left.
+ */
+function rechargeLegacyLarderLine(stay: StayAggregate): void {
+  const legacy = stay.folioItems.find((item) => item.folioItemId === LARDER_FOLIO_ITEM_ID);
+  if (!legacy) return;
+  const uncovered = stay.larderOrders.filter((line) => !line.createdAt);
+  const total = legacy.chargedAmountUSD > 0 ? sumLines(uncovered) : 0;
+  if (total <= 0) {
+    stay.folioItems = stay.folioItems.filter((item) => item !== legacy);
+    return;
+  }
+  Object.assign(legacy, { subtitle: `${uncovered.length} items`, originalValuationUSD: total, chargedAmountUSD: total });
+}
+
+function orderFolioLine(
+  folioItemId: string,
+  serviceId: string,
   displayOrder: number,
   total: number,
   count: number,
@@ -89,7 +116,7 @@ function larderFolioLine(
   title: string,
 ): FolioItem {
   return {
-    folioItemId: LARDER_FOLIO_ITEM_ID,
+    folioItemId,
     displayOrder,
     title,
     subtitle: `${count} items`,
@@ -99,9 +126,28 @@ function larderFolioLine(
     originalValuationUSD: total,
     chargedAmountUSD: total,
     status: 'PRE_AUTHORIZED',
-    sourceRefId: 'larder-cart',
+    sourceRefId: serviceId,
     createdAt: now,
   };
+}
+
+/** Drops the folio line of a cancelled booking and refreshes totals. */
+export function removeBookingCharge(stay: StayAggregate, bookingId: string): void {
+  stay.folioItems = stay.folioItems.filter((item) => item.sourceRefId !== bookingId);
+  stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
+}
+
+/** Re-prices the folio line of a changed booking (date, time, party) and refreshes totals. */
+export function rechargeBooking(stay: StayAggregate, booking: ExperienceBooking): void {
+  const line = stay.folioItems.find((item) => item.sourceRefId === booking.bookingId);
+  if (line) {
+    Object.assign(line, {
+      subtitle: `${booking.scheduledDate} · ${booking.scheduledTimeSlot}`,
+      originalValuationUSD: booking.originalValuationUSD,
+      chargedAmountUSD: booking.priceChargedUSD,
+    });
+  }
+  stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
 }
 
 /** Checkout settlement; `status` omitted keeps the current lifecycle status. */

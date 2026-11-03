@@ -5,22 +5,26 @@ import '../../core/theme/kachava_colors.dart';
 import '../../data/guest_api.dart';
 import '../../domain/catalog.dart';
 import '../../domain/forms.dart';
+import '../../domain/stay.dart';
 import '../common/widgets.dart';
 import 'form_scaffold.dart';
 
 /// BOOKING: [option] → date → time slot → people → configured questions
-/// → Review → "Book". Up to 4 fields share one page.
+/// → Review → "Book". Up to 4 fields share one page. With [changing] it
+/// re-sends a REQUESTED booking: prefilled date, time and people only.
 class BookingForm extends StatefulWidget {
   const BookingForm({
     super.key,
     required this.controller,
     required this.service,
     required this.title,
+    this.changing,
   });
 
   final PortalController controller;
   final CatalogService service;
   final String title;
+  final GuestBooking? changing;
 
   @override
   State<BookingForm> createState() => _BookingFormState();
@@ -28,10 +32,13 @@ class BookingForm extends StatefulWidget {
 
 class _BookingFormState extends State<BookingForm> {
   final BookingDraft _draft = BookingDraft();
-  late final List<BookingFieldSpec> _fields = bookingFields(widget.service);
+  late final List<BookingFieldSpec> _fields = widget.changing == null
+      ? bookingFields(widget.service)
+      : changeableBookingFields(widget.service);
   late final List<List<int>> _fieldPages =
       paginateFields([for (var i = 0; i < _fields.length; i++) i]);
-  late final bool _hasOptions = widget.service.items.isNotEmpty;
+  late final bool _hasOptions =
+      widget.changing == null && widget.service.items.isNotEmpty;
   String? _itemId;
   int _page = 0;
   bool _busy = false;
@@ -46,6 +53,11 @@ class _BookingFormState extends State<BookingForm> {
   @override
   void initState() {
     super.initState();
+    final changing = widget.changing;
+    if (changing != null) {
+      prefillBookingDraft(_draft, changing);
+      return;
+    }
     final a = widget.service.availability;
     if (_fields.any((f) => f.field == BookingField.guests)) {
       final guests = widget.controller.stay?.guestsCount ?? 1;
@@ -80,13 +92,18 @@ class _BookingFormState extends State<BookingForm> {
       _busy = true;
       _error = null;
     });
-    final result = await widget.controller
-        .createBooking(bookingPayload(_draft, widget.service, itemId: _itemId));
+    final changing = widget.changing;
+    final result = changing == null
+        ? await widget.controller.createBooking(
+            bookingPayload(_draft, widget.service, itemId: _itemId))
+        : await widget.controller
+            .changeBooking(changing.id, bookingChangePayload(_draft, _fields));
     if (!mounted) return;
     switch (result) {
       case ApiOk():
         Navigator.of(context).pop();
-        showPortalToast(context, l10n.bookingSent);
+        showPortalToast(
+            context, changing == null ? l10n.bookingSent : l10n.requestChanged);
       case ApiFailed():
         setState(() {
           _busy = false;
@@ -107,7 +124,9 @@ class _BookingFormState extends State<BookingForm> {
       error: _error,
       onRetry: _submit,
       onBack: _page == 0 ? null : () => setState(() => _page--),
-      primaryLabel: _isReview ? l10n.actionBook : l10n.nextPage,
+      primaryLabel: _isReview
+          ? (widget.changing == null ? l10n.actionBook : l10n.change)
+          : l10n.nextPage,
       onPrimary: _isReview ? _submit : _next,
       children: _isReview
           ? _review()

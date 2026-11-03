@@ -292,7 +292,7 @@ describe('Command center operations (phases 6-8)', () => {
       const bruno = await createVillaAndStay(t, { villaName: 'Villa 2', guestName: 'Bruno Test' });
       const guestPath = `/api/v1/stays/${ana.guestTokenUuid}`;
       const thread = await request(t.server()).post(`${guestPath}/concierge-requests`)
-        .send({ title: 'Towels', details: 'Two more please', photoStoragePath: 'stays/a/photo.jpg' });
+        .send({ title: 'Towels', details: 'Two more please', photoStoragePath: `private/stays/${ana.stayId}/concierge/r1/photo.jpg` });
       await request(t.server()).post(`${guestPath}/concierge-requests/${thread.body.data.requestId}/messages`).send({ text: 'Thanks!' });
 
       const inbox = await get('/conversations');
@@ -319,7 +319,7 @@ describe('Command center operations (phases 6-8)', () => {
       expect(messages.body.meta.total).toBe(3);
       const older = await get(`/conversations/${ana.stayId}/messages?pageSize=2&page=2`);
       expect(older.body.data[0]).toMatchObject({ text: 'Two more please', from: 'GUEST' });
-      expect(older.body.data[0].photoUrl).toContain('stays/a/photo.jpg');
+      expect(older.body.data[0].photoUrl).toContain(`stays/${ana.stayId}/concierge/r1/photo.jpg`);
 
       expect((await get('/conversations?awaitingReply=true')).body.meta.total).toBe(0);
       expect((await get('/conversations?unread=true')).body.meta.total).toBe(0);

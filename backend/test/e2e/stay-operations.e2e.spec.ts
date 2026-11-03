@@ -182,7 +182,7 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       await request(t.server()).patch(`${ADMIN}/stays/${created.stayId}/status`).set(admin).send({ status: 'ACTIVE_STAY' });
       await request(t.server()).post(`${stayPath}/bookings`).send({ serviceId: bookingServiceId, scheduledDate: '2026-12-02', partySize: 1 });
       await request(t.server()).put(`${stayPath}/larder`).send({ serviceId: orderServiceId, items: [{ itemId: orderItemId, quantity: 1 }] });
-      await request(t.server()).post(`${stayPath}/concierge-requests`).send({ title: 'Towels', details: 'Two more', photoStoragePath: '/private/stays/x/a.jpg' });
+      await request(t.server()).post(`${stayPath}/concierge-requests`).send({ title: 'Towels', details: 'Two more', photoStoragePath: `/private/stays/${created.stayId}/concierge/r1/a.jpg` });
       await request(t.server()).post(`${stayPath}/midstay-checkin`).send({ rating: 2, note: 'Noise' });
     });
 
@@ -218,7 +218,7 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       expect(larder.body.data.provisioningStatus).toBe('Stocked');
       expect(larderMissing.status).toBe(400);
       expect(reply.body.data).toMatchObject({ status: 'Completed', isCompleted: true });
-      expect(photo.body.data.downloadUrl).toBe('https://signed.test/read/private/stays/x/a.jpg');
+      expect(photo.body.data.downloadUrl).toBe(`https://signed.test/read/private/stays/${created.stayId}/concierge/r1/a.jpg`);
       expect(ack.body.data).toMatchObject({ isAcknowledged: true, acknowledgedByStaffId: 'admin-service' });
     });
 

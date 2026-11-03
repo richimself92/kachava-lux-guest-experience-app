@@ -27,6 +27,8 @@ import { GuestCatalogService } from './modules/catalog/guest-catalog.service';
 import { GuestAlertFolioHelper } from './modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from './modules/guest/guest-booking.service';
 import { GuestConciergeService } from './modules/guest/guest-concierge.service';
+import { GuestPhotoLinks } from './modules/guest/guest-photo-links.service';
+import { GuestRequestChangesService } from './modules/guest/guest-request-changes.service';
 import { GuestStaysController } from './modules/guest/guest-stays.controller';
 import { GuestService } from './modules/guest/guest.service';
 import { SettingsController } from './modules/settings/settings.controller';
@@ -81,6 +83,8 @@ import { VillasService } from './modules/villas/villas.service';
     GuestAlertFolioHelper,
     GuestBookingService,
     GuestConciergeService,
+    GuestPhotoLinks,
+    GuestRequestChangesService,
     GuestService,
     AdminFulfillmentService,
     AdminService,

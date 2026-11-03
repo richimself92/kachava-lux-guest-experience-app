@@ -102,6 +102,8 @@ Json stayJson({
   List<Json> feedback = const [],
   String wifiSsid = 'Casa-Ceiba',
   String wifiPass = 'sea-breeze-77',
+  List<String> skipped = const [],
+  List<String> completed = const [],
 }) =>
     {
       'status': status,
@@ -119,6 +121,8 @@ Json stayJson({
       'experienceBookings': bookings,
       'conciergeRequests': threads,
       'midstayFeedback': feedback,
+      'skippedTaskIds': skipped,
+      'completedTaskIds': completed,
     };
 
 GuestStay stay({
@@ -149,7 +153,8 @@ Json bookingJson(String id, String serviceId,
         String date = '2026-11-05',
         String slot = '19:00',
         int party = 2,
-        String capturedAt = '2026-11-01T10:00:00.000Z'}) =>
+        String capturedAt = '2026-11-01T10:00:00.000Z',
+        String? createdAt}) =>
     {
       'bookingId': id,
       'serviceId': serviceId,
@@ -168,6 +173,8 @@ Json bookingJson(String id, String serviceId,
       'scheduledTimeSlot': slot,
       'partySize': party,
       'status': status,
+      'createdAt': createdAt ?? capturedAt,
+      'updatedAt': createdAt ?? capturedAt,
     };
 
 Json tripJson(String id,

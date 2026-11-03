@@ -65,6 +65,25 @@ describe('FirebaseStorageSignerAdapter with a Cloud Storage bucket', () => {
     );
   });
 
+  it('test_generateSignedPutUrl_returnsMethodHeadersAndSizeLimitLikeTheAdminSigner', async () => {
+    const getSignedUrl = jest.fn().mockResolvedValue(['https://signed.example/put']);
+    const { bucket } = bucketWith(getSignedUrl);
+
+    const result = await adapterOver(bucket).generateSignedPutUrl(PUT_PARAMS);
+
+    expect(result).toEqual({
+      uploadUrl: 'https://signed.example/put',
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/jpeg', 'x-goog-content-length-range': `0,${10 * 1024 * 1024}` },
+      storagePath: '/private/stays/stay_1/concierge/req_1/photo_one.jpg',
+      expiresAt: expect.any(String),
+      maxBytes: 10 * 1024 * 1024,
+    });
+    expect(getSignedUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ extensionHeaders: { 'x-goog-content-length-range': `0,${10 * 1024 * 1024}` } }),
+    );
+  });
+
   it('test_generateSignedGetUrl_signingSucceeds_returnsBucketSignedUrl', async () => {
     const { bucket } = bucketWith(jest.fn().mockResolvedValue(['https://signed.example/get']));
 

@@ -22,7 +22,8 @@ import {
   CreateMidStayCheckInDto,
   ExpressCheckoutDto,
   GenerateUploadUrlDto,
-  UpdateLarderOrderDto,
+  UpdateJourneyDto,
+  UpdateServiceOrderDto,
   UpdatePersonalizationDto,
   UpdateTransferDto,
   VerifyStepUpDto,
@@ -158,8 +159,15 @@ export class GuestService {
     });
   }
 
-  updateLarderOrder(stay: StayAggregate, dto: UpdateLarderOrderDto) {
-    return this.bookingService.updateLarderOrder(stay, dto);
+  updateJourney(stay: StayAggregate, dto: UpdateJourneyDto) {
+    return this.stayRepo.setJourneyMarks(stay.stayId, {
+      ...(dto.skippedTaskIds ? { skippedTaskIds: dto.skippedTaskIds } : {}),
+      ...(dto.completedTaskIds ? { completedTaskIds: dto.completedTaskIds } : {}),
+    });
+  }
+
+  updateServiceOrder(stay: StayAggregate, serviceId: string, dto: UpdateServiceOrderDto) {
+    return this.bookingService.updateServiceOrder(stay, serviceId, dto.items);
   }
 
   createBooking(stay: StayAggregate, dto: CreateBookingDto) {

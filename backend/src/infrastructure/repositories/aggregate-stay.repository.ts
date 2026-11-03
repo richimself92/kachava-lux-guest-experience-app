@@ -32,7 +32,13 @@ import {
 } from '../../domain/stay-projections';
 import { StayDocumentTooLargeError, StayNotFoundError } from '../../domain/stay-errors';
 import { MAX_STAY_DOCUMENT_BYTES } from '../../domain/stay-limits';
+import * as guestRules from '../../domain/stays/guest-request-rules';
+import { BookingChange, JourneyMarks } from '../../domain/stays/guest-request-rules';
 import * as mutations from './stay-mutations';
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
 
 export { StayNotFoundError };
 
@@ -128,13 +134,35 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.mutateStay(stayId, (s) => mutations.selectSignaturePrivilege(s, privilege));
   }
 
-  replaceLarderOrders(
+  replaceServiceOrder(
     stayId: string,
-    orders: LarderOrderItem[],
+    serviceId: string,
+    lines: LarderOrderItem[],
     charge: LarderCharge,
     alertOf?: StayAlertFactory<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
-    return this.mutateStay(stayId, (s) => mutations.replaceLarderAndFolio(s, orders, charge), alertOf);
+    return this.mutateStay(stayId, (s) => guestRules.replaceServiceOrder(s, serviceId, lines, charge, nowIso()), alertOf);
+  }
+
+  cancelGuestBooking(
+    stayId: string,
+    bookingId: string,
+    alertOf?: StayAlertFactory<ExperienceBooking>,
+  ): Promise<ExperienceBooking> {
+    return this.mutateStay(stayId, (s) => guestRules.cancelGuestBooking(s, bookingId, nowIso()), alertOf);
+  }
+
+  changeGuestBooking(
+    stayId: string,
+    bookingId: string,
+    change: BookingChange,
+    alertOf?: StayAlertFactory<ExperienceBooking>,
+  ): Promise<ExperienceBooking> {
+    return this.mutateStay(stayId, (s) => guestRules.changeGuestBooking(s, bookingId, change, nowIso()), alertOf);
+  }
+
+  setJourneyMarks(stayId: string, marks: Partial<JourneyMarks>): Promise<JourneyMarks> {
+    return this.mutateStay(stayId, (s) => guestRules.setJourneyMarks(s, marks, nowIso()));
   }
 
   async listLarderOrdersAcrossStays(filter?: LarderFilterCriteria): Promise<LarderOrderItem[]> {

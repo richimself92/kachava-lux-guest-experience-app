@@ -1,18 +1,22 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { SettledFolio } from '../../domain/folio-ledger';
+import { BusinessRuleError } from '../../domain/domain-errors';
+import { isStayPhotoPath } from '../../domain/stays/guest-request-rules';
 import {
+  ConciergeMessage,
   ConciergeRequest,
   MidStayFeedback,
   OperationalAlert,
   StayAggregate,
 } from '../../domain/models/domain.models';
 import {
-  SignedUrlResult,
+  SignedPhotoUpload,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
   STORAGE_SIGNER_PORT,
@@ -26,6 +30,16 @@ import {
   GenerateUploadUrlDto,
 } from './dto/guest.dto';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
+
+/** Staff-facing alert text of a message that only carries a photo. */
+const PHOTO_ALERT_SUMMARY = 'Photo';
+
+/** A guest may only attach photos uploaded to the stay's own private concierge folder. */
+function assertOwnPhoto(stay: StayAggregate, path: string | undefined): void {
+  if (path && !isStayPhotoPath(stay.stayId, path)) {
+    throw new BusinessRuleError('photoStoragePath must come from this stay\'s upload-url');
+  }
+}
 
 @Injectable()
 export class GuestConciergeService {
@@ -41,6 +55,7 @@ export class GuestConciergeService {
     stay: StayAggregate,
     dto: CreateConciergeRequestDto,
   ): Promise<ConciergeRequest> {
+    assertOwnPhoto(stay, dto.photoStoragePath);
     const request = this.buildConciergeTicket(stay, dto);
     return this.stayRepo.createConciergeRequest(stay.stayId, request, () =>
       this.alerts.buildAlert(stay, {
@@ -59,17 +74,21 @@ export class GuestConciergeService {
     requestId: string,
     dto: CreateConciergeMessageDto,
   ): Promise<ConciergeRequest> {
-    const message = {
-      sender: 'GUEST' as const,
+    const text = (dto.text ?? '').trim();
+    if (!text && !dto.photoStoragePath) throw new BadRequestException('A message needs text or a photo.');
+    assertOwnPhoto(stay, dto.photoStoragePath);
+    const message: ConciergeMessage = {
+      sender: 'GUEST',
       senderName: dto.senderName || stay.guestProfile.name,
-      text: dto.text,
+      text,
       sentAt: new Date().toISOString(),
+      ...(dto.photoStoragePath ? { photoStoragePath: dto.photoStoragePath } : {}),
     };
     const updated = await this.stayRepo.appendConciergeMessage(
       stay.stayId,
       requestId,
       message,
-      (found) => (found ? this.chatMessageAlert(stay, requestId, dto.text) : null),
+      (found) => (found ? this.chatMessageAlert(stay, requestId, text || PHOTO_ALERT_SUMMARY) : null),
     );
     if (!updated) {
       throw new NotFoundException(`Concierge request ${requestId} not found.`);
@@ -100,7 +119,7 @@ export class GuestConciergeService {
   generateUploadUrl(
     stay: StayAggregate,
     dto: GenerateUploadUrlDto,
-  ): Promise<SignedUrlResult> {
+  ): Promise<SignedPhotoUpload> {
     return this.storageSigner.generateSignedPutUrl({
       stayId: stay.stayId,
       requestId: dto.requestId || `req_${Date.now()}`,

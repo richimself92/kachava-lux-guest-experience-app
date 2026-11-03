@@ -292,12 +292,15 @@ void main() {
       expect(find.text('Step 3 of 4'), findsOneWidget);
     });
 
-    testWidgets('"I arrange my own" completes 1.1 without a trip',
+    testWidgets('"I arrange my own" completes 1.1 on the stay, without a trip',
         (tester) async {
       final (api, c) = await openTrip(tester);
       await tester.tap(find.byKey(const Key('trip-own')));
       await tester.pumpAndSettle();
-      expect(api.writes, isEmpty);
+      expect(api.writes.single.$1, 'journey');
+      expect(api.writes.single.$2, {
+        'completedTaskIds': ['core:flight']
+      });
       final task = c.journey!.taskById(1, 'core:flight')!;
       expect(task.state, TaskState.done);
       expect(task.ownArrangement, isTrue);

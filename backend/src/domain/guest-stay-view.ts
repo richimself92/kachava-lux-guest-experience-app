@@ -13,6 +13,7 @@ import {
   StayAggregate,
   VillaAccess,
 } from './models/domain.models';
+import { messagePhotoPath } from './conversations/conversation-rules';
 
 /**
  * ADR-007 guest-safe projection. Every list below is an explicit ALLOW-list: a field added to the
@@ -22,7 +23,7 @@ import {
  * `photoStoragePath`, audit timestamps of the stay, and any operational/staff-only data.
  */
 const STAY_KEYS = [
-  'status', 'villaName', 'suiteName', 'stayDatesLabel', 'nights', 'guestsCount',
+  'status', 'villaName', 'suiteName', 'stayDatesLabel', 'checkInDate', 'checkOutDate', 'nights', 'guestsCount',
   'selectedSignaturePrivilege',
 ] as const satisfies ReadonlyArray<keyof StayAggregate>;
 const GUEST_PROFILE_KEYS = ['name', 'partner', 'celebration', 'folioCard'] as const satisfies ReadonlyArray<keyof GuestProfile>;
@@ -41,12 +42,12 @@ const PERSONALIZATION_KEYS = [
 ] as const satisfies ReadonlyArray<keyof Personalization>;
 const LARDER_KEYS = [
   'orderItemId', 'serviceId', 'catalogItemId', 'name', 'itemName', 'category', 'unitPriceUSD', 'quantity', 'lineTotalUSD',
-  'provisioningStatus',
+  'provisioningStatus', 'createdAt', 'updatedAt',
 ] as const satisfies ReadonlyArray<keyof LarderOrderItem>;
 const BOOKING_KEYS = [
   'bookingId', 'serviceId', 'itemId', 'section', 'usageType', 'category', 'snapshot', 'title', 'scheduledDate',
   'scheduledTimeSlot', 'partySize', 'isIncludedWithStay', 'originalValuationUSD',
-  'priceChargedUSD', 'status', 'cancellationReason',
+  'priceChargedUSD', 'status', 'cancellationReason', 'createdAt', 'updatedAt',
 ] as const satisfies ReadonlyArray<keyof ExperienceBooking>;
 const CONCIERGE_KEYS = [
   'requestId', 'type', 'category', 'title', 'timeLabel', 'location', 'status', 'currentStep',
@@ -79,8 +80,13 @@ export type GuestTransferView = Pick<FlightTransfer, (typeof TRANSFER_KEYS)[numb
 export type GuestBookingView = Pick<ExperienceBooking, (typeof BOOKING_KEYS)[number]>;
 export type GuestLarderOrderView = Pick<LarderOrderItem, (typeof LARDER_KEYS)[number]>;
 export type GuestFolioSummaryView = Pick<FolioSummary, (typeof FOLIO_SUMMARY_KEYS)[number]>;
+/** Read URL of a private photo (signed by the caller); null when it cannot be shown. */
+export type PhotoUrlResolver = (storagePath: string) => string | null;
+const NO_PHOTO_URLS: PhotoUrlResolver = () => null;
+
+export type GuestMessageView = Pick<ConciergeMessage, (typeof MESSAGE_KEYS)[number]> & { photoUrl: string | null };
 export type GuestConciergeRequestView = Pick<ConciergeRequest, (typeof CONCIERGE_KEYS)[number]> & {
-  messages: Array<Pick<ConciergeMessage, (typeof MESSAGE_KEYS)[number]>>;
+  messages: GuestMessageView[];
 };
 export interface GuestFolioView {
   folioSummary: GuestFolioSummaryView;
@@ -101,11 +107,26 @@ export function toGuestLarderOrderView(order: LarderOrderItem): GuestLarderOrder
   return pick(order, LARDER_KEYS);
 }
 
-export function toGuestConciergeRequestView(request: ConciergeRequest): GuestConciergeRequestView {
+/** Messages carry `photoUrl` (never the storage path) so the guest sees photos in the thread. */
+export function toGuestConciergeRequestView(
+  request: ConciergeRequest,
+  photoUrlOf: PhotoUrlResolver = NO_PHOTO_URLS,
+): GuestConciergeRequestView {
   return {
     ...pick(request, CONCIERGE_KEYS),
-    messages: (request.messages ?? []).map((m) => pick(m, MESSAGE_KEYS)),
+    messages: (request.messages ?? []).map((m, index) => {
+      const path = messagePhotoPath(request, index);
+      return { ...pick(m, MESSAGE_KEYS), photoUrl: path ? photoUrlOf(path) : null };
+    }),
   };
+}
+
+/** Every private photo path the guest views of `requests` show. */
+export function guestPhotoPaths(requests: ConciergeRequest[]): string[] {
+  const paths = requests.flatMap((request) =>
+    (request.messages ?? []).map((_, index) => messagePhotoPath(request, index)),
+  );
+  return [...new Set(paths.filter((path): path is string => Boolean(path)))];
 }
 
 export function toGuestFolioSummaryView(summary: FolioSummary): GuestFolioSummaryView {
@@ -128,9 +149,11 @@ export function toGuestPersonalizationView(personalization: Personalization) {
 }
 
 /** The only shape of a stay that guest routes may return. */
-export function toGuestStayView(stay: StayAggregate) {
+export function toGuestStayView(stay: StayAggregate, photoUrlOf: PhotoUrlResolver = NO_PHOTO_URLS) {
   return {
     ...pick(stay, STAY_KEYS),
+    skippedTaskIds: [...(stay.skippedTaskIds ?? [])],
+    completedTaskIds: [...(stay.completedTaskIds ?? [])],
     guestProfile: pick(stay.guestProfile, GUEST_PROFILE_KEYS),
     hostInfo: pick(stay.hostInfo, HOST_KEYS),
     villaAccess: pick(stay.villaAccess, VILLA_ACCESS_KEYS),
@@ -138,7 +161,7 @@ export function toGuestStayView(stay: StayAggregate) {
     personalization: toGuestPersonalizationView(stay.personalization),
     larderOrders: stay.larderOrders.map(toGuestLarderOrderView),
     experienceBookings: stay.experienceBookings.map(toGuestBookingView),
-    conciergeRequests: stay.conciergeRequests.map(toGuestConciergeRequestView),
+    conciergeRequests: stay.conciergeRequests.map((request) => toGuestConciergeRequestView(request, photoUrlOf)),
     midstayFeedback: stay.midstayFeedback.map(toGuestFeedbackView),
     ...toGuestFolioView(stay),
   };
