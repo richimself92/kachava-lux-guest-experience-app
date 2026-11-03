@@ -38,6 +38,17 @@ import { TripFactory } from './modules/trips/trip-factory.service';
 import { GuestTripsController, TripsAdminController } from './modules/trips/trips.controllers';
 import { TripsAdminService } from './modules/trips/trips-admin.service';
 import { VillasController } from './modules/villas/villas.controller';
+import { ConversationsController } from './modules/conversations/conversations.controller';
+import { ConversationsService } from './modules/conversations/conversations.service';
+import { DashboardController } from './modules/dashboard/dashboard.controller';
+import { DashboardService } from './modules/dashboard/dashboard.service';
+import { NotificationsController } from './modules/notifications/notifications.controller';
+import { NotificationsService } from './modules/notifications/notifications.service';
+import { GuestsController, ReservationsController } from './modules/reservations/reservations.controllers';
+import { ReservationsService } from './modules/reservations/reservations.service';
+import { TaskAutomation } from './modules/tasks/task-automation.service';
+import { TasksController } from './modules/tasks/tasks.controller';
+import { TasksService } from './modules/tasks/tasks.service';
 import { VillasService } from './modules/villas/villas.service';
 
 @Module({
@@ -56,6 +67,12 @@ import { VillasService } from './modules/villas/villas.service';
     AdminUploadsController,
     TripsAdminController,
     GuestTripsController,
+    DashboardController,
+    ReservationsController,
+    GuestsController,
+    TasksController,
+    NotificationsController,
+    ConversationsController,
   ],
   providers: [
     SecurityTokenService,
@@ -77,6 +94,12 @@ import { VillasService } from './modules/villas/villas.service';
     TripFactory,
     TripsAdminService,
     GuestTripsService,
+    DashboardService,
+    ReservationsService,
+    TasksService,
+    TaskAutomation,
+    NotificationsService,
+    ConversationsService,
     { provide: CLOCK_PORT, useClass: SystemClock },
     GuestTokenGuard,
     StepUpVerifiedGuard,

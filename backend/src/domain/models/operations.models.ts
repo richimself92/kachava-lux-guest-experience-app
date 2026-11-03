@@ -157,11 +157,32 @@ export interface StayAggregate extends StayRecord {
   folioItems: FolioItem[];
 }
 
-/** The record an alert opens ("Open record"); absent on alerts about the stay itself. */
+/** Records an alert/notification can open ("Open record"). */
+export type AlertTargetType =
+  | 'STAY'
+  | 'TRIP'
+  | 'TASK'
+  | 'BOOKING'
+  | 'ORDER'
+  | 'REQUEST'
+  | 'FEEDBACK'
+  | 'CONVERSATION';
+
+/** The record an alert opens; when absent it is derived from `sourceDocumentPath`. */
 export interface AlertTargetRef {
-  type: 'TRIP';
+  type: AlertTargetType;
   id: string;
 }
+
+/** Operational events the Notifications screen distinguishes (plan v2, "Notifications"). */
+export type NotificationEvent =
+  | 'NEW_RESERVATION'
+  | 'ARRIVAL_DAY'
+  | 'GUEST_REQUEST'
+  | 'ITINERARY_CHANGE'
+  | 'TASK_OVERDUE'
+  | 'GUEST_MESSAGE'
+  | 'TRIP_UNCONFIRMED';
 
 export interface OperationalAlert {
   alertId: string;
@@ -180,6 +201,8 @@ export interface OperationalAlert {
   acknowledgedAt: string | null;
   createdAt: string;
   targetRef?: AlertTargetRef;
+  /** Set by the writer; older alerts derive it from `category`. */
+  event?: NotificationEvent;
 }
 
 export interface StaffMember {

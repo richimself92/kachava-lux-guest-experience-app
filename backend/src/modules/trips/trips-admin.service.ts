@@ -30,6 +30,7 @@ import { flightChanged, requireLeadHours, unconfirmedDueCutoff } from '../../dom
 import { transitionTrip, TripTransitionCommand } from '../../domain/trips/trip-transitions';
 import { AdminTripView, toAdminTripView } from '../../domain/trips/trip-views';
 import { Trip } from '../../domain/trips/trip.models';
+import { TaskAutomation } from '../tasks/task-automation.service';
 import { TripFactory } from './trip-factory.service';
 import {
   CreateAdminTripDto,
@@ -56,6 +57,7 @@ export class TripsAdminService {
     @Inject(TRANSPORT_PROVIDER_REPOSITORY_PORT) private readonly providers: TransportProviderRepositoryPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
     private readonly factory: TripFactory,
+    private readonly taskAutomation: TaskAutomation,
   ) {}
 
   async list(dto: TripListQueryDto): Promise<PaginatedResult<AdminTripView>> {
@@ -87,7 +89,9 @@ export class TripsAdminService {
     if (dto.providerId) await this.assertProviderUsable(dto.providerId);
     const settings = await this.settings.get();
     const { trip } = await this.factory.build({ fields: dto, stay, settings, createdBy: 'STAFF', actor, now: this.clock.now() });
-    return this.view(await this.trips.create(trip), settings);
+    const created = await this.trips.create(trip);
+    await this.taskAutomation.forTrip(created, actor);
+    return this.view(created, settings);
   }
 
   /** A flight change commits a TRANSFER/HIGH alert together with the trip. */

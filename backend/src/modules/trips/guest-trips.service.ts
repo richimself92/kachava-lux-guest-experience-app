@@ -14,6 +14,7 @@ import { newAlertId, tripAlert } from '../../domain/trips/trip-alerts';
 import { assertGuestLeadTime } from '../../domain/trips/trip-rules';
 import { GuestTripView, toGuestTripView } from '../../domain/trips/trip-views';
 import { isAirportTrip } from '../../domain/trips/trip.models';
+import { TaskAutomation } from '../tasks/task-automation.service';
 import { TripFactory } from './trip-factory.service';
 import { CreateGuestTripDto } from './trip.dto';
 
@@ -29,6 +30,7 @@ export class GuestTripsService {
     @Inject(SETTINGS_REPOSITORY_PORT) private readonly settings: SettingsRepositoryPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
     private readonly factory: TripFactory,
+    private readonly taskAutomation: TaskAutomation,
   ) {}
 
   async create(stay: StayAggregate, dto: CreateGuestTripDto): Promise<GuestTripView> {
@@ -43,6 +45,7 @@ export class GuestTripsService {
     });
     assertGuestLeadTime(trip.pickupAt, now, service.availability.minLeadHours);
     const created = await this.trips.create(trip, tripAlert(trip, 'REQUESTED', newAlertId(), now.toISOString()));
+    await this.taskAutomation.forTrip(created, created.createdByActor);
     return toGuestTripView(created);
   }
 

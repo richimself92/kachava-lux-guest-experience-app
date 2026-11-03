@@ -52,7 +52,7 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       await createVillaAndStay(t, { villaName: 'Villa 9', guestName: 'Carla Peña', checkIn: '2026-11-20', checkOut: '2026-11-22' });
     });
 
-    const guests = (res: request.Response) => res.body.data.map((s: { guestProfile: { name: string } }) => s.guestProfile.name);
+    const guests = (res: request.Response) => res.body.data.map((s: { guestName: string }) => s.guestName);
 
     it('test_listStays_paginatesByArrivalWithMeta', async () => {
       const page1 = await request(t.server()).get(`${ADMIN}/stays?pageSize=2`).set(admin);

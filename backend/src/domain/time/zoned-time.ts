@@ -86,6 +86,19 @@ export interface InstantWindow {
   toIsoExclusive?: string;
 }
 
+/** The resort calendar day (YYYY-MM-DD) of `instant` in the configured zone. */
+export function resortDate(instant: Date, timeZone: string | null): string {
+  if (!timeZone) throw new SettingsRequiredError([TIME_ZONE_SETTING]);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
 /** Inclusive resort calendar days (YYYY-MM-DD) as the half-open instant window they cover. */
 export function zonedDayWindow(range: DayRange, timeZone: string | null): InstantWindow {
   if (!range.from && !range.to) return {};

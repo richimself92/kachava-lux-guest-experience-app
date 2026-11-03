@@ -15,6 +15,8 @@ export const METADATA_MAX_BYTES = 2048;
 export const ISO_DATE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 /** 24-hour clock time, e.g. 07:30. */
 export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** Language code such as `en`, `es` or `es-MX`. */
+export const LANGUAGE_PATTERN = /^[a-z]{2}(-[A-Z]{2})?$/;
 /** Villa ids become part of stay ids and storage paths: letters, digits, `_` and `-` only. */
 export const VILLA_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
 

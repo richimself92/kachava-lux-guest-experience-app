@@ -93,8 +93,9 @@ export class GuestService {
       estimatedLanding:
         dto.estimatedLanding || dto.arrivalTime || stay.flightTransfer.estimatedLanding,
     };
-    return this.stayRepo.updateTransfer(stay.stayId, patch, (updated) =>
-      this.alertFolioHelper.buildAlert(stay, {
+    return this.stayRepo.updateTransfer(stay.stayId, patch, (updated) => ({
+      event: 'ITINERARY_CHANGE' as const,
+      ...this.alertFolioHelper.buildAlert(stay, {
         category: 'TRANSFER',
         severity: 'NORMAL',
         title: `${stay.villaName} Aviation Transfer Updated (${updated.flightNumber})`,
@@ -102,7 +103,7 @@ export class GuestService {
         sourceDocumentPath: `stays/${stay.stayId}`,
         assignedDepartment: 'TRANSPORT',
       }),
-    );
+    }));
   }
 
   async updatePersonalization(

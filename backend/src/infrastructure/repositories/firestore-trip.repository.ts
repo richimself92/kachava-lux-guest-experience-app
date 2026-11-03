@@ -6,7 +6,7 @@ import {
   TripRepositoryPort,
   TripWindowQuery,
 } from '../../domain/ports/repository.ports';
-import { Trip, UNCONFIRMED_TRIP_STATUSES } from '../../domain/trips/trip.models';
+import { Trip, TripStatus, UNCONFIRMED_TRIP_STATUSES } from '../../domain/trips/trip.models';
 import { ALERTS_COLLECTION } from './firestore-alert.repository';
 import { toFirestoreDocument } from './firestore-document.mapper';
 
@@ -14,6 +14,7 @@ export const TRIPS_COLLECTION = 'trips';
 /** Upper bound of trip documents one list request may read. */
 export const TRIP_SCAN_LIMIT = 1000;
 const PICKUP_FIELD = 'pickupAt';
+const IN_QUERY_MAX = 30;
 
 /**
  * `trips/{tripId}`, read on every call (no process cache). Trip writes and the alert that goes
@@ -74,6 +75,19 @@ export class FirestoreTripRepository implements TripRepositoryPort {
         .where(PICKUP_FIELD, '<=', cutoffIso)
         .orderBy(PICKUP_FIELD, 'asc'),
     );
+  }
+
+  /** Firestore `in` takes at most 30 values, so the ids are read in chunks. */
+  async listForStays(stayIds: readonly string[]): Promise<Trip[]> {
+    const chunks: string[][] = [];
+    for (let i = 0; i < stayIds.length; i += IN_QUERY_MAX) chunks.push(stayIds.slice(i, i + IN_QUERY_MAX));
+    const results = await Promise.all(chunks.map((ids) => this.bounded(this.trips().where('stayId', 'in', ids))));
+    return results.flat();
+  }
+
+  async countByStatuses(statuses: readonly TripStatus[]): Promise<number> {
+    const snapshot = await this.trips().where('status', 'in', [...statuses]).count().get();
+    return snapshot.data().count;
   }
 
   private async bounded(query: Query): Promise<Trip[]> {

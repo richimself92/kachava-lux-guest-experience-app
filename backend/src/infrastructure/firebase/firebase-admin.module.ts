@@ -13,9 +13,13 @@ import {
   STAY_REPOSITORY_PORT,
   STORAGE_SIGNER_PORT,
   TRANSPORT_PROVIDER_REPOSITORY_PORT,
+  TASK_REPOSITORY_PORT,
+  NOTIFICATION_READ_REPOSITORY_PORT,
   TRIP_REPOSITORY_PORT,
   VILLA_REPOSITORY_PORT,
 } from '../../domain/ports/repository.ports';
+import { FirestoreNotificationReadRepository } from '../repositories/firestore-notification-read.repository';
+import { FirestoreTaskRepository } from '../repositories/firestore-task.repository';
 import { FirestoreAlertRepository } from '../repositories/firestore-alert.repository';
 import { FirestoreEntityRepository } from '../repositories/firestore-entity.repository';
 import { FirestoreSettingsRepository } from '../repositories/firestore-settings.repository';
@@ -83,6 +87,8 @@ const providers: Provider[] = [
   firestoreBacked(STAFF_REPOSITORY_PORT, (db) => new FirestoreStaffRepository(db)),
   firestoreBacked(SETTINGS_REPOSITORY_PORT, (db) => new FirestoreSettingsRepository(db)),
   firestoreBacked(TRIP_REPOSITORY_PORT, (db) => new FirestoreTripRepository(db)),
+  firestoreBacked(TASK_REPOSITORY_PORT, (db) => new FirestoreTaskRepository(db)),
+  firestoreBacked(NOTIFICATION_READ_REPOSITORY_PORT, (db) => new FirestoreNotificationReadRepository(db)),
   firestoreBacked(VILLA_REPOSITORY_PORT, (db) => new FirestoreEntityRepository(db, VILLAS_COLLECTION, 'villaId', 'Villa')),
   firestoreBacked(
     TRANSPORT_PROVIDER_REPOSITORY_PORT,

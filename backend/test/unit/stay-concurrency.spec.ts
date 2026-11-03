@@ -5,6 +5,10 @@ import { FirestoreStayRepository } from '../../src/infrastructure/repositories/f
 import { AdminFulfillmentService } from '../../src/modules/admin/admin-fulfillment.service';
 import { GuestAlertFolioHelper } from '../../src/modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from '../../src/modules/guest/guest-booking.service';
+import { TaskAutomation } from '../../src/modules/tasks/task-automation.service';
+import { FirestoreTaskRepository } from '../../src/infrastructure/repositories/firestore-task.repository';
+import { FirestoreSettingsRepository } from '../../src/infrastructure/repositories/firestore-settings.repository';
+import { SystemClock } from '../../src/infrastructure/time/system-clock';
 import { StaffMember, StayAggregate } from '../../src/domain/models/domain.models';
 import { itemFixture, serviceFixture } from '../support/catalog-fixtures';
 import { FakeFirestore } from '../support/fake-firestore';
@@ -42,7 +46,9 @@ async function seedStay(fake: FakeFirestore) {
   return {
     repo,
     stay,
-    booking: new GuestBookingService(repo, services, items, helper),
+    booking: new GuestBookingService(repo, services, items, helper, new TaskAutomation(
+      new FirestoreTaskRepository(db), new FirestoreSettingsRepository(db), new SystemClock(),
+    )),
     admin: new AdminFulfillmentService(repo, {} as never),
   };
 }

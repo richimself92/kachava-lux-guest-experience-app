@@ -10,6 +10,8 @@ import {
   resolveAdminServiceEmail,
 } from '../../common/config/admin-identity';
 import { paginateInMemory, PaginatedResult, toListQuery } from '../../common/listing/list-query';
+import { guestPortalBaseUrl } from '../../common/config/guest-portal';
+import { auditActorOf } from '../../common/decorators/auth.decorators';
 import { SecurityTokenService } from '../../common/services/security-token.service';
 import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
 import {
@@ -37,14 +39,9 @@ import {
   AssignTransferDto,
   CreateReservationDto,
   StaffListQueryDto,
-  StayListQueryDto,
   UpdateStayWifiDto,
 } from './dto/admin.dto';
 
-const STAY_LIST_SPEC = {
-  sortable: ['checkInDate'],
-  defaultSort: { field: 'checkInDate', direction: 'asc' as const },
-};
 const ALERT_LIST_SPEC = {
   sortable: ['createdAt', 'severity'],
   defaultSort: { field: 'createdAt', direction: 'desc' as const },
@@ -99,22 +96,10 @@ export class AdminService {
     return updated;
   }
 
-  listStays(dto: StayListQueryDto): Promise<PaginatedResult<StayAggregate>> {
-    const query = toListQuery(dto, STAY_LIST_SPEC);
-    return this.stayRepo.pageStays({
-      status: dto.status,
-      villaId: dto.villaId,
-      from: dto.from,
-      to: dto.to,
-      q: query.q,
-      page: query.page,
-      pageSize: query.pageSize,
-      direction: query.sort.direction,
-    });
-  }
-
+  /** The new stay and its NEW_RESERVATION notification commit together. */
   async createReservation(
     dto: CreateReservationDto,
+    staff: StaffMember,
   ): Promise<{ stay: StayAggregate; magicLinkUrl: string }> {
     const villa = await this.villaRepo.findById(dto.villaId);
     if (!villa) throw new EntityNotFoundError('Villa', dto.villaId);
@@ -131,7 +116,7 @@ export class AdminService {
       magicLinkUrl,
       now: new Date().toISOString(),
     });
-    const created = await this.stayRepo.createStay(newStay);
+    const created = await this.stayRepo.createStay(newStay, newReservationAlert(newStay, staff));
     return { stay: created, magicLinkUrl };
   }
 
@@ -193,7 +178,24 @@ export class AdminService {
   }
 }
 
-/** Base URL of the guest portal used in magic links (deployment configuration). */
-function guestPortalBaseUrl(): string {
-  return (process.env.GUEST_PORTAL_URL || 'http://localhost:3000').replace(/\/$/, '');
+function newReservationAlert(stay: StayAggregate, staff: StaffMember): OperationalAlert {
+  return {
+    alertId: `alt_${crypto.randomUUID()}`,
+    stayId: stay.stayId,
+    villaId: stay.villaId,
+    villaName: stay.villaName,
+    guestNames: stay.guestProfile.name,
+    category: 'RESERVATION',
+    severity: 'NORMAL',
+    title: `${stay.villaName}: new reservation`,
+    summary: `${stay.guestProfile.name} · ${stay.checkInDate} – ${stay.checkOutDate} · by ${auditActorOf(staff)}`,
+    sourceDocumentPath: `stays/${stay.stayId}`,
+    assignedDepartment: null,
+    isAcknowledged: false,
+    acknowledgedByStaffId: null,
+    acknowledgedAt: null,
+    createdAt: stay.createdAt,
+    targetRef: { type: 'STAY', id: stay.stayId },
+    event: 'NEW_RESERVATION',
+  };
 }

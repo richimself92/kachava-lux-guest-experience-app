@@ -27,7 +27,6 @@ import {
   CreateReservationDto,
   LarderOrderListQueryDto,
   StaffListQueryDto,
-  StayListQueryDto,
   UpdateAdminConciergeDto,
   UpdateLarderStatusDto,
   UpdateStayStatusDto,
@@ -70,18 +69,11 @@ export class AdminController {
     return this.adminService.acknowledgeAlert(alertId, staff);
   }
 
-  @Get('stays')
-  @UseGuards(AdminAuthGuard, RolesGuard)
-  @Roles('HOST_ADMIN', 'CONCIERGE_STAFF')
-  listStays(@Query() query: StayListQueryDto) {
-    return this.adminService.listStays(query);
-  }
-
   @Post('stays')
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('HOST_ADMIN')
-  createStay(@Body() dto: CreateReservationDto) {
-    return this.adminService.createReservation(dto);
+  createStay(@Body() dto: CreateReservationDto, @CurrentStaff() staff: StaffMember) {
+    return this.adminService.createReservation(dto, staff);
   }
 
   @Post('stays/:stayId/regenerate-token')

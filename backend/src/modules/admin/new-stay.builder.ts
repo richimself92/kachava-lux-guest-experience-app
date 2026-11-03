@@ -8,6 +8,7 @@ import {
   VillaAccess,
 } from '../../domain/models/domain.models';
 import { Villa } from '../../domain/models/resort-config.models';
+import { UNASSIGNED_HOST_LABEL } from '../../domain/stays/stay-admin-views';
 import { CreateReservationDto } from './dto/admin.dto';
 
 export interface NewStayIdentity {
@@ -18,7 +19,7 @@ export interface NewStayIdentity {
 }
 
 /** Unified operations role label shown to guests until a specific host is assigned. */
-const UNIFIED_HOST_ROLE = 'HOST ADMIN';
+const UNIFIED_HOST_ROLE = UNASSIGNED_HOST_LABEL;
 const MS_PER_DAY = 86_400_000;
 
 /**
@@ -42,6 +43,7 @@ export function buildNewStay(dto: CreateReservationDto, villa: Villa, identity: 
     personalization: emptyPersonalization(celebration, identity.now),
     folioSummary: emptyFolioSummary(),
     folioItems: [], larderOrders: [], experienceBookings: [], conciergeRequests: [], midstayFeedback: [],
+    internalNotes: '', statusHistory: [], cancellationReason: null,
     createdAt: identity.now, updatedAt: identity.now,
   };
 }
@@ -52,6 +54,7 @@ function buildGuestProfile(dto: CreateReservationDto, celebration: string): Gues
     name: dto.guestName, lastNameNormalized: lastName, partner: dto.partnerName || '',
     celebration, folioCard: '', dietaryProfile: '', allergies: '', inVillaBar: '',
     communicationPref: '', phone: dto.phone || '', email: dto.email || '', avatarUrl: '',
+    language: dto.language || null,
   };
 }
 

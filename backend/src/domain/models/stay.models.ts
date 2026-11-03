@@ -26,7 +26,8 @@ export type AlertCategory =
   | 'TRANSFER'
   | 'MIDSTAY'
   | 'CHECKOUT'
-  | 'DIETARY';
+  | 'DIETARY'
+  | 'RESERVATION';
 
 export type AlertSeverity = 'NORMAL' | 'HIGH' | 'URGENT';
 
@@ -43,6 +44,16 @@ export interface GuestProfile {
   phone: string;
   email: string;
   avatarUrl: string;
+  /** Guest language (e.g. `en`, `es`) set by staff; null/absent when unknown. */
+  language?: string | null;
+}
+
+export interface StayStatusChange {
+  from: StayLifecycleStatus;
+  to: StayLifecycleStatus;
+  at: string;
+  by: string;
+  reason: string | null;
 }
 
 export interface HostInfo {
@@ -150,6 +161,13 @@ export interface StayRecord {
   flightTransfer: FlightTransfer;
   personalization: Personalization;
   folioSummary: FolioSummary;
+  /** Staff-only notes (never in the guest view). */
+  internalNotes?: string;
+  /** Staff check-in / check-out / cancel moves (absent on older stays). */
+  statusHistory?: StayStatusChange[];
+  cancellationReason?: string | null;
+  /** When staff last read the guest conversation (Messages inbox); absent = never. */
+  conversationReadAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

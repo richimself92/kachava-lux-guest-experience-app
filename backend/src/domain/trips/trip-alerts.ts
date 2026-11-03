@@ -39,5 +39,6 @@ export function tripAlert(trip: Trip, reason: TripAlertReason, alertId: string, 
     acknowledgedAt: null,
     createdAt,
     targetRef: { type: 'TRIP', id: trip.tripId },
+    event: reason === 'FLIGHT_CHANGED' ? 'ITINERARY_CHANGE' : 'GUEST_REQUEST',
   };
 }

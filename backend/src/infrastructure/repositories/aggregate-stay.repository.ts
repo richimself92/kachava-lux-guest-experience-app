@@ -8,6 +8,7 @@ import {
   FolioSummary,
   LarderOrderItem,
   MidStayFeedback,
+  OperationalAlert,
   Personalization,
   StayAggregate,
   StayLifecycleStatus,
@@ -17,6 +18,7 @@ import { PaginatedResult } from '../../common/listing/list-query';
 import {
   BookingFilterCriteria,
   ConciergeFilterCriteria,
+  ConversationPageQuery,
   LarderFilterCriteria,
   StayAlertFactory,
   StayPageQuery,
@@ -46,8 +48,11 @@ export type StayMutator<T> = (draft: StayAggregate) => T;
 export abstract class AggregateStayRepository implements StayRepositoryPort {
   protected abstract findStayByToken(normalizedToken: string): Promise<StayAggregate | null>;
   protected abstract findStay(stayId: string): Promise<StayAggregate | null>;
-  protected abstract listAllStays(): Promise<StayAggregate[]>;
-  protected abstract insertStay(stay: StayAggregate): Promise<void>;
+  /** Open (pre-arrival and in-house) stays: the scope of cross-stay operational lists. */
+  protected abstract listOpenStaysBounded(): Promise<StayAggregate[]>;
+  /** The stay holding the booking, larder line or concierge request `childId` (indexed lookup). */
+  protected abstract findStayByChildRef(childId: string): Promise<StayAggregate | null>;
+  protected abstract insertStay(stay: StayAggregate, alert?: OperationalAlert | null): Promise<void>;
   /** Storage primitive: read, mutate and write one stay (plus its alert) atomically. */
   protected abstract transactStay<T>(
     stayId: string,
@@ -56,6 +61,10 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   ): Promise<T>;
   abstract pageStays(query: StayPageQuery): Promise<PaginatedResult<StayAggregate>>;
   abstract listOpenStays(limit: number): Promise<StayAggregate[]>;
+  abstract listStaysByStatuses(statuses: readonly StayLifecycleStatus[]): Promise<StayAggregate[]>;
+  abstract listStaysCheckingInOn(date: string): Promise<StayAggregate[]>;
+  abstract pageConversations(query: ConversationPageQuery): Promise<PaginatedResult<StayAggregate>>;
+  abstract listUnreadConversations(): Promise<StayAggregate[]>;
   abstract hasStaysForVilla(villaId: string): Promise<boolean>;
 
   findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null> {
@@ -66,9 +75,17 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.findStay(stayId);
   }
 
-  async createStay(stay: StayAggregate): Promise<StayAggregate> {
-    await this.insertStay(structuredClone(stay));
+  async createStay(stay: StayAggregate, alert: OperationalAlert | null = null): Promise<StayAggregate> {
+    await this.insertStay(structuredClone(stay), alert);
     return structuredClone(stay);
+  }
+
+  updateStay(stayId: string, change: (current: StayAggregate) => StayAggregate): Promise<StayAggregate> {
+    return this.mutateStay(stayId, (draft) => {
+      const next = change(structuredClone(draft));
+      Object.assign(draft, next, { stayId });
+      return structuredClone(draft);
+    });
   }
 
   updateStayToken(stayId: string, newUuid: string): Promise<StayRecord> {
@@ -121,16 +138,19 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   }
 
   async listLarderOrdersAcrossStays(filter?: LarderFilterCriteria): Promise<LarderOrderItem[]> {
-    return collectLarderOrders(await this.listAllStays(), filter);
+    return collectLarderOrders(await this.listOpenStaysBounded(), filter);
   }
 
   updateLarderOrderStatus(
     orderItemId: string,
     patch: Partial<LarderOrderItem>,
   ): Promise<LarderOrderItem | null> {
+    const stayIds = [orderItemId, orderItemId.replace(/^larder_/, '')];
     return this.mutateOwningStay(
+      orderItemId,
       (s) => mutations.ownsLarderOrder(s, orderItemId),
       (s) => mutations.applyLarderOrderStatusUpdate(s, orderItemId, patch),
+      stayIds,
     );
   }
 
@@ -147,7 +167,7 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   }
 
   async listBookingsAcrossStays(filter?: BookingFilterCriteria): Promise<ExperienceBooking[]> {
-    return collectBookings(await this.listAllStays(), filter);
+    return collectBookings(await this.listOpenStaysBounded(), filter);
   }
 
   updateBookingAssignment(
@@ -155,6 +175,7 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     patch: Partial<ExperienceBooking>,
   ): Promise<ExperienceBooking | null> {
     return this.mutateOwningStay(
+      bookingId,
       (s) => mutations.ownsBooking(s, bookingId),
       (s) => mutations.applyBookingAssignmentUpdate(s, bookingId, patch),
     );
@@ -167,13 +188,12 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   async listConciergeRequestsAcrossStays(
     filter?: ConciergeFilterCriteria,
   ): Promise<ConciergeRequest[]> {
-    return collectConciergeRequests(await this.listAllStays(), filter);
+    return collectConciergeRequests(await this.listOpenStaysBounded(), filter);
   }
 
   async findConciergeRequestById(requestId: string): Promise<ConciergeRequest | null> {
-    const stays = await this.listAllStays();
-    const found = stays.flatMap((s) => s.conciergeRequests).find((r) => r.requestId === requestId);
-    return found ?? null;
+    const owner = await this.findStayByChildRef(requestId);
+    return owner?.conciergeRequests.find((r) => r.requestId === requestId) ?? null;
   }
 
   createConciergeRequest(
@@ -203,6 +223,7 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     newMessage?: ConciergeMessage,
   ): Promise<ConciergeRequest | null> {
     return this.mutateOwningStay(
+      requestId,
       (s) => mutations.ownsConciergeRequest(s, requestId),
       (s) => mutations.applyConciergeAdminUpdate(s, requestId, patch, newMessage),
     );
@@ -217,7 +238,7 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   }
 
   async listMidStayFeedbackAcrossStays(): Promise<MidStayFeedback[]> {
-    return collectMidStayFeedback(await this.listAllStays());
+    return collectMidStayFeedback(await this.listOpenStaysBounded());
   }
 
   async getFolioForStay(
@@ -256,11 +277,18 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return stay;
   }
 
+  /** Finds the owner through the child-id index (or the candidate stay ids), never by scanning. */
   private async mutateOwningStay<T>(
+    childId: string,
     owns: (stay: StayAggregate) => boolean,
     mutator: StayMutator<T | null>,
+    candidateStayIds: string[] = [],
   ): Promise<T | null> {
-    const owner = (await this.listAllStays()).find(owns);
+    const candidates = [
+      await this.findStayByChildRef(childId),
+      ...(await Promise.all(candidateStayIds.map((id) => this.findStay(id)))),
+    ];
+    const owner = candidates.find((stay): stay is StayAggregate => stay !== null && owns(stay));
     return owner ? this.mutateStay(owner.stayId, mutator) : null;
   }
 }

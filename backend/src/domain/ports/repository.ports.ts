@@ -21,7 +21,8 @@ import { FolioSettlement, LarderCharge, SettledFolio } from '../folio-ledger';
 import { PaginatedResult, SortDirection } from '../../common/listing/list-query';
 import { CatalogItem, CatalogService } from '../catalog/catalog.models';
 import { ResortSettings, TransportProvider, Villa } from '../models/resort-config.models';
-import { Trip } from '../trips/trip.models';
+import { Trip, TripStatus } from '../trips/trip.models';
+import { Task, TaskPriority, TaskStatus } from '../tasks/task.models';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
 export const VILLA_REPOSITORY_PORT = Symbol('VILLA_REPOSITORY_PORT');
@@ -34,13 +35,30 @@ export const ALERT_REPOSITORY_PORT = Symbol('ALERT_REPOSITORY_PORT');
 export const STAFF_REPOSITORY_PORT = Symbol('STAFF_REPOSITORY_PORT');
 export const STORAGE_SIGNER_PORT = Symbol('STORAGE_SIGNER_PORT');
 export const TRIP_REPOSITORY_PORT = Symbol('TRIP_REPOSITORY_PORT');
+export const TASK_REPOSITORY_PORT = Symbol('TASK_REPOSITORY_PORT');
+export const NOTIFICATION_READ_REPOSITORY_PORT = Symbol('NOTIFICATION_READ_REPOSITORY_PORT');
 
-/** Stays page request: equality filters, arrival range (ISO dates) and guest-name search. */
+/** Calendar fields a stays page can be ordered and ranged by. */
+export type StayDateField = 'checkInDate' | 'checkOutDate';
+
+/** Stays page request: equality filters, a date range on `dateField` (ISO dates) and guest-name search. */
 export interface StayPageQuery {
+  /** Order and range field; arrival (`checkInDate`) when omitted. */
+  dateField?: StayDateField;
   status?: StayLifecycleStatus;
   villaId?: string;
   from?: string;
   to?: string;
+  q?: string;
+  page: number;
+  pageSize: number;
+  direction: SortDirection;
+}
+
+/** Messages inbox page: stays with at least one message, newest conversation first by default. */
+export interface ConversationPageQuery {
+  unread?: boolean;
+  awaitingReply?: boolean;
   q?: string;
   page: number;
   pageSize: number;
@@ -127,8 +145,19 @@ export interface StayRepositoryPort {
   pageStays(query: StayPageQuery): Promise<PaginatedResult<StayAggregate>>;
   /** Stays the admin dashboard follows live (pre-arrival and in-house), at most `limit`. */
   listOpenStays(limit: number): Promise<StayAggregate[]>;
+  /** Every stay in `statuses` (bounded read: ListScanLimitError beyond the scan limit). */
+  listStaysByStatuses(statuses: readonly StayLifecycleStatus[]): Promise<StayAggregate[]>;
+  /** Stays with messages, filtered and ordered by the derived conversation summary in Firestore. */
+  pageConversations(query: ConversationPageQuery): Promise<PaginatedResult<StayAggregate>>;
+  /** Stays whose conversation has unread guest messages (bounded read). */
+  listUnreadConversations(): Promise<StayAggregate[]>;
+  /** Stays whose check-in date is `date` (bounded read). */
+  listStaysCheckingInOn(date: string): Promise<StayAggregate[]>;
   hasStaysForVilla(villaId: string): Promise<boolean>;
-  createStay(stay: StayAggregate): Promise<StayAggregate>;
+  /** Creates the stay and, in the same transaction, its alert. */
+  createStay(stay: StayAggregate, alert?: OperationalAlert | null): Promise<StayAggregate>;
+  /** Read-modify-write of one stay in a transaction (StayNotFoundError when absent). */
+  updateStay(stayId: string, change: (current: StayAggregate) => StayAggregate): Promise<StayAggregate>;
   updateStayToken(stayId: string, newUuid: string): Promise<StayRecord>;
   updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord>;
   updateStayWifi(
@@ -225,6 +254,10 @@ export interface AlertRepositoryPort {
     alertId: string,
     staffId: string,
   ): Promise<OperationalAlert | null>;
+  /** Newest-first alerts created in the window (both bounds optional), at most `limit`. */
+  listRecent(window: { fromIso?: string; toIsoExclusive?: string }, limit: number): Promise<OperationalAlert[]>;
+  /** Acknowledges every listed alert that is still unread; returns how many changed. */
+  acknowledgeMany(alertIds: readonly string[], staffId: string, at: string): Promise<number>;
 }
 
 export interface StaffRepositoryPort {
@@ -281,4 +314,45 @@ export interface TripRepositoryPort {
   listForStay(stayId: string): Promise<Trip[]>;
   /** REQUESTED / SENT_TO_PROVIDER trips with `pickupAt <= cutoffIso`, earliest pickup first. */
   listUnconfirmedUntil(cutoffIso: string): Promise<Trip[]>;
+  /** Trips of any of `stayIds` (bounded read). */
+  listForStays(stayIds: readonly string[]): Promise<Trip[]>;
+  /** Number of trips whose status is one of `statuses` (aggregate count, no document reads). */
+  countByStatuses(statuses: readonly TripStatus[]): Promise<number>;
+}
+
+/** Tasks page request; every filter runs in Firestore (ordered by `dueAt`). */
+export interface TaskPageQuery {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  ownerStaffId?: string;
+  villaId?: string;
+  /** Only open tasks whose `dueAt` is before this instant (UTC ISO). */
+  overdueBefore?: string;
+  /** Normalised search text (title, guest or villa word prefix). */
+  q?: string;
+  page: number;
+  pageSize: number;
+  direction: SortDirection;
+}
+
+/** Top-level `tasks` collection (ADR-011). */
+export interface TaskRepositoryPort {
+  /** EntityConflictError when the id exists. */
+  create(task: Task): Promise<Task>;
+  /** Idempotent create keyed by `taskId`: an existing task is returned untouched. */
+  createIfAbsent(task: Task): Promise<{ task: Task; created: boolean }>;
+  findById(taskId: string): Promise<Task | null>;
+  /** Read-modify-write in one transaction; EntityNotFoundError when absent. */
+  update(taskId: string, mutate: (current: Task) => Task): Promise<Task>;
+  page(query: TaskPageQuery): Promise<PaginatedResult<Task>>;
+  /** Open tasks with `dueAt < nowIso`, earliest first (bounded read). */
+  listOverdue(nowIso: string): Promise<Task[]>;
+  countByStatuses(statuses: readonly TaskStatus[]): Promise<number>;
+}
+
+/** Read markers of computed notifications (stored alerts keep their own acknowledgement). */
+export interface NotificationReadRepositoryPort {
+  /** notificationId -> readAt for the ids that were marked read. */
+  readAtOf(ids: readonly string[]): Promise<Map<string, string>>;
+  markRead(ids: readonly string[], staffId: string, at: string): Promise<void>;
 }

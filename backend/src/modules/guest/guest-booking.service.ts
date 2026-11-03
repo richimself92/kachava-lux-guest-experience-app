@@ -7,6 +7,7 @@ import {
 } from '../../domain/catalog/catalog-rules';
 import { CatalogItem, CatalogService, ServiceSnapshot } from '../../domain/catalog/catalog.models';
 import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
+import { orderRefId } from '../../domain/stays/open-requests';
 import {
   ExperienceBooking,
   FolioSummary,
@@ -22,7 +23,13 @@ import {
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
 import { CreateBookingDto, UpdateLarderOrderDto } from './dto/guest.dto';
+import { TaskAutomation } from '../tasks/task-automation.service';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
+
+/** Audit actor of guest-originated writes. */
+function guestActor(stay: StayAggregate): string {
+  return `guest:${stay.stayId}`;
+}
 
 interface OrderableService {
   service: CatalogService;
@@ -43,6 +50,7 @@ export class GuestBookingService {
     @Inject(SERVICE_ITEM_REPOSITORY_PORT)
     private readonly items: ServiceItemRepositoryPort,
     private readonly alerts: GuestAlertFolioHelper,
+    private readonly taskAutomation: TaskAutomation,
   ) {}
 
   async updateLarderOrder(
@@ -58,8 +66,8 @@ export class GuestBookingService {
     const snapshot = buildServiceSnapshot(service, lines, 1, new Date().toISOString());
     const orders = this.toLarderLines(stay, service, lines, snapshot);
     const charge = { title: service.name.en, chargeToFolio: service.pricing.chargeToFolio };
-    return this.stayRepo.replaceLarderOrders(stay.stayId, orders, charge, () =>
-      this.alerts.buildAlert(stay, {
+    const result = await this.stayRepo.replaceLarderOrders(stay.stayId, orders, charge, () => ({
+      ...this.alerts.buildAlert(stay, {
         category: 'LARDER',
         severity: 'NORMAL',
         title: `${stay.villaName}: ${service.name.en}`,
@@ -67,7 +75,11 @@ export class GuestBookingService {
         sourceDocumentPath: `stays/${stay.stayId}`,
         assignedDepartment: service.operation.responsibleDepartment,
       }),
-    );
+      event: 'GUEST_REQUEST',
+      targetRef: { type: 'ORDER', id: orderRefId(stay.stayId, service.serviceId) },
+    }));
+    await this.taskAutomation.forOrder(stay, service, orders.length, guestActor(stay));
+    return result;
   }
 
   async createBooking(stay: StayAggregate, dto: CreateBookingDto): Promise<ExperienceBooking> {
@@ -83,8 +95,8 @@ export class GuestBookingService {
     const now = new Date().toISOString();
     const snapshot = buildServiceSnapshot(service, lines, partySize, now);
     const booking = this.toBooking(stay, service, dto, partySize, snapshot, now);
-    return this.stayRepo.createBooking(stay.stayId, booking, () =>
-      this.alerts.buildAlert(stay, {
+    const created = await this.stayRepo.createBooking(stay.stayId, booking, () => ({
+      ...this.alerts.buildAlert(stay, {
         category: 'BOOKING',
         severity: 'NORMAL',
         title: `${stay.villaName}: ${booking.title}`,
@@ -92,7 +104,11 @@ export class GuestBookingService {
         sourceDocumentPath: `stays/${stay.stayId}`,
         assignedDepartment: booking.assignedDepartment,
       }),
-    );
+      event: 'GUEST_REQUEST',
+      targetRef: { type: 'BOOKING', id: booking.bookingId },
+    }));
+    await this.taskAutomation.forBooking(stay, created, service, guestActor(stay));
+    return created;
   }
 
   private async loadService(serviceId: string): Promise<OrderableService> {

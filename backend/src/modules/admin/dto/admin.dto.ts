@@ -16,6 +16,7 @@ import { QueryBoolean } from '../../../common/listing/query-transforms';
 import {
   EMAIL_MAX,
   ISO_DATE_PATTERN,
+  LANGUAGE_PATTERN,
   LONG_TEXT_MAX,
   SHORT_TEXT_MAX,
   VILLA_ID_PATTERN,
@@ -93,6 +94,10 @@ export class CreateReservationDto {
   @IsString()
   @MaxLength(SHORT_TEXT_MAX)
   phone?: string;
+
+  @IsOptional()
+  @Matches(LANGUAGE_PATTERN, { message: 'language must be a language code such as en or es' })
+  language?: string;
 
   @IsOptional()
   @IsString()

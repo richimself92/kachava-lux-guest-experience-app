@@ -8,6 +8,7 @@ import { SettledFolio } from '../../domain/folio-ledger';
 import {
   ConciergeRequest,
   MidStayFeedback,
+  OperationalAlert,
   StayAggregate,
 } from '../../domain/models/domain.models';
 import {
@@ -76,10 +77,19 @@ export class GuestConciergeService {
     return updated;
   }
 
-  private chatMessageAlert(stay: StayAggregate, requestId: string, text: string) {
+  /** Every guest message is an ACTION notification that opens the stay's conversation. */
+  private chatMessageAlert(stay: StayAggregate, requestId: string, text: string): OperationalAlert {
+    return {
+      ...this.chatMessageAlertBase(stay, requestId, text),
+      event: 'GUEST_MESSAGE',
+      targetRef: { type: 'CONVERSATION', id: stay.stayId },
+    };
+  }
+
+  private chatMessageAlertBase(stay: StayAggregate, requestId: string, text: string): OperationalAlert {
     return this.alerts.buildAlert(stay, {
       category: 'CONCIERGE',
-      severity: 'NORMAL',
+      severity: 'HIGH',
       title: `${stay.villaName} New Chat Message from ${stay.guestProfile.name}`,
       summary: text,
       sourceDocumentPath: `stays/${stay.stayId}/concierge_requests/${requestId}`,
