@@ -47,6 +47,7 @@ void main() {
         'Services',
         'Experiences',
         'Dining',
+        'Transportation',
         'Wellness',
         'Tasks',
       ]) {
@@ -54,7 +55,6 @@ void main() {
       }
       for (final hidden in [
         'Guests',
-        'Transportation',
         'Notifications',
         'TEAM',
         'SANCTUARY COMMAND · ONLINE',

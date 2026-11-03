@@ -12,7 +12,7 @@ void main() {
           ['OPERACIONES DE HUÉSPEDES', 'HOSPITALIDAD', 'OPERACIONES']);
       expect(sections.map((s) => s.items.map((i) => i.labelEn).toList()), [
         ['Reservations', 'Villas'],
-        ['Services', 'Experiences', 'Dining', 'Wellness'],
+        ['Services', 'Experiences', 'Dining', 'Transportation', 'Wellness'],
         ['Tasks'],
       ]);
       expect(AdminNavModel.dashboard.label(false), 'Dashboard');
@@ -26,7 +26,6 @@ void main() {
           .toSet();
       for (final hidden in [
         'Guests',
-        'Transportation',
         'Notifications',
       ]) {
         expect(visible.contains(hidden), isFalse, reason: hidden);

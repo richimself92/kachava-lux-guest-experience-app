@@ -13,11 +13,13 @@ import 'data/admin_api_client.dart';
 import 'data/api_admin_operations_repository.dart';
 import 'data/http_catalog_repositories.dart';
 import 'data/http_service_catalog_repository.dart';
+import 'data/http_trip_repository.dart';
 import 'data/http_uploads.dart';
 import 'domain/admin_catalog_repositories.dart';
 import 'domain/admin_repository.dart';
 import 'presentation/admin_command_shell.dart';
 import 'presentation/services/service_catalog_scope.dart';
+import 'presentation/workspaces/transportation/trip_scope.dart';
 
 void main() {
   GuestPortalLink.configure(AdminAppConfig.guestPortalUrl);
@@ -33,14 +35,20 @@ void main() {
       transport: HttpSignedUploadTransport(),
       picker: createImageFilePicker(),
     ),
-    child: KachavaAdminApp(
-      repository: ApiAdminOperationsRepository(apiClient: api),
-      resort: AdminResortRepositories(
-        settings: HttpSettingsRepository(api),
-        villas: HttpVillaRepository(api),
+    child: TripScope(
+      deps: TripDeps(
+        trips: HttpTripRepository(api),
+        stays: HttpStayListRepository(api),
       ),
-      timeZones: createTimeZoneCatalog(),
-      enableLivePolling: true,
+      child: KachavaAdminApp(
+        repository: ApiAdminOperationsRepository(apiClient: api),
+        resort: AdminResortRepositories(
+          settings: HttpSettingsRepository(api),
+          villas: HttpVillaRepository(api),
+        ),
+        timeZones: createTimeZoneCatalog(),
+        enableLivePolling: true,
+      ),
     ),
   ));
 }

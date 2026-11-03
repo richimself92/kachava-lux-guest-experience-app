@@ -28,6 +28,7 @@ const _menuWorkspaces = [
   'admin-services',
   'admin-section-experiences',
   'admin-section-dining',
+  'admin-transportation',
   'admin-section-wellness',
   'admin-concierge',
 ];

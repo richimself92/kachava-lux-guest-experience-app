@@ -58,6 +58,14 @@ enum AdminWorkspaceTab {
     shortLabel: 'Wellness',
     subtitle: 'Wellness catalog',
   ),
+
+  /// HOSPITALITY › Transportation: trips, providers and transport services.
+  adminTransportation(
+    id: 'admin-transportation',
+    label: 'Transportation',
+    shortLabel: 'Transportation',
+    subtitle: 'Trips and providers',
+  ),
   adminConcierge(
     id: 'admin-concierge',
     label: 'Tasks',

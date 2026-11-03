@@ -233,6 +233,8 @@ class AdminI18n {
         return 'Gastronomía';
       case AdminWorkspaceTab.adminSectionWellness:
         return 'Bienestar';
+      case AdminWorkspaceTab.adminTransportation:
+        return 'Transporte';
       case AdminWorkspaceTab.adminConcierge:
         return 'Tareas';
       case AdminWorkspaceTab.adminFolio:

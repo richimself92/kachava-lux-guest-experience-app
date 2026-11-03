@@ -106,9 +106,12 @@ abstract final class AdminNavModel {
           icon: Icons.restaurant_outlined,
         ),
         AdminNavItem(
-            id: 'transportation',
-            labelEn: 'Transportation',
-            labelEs: 'Transporte'),
+          id: 'transportation',
+          labelEn: 'Transportation',
+          labelEs: 'Transporte',
+          workspace: AdminWorkspaceTab.adminTransportation,
+          icon: Icons.airport_shuttle_outlined,
+        ),
         AdminNavItem(
           id: 'wellness',
           labelEn: 'Wellness',

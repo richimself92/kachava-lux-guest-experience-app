@@ -22,6 +22,7 @@ import 'workspaces/larder_workspace.dart';
 import 'workspaces/overview_workspace.dart';
 import 'workspaces/settings_workspace.dart';
 import 'workspaces/stays_workspace.dart';
+import 'workspaces/transportation/transportation_screen.dart';
 import 'workspaces/villas_workspace.dart';
 
 /// Responsive shell: sidebar (desktop), icon rail (tablet), drawer (mobile).
@@ -161,6 +162,16 @@ class AdminCommandShell extends StatelessWidget {
         return _section(ServiceSection.dining);
       case AdminWorkspaceTab.adminSectionWellness:
         return _section(ServiceSection.wellness);
+      case AdminWorkspaceTab.adminTransportation:
+        return TransportationScreen(
+          resortSettings: resortSettings,
+          queries: controller.listQueries,
+          isEs: controller.isEs,
+          onOpenSettings: () =>
+              controller.selectTab(AdminWorkspaceTab.adminSettings),
+          onOpenServicesTab: () =>
+              controller.selectTab(AdminWorkspaceTab.adminServices),
+        );
       case AdminWorkspaceTab.adminConcierge:
         return ConciergeWorkspace(controller: controller);
       case AdminWorkspaceTab.adminFolio:
