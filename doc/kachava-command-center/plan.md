@@ -10,7 +10,19 @@ Fuente de verdad única. Reemplaza la versión anterior. Fuentes:
 1. **Aplicación de producción.** No hay borradores, datos precargados, seeds, mockups, valores hardcodeados ni modo en memoria en runtime. La base arranca vacía y el cliente crea y configura todo desde el admin. En local se usa el emulador de Firestore, con datos persistentes entre reinicios. Nunca se toca la base real `kavacha-db` sin aprobación explícita.
 2. **Colores, tipografía y radios** salen solo de `DESIGN.md`. Las imágenes del cliente solo definen orden y opciones.
 3. **Todas las listas** tienen búsqueda, filtros, orden y paginación (25 por página; 10/25/50), según `ux-patterns.md`. No hay scroll infinito de tarjetas. Al tocar una fila se abre el detalle lateral; en móvil, a pantalla completa.
-4. **UI limpia:** poco texto y explicaciones en tooltips ⓘ. Si falta configuración, una línea que lleva a donde se configura.
+4. **UI limpia, simple e intuitiva, con el mínimo texto:**
+   - **Títulos y etiquetas:** de 1 a 3 palabras. Sin subtítulos, párrafos ni banners de instrucciones; lo explicativo va en tooltips ⓘ.
+   - **Acciones:** una acción principal visible por pantalla; las secundarias van en el menú ⋮ de la fila. Los botones usan verbos ("Guardar", "Desactivar").
+   - **Estados vacíos y errores:** una línea más una acción.
+   - **Formularios:**
+     - solo los campos necesarios, con valores por defecto sensatos;
+     - opciones avanzadas plegadas;
+     - validación en línea de 5 palabras como máximo;
+     - confirmación de una línea en las acciones destructivas.
+   - **Mensajes de confirmación (toasts):** una línea, que se cierra sola.
+   - **Estados:** un chip corto con color de DESIGN.md, nunca solo color.
+   - **Tablas:** máximo 6 columnas visibles; el resto va en el detalle.
+   - **Configuración faltante:** una línea que lleva a donde se configura.
 5. **Sin login visible** en el admin. La identidad técnica del admin viene de la configuración del entorno, no de la base de datos.
 6. **EN/ES** en todo lo visible. Nunca se traduce automáticamente.
 7. **Sin despliegues sin aprobación.** Pruebas primero en local.
