@@ -140,6 +140,7 @@ Ya hecho, con commit en `feature/kachava-command-center`:
 - Origen de la reserva y pagos del PMS: "Sin integración PMS". Nunca se simulan.
 
 **Guests**
+- **Pestaña Messages** (bandeja, aprobada 2026-11-03): todas las conversaciones con huéspedes, no leídas primero, con búsqueda, filtro "sin responder" y paginación. Clic en una conversación → chat en el panel lateral (responder y ver fotos adjuntas). Cada mensaje nuevo genera una notificación (Acción pendiente) con enlace a la conversación.
 - Perfil por estancia: idioma, preferencias, alergias, ocasión especial, historial de solicitudes, notas internas y chat con el Resort Host.
 
 **Villas**
