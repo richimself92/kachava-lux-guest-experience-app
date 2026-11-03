@@ -209,6 +209,10 @@ class SkeletonBox extends StatelessWidget {
 }
 
 /// 16:9 photo with its box reserved before it loads; alt text in [l10n].
+///
+/// Decoded at the size it is shown ([decodeWidth]), never larger: decoding
+/// full-size covers for small cards kept the page busy right when the guest
+/// opened Services and started typing in the search.
 class ServicePhoto extends StatelessWidget {
   const ServicePhoto(
       {super.key, required this.image, required this.l10n, this.radius = 12});
@@ -216,9 +220,19 @@ class ServicePhoto extends StatelessWidget {
   final L10n l10n;
   final double radius;
 
+  /// Largest decode width (physical pixels) of any photo.
+  static const int maxDecodeWidth = 960;
+
+  /// Physical pixels needed to show [logicalWidth] at [pixelRatio].
+  static int decodeWidth(double logicalWidth, double pixelRatio) {
+    if (!logicalWidth.isFinite || logicalWidth <= 0) return maxDecodeWidth;
+    return (logicalWidth * pixelRatio).ceil().clamp(1, maxDecodeWidth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final img = image;
+    final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
@@ -228,17 +242,19 @@ class ServicePhoto extends StatelessWidget {
           child: img == null
               ? const Icon(Icons.image_outlined,
                   color: KachavaColors.onSurfaceVariant)
-              : Semantics(
-                  image: true,
-                  label: l10n.text(img.alt),
-                  child: Image.network(
-                    img.url,
-                    fit: BoxFit.cover,
-                    cacheWidth: 960,
-                    excludeFromSemantics: true,
-                    errorBuilder: (_, __, ___) => const Icon(
-                        Icons.image_not_supported_outlined,
-                        color: KachavaColors.onSurfaceVariant),
+              : LayoutBuilder(
+                  builder: (context, box) => Semantics(
+                    image: true,
+                    label: l10n.text(img.alt),
+                    child: Image.network(
+                      img.url,
+                      fit: BoxFit.cover,
+                      cacheWidth: decodeWidth(box.maxWidth, pixelRatio),
+                      excludeFromSemantics: true,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: KachavaColors.onSurfaceVariant),
+                    ),
                   ),
                 ),
         ),

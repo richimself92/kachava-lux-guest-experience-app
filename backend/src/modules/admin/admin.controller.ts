@@ -26,7 +26,6 @@ import {
   ConciergeListQueryDto,
   CreateReservationDto,
   LarderOrderListQueryDto,
-  StaffListQueryDto,
   UpdateAdminConciergeDto,
   UpdateLarderStatusDto,
   UpdateStayStatusDto,
@@ -173,12 +172,5 @@ export class AdminController {
     @CurrentStaff() staff: StaffMember,
   ) {
     return this.fulfillment.approveCheckout(stayId, dto, staff);
-  }
-
-  @Get('staff')
-  @UseGuards(AdminAuthGuard, RolesGuard)
-  @Roles('HOST_ADMIN', 'CONCIERGE_STAFF', 'DEPARTMENT_COORDINATOR')
-  listStaff(@Query() query: StaffListQueryDto) {
-    return this.adminService.listStaff(query);
   }
 }

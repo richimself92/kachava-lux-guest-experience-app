@@ -5,19 +5,19 @@ export type StayLifecycleStatus =
   | 'EXPIRED'
   | 'CANCELLED';
 
-export type RbacRole =
-  | 'HOST_ADMIN'
-  | 'CONCIERGE_STAFF'
-  | 'DEPARTMENT_COORDINATOR';
+export const RBAC_ROLES = ['HOST_ADMIN', 'CONCIERGE_STAFF', 'DEPARTMENT_COORDINATOR'] as const;
+export type RbacRole = (typeof RBAC_ROLES)[number];
 
-export type Department =
-  | 'CONCIERGE'
-  | 'CULINARY'
-  | 'MARINE'
-  | 'TRANSPORT'
-  | 'HOUSEKEEPING'
-  | 'ENGINEERING'
-  | 'WELLNESS';
+export const DEPARTMENTS = [
+  'CONCIERGE',
+  'CULINARY',
+  'MARINE',
+  'TRANSPORT',
+  'HOUSEKEEPING',
+  'ENGINEERING',
+  'WELLNESS',
+] as const;
+export type Department = (typeof DEPARTMENTS)[number];
 
 export type AlertCategory =
   | 'CONCIERGE'

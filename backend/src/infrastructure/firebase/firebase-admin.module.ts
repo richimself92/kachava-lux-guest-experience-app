@@ -15,6 +15,8 @@ import {
   TRANSPORT_PROVIDER_REPOSITORY_PORT,
   TASK_REPOSITORY_PORT,
   NOTIFICATION_READ_REPOSITORY_PORT,
+  SERVICE_REQUEST_REPOSITORY_PORT,
+  STAFF_ROSTER_REPOSITORY_PORT,
   TRIP_REPOSITORY_PORT,
   VILLA_REPOSITORY_PORT,
 } from '../../domain/ports/repository.ports';
@@ -23,8 +25,9 @@ import { FirestoreTaskRepository } from '../repositories/firestore-task.reposito
 import { FirestoreAlertRepository } from '../repositories/firestore-alert.repository';
 import { FirestoreEntityRepository } from '../repositories/firestore-entity.repository';
 import { FirestoreSettingsRepository } from '../repositories/firestore-settings.repository';
-import { FirestoreStaffRepository } from '../repositories/firestore-staff.repository';
-import { FirestoreStayRepository } from '../repositories/firestore-stay.repository';
+import { FirestoreServiceRequestRepository } from '../repositories/firestore-service-request.repository';
+import { FirestoreStaffRepository, STAFF_COLLECTION } from '../repositories/firestore-staff.repository';
+import { FirestoreStayRepository, STAY_SCAN_LIMIT } from '../repositories/firestore-stay.repository';
 import { FirestoreTripRepository } from '../repositories/firestore-trip.repository';
 import { CatalogImageStorageAdapter } from '../storage/catalog-image-storage.adapter';
 import {
@@ -82,7 +85,15 @@ function firestoreBacked<T>(token: symbol, build: (db: Firestore) => T): Provide
 const providers: Provider[] = [
   { provide: FIRESTORE_DB, useFactory: createFirestore },
   { provide: OBJECT_URL_SIGNER, useFactory: createObjectUrlSigner },
-  firestoreBacked(STAY_REPOSITORY_PORT, (db) => new FirestoreStayRepository(db)),
+  firestoreBacked(
+    STAY_REPOSITORY_PORT,
+    (db) => new FirestoreStayRepository(db, STAY_SCAN_LIMIT, async () => (await new FirestoreSettingsRepository(db).get()).timeZone),
+  ),
+  firestoreBacked(SERVICE_REQUEST_REPOSITORY_PORT, (db) => new FirestoreServiceRequestRepository(db)),
+  firestoreBacked(
+    STAFF_ROSTER_REPOSITORY_PORT,
+    (db) => new FirestoreEntityRepository(db, STAFF_COLLECTION, 'staffId', 'Staff member'),
+  ),
   firestoreBacked(ALERT_REPOSITORY_PORT, (db) => new FirestoreAlertRepository(db)),
   firestoreBacked(STAFF_REPOSITORY_PORT, (db) => new FirestoreStaffRepository(db)),
   firestoreBacked(SETTINGS_REPOSITORY_PORT, (db) => new FirestoreSettingsRepository(db)),

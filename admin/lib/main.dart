@@ -17,6 +17,7 @@ import 'data/admin_api_client.dart';
 import 'data/http_catalog_repositories.dart';
 import 'data/http_operations_repositories.dart';
 import 'data/http_service_catalog_repository.dart';
+import 'data/http_service_request_repository.dart';
 import 'data/http_stay_repositories.dart';
 import 'data/http_trip_repository.dart';
 import 'data/http_uploads.dart';
@@ -40,6 +41,7 @@ void main() {
       signer: HttpUploadSigner(api),
       transport: HttpSignedUploadTransport(),
       picker: createImageFilePicker(),
+      requests: HttpServiceRequestRepository(api),
     ),
     child: TripScope(
       deps: TripDeps(
@@ -60,6 +62,7 @@ void main() {
           conversations: HttpConversationRepository(api),
         ),
         staff: HttpStaffDirectoryRepository(api),
+        staffRoster: HttpStaffRosterRepository(api),
         timeZones: createTimeZoneCatalog(),
         enableLivePolling: true,
       ),
@@ -79,6 +82,7 @@ class KachavaAdminApp extends StatefulWidget {
     required this.timeZones,
     this.operations,
     this.staff,
+    this.staffRoster,
     this.chime,
     this.zoneResolver,
     this.enableLivePolling = false,
@@ -92,6 +96,9 @@ class KachavaAdminApp extends StatefulWidget {
   /// without them those screens show one error line.
   final OperationsDeps? operations;
   final StaffDirectoryRepository? staff;
+
+  /// Settings › Staff (create, edit, deactivate).
+  final StaffRosterRepository? staffRoster;
   final AlertChimePort? chime;
   final ZoneOffsetResolver? zoneResolver;
   final bool enableLivePolling;
@@ -102,7 +109,7 @@ class KachavaAdminApp extends StatefulWidget {
 
 class _KachavaAdminAppState extends State<KachavaAdminApp> {
   late final AdminShellController _shell =
-      AdminShellController(staff: widget.staff);
+      AdminShellController(staff: widget.staff, roster: widget.staffRoster);
   late final NotificationBellController _bell = NotificationBellController(
       repository: widget.operations?.notifications, chime: widget.chime);
   late final ResortSettingsController _resortSettings =

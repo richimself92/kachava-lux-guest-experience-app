@@ -88,7 +88,7 @@ class HttpGuestRepository implements GuestRepository {
   Future<GuestProfile> get(String stayId) => _profiles.get(stayId);
 }
 
-/// `GET /admin/staff` (the whole roster, one page of up to 100).
+/// `GET /admin/staff?isActive=true` (active staff, one page of up to 100).
 class HttpStaffDirectoryRepository implements StaffDirectoryRepository {
   HttpStaffDirectoryRepository(this._client);
 
@@ -96,5 +96,41 @@ class HttpStaffDirectoryRepository implements StaffDirectoryRepository {
 
   @override
   Future<List<StaffMember>> list() async => AdminStaffMapper.parseDirectory(
-      await _client.getJson('/staff?pageSize=100'));
+      await _client.getJson('/staff?isActive=true&pageSize=100'));
+}
+
+/// `/admin/staff`: the roster of Settings › Staff.
+class HttpStaffRosterRepository implements StaffRosterRepository {
+  HttpStaffRosterRepository(AdminApiClient client)
+      : _staff = AdminHttpResource(client, '/staff', _map);
+
+  final AdminHttpResource<StaffMember> _staff;
+
+  static StaffMember _map(Map<String, dynamic> json) =>
+      AdminStaffMapper.tryMap(json) ??
+      (throw const FormatException('Staff record without "staffId".'));
+
+  @override
+  Future<PagedResult<StaffMember>> page(ListQuery query) => _staff.list(query);
+
+  @override
+  Future<StaffMember> create(StaffMember member) =>
+      _emailGuard(() => _staff.create(member.toWriteJson()));
+
+  @override
+  Future<StaffMember> update(StaffMember member) =>
+      _emailGuard(() => _staff.update(member.staffId, member.toWriteJson()));
+
+  @override
+  Future<StaffMember> setActive(String staffId, bool isActive) =>
+      _staff.update(staffId, {'isActive': isActive});
+
+  static Future<T> _emailGuard<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on AdminApiException catch (error) {
+      if (error.statusCode == 409) throw const StaffEmailTakenException();
+      rethrow;
+    }
+  }
 }

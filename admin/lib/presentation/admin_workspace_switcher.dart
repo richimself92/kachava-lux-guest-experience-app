@@ -200,7 +200,13 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
         );
       default:
         return SettingsWorkspace(
-            settings: resortSettings, timeZones: timeZones, isEs: _isEs);
+          settings: resortSettings,
+          timeZones: timeZones,
+          isEs: _isEs,
+          staff: controller.staffRoster,
+          onStaffChanged: controller.loadStaff,
+          queries: controller.listQueries,
+        );
     }
   }
 
@@ -209,6 +215,7 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
         section: section,
         queryStore: controller.listQueries,
         staff: controller.staffDirectory,
+        today: _resortTime.dayOf(DateTime.now().toUtc()),
         isEs: _isEs,
       );
 }

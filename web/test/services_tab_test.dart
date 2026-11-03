@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_guest_portal/data/guest_api.dart';
+import 'package:kachava_guest_portal/presentation/common/widgets.dart';
 
 import 'support/fake_guest_api.dart';
 import 'support/fixtures.dart';
@@ -96,6 +97,51 @@ void main() {
     expect(find.text('1.4 Massage'), findsOneWidget,
         reason: 'same journey number in the form title');
     expect(find.byKey(const Key('booking-date')), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets(
+      'search typed during the first catalog load is kept and applied '
+      'when the catalog arrives', (tester) async {
+    final api = FakeGuestApi(catalog: fullCatalog())
+      ..catalogFailure = FailureKind.unreachable;
+    await pumpPortal(tester, api: api);
+    await _openServices(tester);
+    await tester.enterText(find.byKey(const Key('services-search')), 'massa');
+    await tester.pump(const Duration(milliseconds: 100));
+
+    api.catalogFailure = null;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 400));
+
+    final field =
+        tester.widget<TextField>(find.byKey(const Key('services-search')));
+    expect(field.controller!.text, 'massa');
+    expect(find.text('1 services'), findsOneWidget);
+    await unmount(tester);
+  });
+
+  test('photos decode at the size they are shown, never above the cap', () {
+    expect(ServicePhoto.decodeWidth(358, 2), 716);
+    expect(ServicePhoto.decodeWidth(358, 1), 358);
+    expect(ServicePhoto.decodeWidth(1200, 3), ServicePhoto.maxDecodeWidth);
+    expect(ServicePhoto.decodeWidth(double.infinity, 2),
+        ServicePhoto.maxDecodeWidth);
+  });
+
+  testWidgets('a service card decodes its cover at the card width',
+      (tester) async {
+    await pumpPortal(tester,
+        api: FakeGuestApi(catalog: fullCatalog()), size: const Size(390, 844));
+    await _openServices(tester);
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, isNotEmpty);
+    for (final image in images) {
+      final provider = image.image;
+      expect(provider, isA<ResizeImage>());
+      expect((provider as ResizeImage).width,
+          lessThan(ServicePhoto.maxDecodeWidth));
+    }
     await unmount(tester);
   });
 }

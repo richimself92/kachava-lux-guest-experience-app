@@ -137,6 +137,13 @@ export function removeBookingCharge(stay: StayAggregate, bookingId: string): voi
   stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
 }
 
+/** Drops the folio line of one order service (a cancelled order) and refreshes totals. */
+export function removeOrderCharge(stay: StayAggregate, serviceId: string): void {
+  const lineId = orderFolioItemId(serviceId);
+  stay.folioItems = stay.folioItems.filter((item) => item.folioItemId !== lineId);
+  stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
+}
+
 /** Re-prices the folio line of a changed booking (date, time, party) and refreshes totals. */
 export function rechargeBooking(stay: StayAggregate, booking: ExperienceBooking): void {
   const line = stay.folioItems.find((item) => item.sourceRefId === booking.bookingId);

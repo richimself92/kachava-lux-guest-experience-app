@@ -4,7 +4,6 @@ import { OperationalAlert, StaffMember } from '../../src/domain/models/domain.mo
 import { Villa } from '../../src/domain/models/resort-config.models';
 import { FirestoreAlertRepository } from '../../src/infrastructure/repositories/firestore-alert.repository';
 import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
-import { FirestoreStaffRepository } from '../../src/infrastructure/repositories/firestore-staff.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
 import { AdminService } from '../../src/modules/admin/admin.service';
 import { FakeFirestore } from '../support/fake-firestore';
@@ -20,7 +19,6 @@ async function adminServiceOver(fake: FakeFirestore, villa: Villa | null = villa
   return new AdminService(
     new FirestoreStayRepository(db),
     new FirestoreAlertRepository(db),
-    new FirestoreStaffRepository(db),
     villas,
     new SecurityTokenService(),
   );

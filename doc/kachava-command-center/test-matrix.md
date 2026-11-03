@@ -29,9 +29,8 @@
 - Specs (fixed): missing villa statuses, `tab` role for portal nav, stale panel clicked, completed filter not scoped to the run, 8-row dashboard and long villa menu (run names sort first), empty staff roster (spec creates one in the emulator), first key lost in Flutter inputs, click during panel re-flow, dangling cover objects (now uploaded to Storage).
 
 ## 4. Remaining
-- Tasks: Assign shows "No staff available" until a roster exists (no Team screen yet).
-- Dining and Experiences "Requests" tab still "coming soon" (queue not built).
-- Typing in the portal Services search during the first catalog load can be discarded.
+- Closed: Settings › Staff roster feeds every owner picker; Experiences/Dining/Wellness request queues (`admin-requests-staff.e2e.spec.ts`, PASS); portal photos decode at shown size (`services_tab_test.dart`).
+- Flutter web activates a text field one frame after focus; keys typed in the first ~1 s after Services first opens can still be overwritten (specs retry input).
 - Not tested: real phone, App Check (phase 11).
 
 ## 5. Evidence

@@ -1,36 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../application/list_query_store.dart';
 import '../../application/resort_settings_controller.dart';
 import '../../core/admin_list_strings.dart';
 import '../../core/resort_strings.dart';
+import '../../core/staff_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../core/time_zone_catalog.dart';
 import '../../domain/admin_settings.dart';
+import '../../domain/staff_member.dart';
 import '../components/components.dart';
 import 'settings_airports.dart';
+import 'staff_tab.dart';
 
-/// Settings (top bar gear): check-in/out times, time zone, airports and the
-/// trip alert lead time, in one form with one Save. Unset values show
-/// "Not set"; nothing is pre-filled.
-class SettingsWorkspace extends StatelessWidget {
+/// Settings (top bar gear), in two tabs:
+/// - General: check-in/out times, time zone, airports and the trip alert
+///   lead time, in one form with one Save. Unset values show "Not set";
+///   nothing is pre-filled.
+/// - Staff: the roster that feeds every owner picker ([StaffTab]).
+class SettingsWorkspace extends StatefulWidget {
   const SettingsWorkspace({
     super.key,
     required this.settings,
     required this.timeZones,
     required this.isEs,
+    this.staff,
+    this.onStaffChanged,
+    this.queries,
   });
 
   final ResortSettingsController settings;
   final TimeZoneCatalog timeZones;
   final bool isEs;
 
+  /// The staff roster; `null` shows one error line in the Staff tab.
+  final StaffRosterRepository? staff;
+
+  /// Runs after a roster change (reload the owner pickers).
+  final VoidCallback? onStaffChanged;
+  final ListQueryStore? queries;
+
+  @override
+  State<SettingsWorkspace> createState() => _SettingsWorkspaceState();
+}
+
+class _SettingsWorkspaceState extends State<SettingsWorkspace>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this)
+    ..addListener(_onTab);
+
+  void _onTab() {
+    if (!_tabs.indexIsChanging) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = StaffStrings(widget.isEs);
+    return Container(
+      key: const Key('workspace-admin-settings'),
+      color: KachavaTokens.background,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TabBar(
+            controller: _tabs,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelColor: KachavaTokens.text,
+            unselectedLabelColor: KachavaTokens.textSecondary,
+            indicatorColor: KachavaTokens.primary,
+            dividerColor: KachavaTokens.border,
+            tabs: [
+              Tab(key: const Key('settings-tab-general'), text: s.general),
+              Tab(key: const Key('settings-tab-staff'), text: s.staff),
+            ],
+          ),
+          Expanded(child: _tabs.index == 0 ? _general() : _staff(s)),
+        ],
+      ),
+    );
+  }
+
+  Widget _staff(StaffStrings s) {
+    final roster = widget.staff;
+    if (roster == null) {
+      return Align(
+        alignment: Alignment.topLeft,
+        child: AdminStateLine(
+            key: const Key('staff-not-connected'),
+            message: s.notConnected,
+            isError: true),
+      );
+    }
+    return StaffTab(
+      repository: roster,
+      onChanged: widget.onStaffChanged ?? () {},
+      queries: widget.queries,
+      isEs: widget.isEs,
+    );
+  }
+
+  Widget _general() {
+    final settings = widget.settings;
+    final isEs = widget.isEs;
     return ListenableBuilder(
       listenable: settings,
       builder: (context, _) => Container(
-        key: const Key('workspace-admin-settings'),
         alignment: Alignment.topLeft,
         child: switch (settings.status) {
           ResortSettingsStatus.loading =>
@@ -46,7 +128,7 @@ class SettingsWorkspace extends StatelessWidget {
               key: ObjectKey(settings.settings),
               initial: settings.settings!,
               controller: settings,
-              zones: timeZones.zones(),
+              zones: widget.timeZones.zones(),
               isEs: isEs,
             ),
         },

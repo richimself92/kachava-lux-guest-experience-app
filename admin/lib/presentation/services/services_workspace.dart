@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../application/list_query_store.dart';
+import '../../core/request_strings.dart';
 import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_service.dart';
+import '../../domain/service_request.dart';
 import '../../domain/staff_member.dart';
 import '../components/components.dart';
+import 'request_queue_tab.dart';
 import 'service_catalog_scope.dart';
 import 'services_catalog_list.dart';
 
@@ -43,19 +46,23 @@ class ServicesWorkspace extends StatelessWidget {
 }
 
 /// HOSPITALITY › Experiences / Dining / Wellness: the same catalog filtered
-/// by [section], plus a "Requests" tab (the request queues come later).
+/// by [section], plus the section's "Requests" queue.
 class ServiceSectionWorkspace extends StatelessWidget {
   const ServiceSectionWorkspace({
     super.key,
     required this.section,
     this.queryStore,
     this.staff = const [],
+    this.today,
     this.isEs = false,
   });
 
   final ServiceSection section;
   final ListQueryStore? queryStore;
   final List<StaffMember> staff;
+
+  /// Resort day for the queue's date presets (`null` without a zone).
+  final String? today;
   final bool isEs;
 
   @override
@@ -74,7 +81,14 @@ class ServiceSectionWorkspace extends StatelessWidget {
           unselectedLabelColor: KachavaTokens.textSecondary,
           indicatorColor: KachavaTokens.text,
           dividerColor: KachavaTokens.border,
-          tabs: [Tab(text: s.catalog), Tab(text: s.requests)],
+          tabs: [
+            Tab(
+                key: Key('section-tab-catalog-${section.wire.toLowerCase()}'),
+                text: s.catalog),
+            Tab(
+                key: Key('section-tab-requests-${section.wire.toLowerCase()}'),
+                text: s.requests),
+          ],
         ),
         Expanded(
           child: TabBarView(children: [
@@ -89,17 +103,28 @@ class ServiceSectionWorkspace extends StatelessWidget {
                 staff: staff,
                 isEs: isEs,
               ),
-            Align(
-              alignment: Alignment.topLeft,
-              child: AdminStateLine(
-                  key: Key('requests-${section.wire.toLowerCase()}-empty'),
-                  message: s.requestsSoon),
-            ),
+            _requests(deps?.requests),
           ]),
         ),
       ]),
     );
   }
+
+  Widget _requests(ServiceRequestRepository? repository) => repository == null
+      ? Align(
+          alignment: Alignment.topLeft,
+          child: AdminStateLine(
+              key: Key('requests-${section.wire.toLowerCase()}-not-connected'),
+              message: RequestStrings(isEs).notConnected,
+              isError: true),
+        )
+      : RequestQueueTab(
+          section: section,
+          repository: repository,
+          queries: queryStore,
+          today: today,
+          isEs: isEs,
+        );
 }
 
 class _NotConnected extends StatelessWidget {

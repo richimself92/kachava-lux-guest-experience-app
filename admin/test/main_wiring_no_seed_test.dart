@@ -82,6 +82,8 @@ void main() {
       'HttpNotificationRepository(api)',
       'HttpConversationRepository(api)',
       'HttpStaffDirectoryRepository(api)',
+      'HttpStaffRosterRepository(api)',
+      'HttpServiceRequestRepository(api)',
     ]) {
       expect(main, contains(repo));
     }

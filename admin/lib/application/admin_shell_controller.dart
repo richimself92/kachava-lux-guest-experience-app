@@ -20,9 +20,15 @@ class AdminOpenRequest {
 /// roster and cross-screen "open this record" requests. Holds no business
 /// data: every screen reads its own server-paged list.
 class AdminShellController extends ChangeNotifier {
-  AdminShellController({StaffDirectoryRepository? staff}) : _staff = staff;
+  AdminShellController(
+      {StaffDirectoryRepository? staff, StaffRosterRepository? roster})
+      : _staff = staff,
+        staffRoster = roster;
 
   final StaffDirectoryRepository? _staff;
+
+  /// Settings › Staff; `null` shows one error line there.
+  final StaffRosterRepository? staffRoster;
   AdminLocale _locale = AdminLocale.en;
   AdminWorkspaceTab _activeTab = AdminWorkspaceTab.adminOverview;
   List<StaffMember> _staffDirectory = const [];
@@ -37,6 +43,7 @@ class AdminShellController extends ChangeNotifier {
   AdminWorkspaceTab get activeTab => _activeTab;
   List<StaffMember> get staffDirectory => _staffDirectory;
 
+  /// Active staff for the owner pickers; reloaded after roster changes.
   /// Best effort: without it owner pickers offer no names.
   Future<void> loadStaff() async {
     final staff = _staff;

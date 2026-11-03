@@ -25,8 +25,6 @@ import {
 import {
   ALERT_REPOSITORY_PORT,
   AlertRepositoryPort,
-  STAFF_REPOSITORY_PORT,
-  StaffRepositoryPort,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
   VILLA_REPOSITORY_PORT,
@@ -38,7 +36,6 @@ import {
   AlertListQueryDto,
   AssignTransferDto,
   CreateReservationDto,
-  StaffListQueryDto,
   UpdateStayWifiDto,
 } from './dto/admin.dto';
 
@@ -46,17 +43,12 @@ const ALERT_LIST_SPEC = {
   sortable: ['createdAt', 'severity'],
   defaultSort: { field: 'createdAt', direction: 'desc' as const },
 };
-const STAFF_LIST_SPEC = {
-  sortable: ['fullName', 'department'],
-  defaultSort: { field: 'fullName', direction: 'asc' as const },
-};
 
 @Injectable()
 export class AdminService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT) private readonly stayRepo: StayRepositoryPort,
     @Inject(ALERT_REPOSITORY_PORT) private readonly alertRepo: AlertRepositoryPort,
-    @Inject(STAFF_REPOSITORY_PORT) private readonly staffRepo: StaffRepositoryPort,
     @Inject(VILLA_REPOSITORY_PORT) private readonly villaRepo: VillaRepositoryPort,
     private readonly securityTokenService: SecurityTokenService,
   ) {}
@@ -159,15 +151,6 @@ export class AdminService {
       status: dto.status || existing.flightTransfer.status,
       adminDispatchNotes: dto.adminDispatchNotes ?? existing.flightTransfer.adminDispatchNotes,
       notifiedAt: new Date().toISOString(),
-    });
-  }
-
-  async listStaff(dto: StaffListQueryDto): Promise<PaginatedResult<StaffMember>> {
-    const query = toListQuery(dto, STAFF_LIST_SPEC);
-    const staff = await this.staffRepo.listStaff(dto.department);
-    return paginateInMemory(staff, query, {
-      searchText: (s) => `${s.fullName} ${s.email} ${s.role}`,
-      sortValue: (s, field) => (field === 'department' ? s.department : s.fullName),
     });
   }
 

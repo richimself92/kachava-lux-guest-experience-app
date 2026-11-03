@@ -45,7 +45,10 @@ abstract final class StatusVocabulary {
     'ACTIVE': StatusTerm('Active', 'Activo', StatusTone.success),
     'DISABLED': StatusTerm('Disabled', 'Desactivado', StatusTone.neutral),
     'INACTIVE': StatusTerm('Disabled', 'Desactivado', StatusTone.neutral),
-    // Requests, trips and tasks.
+    // Requests, trips and tasks (section queues use the guest's words).
+    'RECEIVED': StatusTerm('Received', 'Recibida', StatusTone.info),
+    'PREPARING': StatusTerm('Preparing', 'En preparación', StatusTone.info),
+    'DONE': StatusTerm('Done', 'Lista', StatusTone.success),
     'REQUESTED': StatusTerm('Requested', 'Solicitado', StatusTone.info),
     'PENDING': StatusTerm('Pending', 'Pendiente', StatusTone.info),
     'ASSIGNED': StatusTerm('Assigned', 'Asignado', StatusTone.neutral),

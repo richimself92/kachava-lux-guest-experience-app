@@ -28,7 +28,8 @@
 /// | `GET/POST /services/:id/items`, `PATCH /services/:id/items/:itemId` | `id, name{en,es}, description{en,es}, category, image{...}, priceUSD, tags[], dietaryTags[], allergens[], origin, unit, storage, capacity{passengers, luggage}, order, status (ACTIVE/DISABLED)`, audit |
 /// | `POST /uploads/sign` | request `{fileName?, folder, contentType (image/jpeg, image/png, image/webp), sizeBytes (<= 5 MB)}`; response `{uploadUrl, method, headers, storagePath, publicUrl, expiresAt, maxBytes}`; then send the bytes to `uploadUrl` with the returned `method` (PUT on Cloud Storage, POST on the emulator) and `headers` |
 /// | `GET /sync` | `{stays, alerts {alerts, unreadCount}, bookings, larderOrders, conciergeRequests, midstayFeedback}` (polled every 5 s) |
-/// | `GET /staff` | paged staff roster (read once) |
+/// | `GET/POST /staff`, `GET/PATCH /staff/:id` | `id, staffId, fullName, shortName, role (job title), rbacRole (HOST_ADMIN/CONCIERGE_STAFF/DEPARTMENT_COORDINATOR), department, email (unique, 409), phone, isActive`. Filters `isActive`, `rbacRole`, `department`; sort `fullName`, `department`, `rbacRole`, `email`. Owner pickers read `isActive=true`. |
+/// | `GET /requests?section=`, `POST /requests/:id/transition` | `id, kind (BOOKING/ORDER), guestName, villaName, serviceName{en,es}, section, at (resort YYYY-MM-DDTHH:mm), quantity, status (RECEIVED/CONFIRMED/PREPARING/DONE/CANCELLED), lines[{name, quantity}], totalUSD, cancellationReason`. Filters `status` (or OPEN), `from`/`to` days; sort `at`. Transition `{action: CONFIRM/START/COMPLETE/CANCEL, reason (CANCEL)}`, 422 when not allowed. |
 /// | `GET /stays` (paged) | existing stay wire shape (`stayId`, `guestName`, `villaId`, `checkIn`, `checkOut`, `status`, ...) |
 ///
 /// Removed (never call): `/catalog/*` (legacy experiences/larder catalog)

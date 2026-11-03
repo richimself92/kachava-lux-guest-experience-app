@@ -1,3 +1,6 @@
+import 'list_query.dart';
+import 'paged_result.dart';
+
 /// Role-Based Access Control (RBAC) roles enforced by AdminAuthGuard & RolesGuard.
 enum StaffRole {
   hostAdmin('HOST_ADMIN'),
@@ -45,9 +48,36 @@ class StaffMember {
   final String email;
   final String phone;
   final bool isActive;
+
+  /// Editable fields of `POST/PATCH /admin/staff` (`isActive` via PATCH).
+  Map<String, dynamic> toWriteJson() => {
+        'fullName': fullName,
+        'rbacRole': rbacRole.apiValue,
+        'department': department.apiValue,
+        'email': email,
+        'phone': phone,
+        'role': role,
+      };
 }
 
-/// The staff roster (`GET /admin/staff`).
+/// Active staff for the owner pickers (`GET /admin/staff?isActive=true`).
 abstract interface class StaffDirectoryRepository {
   Future<List<StaffMember>> list();
+}
+
+/// The whole roster, managed in Settings › Staff (`/admin/staff`). Filters
+/// `isActive`, `rbacRole`, `department`; sort `fullName`, `department`,
+/// `rbacRole`, `email`.
+abstract interface class StaffRosterRepository {
+  Future<PagedResult<StaffMember>> page(ListQuery query);
+  Future<StaffMember> create(StaffMember member);
+  Future<StaffMember> update(StaffMember member);
+
+  /// Deactivates (`false`) or reactivates; sends only `isActive`.
+  Future<StaffMember> setActive(String staffId, bool isActive);
+}
+
+/// Another staff member already uses the email (HTTP 409).
+class StaffEmailTakenException implements Exception {
+  const StaffEmailTakenException();
 }

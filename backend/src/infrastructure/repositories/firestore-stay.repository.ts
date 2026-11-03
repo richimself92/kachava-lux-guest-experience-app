@@ -16,6 +16,7 @@ import {
   StayNotFoundError,
 } from './aggregate-stay.repository';
 import { toFirestoreDocument } from './firestore-document.mapper';
+import { ServiceRequestIndexWriter, TimeZoneSource } from './firestore-service-request.repository';
 
 export const STAYS_COLLECTION = 'stays';
 /** Derived, storage-only field used for `array-contains` guest-name search. */
@@ -38,11 +39,16 @@ const DERIVED_FIELDS = [GUEST_SEARCH_FIELD, CHILD_REFS_FIELD, CONVERSATION_FIELD
  * that rewrites only the affected stay document, and storage errors propagate to the caller.
  */
 export class FirestoreStayRepository extends AggregateStayRepository {
+  private readonly requestIndex: ServiceRequestIndexWriter;
+
+  /** `timeZoneOf` gives the resort zone the request queue uses for order times. */
   constructor(
     private readonly db: Firestore,
     private readonly scanLimit = STAY_SCAN_LIMIT,
+    timeZoneOf: TimeZoneSource = async () => null,
   ) {
     super();
+    this.requestIndex = new ServiceRequestIndexWriter(db, timeZoneOf);
   }
 
   protected async findStayByToken(normalizedToken: string): Promise<StayAggregate | null> {
@@ -147,7 +153,9 @@ export class FirestoreStayRepository extends AggregateStayRepository {
     return this.db.runTransaction(async (tx) => {
       const ref = this.stays().doc(stay.stayId);
       if ((await tx.get(ref)).exists) throw new EntityConflictError(`Stay ${stay.stayId} already exists.`);
+      const writeRequests = await this.requestIndex.prepare(null, stay);
       tx.set(ref, toStayDocument(stay));
+      writeRequests(tx);
       if (alert) tx.set(this.db.collection(ALERTS_COLLECTION).doc(alert.alertId), toFirestoreDocument(alert));
     });
   }
@@ -169,8 +177,11 @@ export class FirestoreStayRepository extends AggregateStayRepository {
       const snapshot = await tx.get(ref);
       if (!snapshot.exists) throw new StayNotFoundError(stayId);
       const draft = toStayAggregate(snapshot.id, snapshot.data());
+      const before = structuredClone(draft);
       const result = mutator(draft);
+      const writeRequests = await this.requestIndex.prepare(before, draft);
       tx.set(ref, toStayDocument(draft));
+      writeRequests(tx);
       const alert = alertOf?.(result);
       if (alert) {
         tx.set(this.db.collection(ALERTS_COLLECTION).doc(alert.alertId), toFirestoreDocument(alert));

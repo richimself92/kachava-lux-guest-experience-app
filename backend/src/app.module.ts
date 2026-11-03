@@ -52,6 +52,10 @@ import { TaskAutomation } from './modules/tasks/task-automation.service';
 import { TasksController } from './modules/tasks/tasks.controller';
 import { TasksService } from './modules/tasks/tasks.service';
 import { VillasService } from './modules/villas/villas.service';
+import { RequestsController } from './modules/requests/requests.controller';
+import { RequestsService } from './modules/requests/requests.service';
+import { StaffController } from './modules/staff/staff.controller';
+import { StaffService } from './modules/staff/staff.service';
 
 @Module({
   imports: [
@@ -75,6 +79,8 @@ import { VillasService } from './modules/villas/villas.service';
     TasksController,
     NotificationsController,
     ConversationsController,
+    RequestsController,
+    StaffController,
   ],
   providers: [
     SecurityTokenService,
@@ -104,6 +110,8 @@ import { VillasService } from './modules/villas/villas.service';
     TaskAutomation,
     NotificationsService,
     ConversationsService,
+    RequestsService,
+    StaffService,
     { provide: CLOCK_PORT, useClass: SystemClock },
     GuestTokenGuard,
     StepUpVerifiedGuard,

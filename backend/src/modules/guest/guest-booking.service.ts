@@ -157,6 +157,8 @@ export class GuestBookingService {
         villaName: stay.villaName,
         guestNames: stay.guestProfile.name,
         serviceId: service.serviceId,
+        section: service.section,
+        serviceName: structuredClone(service.name),
         catalogItemId: line.itemId ?? '',
         name: line.name.en,
         itemName: line.name,

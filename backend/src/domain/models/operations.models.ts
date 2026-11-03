@@ -35,6 +35,11 @@ export interface LarderOrderItem {
   assignedAt: string | null;
   /** When the guest first ordered from this service (absent on older lines). */
   createdAt?: string;
+  /** Catalog section and name of the ordered service (snapshot; absent on older lines). */
+  section?: ServiceSection;
+  serviceName?: LocalizedText;
+  /** Why staff cancelled the order (request queue). */
+  cancellationReason?: string;
   updatedAt: string;
 }
 

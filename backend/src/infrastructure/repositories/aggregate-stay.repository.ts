@@ -35,6 +35,7 @@ import { MAX_STAY_DOCUMENT_BYTES } from '../../domain/stay-limits';
 import * as guestRules from '../../domain/stays/guest-request-rules';
 import { BookingChange, JourneyMarks } from '../../domain/stays/guest-request-rules';
 import * as mutations from './stay-mutations';
+import { applyRequestTransition, RequestMove, RequestRef } from '../../domain/requests/request-transitions';
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -192,6 +193,10 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
 
   async listBookingsForStay(stayId: string): Promise<ExperienceBooking[]> {
     return (await this.requireStay(stayId)).experienceBookings;
+  }
+
+  async transitionServiceRequest(stayId: string, ref: RequestRef, move: RequestMove): Promise<void> {
+    await this.mutateStay(stayId, (s) => applyRequestTransition(s, ref, move));
   }
 
   async listBookingsAcrossStays(filter?: BookingFilterCriteria): Promise<ExperienceBooking[]> {

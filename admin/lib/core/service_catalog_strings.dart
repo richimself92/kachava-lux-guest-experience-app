@@ -15,8 +15,6 @@ class ServiceCatalogStrings {
   String get noServices => t('No services yet', 'Aún no hay servicios');
   String get catalog => t('Catalog', 'Catálogo');
   String get requests => t('Requests', 'Solicitudes');
-  String get requestsSoon =>
-      t('Request queue coming soon', 'Cola de solicitudes próximamente');
   String get notConfigured =>
       t('Catalog not connected', 'Catálogo sin conexión');
   String get servicesInfo => t('One catalog; sections are filtered views.',

@@ -24,6 +24,9 @@ import { CatalogItem, CatalogService } from '../catalog/catalog.models';
 import { ResortSettings, TransportProvider, Villa } from '../models/resort-config.models';
 import { Trip, TripStatus } from '../trips/trip.models';
 import { Task, TaskPriority, TaskStatus } from '../tasks/task.models';
+import { ServiceSection } from '../catalog/catalog.models';
+import { RequestStatusFilter, ServiceRequestEntry } from '../requests/service-requests';
+import { RequestMove, RequestRef } from '../requests/request-transitions';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
 export const VILLA_REPOSITORY_PORT = Symbol('VILLA_REPOSITORY_PORT');
@@ -38,6 +41,8 @@ export const STORAGE_SIGNER_PORT = Symbol('STORAGE_SIGNER_PORT');
 export const TRIP_REPOSITORY_PORT = Symbol('TRIP_REPOSITORY_PORT');
 export const TASK_REPOSITORY_PORT = Symbol('TASK_REPOSITORY_PORT');
 export const NOTIFICATION_READ_REPOSITORY_PORT = Symbol('NOTIFICATION_READ_REPOSITORY_PORT');
+export const SERVICE_REQUEST_REPOSITORY_PORT = Symbol('SERVICE_REQUEST_REPOSITORY_PORT');
+export const STAFF_ROSTER_REPOSITORY_PORT = Symbol('STAFF_ROSTER_REPOSITORY_PORT');
 
 /** Calendar fields a stays page can be ordered and ranged by. */
 export type StayDateField = 'checkInDate' | 'checkOutDate';
@@ -86,6 +91,27 @@ export type VillaRepositoryPort = EntityRepositoryPort<Villa>;
 export type TransportProviderRepositoryPort = EntityRepositoryPort<TransportProvider>;
 export type ServiceRepositoryPort = EntityRepositoryPort<CatalogService>;
 export type ServiceItemRepositoryPort = EntityRepositoryPort<CatalogItem>;
+/** The whole staff roster, active and inactive (`staff_members`), managed from Settings. */
+export type StaffRosterRepositoryPort = EntityRepositoryPort<StaffMember>;
+
+/** Section request queue page; `at` bounds are resort wall times (YYYY-MM-DD[THH:mm]). */
+export interface ServiceRequestPageQuery {
+  section?: ServiceSection;
+  status?: RequestStatusFilter;
+  fromAt?: string;
+  toAtExclusive?: string;
+  /** Normalised guest or service name prefix. */
+  q?: string;
+  page: number;
+  pageSize: number;
+  direction: SortDirection;
+}
+
+/** `service_requests`: the guest bookings and orders projected from the stays. */
+export interface ServiceRequestRepositoryPort {
+  page(query: ServiceRequestPageQuery): Promise<PaginatedResult<ServiceRequestEntry>>;
+  findById(requestId: string): Promise<ServiceRequestEntry | null>;
+}
 
 export interface SettingsRepositoryPort {
   get(): Promise<ResortSettings>;
@@ -217,6 +243,8 @@ export interface StayRepositoryPort {
     alertOf?: StayAlertFactory<ExperienceBooking>,
   ): Promise<ExperienceBooking>;
   listBookingsForStay(stayId: string): Promise<ExperienceBooking[]>;
+  /** Staff action on one booking or order of the stay (404 unknown, 422 not allowed). */
+  transitionServiceRequest(stayId: string, ref: RequestRef, move: RequestMove): Promise<void>;
   listBookingsAcrossStays(
     filter?: BookingFilterCriteria,
   ): Promise<ExperienceBooking[]>;

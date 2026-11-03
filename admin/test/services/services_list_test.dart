@@ -151,7 +151,9 @@ void main() {
 
       await tester.tap(find.text('Requests'));
       await tester.pumpAndSettle();
-      expect(find.text('Request queue coming soon'), findsOneWidget);
+      // Without a wired queue the tab says so in one line (never a stub).
+      expect(find.text('Requests not connected'), findsOneWidget);
+      expect(find.textContaining('soon'), findsNothing);
     });
 
     testWidgets('Dining: New service offers only dining kinds', (tester) async {

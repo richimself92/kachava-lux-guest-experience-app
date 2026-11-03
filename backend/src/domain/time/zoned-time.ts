@@ -112,3 +112,19 @@ export function zonedDayWindow(range: DayRange, timeZone: string | null): Instan
     ...(range.to ? { toIsoExclusive: startOf(nextDay(range.to)) } : {}),
   };
 }
+
+/** The resort wall time (YYYY-MM-DDTHH:mm) of `instant` in the configured zone. */
+export function resortWallTime(instant: Date, timeZone: string | null): string {
+  if (!timeZone) throw new SettingsRequiredError([TIME_ZONE_SETTING]);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`;
+}

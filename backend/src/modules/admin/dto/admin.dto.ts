@@ -158,10 +158,6 @@ export class AlertListQueryDto extends ListQueryDto {
   @IsOptional() @IsString() @MaxLength(SHORT_TEXT_MAX) assignedDepartment?: Department;
 }
 
-export class StaffListQueryDto extends ListQueryDto {
-  @IsOptional() @IsString() @MaxLength(SHORT_TEXT_MAX) department?: string;
-}
-
 export class UpdateStayWifiDto {
   @IsOptional()
   @IsString()
