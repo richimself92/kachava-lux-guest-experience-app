@@ -90,6 +90,108 @@ Ya hecho, con commit en `feature/kachava-command-center`:
 | 10 | **Verificación final:** E2E completo, teléfono real, estrés y cumplimiento; build de release | `qa-tester`, `e2e-blackbox-tester`, `challenger`, `flutter-reviewer`, `compliance-verifier`, `flutter-release-engineer` |
 | 11 | **Proteger el backend:** App Check + Auth anónimo en el admin. Diferida, pero recomendada antes del lanzamiento | `code-implementer` + `flutter-implementer` |
 
+## Detalle acordado por pantalla (todo lo decidido con el dueño)
+
+**Barra superior del admin**
+- Contiene: título de la pantalla, EN/ES, campana de alertas y engranaje de Ajustes.
+- Sin búsqueda ni filtros globales: cada pantalla tiene los suyos.
+- Sin botones de prueba (por ejemplo, "Test 10s").
+
+**Dashboard**
+- Encabezado: "Overview" y una píldora "Today" con la fecha del resort (zona horaria de Ajustes).
+- 6 KPIs, cada uno con su fórmula en un ⓘ:
+  - villas ocupadas = villas con estancia activa;
+  - disponibles = activas − ocupadas − fuera de servicio;
+  - % de ocupación = ocupadas / total activas;
+  - llegadas = check-in hoy;
+  - salidas = check-out hoy;
+  - solicitudes abiertas = pedidos, reservas, viajes y tareas sin completar.
+- Tabla "Actividad de hoy" de 3 columnas (Guest, Villa, Status), máximo 8 filas y "Ver todo" que lleva a Reservations.
+- Estados de la tabla:
+  - **Departure** si el check-out es hoy (prevalece si hoy también es el check-in);
+  - **Arrival** si el check-in es hoy (todo el día);
+  - **In-house** si ya hizo check-in;
+  - **In-house con aviso rojo** si sigue después de su fecha de salida;
+  - las estancias futuras, canceladas o cerradas no aparecen.
+- Chips de color con tokens semánticos de DESIGN.md: In-house verde, Arrival azul, Departure gris, vencido rojo.
+- Clic en una fila → detalle de la estancia.
+- Sin lista de alertas en el Dashboard: viven en Notifications y en la campana.
+
+**Reservations**
+- Tabla: Guest, Villa, Llegada, Salida, Estado, Resort Host.
+- Filtros: estado, villa y rango de fechas. Búsqueda por huésped.
+- Detalle lateral con pestañas:
+  - Resumen: link del huésped con botón copiar, Wi-Fi, Resort Host y notas internas.
+  - Preferencias y alergias.
+  - Traslados.
+  - Folio ("Resumen de estancia": servicios adquiridos, pedidos, reservas, calificación y cargos).
+- Origen de la reserva y pagos del PMS: "Sin integración PMS". Nunca se simulan.
+
+**Guests**
+- Perfil por estancia: idioma, preferencias, alergias, ocasión especial, historial de solicitudes, notas internas y chat con el Resort Host.
+
+**Villas**
+- Tabla: nombre, categoría, capacidad, estado operativo, limpieza, mantenimiento y huésped actual.
+- Crear, editar y desactivar desde el detalle lateral.
+
+**Services / Experiences / Dining / Wellness**
+- Tabla del catálogo: portada, nombre, sección, tipo de uso, precio, anticipación y estado.
+- Formulario por pestañas: General · Imágenes · Precio y disponibilidad · Ítems/Opciones · Formulario del huésped · Operación.
+- Cada vista por sección lleva debajo la cola de solicitudes de esa sección, en tabla.
+
+**Transportation**
+- Tabla de viajes de hoy y mañana: hora, huésped, villa, tipo, vuelo, proveedor, chofer y estado.
+- Pestañas: Viajes · Servicios de transporte · Proveedores.
+
+**Tasks**
+- Campos: villa, huésped, categoría, responsable, prioridad, fecha límite, estado (Pending → Assigned → In Progress → Completed) y confirmación de cumplimiento.
+- Las preferencias, pedidos y viajes generan tareas.
+- La condición de "vencida" se calcula al leer la lista.
+
+**Notifications**
+- Niveles: Info, Acción pendiente y Urgente.
+- Sonido solo en las urgentes.
+- Botón "Abrir registro" que lleva al origen.
+- Eventos: nueva reserva, llegada, solicitud, cambio de vuelo o itinerario, tarea vencida, incidencia, mensaje del huésped y viaje sin confirmar.
+
+**Terminología**
+- "Resort Host" (nunca "Concierge") en el admin y en el portal. Solo cambia el texto visible; los identificadores del código se mantienen.
+
+**Portal del huésped** (conserva su estilo de marca; tipografía mínima de 14 px; sin jerga)
+- Acceso:
+  - Link `?guestId` que se guarda en el teléfono; ya hecho en la fase B.
+  - Si el link expiró: "Tu enlace expiró, pide uno nuevo a tu Resort Host".
+  - Instalación: en Android, botón "Instalar app"; en iPhone, guía "Compartir → Agregar a pantalla de inicio".
+- 4 pestañas:
+  - **Inicio:** fechas, villa y tarjetas de "Lo próximo" según el momento de la estancia (registrar vuelo, preferencias, Wi-Fi, encuesta de mitad de estancia, salida).
+  - **Servicios:** secciones armadas solo con el catálogo activo, con tarjetas de foto, nombre, línea corta, precio o "Incluido" y anticipación. Cada servicio se abre en una hoja con el formulario según su tipo: pedir, reservar, elegir o viaje.
+  - **Mis solicitudes:** una sola lista con estados en lenguaje simple: Recibida → Confirmada → En preparación / En camino → Lista. Se puede cancelar o cambiar mientras esté en "Recibida".
+  - **Resort Host:** chat y adjuntar una foto real.
+- Se elimina:
+  - el drawer "todas las pantallas" y los títulos numerados;
+  - las pantallas yate, Included y Philosophy;
+  - el teléfono hardcodeado;
+  - el badge siempre encendido.
+- Idioma: se detecta del navegador y se recuerda.
+- Estados de carga, error y vacío en todas las pantallas.
+- El mensaje de éxito solo aparece cuando el servidor confirma.
+
+**Fase 11 — Proteger el backend** (diferida; recomendada antes del lanzamiento real)
+- Firebase App Check con reCAPTCHA Enterprise, invisible, en el admin y en el portal. El backend rechaza las llamadas sin token válido. En local se usa un debug token.
+- Auth anónimo de Firebase solo en el admin, en lugar de la identidad por entorno. Usa el verificador de ID token que ya existe.
+- Registrar App Check en `kavacha-app` requiere la aprobación del dueño.
+
+**Entorno local**
+- Backend de Kachava en el puerto 3011, porque el 3001 lo usa otro proyecto del dueño.
+- Admin en 3002 y portal en 3000.
+- Emulador de Firestore y Storage con datos persistentes en `.local-data/`.
+
+**Pendiente del cliente** (no bloquea el desarrollo)
+- Textos, precios y fotos de los servicios.
+- Nombres de las villas.
+- Aprobación del español.
+- Prueba en un teléfono real.
+
 ## Verificación por fase
 - `cd backend && npm run typecheck && npm test`
 - `cd admin && dart analyze && flutter test`
