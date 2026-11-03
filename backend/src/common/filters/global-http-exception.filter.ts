@@ -36,6 +36,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       statusCode: classified.status,
       error: classified.error,
       message: classified.message,
+      ...(classified.code ? { code: classified.code, details: classified.details ?? [] } : {}),
       timestamp,
       path: request.url,
       meta: { timestamp, requestId: `req_${crypto.randomBytes(4).toString('hex')}` },

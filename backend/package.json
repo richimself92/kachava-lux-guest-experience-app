@@ -13,7 +13,8 @@
     "test": "jest --runInBand",
     "test:unit": "jest --testPathPattern=test/unit --runInBand",
     "test:e2e": "jest --testPathPattern=test/e2e --runInBand",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:flight-transfers": "ts-node src/scripts/migrate-flight-transfers.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

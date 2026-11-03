@@ -22,7 +22,7 @@ const GRPC_INVALID_ARGUMENT = 3;
 
 /**
  * In-memory Firestore double for unit tests. Supports the subset of the Admin SDK used by the
- * repositories (doc get/set/create/delete, where with ==/range/in/array-contains, orderBy,
+ * repositories (doc get/set/create/delete, where with ==/range/in/array-contains on top-level or dotted map fields, orderBy,
  * offset, limit, count(), transactions, recursiveDelete) and lets tests inject read/write failures. Never touches the network.
  *
  * Transactions are optimistic: every document read through `tx.get` is version-checked at
@@ -202,7 +202,7 @@ class FakeCollectionRef {
   private matchingEntries(): Array<[string, DocumentData]> {
     return Array.from(this.db.store(this.id).entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .filter(([, data]) => this.state.filters.every((f) => matchesFilter(data[f.field], f.op, f.value)));
+      .filter(([, data]) => this.state.filters.every((f) => matchesFilter(fieldValue(data, f.field), f.op, f.value)));
   }
 
   private sorted(entries: Array<[string, DocumentData]>): Array<[string, DocumentData]> {
@@ -211,8 +211,8 @@ class FakeCollectionRef {
     const sign = order.direction === 'desc' ? -1 : 1;
     // Like Firestore, documents missing the order-by field are excluded from the result.
     return entries
-      .filter(([, data]) => data[order.field] !== undefined)
-      .sort(([, a], [, b]) => sign * compareFieldValues(a[order.field], b[order.field]));
+      .filter(([, data]) => fieldValue(data, order.field) !== undefined)
+      .sort(([, a], [, b]) => sign * compareFieldValues(fieldValue(a, order.field), fieldValue(b, order.field)));
   }
 }
 
@@ -277,6 +277,14 @@ class FakeDocumentSnapshot {
   data(): DocumentData | undefined {
     return this.payload ? structuredClone(this.payload) : undefined;
   }
+}
+
+/** Resolves a dotted field path (`flight.scheduledAt`) like Firestore does for map fields. */
+function fieldValue(data: DocumentData, path: string): unknown {
+  return path.split('.').reduce<unknown>(
+    (value, key) => (value !== null && typeof value === 'object' ? (value as DocumentData)[key] : undefined),
+    data,
+  );
 }
 
 function compareFieldValues(a: unknown, b: unknown): number {

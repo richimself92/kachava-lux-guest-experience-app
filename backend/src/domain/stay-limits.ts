@@ -7,4 +7,6 @@ export const MAX_BOOKINGS_PER_STAY = 100;
 export const MAX_CONCIERGE_REQUESTS_PER_STAY = 100;
 export const MAX_MESSAGES_PER_REQUEST = 100;
 export const MAX_MIDSTAY_FEEDBACK_PER_STAY = 30;
+/** Trips live in their own collection; the cap only bounds guest self-service requests. */
+export const MAX_GUEST_TRIPS_PER_STAY = 50;
 export const MAX_STAY_DOCUMENT_BYTES = 900 * 1024;

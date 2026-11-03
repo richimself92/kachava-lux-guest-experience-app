@@ -12,8 +12,10 @@ import {
   STAY_REPOSITORY_PORT,
   STORAGE_SIGNER_PORT,
   TRANSPORT_PROVIDER_REPOSITORY_PORT,
+  TRIP_REPOSITORY_PORT,
   VILLA_REPOSITORY_PORT,
 } from '../../src/domain/ports/repository.ports';
+import { CLOCK_PORT } from '../../src/domain/ports/clock.port';
 import { FIRESTORE_DB, OBJECT_URL_SIGNER } from '../../src/infrastructure/firebase/firebase-admin.module';
 
 const SRC_ROOT = path.resolve(__dirname, '../../src');
@@ -21,6 +23,7 @@ const RUNTIME_TOKENS = {
   STAY_REPOSITORY_PORT, ALERT_REPOSITORY_PORT, STAFF_REPOSITORY_PORT, SETTINGS_REPOSITORY_PORT,
   VILLA_REPOSITORY_PORT, TRANSPORT_PROVIDER_REPOSITORY_PORT, SERVICE_REPOSITORY_PORT,
   SERVICE_ITEM_REPOSITORY_PORT, STORAGE_SIGNER_PORT, CATALOG_IMAGE_STORAGE_PORT, OBJECT_URL_SIGNER,
+  TRIP_REPOSITORY_PORT, CLOCK_PORT,
 };
 const FORBIDDEN_RUNTIME_NAME = /in-?memory|seed|fake|demo|mock/i;
 
@@ -64,6 +67,8 @@ describe('Runtime module graph has no in-memory, seed or demo providers', () => 
       SERVICE_REPOSITORY_PORT: 'FirestoreEntityRepository',
       SETTINGS_REPOSITORY_PORT: 'FirestoreSettingsRepository',
       STAFF_REPOSITORY_PORT: 'FirestoreStaffRepository',
+      TRIP_REPOSITORY_PORT: 'FirestoreTripRepository',
+      CLOCK_PORT: 'SystemClock',
       OBJECT_URL_SIGNER: 'EmulatorObjectUrlSigner',
     });
   });

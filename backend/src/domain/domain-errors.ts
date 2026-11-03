@@ -20,9 +20,21 @@ export class BusinessRuleError extends Error {
   constructor(
     message: string,
     readonly details: string[] = [],
+    /** Stable machine-readable reason clients can branch on (e.g. link to Settings). */
+    readonly code?: string,
   ) {
     super(details.length > 0 ? `${message}: ${details.join('; ')}` : message);
     this.name = 'BusinessRuleError';
+  }
+}
+
+export const SETTINGS_REQUIRED = 'SETTINGS_REQUIRED';
+
+/** The request needs resort settings that are not configured yet (`missing` names them). */
+export class SettingsRequiredError extends BusinessRuleError {
+  constructor(missing: string[]) {
+    super('Resort settings are incomplete', missing, SETTINGS_REQUIRED);
+    this.name = 'SettingsRequiredError';
   }
 }
 

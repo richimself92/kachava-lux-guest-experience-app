@@ -1,6 +1,7 @@
 import { ArgumentsHost, BadRequestException, Logger } from '@nestjs/common';
 import { GlobalHttpExceptionFilter } from '../../src/common/filters/global-http-exception.filter';
 import { RetryAfterHttpException } from '../../src/common/filters/retry-after-http.exception';
+import { SettingsRequiredError } from '../../src/domain/domain-errors';
 import {
   StayDocumentTooLargeError,
   StayLimitExceededError,
@@ -10,7 +11,7 @@ import {
 interface CapturedResponse {
   status: number;
   headers: Record<string, string>;
-  body: { statusCode: number; message: string; error: string };
+  body: { statusCode: number; message: string; error: string; code?: string; details?: string[] };
 }
 
 function runFilter(exception: unknown): CapturedResponse {
@@ -114,5 +115,12 @@ describe('GlobalHttpExceptionFilter', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('title must be shorter');
     expect(logSpy).not.toHaveBeenCalled();
+  });
+
+  it('test_filter_settingsRequired_returns422WithCodeAndDetails', () => {
+    const res = runFilter(new SettingsRequiredError(['transportAlertLeadHours']));
+
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({ code: 'SETTINGS_REQUIRED', details: ['transportAlertLeadHours'] });
   });
 });

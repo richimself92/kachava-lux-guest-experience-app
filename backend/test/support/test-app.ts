@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { SecurityTokenService } from '../../src/common/services/security-token.service';
 import { RbacRole, StaffMember } from '../../src/domain/models/domain.models';
+import { CLOCK_PORT, ClockPort } from '../../src/domain/ports/clock.port';
 import {
   CATALOG_ITEMS_COLLECTION,
   CATALOG_SERVICES_COLLECTION,
@@ -58,20 +59,26 @@ export interface TestApp {
   close: () => Promise<void>;
 }
 
+export interface TestAppOptions {
+  /** Pins "now" for time-dependent rules; the system clock is used when omitted. */
+  clock?: ClockPort;
+}
+
 /**
  * Boots the real AppModule with exactly two external handles replaced by test-only fakes:
- * Firestore (FakeFirestore) and the object URL signer. Every repository is the production
- * Firestore adapter running over the fake.
+ * Firestore (FakeFirestore) and the object URL signer (plus, optionally, the clock). Every
+ * repository is the production Firestore adapter running over the fake.
  */
-export async function createTestApp(fake = new FakeFirestore()): Promise<TestApp> {
+export async function createTestApp(fake = new FakeFirestore(), options: TestAppOptions = {}): Promise<TestApp> {
   process.env.ADMIN_SERVICE_EMAIL = TEST_ADMIN_EMAIL;
   const signer = new FakeObjectUrlSigner();
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  let builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(FIRESTORE_DB)
     .useValue(fake.asFirestore())
     .overrideProvider(OBJECT_URL_SIGNER)
-    .useValue(signer)
-    .compile();
+    .useValue(signer);
+  if (options.clock) builder = builder.overrideProvider(CLOCK_PORT).useValue(options.clock);
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
   // Listen explicitly: supertest then reuses one bound server for every request in the test.

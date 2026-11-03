@@ -13,6 +13,7 @@ import {
   STAY_REPOSITORY_PORT,
   STORAGE_SIGNER_PORT,
   TRANSPORT_PROVIDER_REPOSITORY_PORT,
+  TRIP_REPOSITORY_PORT,
   VILLA_REPOSITORY_PORT,
 } from '../../domain/ports/repository.ports';
 import { FirestoreAlertRepository } from '../repositories/firestore-alert.repository';
@@ -20,6 +21,7 @@ import { FirestoreEntityRepository } from '../repositories/firestore-entity.repo
 import { FirestoreSettingsRepository } from '../repositories/firestore-settings.repository';
 import { FirestoreStaffRepository } from '../repositories/firestore-staff.repository';
 import { FirestoreStayRepository } from '../repositories/firestore-stay.repository';
+import { FirestoreTripRepository } from '../repositories/firestore-trip.repository';
 import { CatalogImageStorageAdapter } from '../storage/catalog-image-storage.adapter';
 import {
   EmulatorObjectUrlSigner,
@@ -80,6 +82,7 @@ const providers: Provider[] = [
   firestoreBacked(ALERT_REPOSITORY_PORT, (db) => new FirestoreAlertRepository(db)),
   firestoreBacked(STAFF_REPOSITORY_PORT, (db) => new FirestoreStaffRepository(db)),
   firestoreBacked(SETTINGS_REPOSITORY_PORT, (db) => new FirestoreSettingsRepository(db)),
+  firestoreBacked(TRIP_REPOSITORY_PORT, (db) => new FirestoreTripRepository(db)),
   firestoreBacked(VILLA_REPOSITORY_PORT, (db) => new FirestoreEntityRepository(db, VILLAS_COLLECTION, 'villaId', 'Villa')),
   firestoreBacked(
     TRANSPORT_PROVIDER_REPOSITORY_PORT,

@@ -157,6 +157,12 @@ export interface StayAggregate extends StayRecord {
   folioItems: FolioItem[];
 }
 
+/** The record an alert opens ("Open record"); absent on alerts about the stay itself. */
+export interface AlertTargetRef {
+  type: 'TRIP';
+  id: string;
+}
+
 export interface OperationalAlert {
   alertId: string;
   stayId: string;
@@ -173,6 +179,7 @@ export interface OperationalAlert {
   acknowledgedByStaffId: string | null;
   acknowledgedAt: string | null;
   createdAt: string;
+  targetRef?: AlertTargetRef;
 }
 
 export interface StaffMember {

@@ -18,6 +18,9 @@ export interface ClassifiedError {
   /** Safe for clients; 5xx always use a generic text (details are logged server-side only). */
   message: string;
   retryAfterSeconds?: number;
+  /** Stable reason code of a coded business rule (e.g. SETTINGS_REQUIRED) and its details. */
+  code?: string;
+  details?: string[];
 }
 
 const GRPC_INVALID_ARGUMENT = 3;
@@ -60,6 +63,15 @@ function classifyDomainError(exception: unknown): ClassifiedError | null {
   }
   if (exception instanceof EntityConflictError) {
     return { status: HttpStatus.CONFLICT, error: 'Conflict', message: exception.message };
+  }
+  if (exception instanceof BusinessRuleError && exception.code) {
+    return {
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+      error: 'UnprocessableEntity',
+      message: exception.message,
+      code: exception.code,
+      details: [...exception.details],
+    };
   }
   if (exception instanceof BusinessRuleError || exception instanceof ListScanLimitError) {
     return {

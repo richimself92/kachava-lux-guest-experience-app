@@ -9,7 +9,9 @@ import { buildThrottlerOptions } from './common/throttling/throttle-tracker';
 import { FirebaseIdTokenVerifier } from './common/services/firebase-id-token.verifier';
 import { SecurityTokenService } from './common/services/security-token.service';
 import { StepUpAttemptLimiter } from './common/services/step-up-attempt-limiter';
+import { CLOCK_PORT } from './domain/ports/clock.port';
 import { FirebaseInfrastructureModule } from './infrastructure/firebase/firebase-admin.module';
+import { SystemClock } from './infrastructure/time/system-clock';
 import { AdminFulfillmentService } from './modules/admin/admin-fulfillment.service';
 import { AdminSyncService } from './modules/admin/admin-sync.service';
 import { AdminController } from './modules/admin/admin.controller';
@@ -31,6 +33,10 @@ import { SettingsController } from './modules/settings/settings.controller';
 import { SettingsService } from './modules/settings/settings.service';
 import { TransportProvidersController } from './modules/transport/transport-providers.controller';
 import { TransportProvidersService } from './modules/transport/transport-providers.service';
+import { GuestTripsService } from './modules/trips/guest-trips.service';
+import { TripFactory } from './modules/trips/trip-factory.service';
+import { GuestTripsController, TripsAdminController } from './modules/trips/trips.controllers';
+import { TripsAdminService } from './modules/trips/trips-admin.service';
 import { VillasController } from './modules/villas/villas.controller';
 import { VillasService } from './modules/villas/villas.service';
 
@@ -48,6 +54,8 @@ import { VillasService } from './modules/villas/villas.service';
     TransportProvidersController,
     AdminServicesController,
     AdminUploadsController,
+    TripsAdminController,
+    GuestTripsController,
   ],
   providers: [
     SecurityTokenService,
@@ -66,6 +74,10 @@ import { VillasService } from './modules/villas/villas.service';
     CatalogAdminService,
     CatalogUploadsService,
     GuestCatalogService,
+    TripFactory,
+    TripsAdminService,
+    GuestTripsService,
+    { provide: CLOCK_PORT, useClass: SystemClock },
     GuestTokenGuard,
     StepUpVerifiedGuard,
     AdminAuthGuard,

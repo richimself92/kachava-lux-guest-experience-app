@@ -21,6 +21,7 @@ import { FolioSettlement, LarderCharge, SettledFolio } from '../folio-ledger';
 import { PaginatedResult, SortDirection } from '../../common/listing/list-query';
 import { CatalogItem, CatalogService } from '../catalog/catalog.models';
 import { ResortSettings, TransportProvider, Villa } from '../models/resort-config.models';
+import { Trip } from '../trips/trip.models';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
 export const VILLA_REPOSITORY_PORT = Symbol('VILLA_REPOSITORY_PORT');
@@ -32,6 +33,7 @@ export const CATALOG_IMAGE_STORAGE_PORT = Symbol('CATALOG_IMAGE_STORAGE_PORT');
 export const ALERT_REPOSITORY_PORT = Symbol('ALERT_REPOSITORY_PORT');
 export const STAFF_REPOSITORY_PORT = Symbol('STAFF_REPOSITORY_PORT');
 export const STORAGE_SIGNER_PORT = Symbol('STORAGE_SIGNER_PORT');
+export const TRIP_REPOSITORY_PORT = Symbol('TRIP_REPOSITORY_PORT');
 
 /** Stays page request: equality filters, arrival range (ISO dates) and guest-name search. */
 export interface StayPageQuery {
@@ -249,4 +251,34 @@ export interface StorageSignerPort {
     fileSizeBytes: number;
   }): Promise<SignedUrlResult>;
   generateSignedGetUrl(storagePath: string): Promise<SignedUrlResult>;
+}
+
+/** Trip instants that can bound a list: the pickup or the flight time. */
+export type TripDateField = 'pickupAt' | 'flight.scheduledAt';
+
+export interface TripWindowQuery {
+  field: TripDateField;
+  /** Inclusive lower bound (UTC ISO). */
+  fromIso?: string;
+  /** Exclusive upper bound (UTC ISO). */
+  toIsoExclusive?: string;
+}
+
+/** Builds the alert that commits with a trip update (null writes none). */
+export type TripAlertFactory = (updated: Trip, previous: Trip) => OperationalAlert | null;
+
+/**
+ * Top-level `trips` collection. Every list is a bounded read (ListScanLimitError beyond the
+ * limit); alerts passed to `create`/`update` commit in the same transaction as the trip.
+ */
+export interface TripRepositoryPort {
+  create(trip: Trip, alert?: OperationalAlert | null): Promise<Trip>;
+  findById(tripId: string): Promise<Trip | null>;
+  /** Read-modify-write in one transaction; throws EntityNotFoundError when absent. */
+  update(tripId: string, mutate: (current: Trip) => Trip, alertOf?: TripAlertFactory): Promise<Trip>;
+  /** Trips whose `field` lies in the window (every trip when no bound is given), ordered by it. */
+  listInWindow(query: TripWindowQuery): Promise<Trip[]>;
+  listForStay(stayId: string): Promise<Trip[]>;
+  /** REQUESTED / SENT_TO_PROVIDER trips with `pickupAt <= cutoffIso`, earliest pickup first. */
+  listUnconfirmedUntil(cutoffIso: string): Promise<Trip[]>;
 }
