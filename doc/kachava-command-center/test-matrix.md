@@ -1,37 +1,31 @@
-# Test Matrix - Kachava Command Center (Phase D)
-
-Phase D = admin design system, sectioned navigation, no-login silent auth. Tier 3.
+# Test Matrix: Command Center integration QA (phases 3-5)
 
 ## 1. Execution Summary
-- Runner Command: `cd admin && dart analyze && flutter test`; `cd e2e && E2E_API_BASE_URL=http://localhost:3011/api/v1 npx playwright test --config <headless temp config>`
-- Results: analyze 0 issues; flutter test 172 passed / 0 failed (after D5 review fixes; exit 0); Playwright 8 passed / 7 failed (see TC-13)
-- Exit Code: dart analyze 0; flutter test "All tests passed!" (exit code not captured by shell pipe); Playwright 1
-- Date: 2026-11-02
+- Runner Command: `cd e2e && npx playwright test --config <headless> <spec>` (backend :3011, admin :3002, emulators 8085/9199) + `explore.mjs` (1440/375).
+- Results: villas-settings 2/2; services 3/3; transportation 1/1; admin `dart analyze` clean; backend 40 suites / 537 tests passed; admin `flutter test` 371 passed.
+- Exit Code: 0 for all three specs (final runs), `npm run typecheck` 0, `npm test` 0, `dart analyze` 0, `flutter test` 0.
+- Date: 2026-11-03. Production code unchanged: every failure was an outdated spec.
 
-## 2. Test Case Matrix (Phase D)
-Ref: spec Phase D (client mockup `doc/improvements/WhatsApp Image 2026-11-02 at 16.52.54.jpeg`).
+## 2. Test Case Matrix
+| ID | Ref | Level | Objective | Steps | Expected Result | Automated Test | Status |
+|---|---|---|---|---|---|---|---|
+| TC-01 | P3 Settings/Villas | E2E | Configure settings; create, edit, deactivate villas; search, filter, page | 1. Open Settings, save. 2. Create/edit/deactivate villas. 3. Add 30 via API, search, page, reload | 25 per page, filters work, data persists, no 4xx, no console errors | `e2e/tests/admin-villas-settings.e2e.spec.ts::E2E-P3-01` | PASS |
+| TC-02 | P3 mobile | E2E | Villas list, full-screen detail and Settings at 375 | 1. Open Menu, Villas. 2. Search, open row. 3. Open Settings | Full-screen sheet, no overflow, no 4xx | `admin-villas-settings.e2e.spec.ts::E2E-P3-02` | PASS |
+| TC-03 | P4 Services | E2E | One service per kind with cover upload to the Storage emulator, items, activation | 1. New service per kind. 2. Activate without cover. 3. Upload cover, confirm rights, activate. 4. Add item | 422 "Cover required" first, then Active; signed cover URL; item active; upload 200, no CORS error | `admin-services.e2e.spec.ts::E2E-S01` | PASS |
+| TC-04 | P4 Services | E2E | Search, filters, pagination, reload persistence, section view | 1. Add 20 via API. 2. Search tag, page 2. 3. Section/Use/Status filters. 4. Reload, open Experiences | 1-25 of 28, 26-28, filter counts exact, data persists | `admin-services.e2e.spec.ts::E2E-S02` | PASS |
+| TC-05 | P4 mobile | E2E | Catalog at 375 | 1. Menu. 2. Services | Renders, no horizontal overflow | `admin-services.e2e.spec.ts::E2E-S03` | PASS |
+| TC-06 | P5 Transport | E2E | Provider, staff trip, full status flow, filters, reload | 1. Create provider. 2. New departure trip. 3. Send, Confirm, En route, Complete. 4. Cancel second trip | Pickup = flight - 3 h, history has 5 states, persists | `admin-transportation.e2e.spec.ts::E2E-P5-01` | PASS |
+| TC-07 | Exploratory | E2E | All 10 menu items at 1440 and 375: console, network, overflow, raw enums, demo data | 1. Load admin. 2. Open each item (Menu first at 375). 3. Capture screenshot, console, responses, semantics | 0 console errors, 0 responses >= 400, 0 overflow, 0 raw enums, no demo data | `scratchpad/explore.mjs` (not committed) | PASS |
+| TC-08 | Upload/CORS | Integration | Browser image upload to Storage emulator | 1. Upload cover in TC-03. 2. Watch network | `POST :9199/upload/...` 200; no CORS change needed | `admin-services.e2e.spec.ts::E2E-S01` | PASS |
 
-| ID | Ref | Level | Objective | Steps | Expected | Automated Test | Status |
-|----|-----|-------|-----------|-------|----------|----------------|--------|
-| TC-01 | D-NAV | Unit | Nav model: sections and hidden items | 1. Build nav model 2. List sections/items 3. Check hidden entries | 3 sections (Guest Operations, Hospitality, Operations); hidden items absent | admin/test/admin_nav_model_test.dart | PASS |
-| TC-02 | D-NAV | Unit | No numeric prefixes in labels | 1. Read all item labels 2. Match `^\d` | None start with digits | admin/test/admin_nav_model_test.dart | PASS |
-| TC-03 | D-UX | Unit | Contrast tokens meet WCAG AA | 1. Load Kachava tokens 2. Compute ratios per pair | All >= required ratio | admin/test/kachava_tokens_contrast_test.dart | PASS |
-| TC-04 | D-NAV | Widget | Sidebar (desktop) layout + selected style | 1. Pump 1440px shell 2. Find sidebar 3. Select item | Brand, Dashboard, labels, chevrons; selected = light gray + bold | admin/test/admin_sidebar_test.dart | PASS |
-| TC-05 | D-NAV | Widget | Rail (tablet) and drawer (mobile) | 1. Pump tablet/375px 2. Open drawer 3. Tap item | Rail/drawer navigate; no overflow | admin/test/admin_sidebar_test.dart | PASS |
-| TC-06 | D-NAV | Widget | Stay summary reachable with hidden items | 1. Open dashboard 2. Use Reservations/Go to section 3. Open stay summary | Summary reachable without a nav entry | admin/test/admin_dashboard_widget_test.dart | PASS |
-| TC-07 | D-COPY | Widget | Clean-UI copy (no eyebrows/FR codes) | 1. Pump each workspace 2. Search text for "SANCTUARY COMMAND CENTER", "FR-" | Absent | admin/test/d2a_restyle_test.dart, d2b_restyle_test.dart | PASS |
-| TC-08 | D-UX | Widget | Shared components + 320px no overflow | 1. Pump components 2. Pump 6 workspaces at 320px | No overflow errors | admin/test/admin_components_test.dart; admin_dashboard_widget_test.dart::test_compact_320px_viewport_renders_all_6_workspaces_without_overflow | PASS |
-| TC-09 | D-AUTH | Unit | Silent auth: one login | 1. Start app 2. Issue 3 API calls 3. Count logins | Exactly 1 login, no sign-in screen | admin/test/silent_staff_auth_test.dart | PASS |
-| TC-10 | D-AUTH | Unit | Concurrent calls share one login | 1. Fire N parallel calls cold 2. Count logins | 1 login shared | admin/test/silent_staff_auth_test.dart | PASS |
-| TC-11 | D-AUTH | Unit | 401 retried exactly once | 1. Stub 401 then 200 2. Call 3. Stub 401,401 | Re-login + 1 retry; second 401 surfaces error | admin/test/silent_staff_auth_test.dart | PASS |
-| TC-12 | D-AUTH | Widget | Staff 403 on roster still shows shell | 1. Stub roster 403 2. Pump app | Shell shown, not No-Access | admin/test/best_effort_reread_test.dart | PASS |
-| TC-13 | D-E2E | E2E | Full Playwright suite (headless, API :3011) | 1. Run suite 2. Record per test | All pass | e2e/tests/*.e2e.spec.ts | FAIL (8/15) |
-| TC-14 | D-VIS | E2E | Visual evidence desktop 1440 + mobile 375 drawer | 1. Open :3002 headless 2. Wait render 3. Screenshot (click hamburger) | Matches mockup | evidence/phase-d-admin-desktop-1440.png, phase-d-admin-mobile-375.png | PASS (truncation fixed in D5, re-shot) |
+## 3. Defects (all outdated specs, none in product code)
+- Transportation: `POST /villas` now requires operational/housekeeping/maintenance status; `POST /stays` returns `data.stay.stayId`; Providers/Trips are `tab` roles; stay suggestions are `button`, not `option`.
+- Services: checkbox is the identifier node itself (`[flt-semantics-identifier][role=checkbox]`); first "New service" tap can be lost (retry until editor opens); the open search box is a textbox; section tab bar "Requests" is not the scrolling editor bar; at 375 the drawer item must be tapped with a stable locator.
 
-## 3. E2E Failures (7 of 15)
-- E2E-A02 (admin-dashboard): `clickSemanticsByText` false; menu item is "Villa-110 - 110 - AVAILABLE" (spec/helper label mismatch with `displayLabel`).
-- E2E-PA01, PA05: same villa-label click in `submitNewStayDialog` (e2e-helpers.ts:320). PA06: create-stay returned 400 (expected 201).
-- Root cause A02/PA01/PA05: `AdminVillaInfo.displayLabel` = `villaName — suiteType` (Phase A, unchanged in D) and the :3011 in-memory data has numeric suiteTypes; not a Phase D regression. Follow-up: helper should match villa + AVAILABLE, not the full label.
-- E2E-PA02: guest API returns 401 "reservation token not found" for unknown guestId; spec expects 404 (backend/spec drift, not admin UI).
-- E2E-G01/G02: guest portal semantics lack "432Hz" / a step returned false; guest web, not Phase D admin.
-- Visual defect (fixed in D5): brand truncated at 280px sidebar; sidebar now 300px, screenshots re-taken.
+## 4. Observations (not failures)
+- Dining and Experiences "Requests" tab shows "Request queue coming soon" (planned later phase).
+- Rows with a stale cover show a pale tile: the 404 comes from old objects missing in the emulator Storage (`e2e-transport-cover.jpg`), not from the app.
+- Local DB holds RUN-tagged test records (`e2e*`, `P3*`, `P5*`) and one probe stay (`ZZ probe`) from QA runs; emulator data only.
+
+## 5. Evidence
+`doc/kachava-command-center/evidence/integration-<screen>-<1440|375>.png` for dashboard, reservations, villas, services, experiences, dining, transportation, wellness, tasks, settings.

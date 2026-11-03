@@ -91,7 +91,12 @@ async function ensureTransportService(api: Api): Promise<{ id: string; name: str
 
 /** A villa and an upcoming stay for [GUEST] (check-in today, resort time). */
 async function createStay(api: Api): Promise<string> {
-  const villa = await api.post('/villas', { name: `${RUN} Casa Ceiba`, category: 'Ocean view', capacity: 4 });
+  const villa = await api.post('/villas', { name: `${RUN} Casa Ceiba`, category: 'Ocean view',
+    capacity: 4,
+    operationalStatus: 'AVAILABLE',
+    housekeepingStatus: 'CLEAN',
+    maintenanceStatus: 'OK',
+  });
   const stay = await api.post('/stays', {
     guestName: GUEST,
     villaId: villa.data.id,
@@ -99,7 +104,7 @@ async function createStay(api: Api): Promise<string> {
     checkIn: resortDay(0),
     checkOut: resortDay(4),
   });
-  return stay.data.stayId ?? stay.data.id;
+  return stay.data.stay?.stayId ?? stay.data.stayId ?? stay.data.id;
 }
 
 const button = (page: Page, name: string | RegExp): Locator =>
@@ -174,7 +179,7 @@ test.describe('Phase 5 — Transportation (admin http://localhost:3002)', () => 
     await shot(page, 'trips-default-1440');
 
     // Providers: create one in the UI.
-    await button(page, 'Providers').click();
+    await page.getByRole('tab', { name: 'Providers' }).click();
     await button(page, 'New provider').first().click();
     await typeInto(page, field(page, 'Name'), PROVIDER);
     await typeInto(page, field(page, 'Phone'), '+52 998 000 0000');
@@ -186,10 +191,10 @@ test.describe('Phase 5 — Transportation (admin http://localhost:3002)', () => 
     expect(providers.data).toEqual([expect.objectContaining({ name: PROVIDER, isActive: true })]);
 
     // New trip on behalf of the guest: departure tomorrow 18:00, no pickup.
-    await button(page, 'Trips').click();
+    await page.getByRole('tab', { name: 'Trips' }).click();
     await button(page, 'New trip').first().click();
     await typeInto(page, field(page, 'Guest stay'), GUEST);
-    await page.getByRole('option', { name: new RegExp(GUEST) }).first().click();
+    await page.getByRole('button', { name: new RegExp(GUEST) }).first().click();
     await choose(page, /^Service/, service.name);
     await choose(page, /^Type/, 'Departure');
     await typeInto(page, field(page, 'Airline'), 'Aeromexico');

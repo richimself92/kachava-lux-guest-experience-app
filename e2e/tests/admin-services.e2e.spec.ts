@@ -226,7 +226,10 @@ async function openServices(page: Page): Promise<void> {
 }
 
 async function searchFor(page: Page, text: string): Promise<void> {
-  await clickContaining(page, 'input, textarea, [role="textbox"], flt-semantics', 'Search');
+  // Once opened, the search box is a real textbox; before that it is the "Search" button.
+  const box = page.getByRole('textbox', { name: 'Search' });
+  if ((await box.count()) > 0) await box.first().click();
+  else await clickContaining(page, 'input, textarea, [role="textbox"], flt-semantics', 'Search');
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
   await page.keyboard.type(text, { delay: 10 });
 }
@@ -235,8 +238,11 @@ const searchTag = (page: Page) => searchFor(page, RUN);
 
 async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Promise<void> {
   const name = `${RUN} ${spec.label}`;
-  await clickButton(page, 'New service');
-  await waitForFlutterSemantics(page, 'Price & availability');
+  // The first tap can land before the freshly rendered list wires its handlers: retry until the editor opens.
+  await expect(async () => {
+    await clickButton(page, 'New service');
+    await waitForFlutterSemantics(page, 'Price & availability', 4000);
+  }).toPass({ timeout: 30000 });
   await selectDropdown(page, 'svc-kind', spec.label);
   await fillField(page, 'svc-name.en', name);
   await fillField(page, 'svc-name.es', `${name} ES`);
@@ -255,7 +261,7 @@ async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Pr
   await waitForFlutterSemantics(page, 'Usage rights');
   await fillField(page, 'svc-cover-alt-en', `${spec.label} cover`);
   await fillField(page, 'svc-cover-alt-es', `Portada ${spec.label}`);
-  await clickWhenReady(page, `${byId('svc-cover-rights')} [role="checkbox"]`);
+  await clickWhenReady(page, `${byId('svc-cover-rights')}[role="checkbox"]`);
   await clickButton(page, 'Activate');
   await confirmDialog(page, 'Activate');
   await waitForButtons(page, 'Deactivate', 1); // service footer flips once the server confirms
@@ -271,7 +277,7 @@ async function addItemViaUi(page: Page, spec: KindSpec, index: number): Promise<
   await fillField(page, 'svc-name.es', `${item} ES`);
   if (index === 0) {
     await uploadWith(page, 'Upload');
-    await clickWhenReady(page, `${byId('svc-item-image-rights')} [role="checkbox"]`);
+    await clickWhenReady(page, `${byId('svc-item-image-rights')}[role="checkbox"]`);
   }
   await fillField(page, 'svc-priceUSD', spec.itemPrice);
   if (spec.capacity) {
@@ -387,7 +393,7 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
     await searchTag(page);
     await waitForFlutterSemantics(page, `${RUN} Experience`);
     expect(await readSemanticsSnapshot(page)).not.toContain(`${RUN} Lux bar`);
-    await clickTab(page, 'Requests');
+    await page.getByRole('tab', { name: 'Requests' }).click(); // section-level tab bar, not the scrolling editor bar
     await waitForFlutterSemantics(page, 'Request queue coming soon');
     await captureDualScreenshot(page, 'e2e-admin-experiences-section.png');
     expect(monitor.pageErrors).toEqual([]);
@@ -399,7 +405,8 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
     await page.goto(ADMIN_DASHBOARD_URL);
     await waitForFlutterSemantics(page, 'Menu');
     await clickButton(page, 'Menu');
-    await clickNav(page, 'Services');
+    // The drawer slides in: Playwright waits for the item to be stable before tapping.
+    await page.getByRole('button', { name: 'Services', exact: true }).click();
     await waitForFlutterSemantics(page, 'New service');
     await assertNoHorizontalOverflow(page);
     expect(fs.existsSync(COVER)).toBe(true);
