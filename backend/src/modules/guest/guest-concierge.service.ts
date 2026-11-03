@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { SettledFolio } from '../../domain/folio-ledger';
 import { BusinessRuleError } from '../../domain/domain-errors';
 import { isStayPhotoPath } from '../../domain/stays/guest-request-rules';
 import {
@@ -26,7 +25,6 @@ import {
   CreateConciergeMessageDto,
   CreateConciergeRequestDto,
   CreateMidStayCheckInDto,
-  ExpressCheckoutDto,
   GenerateUploadUrlDto,
 } from './dto/guest.dto';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
@@ -175,26 +173,6 @@ export class GuestConciergeService {
       handledByStaffId: null,
       createdAt: new Date().toISOString(),
     };
-  }
-
-  /** Settles the folio as stored at commit time; the guest's snapshot only identifies the stay. */
-  processExpressCheckout(stay: StayAggregate, dto: ExpressCheckoutDto): Promise<SettledFolio> {
-    const settlement = {
-      settledAt: new Date().toISOString(),
-      lateCheckoutRequested: dto.lateCheckoutRequested,
-    };
-    return this.stayRepo.settleFolio(stay.stayId, settlement, (settled) =>
-      this.alerts.buildAlert(stay, {
-        category: 'CHECKOUT',
-        severity: 'HIGH',
-        title: `${stay.villaName} Express Checkout Initiated ($${settled.folioSummary.finalSettledTotalUSD} USD)`,
-        summary: dto.lateCheckoutRequested
-          ? `Guest requested late checkout${dto.requestedCheckoutTime ? ` (${dto.requestedCheckoutTime})` : ''} and settled the folio.`
-          : 'Guest completed express checkout.',
-        sourceDocumentPath: `stays/${stay.stayId}`,
-        assignedDepartment: 'CONCIERGE',
-      }),
-    );
   }
 
   private buildConciergeTicket(

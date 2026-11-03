@@ -17,7 +17,6 @@ PortalController _c(FakeGuestApi api,
       initialUri: portalUri(),
       clock: clockAt(DateTime.utc(2026, 11, 1, 10)),
       onLinkRejected: onRejected,
-      pollInterval: const Duration(days: 1),
     );
 
 void main() {

@@ -20,37 +20,11 @@ export interface VerifiedStaffPayload {
 
 @Injectable()
 export class SecurityTokenService {
-  private readonly stepUpSecret = resolveSecret('STEPUP_HMAC_SECRET');
   private readonly staffJwtSecret = resolveSecret('STAFF_JWT_SECRET');
 
   isValidUuidV4(candidate: string | undefined | null): boolean {
     if (!candidate || typeof candidate !== 'string') return false;
     return UUID_V4_REGEX.test(candidate.trim());
-  }
-
-  issueStepUpToken(stayId: string, guestTokenUuid: string): string {
-    const payload = {
-      type: 'STEP_UP',
-      stayId,
-      guestTokenUuid,
-      exp: Date.now() + 24 * 60 * 60 * 1000,
-    };
-    return this.signPayload(payload, this.stepUpSecret);
-  }
-
-  verifyStepUpToken(token: string | undefined, expectedStayId: string): boolean {
-    if (!token) return false;
-    const decoded = this.verifyPayload<{
-      type: string;
-      stayId: string;
-      exp: number;
-    }>(token, this.stepUpSecret);
-    if (!decoded) return false;
-    return (
-      decoded.type === 'STEP_UP' &&
-      decoded.stayId === expectedStayId &&
-      decoded.exp > Date.now()
-    );
   }
 
   issueStaffToken(staff: StaffMember): string {

@@ -5,6 +5,7 @@ import '../../core/resort_time.dart';
 import '../../core/stay_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../domain/dashboard_view.dart';
+import '../../domain/realtime_change.dart';
 import '../../domain/trip_repository.dart';
 import '../components/components.dart';
 import 'dashboard_parts.dart';
@@ -32,7 +33,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with AdminRealtimeRefresh<DashboardScreen> {
   DashboardView? _view;
   Object? _error;
   bool _loading = true;
@@ -58,6 +60,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Any change may move a KPI: reload in the background (no progress bar;
+  /// a failure keeps the last numbers).
+  @override
+  void onRealtimeInvalidation(RealtimeInvalidation change) {
+    if (_view == null || _loading) return;
+    widget.repository.fetch().then((view) {
+      if (mounted) setState(() => _view = view);
+    }, onError: (Object error) {
+      debugPrint('Dashboard refresh failed: $error');
+    });
   }
 
   @override

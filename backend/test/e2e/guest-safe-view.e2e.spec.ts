@@ -12,7 +12,7 @@ describe('Guest routes return only the ADR-007 guest-safe view', () => {
 
   afterAll(() => t.close());
 
-  it.each(['', '/bookings', '/concierge-requests', '/folio'])(
+  it.each(['', '/bookings', '/concierge-requests'])(
     'test_guestGet%s_containsNoStaffOrInternalFields',
     async (suffix) => {
       const res = await request(t.server()).get(`${STAY}${suffix}`);
@@ -25,11 +25,11 @@ describe('Guest routes return only the ADR-007 guest-safe view', () => {
   it('test_guestMutations_responsesContainNoStaffOrInternalFields', async () => {
     const server = t.server();
     const responses = [
-      await request(server).patch(`${STAY}/transfer`).send({ flightNumber: 'AA 1' }),
+      await request(server).patch(`${STAY}/personalization`).send({ dietary: 'Vegan' }),
       await request(server).post(`${STAY}/bookings`).send({ serviceId: 'svc-1', scheduledDate: '2026-12-03', scheduledTimeSlot: '10:00' }),
       await request(server).post(`${STAY}/concierge-requests`).send({ title: 'Ice', details: 'More ice' }),
       await request(server).post(`${STAY}/midstay-checkin`).send({ rating: 5 }),
-      await request(server).put(`${STAY}/larder`).send({ serviceId: 'svc-stock', items: [] }),
+      await request(server).put(`${STAY}/orders/svc-stock`).send({ items: [] }),
     ];
 
     expect(responses.map((r) => r.status)).toEqual([200, 201, 201, 201, 200]);

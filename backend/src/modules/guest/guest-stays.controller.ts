@@ -12,34 +12,29 @@ import {
 } from '@nestjs/common';
 import { CurrentStay } from '../../common/decorators/auth.decorators';
 import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
-import { StepUpVerifiedGuard } from '../../common/guards/step-up-verified.guard';
 import {
   GuestStayView,
   toGuestBookingView,
   toGuestConciergeRequestView,
   toGuestFeedbackView,
   toGuestFolioSummaryView,
-  toGuestFolioView,
   toGuestLarderOrderView,
   toGuestPersonalizationView,
   toGuestStayView,
-  toGuestTransferView,
 } from '../../domain/guest-stay-view';
 import { ConciergeRequest, FolioSummary, LarderOrderItem, StayAggregate } from '../../domain/models/domain.models';
+import { GuestRealtimeChannels, guestRealtimeChannels } from '../../domain/realtime/realtime-signal';
+import { RealtimeChannels } from '../realtime/realtime-channels.service';
 import {
   ChangeBookingDto,
   CreateBookingDto,
   CreateConciergeMessageDto,
   CreateConciergeRequestDto,
   CreateMidStayCheckInDto,
-  ExpressCheckoutDto,
   GenerateUploadUrlDto,
   UpdateJourneyDto,
-  UpdateLarderOrderDto,
   UpdatePersonalizationDto,
   UpdateServiceOrderDto,
-  UpdateTransferDto,
-  VerifyStepUpDto,
 } from './dto/guest.dto';
 import { GuestPhotoLinks } from './guest-photo-links.service';
 import { GuestRequestChangesService } from './guest-request-changes.service';
@@ -63,49 +58,22 @@ export class GuestStaysController {
     private readonly guestService: GuestService,
     private readonly changes: GuestRequestChangesService,
     private readonly photos: GuestPhotoLinks,
+    private readonly realtime: RealtimeChannels,
   ) {}
 
+  /** The guest-safe view plus the ADR-012 signal channels this guest may listen to. */
   @Get()
-  async getStayAggregate(@CurrentStay() stay: StayAggregate): Promise<GuestStayView> {
-    return toGuestStayView(stay, await this.photos.resolverFor(stay.conciergeRequests));
+  async getStayAggregate(
+    @CurrentStay() stay: StayAggregate,
+  ): Promise<GuestStayView & { realtime: GuestRealtimeChannels }> {
+    const view = toGuestStayView(stay, await this.photos.resolverFor(stay.conciergeRequests));
+    return { ...view, realtime: guestRealtimeChannels(await this.realtime.ensureStayChannel(stay)) };
   }
 
   /** Skipped ("Not now") and self-completed journey tasks; only the lists sent are replaced. */
   @Put('journey')
   updateJourney(@CurrentStay() stay: StayAggregate, @Body() dto: UpdateJourneyDto) {
     return this.guestService.updateJourney(stay, dto);
-  }
-
-  @Post('verify-step-up')
-  verifyStepUp(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: VerifyStepUpDto,
-  ) {
-    return this.guestService.verifyStepUp(stay, dto);
-  }
-
-  @Post('verify-stepup')
-  verifyStepUpAlias(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: VerifyStepUpDto,
-  ) {
-    return this.guestService.verifyStepUp(stay, dto);
-  }
-
-  @Patch('transfer')
-  updateTransfer(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: UpdateTransferDto,
-  ) {
-    return this.guestService.updateTransfer(stay, dto).then(toGuestTransferView);
-  }
-
-  @Patch('transport')
-  updateTransportAlias(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: UpdateTransferDto,
-  ) {
-    return this.guestService.updateTransfer(stay, dto).then(toGuestTransferView);
   }
 
   @Patch('personalization')
@@ -124,15 +92,6 @@ export class GuestStaysController {
     @Body() dto: UpdateServiceOrderDto,
   ) {
     return toGuestOrdersView(await this.guestService.updateServiceOrder(stay, serviceId, dto));
-  }
-
-  /** Legacy route of the same per-service order (service id in the body). */
-  @Put('larder')
-  async updateLarder(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: UpdateLarderOrderDto,
-  ) {
-    return toGuestOrdersView(await this.guestService.updateServiceOrder(stay, dto.serviceId, dto));
   }
 
   @Get('bookings')
@@ -204,21 +163,6 @@ export class GuestStaysController {
     @Body() dto: CreateMidStayCheckInDto,
   ) {
     return this.guestService.submitMidStayCheckIn(stay, dto).then(toGuestFeedbackView);
-  }
-
-  @Get('folio')
-  getFolio(@CurrentStay() stay: StayAggregate) {
-    return toGuestFolioView(stay);
-  }
-
-  @Post('folio/checkout')
-  @UseGuards(StepUpVerifiedGuard)
-  async expressCheckout(
-    @CurrentStay() stay: StayAggregate,
-    @Body() dto: ExpressCheckoutDto,
-  ) {
-    const settled = await this.guestService.processExpressCheckout(stay, dto);
-    return { ...toGuestFolioView(settled), status: settled.status };
   }
 
   private async requestViews(requests: ConciergeRequest[]) {

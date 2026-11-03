@@ -72,7 +72,6 @@ class ServiceCatalogStrings {
       'Empty when items carry the price.', 'Vacío si los ítems tienen precio.');
   String get days => t('Days', 'Días');
   String get timeSlots => t('Time slots', 'Horarios');
-  String get addSlot => t('Add slot', 'Agregar horario');
   String get blockedDates => t('Blocked dates', 'Fechas bloqueadas');
   String get leadTime => t('Lead time (h)', 'Anticipación (h)');
   String get cancelBy => t('Cancel by (h)', 'Cancelar hasta (h)');
@@ -149,7 +148,6 @@ class ServiceCatalogStrings {
   String get timeFormat => t('Use HH:mm', 'Usa HH:mm');
   String get endAfterStart => t('End after start', 'Fin después del inicio');
   String get dateFormat => t('Use YYYY-MM-DD', 'Usa AAAA-MM-DD');
-  String get minAboveMax => t('Min above max', 'Mínimo mayor que máximo');
   String get codesFormat => t('Invalid codes', 'Códigos inválidos');
 
   /// One 422 detail as a short label ("Cover required").

@@ -1,12 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
-import { SecurityTokenService } from '../../common/services/security-token.service';
-import { StepUpAttemptLimiter } from '../../common/services/step-up-attempt-limiter';
-import {
-  FlightTransfer,
   OperationalAlert,
   Personalization,
   StayAggregate,
@@ -20,92 +13,24 @@ import {
   CreateConciergeMessageDto,
   CreateConciergeRequestDto,
   CreateMidStayCheckInDto,
-  ExpressCheckoutDto,
   GenerateUploadUrlDto,
   UpdateJourneyDto,
   UpdateServiceOrderDto,
   UpdatePersonalizationDto,
-  UpdateTransferDto,
-  VerifyStepUpDto,
 } from './dto/guest.dto';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
 import { GuestBookingService } from './guest-booking.service';
 import { GuestConciergeService } from './guest-concierge.service';
-import { matchesGuestLastName } from './step-up-last-name.matcher';
 
 @Injectable()
 export class GuestService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT)
     private readonly stayRepo: StayRepositoryPort,
-    private readonly securityTokenService: SecurityTokenService,
     private readonly alertFolioHelper: GuestAlertFolioHelper,
     private readonly bookingService: GuestBookingService,
     private readonly conciergeService: GuestConciergeService,
-    private readonly stepUpLimiter: StepUpAttemptLimiter,
   ) {}
-
-  /**
-   * Step-up answers are the villa number or the primary guest's last name. Both are visible in
-   * the guest view (villa name, guest name), so this only proves possession of a session that
-   * already holds the link; a secret not exposed to guests is a pending owner decision. Failed
-   * answers are rate limited per stay (StepUpAttemptLimiter).
-   */
-  verifyStepUp(
-    stay: StayAggregate,
-    dto: VerifyStepUpDto,
-  ): { verified: boolean; stepUpToken: string } {
-    this.stepUpLimiter.assertCanAttempt(stay.stayId);
-    if (!this.matchesStepUpAnswer(stay, dto)) {
-      this.stepUpLimiter.recordFailure(stay.stayId);
-      throw new ForbiddenException(
-        'Step-up challenge failed: Villa Number or Primary Guest Last Name did not match.',
-      );
-    }
-    this.stepUpLimiter.recordSuccess(stay.stayId);
-    const stepUpToken = this.securityTokenService.issueStepUpToken(
-      stay.stayId,
-      stay.guestTokenUuid,
-    );
-    return { verified: true, stepUpToken };
-  }
-
-  private matchesStepUpAnswer(stay: StayAggregate, dto: VerifyStepUpDto): boolean {
-    const cleanVilla = dto.villaNumber?.replace(/[^0-9]/g, '');
-    const stayVillaDigits =
-      stay.villaName.replace(/[^0-9]/g, '') || stay.villaId.replace(/[^0-9]/g, '');
-    const matchesVilla =
-      (Boolean(cleanVilla) && cleanVilla === stayVillaDigits) ||
-      dto.villaNumber === stay.villaId;
-    return matchesVilla || matchesGuestLastName(stay.guestProfile, dto.lastName);
-  }
-
-  async updateTransfer(
-    stay: StayAggregate,
-    dto: UpdateTransferDto,
-  ): Promise<FlightTransfer> {
-    const nextStatus =
-      stay.flightTransfer.status === 'Not Requested' || !dto.status
-        ? 'Pending'
-        : dto.status;
-    const patch = {
-      ...dto,
-      status: nextStatus,
-      estimatedLanding:
-        dto.estimatedLanding || dto.arrivalTime || stay.flightTransfer.estimatedLanding,
-    };
-    return this.stayRepo.updateTransfer(stay.stayId, patch, (updated) => ({
-      event: 'ITINERARY_CHANGE' as const,
-      ...this.alertFolioHelper.buildAlert(stay, {
-        category: 'TRANSFER',
-        severity: 'NORMAL',
-        title: `${stay.villaName} Aviation Transfer Updated (${updated.flightNumber})`,
-        summary: `Flight ${updated.flightNumber} landing at ${updated.estimatedLanding}.`,
-        sourceDocumentPath: `stays/${stay.stayId}`,
-        assignedDepartment: 'TRANSPORT',
-      }),
-    }));
-  }
 
   async updatePersonalization(
     stay: StayAggregate,
@@ -194,7 +119,4 @@ export class GuestService {
     return this.conciergeService.submitMidStayCheckIn(stay, dto);
   }
 
-  processExpressCheckout(stay: StayAggregate, dto: ExpressCheckoutDto) {
-    return this.conciergeService.processExpressCheckout(stay, dto);
-  }
 }

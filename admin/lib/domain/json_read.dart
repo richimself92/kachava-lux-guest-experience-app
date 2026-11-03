@@ -54,13 +54,4 @@ abstract final class JsonRead {
         if ('${e ?? ''}'.trim().isNotEmpty) '$e'.trim()
     ];
   }
-
-  static List<int> ints(Map<String, dynamic> json, String key) {
-    final value = json[key];
-    if (value is! List) return const [];
-    return [
-      for (final e in value)
-        if (e is num) e.toInt()
-    ];
-  }
 }

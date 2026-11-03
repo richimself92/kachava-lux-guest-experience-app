@@ -48,7 +48,6 @@ describe('Runtime module graph has no in-memory, seed or demo providers', () => 
       FIREBASE_STORAGE_EMULATOR_HOST: '127.0.0.1:2',
       FIREBASE_PROJECT_ID: 'demo-module-graph',
       STAFF_JWT_SECRET: 'x'.repeat(32),
-      STEPUP_HMAC_SECRET: 'y'.repeat(32),
     });
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
 

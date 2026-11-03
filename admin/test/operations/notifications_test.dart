@@ -54,9 +54,7 @@ void main() {
       expect((chime.stops, bell.hasUrgentAlert), (1, false));
     });
 
-    test('the poll runs every 15 s and reports failures as reconnecting',
-        () async {
-      expect(AdminLiveSync.defaultInterval, const Duration(seconds: 15));
+    test('a failed bell sync reports reconnecting', () async {
       final repo = FakeNotificationRepository()..countsError = Exception('x');
       final bell =
           NotificationBellController(repository: repo, chime: FakeChime());
@@ -92,7 +90,7 @@ void main() {
           .add(ConversationRow.fromJson(recordedConversationRow));
     });
 
-    Future<void> pumpApp(WidgetTester tester, {bool polling = false}) async {
+    Future<void> pumpApp(WidgetTester tester) async {
       tester.view.physicalSize = const Size(1440, 960);
       tester.view.devicePixelRatio = 1;
       tester.binding.defaultBinaryMessenger
@@ -120,7 +118,6 @@ void main() {
             staff: FakeStaffDirectory(const [testStaff]),
             chime: chime,
             zoneResolver: const FixedOffsetResolver(Duration(hours: -5)),
-            enableLivePolling: polling,
           ),
         ),
       ));
@@ -201,19 +198,19 @@ void main() {
       expect(find.byKey(const Key('task-detail')), findsOneWidget);
     });
 
-    testWidgets('a new URGENT rings once and shows Open / Mute',
+    testWidgets('a new URGENT (seen on Refresh) rings once; Open / Mute',
         (tester) async {
-      await pumpApp(tester, polling: true);
+      await pumpApp(tester);
       expect(chime.rings, 0);
       ops.notifications.counts = const UnreadCounts(unread: 5, urgentUnread: 2);
-      await tester.pump(const Duration(seconds: 16));
+      await tester.tap(find.byKey(const Key('admin-refresh-button')));
       await tester.pumpAndSettle();
       expect(chime.rings, 1);
       expect(find.byKey(const Key('admin-toast-banner')), findsOneWidget);
       await tester.tap(find.byKey(const Key('dismiss-alert-chime-btn')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('admin-toast-banner')), findsNothing);
-      await tester.pumpWidget(const SizedBox()); // stops the poll timer
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

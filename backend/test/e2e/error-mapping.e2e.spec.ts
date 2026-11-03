@@ -24,7 +24,7 @@ describe('HTTP error mapping and concurrency (ADV-01, ADV-07, ADV-10)', () => {
 
   it('test_20ParallelPaidBookingsOverHttp_produce20FolioLines', async () => {
     await Promise.all(Array.from({ length: 20 }, (_, i) => request(t.server()).post(`${STAY}/bookings`).send(paidBooking(i))));
-    const folio = await request(t.server()).get(`${STAY}/folio`);
+    const folio = await request(t.server()).get(STAY);
 
     const lines = folio.body.data.folioItems.filter((f: { folioItemId: string }) => f.folioItemId.startsWith('folio_bk_'));
     expect(lines).toHaveLength(20);
@@ -39,7 +39,7 @@ describe('HTTP error mapping and concurrency (ADV-01, ADV-07, ADV-10)', () => {
       return stay;
     });
 
-    const res = await request(t.server()).patch(`${STAY}/transfer`).send({ flightNumber: 'AA1' });
+    const res = await request(t.server()).patch(`${STAY}/personalization`).send({ dietary: 'Vegan' });
 
     expect(res.status).toBe(404);
   });
@@ -55,7 +55,7 @@ describe('HTTP error mapping and concurrency (ADV-01, ADV-07, ADV-10)', () => {
   });
 
   it('test_oversizedGuestField_isRejectedWith400', async () => {
-    const res = await request(t.server()).patch(`${STAY}/transfer`).send({ flightNumber: 'F'.repeat(45_000) });
+    const res = await request(t.server()).patch(`${STAY}/personalization`).send({ occasionDetails: 'F'.repeat(45_000) });
 
     expect(res.status).toBe(400);
   });

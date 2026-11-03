@@ -4,7 +4,7 @@ import { isFirestoreFlagEnabled } from './runtime-flags';
 type RuntimeEnv = Readonly<Record<string, string | undefined>>;
 
 export const MIN_SECRET_LENGTH = 32;
-export const REQUIRED_SECRET_NAMES = ['STAFF_JWT_SECRET', 'STEPUP_HMAC_SECRET'] as const;
+export const REQUIRED_SECRET_NAMES = ['STAFF_JWT_SECRET'] as const;
 export type SecretName = (typeof REQUIRED_SECRET_NAMES)[number];
 
 const ephemeralSecrets = new Map<SecretName, string>();

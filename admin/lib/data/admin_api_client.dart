@@ -42,6 +42,11 @@ class AdminApiClient implements AdminWriteGateway {
   final http.Client _client;
   Future<String>? _loginInFlight;
 
+  /// `realtime.adminChannel` of the last login, and the session token when
+  /// the channel was last handed to the listener.
+  String? _realtimeChannel;
+  String? _channelToken;
+
   String get _adminBaseUrl {
     var trimmed = baseUrl.trim();
     while (trimmed.endsWith('/')) {
@@ -81,6 +86,10 @@ class AdminApiClient implements AdminWriteGateway {
           statusCode: response.statusCode,
           message: 'Admin API login response carried no token.');
     }
+    _realtimeChannel = switch (body['realtime']) {
+      {'adminChannel': final String channel} when channel.isNotEmpty => channel,
+      _ => null,
+    };
     session.open(token, staff: AdminStaffMapper.tryMap(body['staff']));
     return token;
   }
@@ -102,6 +111,18 @@ class AdminApiClient implements AdminWriteGateway {
       }
     }
     return _decodeResponse(response);
+  }
+
+  /// The staff's real-time channel (ADR-012) from the silent login, or
+  /// null when the backend sends none. [renew] logs in again when the
+  /// session still holds the token the channel came with (the listener was
+  /// refused); a session the API already renewed is reused.
+  Future<String?> realtimeChannel({bool renew = false}) async {
+    if (renew && session.token != null && session.token == _channelToken) {
+      session.expire();
+    }
+    _channelToken = await _ensureToken();
+    return _realtimeChannel;
   }
 
   Map<String, String> _bearer(String token) =>

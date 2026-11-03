@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../core/auth/magic_link_parser.dart';
 import '../core/i18n/l10n.dart';
 import '../core/platform/photo_picker.dart';
+import '../core/realtime/realtime_events_port.dart';
 import '../core/storage/device_prefs.dart';
 import '../data/guest_api.dart';
 import '../domain/catalog.dart';
@@ -15,6 +16,7 @@ import '../domain/requests.dart';
 import '../domain/resort_clock.dart';
 import '../domain/stay.dart';
 import '../domain/trip.dart';
+import 'realtime_sync.dart';
 
 enum PortalPhase { loading, linkMissing, linkInvalid, linkExpired, ready }
 
@@ -28,7 +30,9 @@ class PortalController extends ChangeNotifier {
     required Uri initialUri,
     this.clock = const ResortClock(),
     this.onLinkRejected,
-    this.pollInterval = const Duration(seconds: 30),
+    this.realtime,
+    this.onPageVisible,
+    this.realtimeRetry = const Duration(seconds: 5),
   }) : _guestUuid = MagicLinkParser.rawGuestId(initialUri).toLowerCase() {
     lang = _initialLang();
     _phase = switch (MagicLinkParser.statusOf(initialUri)) {
@@ -44,7 +48,14 @@ class PortalController extends ChangeNotifier {
   final DevicePrefs prefs;
   final ResortClock clock;
   final VoidCallback? onLinkRejected;
-  final Duration pollInterval;
+
+  /// "Something changed" signals (ADR-012); null disables realtime. There is
+  /// no periodic polling: Cloud Run must be able to scale to zero.
+  final RealtimeEventsPort? realtime;
+
+  /// Fires when the browser tab becomes visible again.
+  final Stream<void>? onPageVisible;
+  final Duration realtimeRetry;
   final String _guestUuid;
 
   late Lang lang;
@@ -68,7 +79,11 @@ class PortalController extends ChangeNotifier {
   Future<void>? _running;
   bool _again = false;
   bool _disposed = false;
-  Timer? _timer;
+  RealtimeSync? _sync;
+  bool _manual = false;
+
+  /// A refresh the guest asked for is running.
+  bool get isRefreshing => _manual;
 
   String get guestUuid => _guestUuid;
 
@@ -95,19 +110,37 @@ class PortalController extends ChangeNotifier {
   Future<void> start() async {
     if (_phase != PortalPhase.loading) return;
     await refresh();
-    _timer ??= Timer.periodic(pollInterval, (_) => refresh());
+    final port = realtime;
+    if (port == null || _disposed || _phase == PortalPhase.linkExpired) return;
+    _sync ??= RealtimeSync(
+      port: port,
+      refresh: () => refresh(followUp: true),
+      onPageVisible: onPageVisible,
+      retryDelay: realtimeRetry,
+    )..follow(_stay?.realtime);
   }
 
-  /// Reloads stay, catalog and trips; never overlaps another refresh. A poll
-  /// that finds one running is dropped; a refresh after a write ([afterWrite])
-  /// instead waits and runs once more, because the running one may have read
-  /// the server before the write and would hide it until the next poll.
-  Future<void> refresh({bool afterWrite = false}) {
+  /// The refresh button: always reads the server again and shows progress.
+  Future<void> refreshNow() async {
+    if (_manual) return;
+    _manual = true;
+    notifyListeners();
+    await refresh(followUp: true);
+    if (_disposed) return;
+    _manual = false;
+    notifyListeners();
+  }
+
+  /// Reloads stay, catalog and trips; never overlaps another refresh. A plain
+  /// refresh that finds one running is dropped; a [followUp] refresh (after a write or
+  /// a realtime change) instead waits and runs once more, because the running
+  /// one may have read the server before the change and would hide it.
+  Future<void> refresh({bool followUp = false}) {
     if (_disposed || _guestUuid.isEmpty) return Future.value();
     final running = _running;
     if (running != null) {
-      if (afterWrite) _again = true;
-      return afterWrite ? running : Future.value();
+      if (followUp) _again = true;
+      return followUp ? running : Future.value();
     }
     return _running = _runRefreshes().whenComplete(() => _running = null);
   }
@@ -134,6 +167,7 @@ class PortalController extends ChangeNotifier {
     }
     if (stayResult case ApiOk(:final value)) {
       _stay = value;
+      _sync?.follow(value.realtime);
       _phase = PortalPhase.ready;
       _reconnecting = false;
     } else {
@@ -154,7 +188,7 @@ class PortalController extends ChangeNotifier {
   void _expire() {
     _phase = PortalPhase.linkExpired;
     _stay = null;
-    _timer?.cancel();
+    _stopBackground();
     onLinkRejected?.call();
     notifyListeners();
   }
@@ -166,9 +200,14 @@ class PortalController extends ChangeNotifier {
     if (result case ApiFailed(kind: FailureKind.linkRejected)) {
       _expire();
     } else if (result is ApiOk<T>) {
-      await refresh(afterWrite: true);
+      await refresh(followUp: true);
     }
     return result;
+  }
+
+  void _stopBackground() {
+    _sync?.dispose();
+    _sync = null;
   }
 
   // ------------------------------------------------------------ actions
@@ -334,7 +373,7 @@ class PortalController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _timer?.cancel();
+    _stopBackground();
     super.dispose();
   }
 }

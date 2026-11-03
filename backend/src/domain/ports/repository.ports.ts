@@ -1,12 +1,7 @@
 import {
-  AlertCategory,
-  AlertSeverity,
   ConciergeMessage,
   ConciergeRequest,
-  Department,
   ExperienceBooking,
-  FlightTransfer,
-  FolioItem,
   FolioSummary,
   LarderOrderItem,
   MidStayFeedback,
@@ -17,7 +12,7 @@ import {
   StayLifecycleStatus,
   StayRecord,
 } from '../models/domain.models';
-import { FolioSettlement, LarderCharge, SettledFolio } from '../folio-ledger';
+import { LarderCharge } from '../folio-ledger';
 import { BookingChange, JourneyMarks } from '../stays/guest-request-rules';
 import { PaginatedResult, SortDirection } from '../../common/listing/list-query';
 import { CatalogItem, CatalogService } from '../catalog/catalog.models';
@@ -130,35 +125,6 @@ export interface CatalogImageStoragePort {
   publicUrl(path: string): string;
 }
 
-export interface BookingFilterCriteria {
-  section?: string;
-  usageType?: string;
-  status?: string;
-  assignedDepartment?: string;
-  scheduledDate?: string;
-}
-
-export interface LarderFilterCriteria {
-  provisioningStatus?: string;
-  category?: string;
-  villaId?: string;
-}
-
-export interface ConciergeFilterCriteria {
-  status?: string;
-  priority?: string;
-  assignedDepartment?: string;
-  category?: string;
-  villaId?: string;
-}
-
-export interface AlertFilterCriteria {
-  isAcknowledged?: boolean;
-  category?: AlertCategory;
-  severity?: AlertSeverity;
-  assignedDepartment?: Department;
-}
-
 /**
  * Builds the operational alert for a stay mutation from its result. The repository writes the
  * alert in the same transaction as the stay, so a failed request persists neither and a client
@@ -186,26 +152,12 @@ export interface StayRepositoryPort {
   /** Read-modify-write of one stay in a transaction (StayNotFoundError when absent). */
   updateStay(stayId: string, change: (current: StayAggregate) => StayAggregate): Promise<StayAggregate>;
   updateStayToken(stayId: string, newUuid: string): Promise<StayRecord>;
-  updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord>;
-  updateStayWifi(
-    stayId: string,
-    wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
-  ): Promise<StayRecord>;
-  updateTransfer(
-    stayId: string,
-    transferPatch: Partial<FlightTransfer>,
-    alertOf?: StayAlertFactory<FlightTransfer>,
-  ): Promise<FlightTransfer>;
   updatePersonalization(
     stayId: string,
     personalizationPatch: Partial<Personalization>,
     allergiesLabel?: string,
     alertOf?: StayAlertFactory<Personalization>,
   ): Promise<Personalization>;
-  updateSignaturePrivilege(
-    stayId: string,
-    privilege: 'massage' | 'golf',
-  ): Promise<StayRecord>;
   /** Replaces the lines of ONE order service (others untouched) and re-prices its folio line. */
   replaceServiceOrder(
     stayId: string,
@@ -229,34 +181,14 @@ export interface StayRepositoryPort {
   ): Promise<ExperienceBooking>;
   /** Replaces the guest's skipped / self-completed journey task lists that are given. */
   setJourneyMarks(stayId: string, marks: Partial<JourneyMarks>): Promise<JourneyMarks>;
-  listLarderOrdersAcrossStays(
-    filter?: LarderFilterCriteria,
-  ): Promise<LarderOrderItem[]>;
-  updateLarderOrderStatus(
-    orderItemId: string,
-    patch: Partial<LarderOrderItem>,
-  ): Promise<LarderOrderItem | null>;
   /** Stores the booking and, when paid, appends its folio line to the stored folio. */
   createBooking(
     stayId: string,
     booking: ExperienceBooking,
     alertOf?: StayAlertFactory<ExperienceBooking>,
   ): Promise<ExperienceBooking>;
-  listBookingsForStay(stayId: string): Promise<ExperienceBooking[]>;
   /** Staff action on one booking or order of the stay (404 unknown, 422 not allowed). */
   transitionServiceRequest(stayId: string, ref: RequestRef, move: RequestMove): Promise<void>;
-  listBookingsAcrossStays(
-    filter?: BookingFilterCriteria,
-  ): Promise<ExperienceBooking[]>;
-  updateBookingAssignment(
-    bookingId: string,
-    patch: Partial<ExperienceBooking>,
-  ): Promise<ExperienceBooking | null>;
-  listConciergeRequestsForStay(stayId: string): Promise<ConciergeRequest[]>;
-  listConciergeRequestsAcrossStays(
-    filter?: ConciergeFilterCriteria,
-  ): Promise<ConciergeRequest[]>;
-  findConciergeRequestById(requestId: string): Promise<ConciergeRequest | null>;
   createConciergeRequest(
     stayId: string,
     request: ConciergeRequest,
@@ -268,33 +200,16 @@ export interface StayRepositoryPort {
     message: ConciergeMessage,
     alertOf?: StayAlertFactory<ConciergeRequest | null>,
   ): Promise<ConciergeRequest | null>;
-  updateConciergeRequestAdmin(
-    requestId: string,
-    patch: Partial<ConciergeRequest>,
-    newMessage?: ConciergeMessage,
-  ): Promise<ConciergeRequest | null>;
   createMidStayFeedback(
     stayId: string,
     feedback: MidStayFeedback,
     alertOf?: StayAlertFactory<MidStayFeedback>,
   ): Promise<MidStayFeedback>;
   listMidStayFeedbackAcrossStays(): Promise<MidStayFeedback[]>;
-  getFolioForStay(
-    stayId: string,
-  ): Promise<{ folioSummary: FolioSummary; folioItems: FolioItem[] }>;
-  /** Settles every folio line stored at commit time (no caller-supplied folio snapshot). */
-  settleFolio(
-    stayId: string,
-    settlement: FolioSettlement,
-    alertOf?: StayAlertFactory<SettledFolio>,
-  ): Promise<SettledFolio>;
 }
 
 export interface AlertRepositoryPort {
   createAlert(alert: OperationalAlert): Promise<OperationalAlert>;
-  listAlerts(
-    filter?: AlertFilterCriteria,
-  ): Promise<{ alerts: OperationalAlert[]; unreadCount: number }>;
   acknowledgeAlert(
     alertId: string,
     staffId: string,

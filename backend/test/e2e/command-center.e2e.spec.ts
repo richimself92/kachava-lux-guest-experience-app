@@ -233,7 +233,7 @@ describe('Command center operations (phases 6-8)', () => {
       await request(t.server()).post(`${guestPath}/bookings`).send({ serviceId: bookingServiceId, scheduledDate: '2026-12-02', scheduledTimeSlot: '10:00' });
       await request(t.server()).post(`${guestPath}/bookings`).send({ serviceId: prefId, scheduledDate: '2026-12-01' });
       for (const quantity of [1, 2]) {
-        await request(t.server()).put(`${guestPath}/larder`).send({ serviceId: stockId, items: [{ itemId, quantity }] });
+        await request(t.server()).put(`${guestPath}/orders/${stockId}`).send({ items: [{ itemId, quantity }] });
       }
 
       const tasks = await get('/tasks?pageSize=50');

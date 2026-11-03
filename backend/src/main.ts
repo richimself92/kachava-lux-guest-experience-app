@@ -6,8 +6,10 @@ import { AppModule } from './app.module';
 import { assertAdminIdentityConfigured } from './common/config/admin-identity';
 import { assertFirestoreTarget } from './common/config/runtime-flags';
 import { assertProductionSecrets } from './common/config/runtime-secrets';
+import { resolveRealtimeAdminChannel } from './common/config/realtime-channels';
 import { GlobalHttpExceptionFilter } from './common/filters/global-http-exception.filter';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
+import { RealtimeEmissionInterceptor } from './modules/realtime/realtime-emission.interceptor';
 
 /**
  * Cloud Run terminates TLS at one Google front-end hop; trust exactly that hop for req.ip.
@@ -30,8 +32,6 @@ export function configureApp(app: NestExpressApplication): void {
       'Content-Type',
       'Authorization',
       'X-Guest-Token',
-      'X-StepUp-Session',
-      'X-StepUp-Token',
     ],
     credentials: true,
   });
@@ -47,12 +47,22 @@ export function configureApp(app: NestExpressApplication): void {
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
 }
 
+/**
+ * ADR-012 change signals for the full AppModule. Call after `configureApp`: interceptors run in
+ * registration order, so this one sits inside the response envelope and sees the handler result.
+ */
+export function enableRealtimeEmission(app: NestExpressApplication): void {
+  app.useGlobalInterceptors(app.get(RealtimeEmissionInterceptor));
+}
+
 export async function bootstrap(): Promise<void> {
   assertProductionSecrets();
   assertAdminIdentityConfigured();
   assertFirestoreTarget();
+  resolveRealtimeAdminChannel();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   configureApp(app);
+  enableRealtimeEmission(app);
   const port = Number(process.env.PORT || 8080);
   await app.listen(port);
 }

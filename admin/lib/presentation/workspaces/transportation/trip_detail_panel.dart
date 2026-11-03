@@ -44,6 +44,13 @@ class _TripDetailPanelState extends State<TripDetailPanel> {
   late AdminTrip _trip = widget.trip;
   bool _busy = false;
 
+  /// A reloaded list row (real-time change) replaces the shown copy.
+  @override
+  void didUpdateWidget(TripDetailPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.trip, oldWidget.trip)) _trip = widget.trip;
+  }
+
   TransportStrings get _s => TransportStrings(widget.isEs);
 
   Future<void> _advance() async {

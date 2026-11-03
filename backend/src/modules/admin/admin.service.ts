@@ -1,54 +1,28 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { resolveRealtimeAdminChannel } from '../../common/config/realtime-channels';
+import { Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import {
   buildAdminServiceStaff,
   resolveAdminServiceEmail,
 } from '../../common/config/admin-identity';
-import { paginateInMemory, PaginatedResult, toListQuery } from '../../common/listing/list-query';
 import { guestPortalBaseUrl } from '../../common/config/guest-portal';
 import { auditActorOf } from '../../common/decorators/auth.decorators';
 import { SecurityTokenService } from '../../common/services/security-token.service';
 import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
+import { OperationalAlert, StaffMember, StayAggregate, StayRecord } from '../../domain/models/domain.models';
 import {
-  FlightTransfer,
-  OperationalAlert,
-  StaffMember,
-  StayAggregate,
-  StayLifecycleStatus,
-  StayRecord,
-} from '../../domain/models/domain.models';
-import {
-  ALERT_REPOSITORY_PORT,
-  AlertRepositoryPort,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
   VILLA_REPOSITORY_PORT,
   VillaRepositoryPort,
 } from '../../domain/ports/repository.ports';
 import { nightsBetween, buildNewStay } from './new-stay.builder';
-import {
-  AdminLoginDto,
-  AlertListQueryDto,
-  AssignTransferDto,
-  CreateReservationDto,
-  UpdateStayWifiDto,
-} from './dto/admin.dto';
-
-const ALERT_LIST_SPEC = {
-  sortable: ['createdAt', 'severity'],
-  defaultSort: { field: 'createdAt', direction: 'desc' as const },
-};
+import { AdminLoginDto, CreateReservationDto } from './dto/admin.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT) private readonly stayRepo: StayRepositoryPort,
-    @Inject(ALERT_REPOSITORY_PORT) private readonly alertRepo: AlertRepositoryPort,
     @Inject(VILLA_REPOSITORY_PORT) private readonly villaRepo: VillaRepositoryPort,
     private readonly securityTokenService: SecurityTokenService,
   ) {}
@@ -58,34 +32,14 @@ export class AdminService {
    * `ADMIN_SERVICE_EMAIL` receives a HOST_ADMIN session. No staff document is required and
    * any other email (or a missing configuration) is rejected.
    */
-  loginStaff(dto: AdminLoginDto): { token: string; staff: StaffMember } {
+  loginStaff(dto: AdminLoginDto): { token: string; staff: StaffMember; realtime: { adminChannel: string } } {
     const configured = resolveAdminServiceEmail();
     if (!configured || dto.email.trim().toLowerCase() !== configured) {
       throw new UnauthorizedException('Invalid staff credentials.');
     }
     const staff = buildAdminServiceStaff(configured);
-    return { token: this.securityTokenService.issueStaffToken(staff), staff };
-  }
-
-  async listAlerts(dto: AlertListQueryDto): Promise<PaginatedResult<OperationalAlert>> {
-    const query = toListQuery(dto, ALERT_LIST_SPEC);
-    const listing = await this.alertRepo.listAlerts({
-      isAcknowledged: dto.isAcknowledged,
-      category: dto.category,
-      severity: dto.severity,
-      assignedDepartment: dto.assignedDepartment,
-    });
-    const page = paginateInMemory(listing.alerts, query, {
-      searchText: (a) => `${a.title} ${a.summary} ${a.villaName} ${a.guestNames}`,
-      sortValue: (a, field) => (field === 'severity' ? a.severity : a.createdAt),
-    });
-    return new PaginatedResult(page.data, page.meta, { unreadCount: listing.unreadCount });
-  }
-
-  async acknowledgeAlert(alertId: string, staff: StaffMember): Promise<OperationalAlert> {
-    const updated = await this.alertRepo.acknowledgeAlert(alertId, staff.staffId);
-    if (!updated) throw new NotFoundException(`Operational alert ${alertId} not found.`);
-    return updated;
+    const realtime = { adminChannel: resolveRealtimeAdminChannel() };
+    return { token: this.securityTokenService.issueStaffToken(staff), staff, realtime };
   }
 
   /** The new stay and its NEW_RESERVATION notification commit together. */
@@ -112,19 +66,6 @@ export class AdminService {
     return { stay: created, magicLinkUrl };
   }
 
-  async updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord> {
-    await this.requireStay(stayId);
-    return this.stayRepo.updateStayStatus(stayId, status);
-  }
-
-  async updateStayWifi(stayId: string, dto: UpdateStayWifiDto): Promise<StayRecord> {
-    const existing = await this.requireStay(stayId);
-    return this.stayRepo.updateStayWifi(stayId, {
-      wifiSsid: dto.wifiSsid?.trim() || existing.villaAccess.wifiSsid,
-      wifiPasscode: dto.wifiPasscode?.trim() || existing.villaAccess.wifiPasscode,
-    });
-  }
-
   async regenerateStayToken(
     stayId: string,
   ): Promise<{ stayId: string; guestTokenUuid: string; magicLinkUrl: string }> {
@@ -136,22 +77,6 @@ export class AdminService {
       guestTokenUuid: updated.guestTokenUuid,
       magicLinkUrl: `${guestPortalBaseUrl()}/?guestId=${newUuid}`,
     };
-  }
-
-  async updateStayTransfer(stayId: string, dto: AssignTransferDto): Promise<FlightTransfer> {
-    const existing = await this.requireStay(stayId);
-    const driverName =
-      dto.assignedStaffName ?? dto.assignedDriver ?? existing.flightTransfer.assignedDriver;
-    return this.stayRepo.updateTransfer(stayId, {
-      assignedStaffId: dto.assignedStaffId ?? existing.flightTransfer.assignedStaffId,
-      assignedStaffName: driverName,
-      assignedDriver: driverName,
-      vehicleModel: dto.vehicleModel ?? existing.flightTransfer.vehicleModel,
-      meetingPoint: dto.meetingPoint ?? existing.flightTransfer.meetingPoint,
-      status: dto.status || existing.flightTransfer.status,
-      adminDispatchNotes: dto.adminDispatchNotes ?? existing.flightTransfer.adminDispatchNotes,
-      notifiedAt: new Date().toISOString(),
-    });
   }
 
   private async requireStay(stayId: string): Promise<StayAggregate> {

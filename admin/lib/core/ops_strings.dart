@@ -39,8 +39,6 @@ class OpsStrings {
   String get source => _t('Source', 'Origen');
   String get dueInfo => _t('Resort time (Settings time zone).',
       'Hora del resort (zona horaria de Ajustes).');
-  String get overdueInfo =>
-      _t('Open and past its due time.', 'Abierta y pasada su hora límite.');
 
   String actionFor(String next) => switch (next) {
         TaskValues.assigned => assign,

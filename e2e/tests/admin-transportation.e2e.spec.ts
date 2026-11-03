@@ -199,6 +199,9 @@ test.describe('Phase 5 — Transportation (admin http://localhost:3002)', () => 
     await page.getByRole('button', { name: new RegExp(GUEST) }).first().click();
     await choose(page, /^Service/, service.name);
     await choose(page, /^Type/, 'Departure');
+    // Settings may list other airports; this service serves CUN only.
+    await button(page, /^Airport/).last().click();
+    await page.getByRole('menuitem', { name: /^CUN/ }).last().click();
     await typeInto(page, field(page, 'Airline'), 'Aeromexico');
     await typeInto(page, field(page, 'Flight number'), FLIGHT);
     await typeInto(page, field(page, 'Flight time'), `${resortDay(1)} 18:00`);

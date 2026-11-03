@@ -86,6 +86,6 @@ describe('Per-stay list caps and document budget (ADV-12)', () => {
     }
 
     expect(failure).toBeInstanceOf(StayDocumentTooLargeError);
-    await expect(repo.updateStayStatus(stay.stayId, 'ACTIVE_STAY')).resolves.toBeDefined();
+    await expect(repo.updateStay(stay.stayId, (s) => ({ ...s, status: 'ACTIVE_STAY' }))).resolves.toBeDefined();
   });
 });

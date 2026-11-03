@@ -10,11 +10,13 @@ import {
   VILLA_REPOSITORY_PORT,
   VillaRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { SYNC_STAY_LIMIT } from '../admin/admin-sync.service';
 import { CreateVillaDto, UpdateVillaDto, VillaListQueryDto } from './villa.dto';
 
 /** Wire shape: the villa plus `id` and the read-only name of the in-house guest (or null). */
 export type VillaView = Villa & { id: string; currentGuestName: string | null };
+
+/** Upper bound of open stays (pre-arrival + in-house) read to find in-house guests. */
+const OPEN_STAY_LIMIT = 200;
 
 const VILLA_LIST_SPEC = {
   sortable: ['name', 'category', 'capacity', 'operationalStatus'],
@@ -93,7 +95,7 @@ export class VillasService {
 
   /** villaId -> guest name of its in-house (ACTIVE_STAY) stay, from one bounded query. */
   private async inHouseGuests(): Promise<Map<string, string>> {
-    const open = await this.stays.listOpenStays(SYNC_STAY_LIMIT);
+    const open = await this.stays.listOpenStays(OPEN_STAY_LIMIT);
     return new Map(open.filter((s) => s.status === 'ACTIVE_STAY').map((s) => [s.villaId, s.guestProfile.name]));
   }
 }

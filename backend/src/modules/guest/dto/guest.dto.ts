@@ -2,7 +2,6 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
-  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -26,89 +25,6 @@ import {
   TIME_OF_DAY_PATTERN,
   URL_MAX,
 } from '../../../common/validation/field-limits';
-
-export class VerifyStepUpDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  villaNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  lastName?: string;
-}
-
-export class UpdateTransferDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  arrivalDate?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  arrivalAirport?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  airline?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  flightNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  arrivalTime?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  estimatedLanding?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  terminal?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(12)
-  partySize?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(30)
-  luggageCount?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(20)
-  luggageChecked?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(20)
-  luggageCarryOn?: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(LONG_TEXT_MAX)
-  notes?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  status?: string;
-}
 
 export class UpdatePersonalizationDto {
   @IsOptional()
@@ -205,14 +121,6 @@ export class UpdateServiceOrderDto {
   @Type(() => LarderCartLineDto)
   @ArrayMaxSize(LARDER_LINES_MAX)
   items!: LarderCartLineDto[];
-}
-
-/** Legacy `PUT /stays/:guestUuid/larder`: same per-service order with the service in the body. */
-export class UpdateLarderOrderDto extends UpdateServiceOrderDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(SHORT_TEXT_MAX)
-  serviceId!: string;
 }
 
 /** Journey task ids such as `1:core:flight` or `2:section:DINING`. */
@@ -392,15 +300,4 @@ export class CreateMidStayCheckInDto {
   @IsString()
   @MaxLength(LONG_TEXT_MAX)
   note?: string;
-}
-
-export class ExpressCheckoutDto {
-  @IsOptional()
-  @IsBoolean()
-  lateCheckoutRequested?: boolean;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  requestedCheckoutTime?: string;
 }

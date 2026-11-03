@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import 'application/admin_live_sync.dart';
+import 'application/admin_realtime.dart';
 import 'application/admin_shell_controller.dart';
 import 'application/notification_bell_controller.dart';
 import 'application/resort_settings_controller.dart';
 import 'application/service_catalog_deps.dart';
 import 'core/admin_theme.dart';
 import 'core/alert_chime_port.dart';
-import 'core/app_config.dart';
-import 'core/guest_portal_link.dart';
 import 'core/image_file_picker.dart';
+import 'core/realtime_events_port.dart';
 import 'core/resort_time.dart';
 import 'core/time_zone_catalog.dart';
 import 'data/admin_api_client.dart';
@@ -24,12 +24,12 @@ import 'data/http_uploads.dart';
 import 'domain/admin_catalog_repositories.dart';
 import 'domain/staff_member.dart';
 import 'presentation/admin_command_shell.dart';
+import 'presentation/components/realtime_scope.dart';
 import 'presentation/operations/operations_scope.dart';
 import 'presentation/services/service_catalog_scope.dart';
 import 'presentation/workspaces/transportation/trip_scope.dart';
 
 void main() {
-  GuestPortalLink.configure(AdminAppConfig.guestPortalUrl);
   WidgetsFlutterBinding.ensureInitialized();
   SemanticsBinding.instance.ensureSemantics();
   // One API client: one silent staff session for every repository.
@@ -64,7 +64,8 @@ void main() {
         staff: HttpStaffDirectoryRepository(api),
         staffRoster: HttpStaffRosterRepository(api),
         timeZones: createTimeZoneCatalog(),
-        enableLivePolling: true,
+        realtimePort: createRealtimeEventsPort(),
+        realtimeChannel: api.realtimeChannel,
       ),
     ),
   ));
@@ -73,8 +74,9 @@ void main() {
 /// Root of the Kachava Lux staff Command Center.
 ///
 /// There is no sign-in: the API client authenticates silently, so the shell
-/// is always shown. The only background traffic is the bell poll (unread
-/// notification counts every 15 s); each screen reads its own pages.
+/// is always shown. No periodic polling (ADR-012): the bell and the open
+/// screen refresh on load, after own writes, on real-time signals, when the
+/// tab becomes visible again and with the top-bar Refresh button.
 class KachavaAdminApp extends StatefulWidget {
   const KachavaAdminApp({
     super.key,
@@ -85,7 +87,8 @@ class KachavaAdminApp extends StatefulWidget {
     this.staffRoster,
     this.chime,
     this.zoneResolver,
-    this.enableLivePolling = false,
+    this.realtimePort,
+    this.realtimeChannel,
   });
 
   /// Settings and Villas (`/admin/settings`, `/admin/villas`).
@@ -101,7 +104,10 @@ class KachavaAdminApp extends StatefulWidget {
   final StaffRosterRepository? staffRoster;
   final AlertChimePort? chime;
   final ZoneOffsetResolver? zoneResolver;
-  final bool enableLivePolling;
+
+  /// Real-time signal listener; both are needed to enable real time.
+  final RealtimeEventsPort? realtimePort;
+  final RealtimeChannel? realtimeChannel;
 
   @override
   State<KachavaAdminApp> createState() => _KachavaAdminAppState();
@@ -116,6 +122,13 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
       ResortSettingsController(widget.resort.settings);
   late final AdminLiveSync _poll =
       AdminLiveSync(initialLoad: _bell.refresh, refresh: _bell.refresh);
+  late final AdminRealtime _realtime = AdminRealtime(
+      port: widget.realtimePort,
+      channel: widget.realtimeChannel,
+      liveSync: _poll);
+
+  /// The browser tab became visible again: catch up on missed changes.
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
@@ -123,11 +136,14 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
     _resortSettings.load();
     _shell.loadStaff();
     _poll.tick();
-    if (widget.enableLivePolling) _poll.startPolling();
+    _realtime.start();
+    _lifecycle = AppLifecycleListener(onShow: _realtime.refreshAll);
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    _realtime.dispose();
     _poll.dispose();
     _bell.dispose();
     _resortSettings.dispose();
@@ -145,9 +161,10 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
       timeZones: widget.timeZones,
       syncStatus: _poll.status,
       zoneResolver: widget.zoneResolver,
+      onRefresh: _realtime.refreshAll,
     );
     final operations = widget.operations;
-    return MaterialApp(
+    final app = MaterialApp(
       title: 'Kachava Lux · Command Center',
       debugShowCheckedModeBanner: false,
       theme: KachavaAdminTheme.build(),
@@ -155,5 +172,7 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
           ? shell
           : OperationsScope(deps: operations, child: shell),
     );
+    return AdminRealtimeScope(
+        invalidations: _realtime.invalidations, child: app);
   }
 }

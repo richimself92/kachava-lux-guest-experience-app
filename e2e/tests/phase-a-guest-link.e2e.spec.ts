@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import { attachErrorMonitor, readSemanticsSnapshot, waitForFlutterSemantics } from './e2e-helpers';
 import {
+  adminApi,
   API,
   DEMO_MARKERS,
   GUEST_URL,
@@ -17,8 +18,12 @@ import {
  * device. Everything is created through the admin API (no seeds); the stay is upcoming.
  */
 const STAY_PATH = (guestId: string) => `/api/v1/stays/${guestId}`;
-const SOAK_MS = 2 * 60 * 1000;
-const POLL_MS = 30_000;
+/** No polling (ADR-012): a quiet window long enough to catch the old 30 s poll. */
+const QUIET_MS = 40_000;
+const PUSH_MS = 10_000;
+
+/** The app-bar Refresh button: the only manual way to re-read the stay. */
+const tapRefresh = (page: Page) => page.getByRole('button', { name: 'Refresh' }).last().click();
 
 test.describe('Phase A: guest magic link reliability', () => {
   test.describe.configure({ mode: 'serial' });
@@ -28,8 +33,8 @@ test.describe('Phase A: guest magic link reliability', () => {
     world = await prepareGuestWorld(request, 'PA');
   });
 
-  test('E2E-PA01: the link opens the right stay with server data only, and keeps it while polling', async ({ page, request }) => {
-    test.setTimeout(SOAK_MS + 120_000);
+  test('E2E-PA01: the link opens the right stay with server data only; no polling, server changes push a refresh', async ({ page, request }) => {
+    test.setTimeout(QUIET_MS + 120_000);
     const monitor = attachErrorMonitor(page);
     const statuses: number[] = [];
     page.on('response', (res) => {
@@ -50,18 +55,21 @@ test.describe('Phase A: guest magic link reliability', () => {
     expect(home).not.toMatch(DEMO_MARKERS);
     expect(home).not.toContain('Ask your Resort Host');
 
-    // Soak: every poll (30 s) answers 200 and keeps the same stay on screen.
-    const started = Date.now();
-    while (Date.now() - started < SOAK_MS) {
-      await page.waitForResponse(
-        (res) => res.request().method() === 'GET' && res.url().endsWith(STAY_PATH(world.guestId)),
-        { timeout: POLL_MS + 15_000 },
-      );
-      const snap = await readSemanticsSnapshot(page);
-      expect(snap).toContain(world.villaName);
-      expect(snap).not.toMatch(DEMO_MARKERS);
-    }
-    expect(statuses.length).toBeGreaterThanOrEqual(Math.floor(SOAK_MS / POLL_MS));
+    // Quiet: nothing changes on the server, so the portal makes no request at all.
+    await page.waitForTimeout(2_000);
+    const settled = statuses.length;
+    await page.waitForTimeout(QUIET_MS);
+    expect(statuses.length, 'no polling while nothing changes').toBe(settled);
+
+    // A server-side change for this stay pushes a re-read (Firestore signal → REST).
+    const api = await adminApi(request);
+    const found = (await api.get(`/stays?q=${encodeURIComponent(world.guestName)}`)).data[0];
+    await api.patch(`/stays/${found.stayId ?? found.id}`, { internalNotes: `${world.tag} pushed` });
+    await expect.poll(() => statuses.length, { timeout: PUSH_MS }).toBeGreaterThan(settled);
+    const snap = await readSemanticsSnapshot(page);
+    expect(snap).toContain(world.villaName);
+    expect(snap).not.toMatch(DEMO_MARKERS);
+    expect(snap).not.toContain(`${world.tag} pushed`); // internal notes never reach the guest
     expect(statuses.every((status) => status === 200)).toBe(true);
     expect([...monitor.pageErrors, ...monitor.overflowErrors]).toEqual([]);
   });
@@ -121,14 +129,16 @@ test.describe('Phase A: guest magic link reliability', () => {
       }
     });
 
-    // The next poll fails: same villa on screen, no expired-link screen.
-    const degraded = await waitForFlutterSemantics(page, 'Reconnecting', POLL_MS + 15_000);
+    // The next read fails: same villa on screen, no expired-link screen.
+    await tapRefresh(page);
+    const degraded = await waitForFlutterSemantics(page, 'Reconnecting', PUSH_MS);
     expect(degraded).toContain(world.villaName);
     expect(degraded).not.toContain('Ask your Resort Host');
 
     blocked = false;
+    await tapRefresh(page);
     await expect
-      .poll(() => readSemanticsSnapshot(page), { timeout: POLL_MS + 15_000, intervals: [1000] })
+      .poll(() => readSemanticsSnapshot(page), { timeout: PUSH_MS, intervals: [500] })
       .not.toContain('Reconnecting');
   });
 
@@ -143,14 +153,15 @@ test.describe('Phase A: guest magic link reliability', () => {
     expect(await page.evaluate(() => JSON.stringify(window.localStorage))).toContain(world.guestId);
   });
 
-  test('E2E-PA06: a link the server rejects (401) ends the session on its next poll', async ({ page }) => {
+  test('E2E-PA06: a link the server rejects (401) ends the session on its next read', async ({ page }) => {
     await page.goto(`${GUEST_URL}/?guestId=${world.guestId}`);
     await waitForFlutterSemantics(page, world.villaName);
 
     await page.route(`**${STAY_PATH(world.guestId)}`, (route) =>
       route.fulfill({ status: 401, contentType: 'application/json', body: '{"success":false,"statusCode":401}' }));
 
-    await waitForFlutterSemantics(page, 'Ask your Resort Host for a new one', POLL_MS + 15_000);
+    await tapRefresh(page);
+    await waitForFlutterSemantics(page, 'Ask your Resort Host for a new one', PUSH_MS);
     expect(await readSemanticsSnapshot(page)).not.toContain(world.villaName);
   });
 });

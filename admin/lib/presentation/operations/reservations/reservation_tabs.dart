@@ -3,29 +3,45 @@ import 'package:flutter/material.dart';
 import '../../../core/stay_strings.dart';
 import '../../../core/theme/kachava_tokens.dart';
 import '../../../domain/guest_profile.dart';
+import '../../../domain/realtime_change.dart';
 import '../../../domain/reservation.dart';
 import '../../components/components.dart';
 import '../ops_fields.dart';
 
 /// Loads [load] once and renders loading / one-line error + Retry / data.
+/// A real-time change matching [reloadOn] reloads it in the background
+/// (the last data stays on screen; a failure keeps it).
 class LoadedTab<T> extends StatefulWidget {
   const LoadedTab({
     super.key,
     required this.load,
     required this.builder,
     required this.isEs,
+    this.reloadOn,
   });
 
   final Future<T> Function() load;
   final Widget Function(BuildContext context, T value) builder;
   final bool isEs;
+  final bool Function(RealtimeInvalidation change)? reloadOn;
 
   @override
   State<LoadedTab<T>> createState() => _LoadedTabState<T>();
 }
 
-class _LoadedTabState<T> extends State<LoadedTab<T>> {
+class _LoadedTabState<T> extends State<LoadedTab<T>>
+    with AdminRealtimeRefresh<LoadedTab<T>> {
   late Future<T> _future = widget.load();
+
+  @override
+  void onRealtimeInvalidation(RealtimeInvalidation change) {
+    if (!(widget.reloadOn?.call(change) ?? false)) return;
+    widget.load().then((value) {
+      if (mounted) setState(() => _future = Future.value(value));
+    }, onError: (Object error) {
+      debugPrint('Tab refresh failed: $error');
+    });
+  }
 
   @override
   Widget build(BuildContext context) => FutureBuilder<T>(
@@ -71,6 +87,7 @@ class GuestPreferencesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LoadedTab<GuestProfile>(
         load: () => guests.get(stayId),
+        reloadOn: (c) => c.touchesStay(stayId, const {RealtimeTopic.stay}),
         isEs: isEs,
         builder: (context, profile) =>
             GuestPreferencesView(profile: profile, isEs: isEs),
@@ -139,6 +156,7 @@ class StayTripsTab extends StatelessWidget {
     final s = StayStrings(isEs);
     return LoadedTab<StayFolio>(
       load: () => reservations.folio(row.id),
+      reloadOn: (c) => c.touchesStay(row.id, const {RealtimeTopic.trips}),
       isEs: isEs,
       builder: (context, folio) => ListView(
         key: const Key('reservation-trips'),
@@ -169,6 +187,14 @@ class StayTripsTab extends StatelessWidget {
   }
 }
 
+const Set<String> _folioTopics = {
+  RealtimeTopic.stay,
+  RealtimeTopic.requests,
+  RealtimeTopic.bookings,
+  RealtimeTopic.orders,
+  RealtimeTopic.trips,
+};
+
 /// "Stay summary": acquired services, rating, charges and total. Payments
 /// are not simulated: "No PMS integration".
 class StayFolioTab extends StatelessWidget {
@@ -186,6 +212,7 @@ class StayFolioTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LoadedTab<StayFolio>(
         load: () => reservations.folio(stayId),
+        reloadOn: (c) => c.touchesStay(stayId, _folioTopics),
         isEs: isEs,
         builder: (context, folio) => _view(folio),
       );

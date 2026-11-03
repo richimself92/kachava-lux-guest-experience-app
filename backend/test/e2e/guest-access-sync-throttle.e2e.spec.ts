@@ -50,7 +50,7 @@ describe('Guest magic link: invalid token vs storage failure', () => {
   });
 });
 
-describe('GET /api/v1/admin/sync (bounded)', () => {
+describe('Admin read routes (guarded, open stays only)', () => {
   let t: TestApp;
 
   beforeAll(async () => {
@@ -60,36 +60,24 @@ describe('GET /api/v1/admin/sync (bounded)', () => {
 
   afterAll(() => t.close());
 
-  const getData = async (path: string) => {
-    const res = await request(t.server()).get(`/api/v1/admin/${path}`).set(await t.adminHeaders());
+  it('test_midStayFeedback_listsTheOpenStaysFeedback', async () => {
+    const res = await request(t.server()).get('/api/v1/admin/midstay-feedback').set(await t.adminHeaders());
+
     expect(res.status).toBe(200);
-    return res.body.data;
-  };
-
-  it('test_adminSync_returnsOpenStaysAndTheirDerivedLists_withoutCatalog', async () => {
-    const sync = await getData('sync');
-
-    expect(Object.keys(sync).sort()).toEqual(
-      ['alerts', 'bookings', 'conciergeRequests', 'larderOrders', 'midstayFeedback', 'stays'],
-    );
-    expect(sync.stays.map((s: { stayId: string }) => s.stayId)).toEqual(['stay-test-1']);
-    expect(sync.bookings).toEqual(await getData('bookings'));
-    expect(sync.larderOrders).toEqual(await getData('larder-orders'));
-    expect(sync.conciergeRequests).toEqual(await getData('concierge-requests'));
-    expect(sync.midstayFeedback).toEqual(await getData('midstay-feedback'));
+    expect(res.body.data.map((f: { stayId: string }) => f.stayId)).toEqual(['stay-test-1']);
   });
 
   it('test_adminRoutes_withoutBearerToken_return401WithoutDefaultStaffIdentity', async () => {
     const server = t.server();
 
-    const sync = await request(server).get('/api/v1/admin/sync');
+    const feedback = await request(server).get('/api/v1/admin/midstay-feedback');
     const stays = await request(server).get('/api/v1/admin/stays');
 
-    expect([sync.status, stays.status]).toEqual([401, 401]);
+    expect([feedback.status, stays.status]).toEqual([401, 401]);
   });
 
-  it('test_adminSync_guestUuidAsBearer_isRejectedByAdminAuthGuard', async () => {
-    const res = await request(t.server()).get('/api/v1/admin/sync').set('Authorization', `Bearer ${DEMO_UUID}`);
+  it('test_adminRoute_guestUuidAsBearer_isRejectedByAdminAuthGuard', async () => {
+    const res = await request(t.server()).get('/api/v1/admin/midstay-feedback').set('Authorization', `Bearer ${DEMO_UUID}`);
     expect(res.status).toBe(401);
   });
 });

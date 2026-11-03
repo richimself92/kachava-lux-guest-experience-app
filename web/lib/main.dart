@@ -6,8 +6,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'application/portal_controller.dart';
 import 'core/auth/guest_link_resolver.dart';
+import 'core/platform/page_visibility.dart';
 import 'core/platform/photo_picker.dart';
 import 'core/pwa/install_prompt_port.dart';
+import 'core/realtime/realtime_events_port.dart';
 import 'core/storage/device_prefs.dart';
 import 'core/storage/guest_id_store.dart';
 import 'core/theme/kachava_theme.dart';
@@ -31,9 +33,9 @@ class KachavaGuestPortalApp extends StatefulWidget {
     this.prefs,
     this.installPrompt,
     this.photoPicker,
+    this.realtime,
     this.clock = const ResortClock(),
     this.initialUri,
-    this.pollInterval = const Duration(seconds: 30),
   });
 
   final GuestApi? api;
@@ -43,11 +45,13 @@ class KachavaGuestPortalApp extends StatefulWidget {
   final DevicePrefs? prefs;
   final InstallPromptPort? installPrompt;
   final PhotoPicker? photoPicker;
+
+  /// Firestore signal listeners (ADR-012); defaults to the platform port.
+  final RealtimeEventsPort? realtime;
   final ResortClock clock;
 
   /// Page URL; defaults to [Uri.base].
   final Uri? initialUri;
-  final Duration pollInterval;
 
   @override
   State<KachavaGuestPortalApp> createState() => _KachavaGuestPortalAppState();
@@ -69,7 +73,8 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
       api: _api,
       prefs: widget.prefs ?? createDevicePrefs(),
       clock: widget.clock,
-      pollInterval: widget.pollInterval,
+      realtime: widget.realtime ?? createRealtimeEventsPort(),
+      onPageVisible: pageVisibleAgain(),
       initialUri:
           GuestLinkResolver.resolve(widget.initialUri ?? Uri.base, store),
       onLinkRejected: store.clear,

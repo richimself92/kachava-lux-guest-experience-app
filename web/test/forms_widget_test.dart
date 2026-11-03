@@ -22,7 +22,6 @@ Future<PortalController> _controller(FakeGuestApi api,
     prefs: prefs ?? MemoryDevicePrefs(),
     initialUri: portalUri(),
     clock: clockAt(DateTime.utc(2026, 11, 1, 10)),
-    pollInterval: const Duration(days: 1),
   );
   await c.refresh();
   return c;

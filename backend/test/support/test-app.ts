@@ -16,7 +16,7 @@ import {
   guestSearchKeywords,
   STAYS_COLLECTION,
 } from '../../src/infrastructure/repositories/firestore-stay.repository';
-import { configureApp } from '../../src/main';
+import { configureApp, enableRealtimeEmission } from '../../src/main';
 import { itemFixture, serviceFixture } from './catalog-fixtures';
 import { FakeFirestore } from './fake-firestore';
 import { FakeObjectUrlSigner } from './fake-object-url-signer';
@@ -81,6 +81,7 @@ export async function createTestApp(fake = new FakeFirestore(), options: TestApp
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
+  enableRealtimeEmission(app);
   // Listen explicitly: supertest then reuses one bound server for every request in the test.
   await app.listen(0, '127.0.0.1');
   const server = () => app.getHttpServer();

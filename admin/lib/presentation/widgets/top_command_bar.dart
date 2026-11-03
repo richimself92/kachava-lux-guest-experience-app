@@ -7,9 +7,10 @@ import '../../core/admin_theme.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
 import '../components/focus_ring.dart';
+import 'admin_refresh_button.dart';
 
-/// White 64px top bar: page title, EN|ES toggle, alert bell and the
-/// Settings gear. No global search or filters: each list has its own toolbar.
+/// White 64px top bar: page title, EN|ES toggle, Refresh, alert bell and
+/// the Settings gear. No global search or filters: each list has its own toolbar.
 /// Mobile adds the drawer menu button.
 class TopCommandBar extends StatelessWidget {
   static const TextTheme _text = KachavaAdminTheme.textTheme;
@@ -19,15 +20,19 @@ class TopCommandBar extends StatelessWidget {
     required this.controller,
     required this.bell,
     this.showMenuButton = false,
+    this.onRefresh,
   });
 
   final AdminShellController controller;
 
-  /// Unread notification counters (polled).
+  /// Unread notification counters (refreshed by real-time signals).
   final NotificationBellController bell;
 
   /// Shows the menu button that opens the mobile navigation drawer.
   final bool showMenuButton;
+
+  /// Refreshes the bell and every open screen (shows the Refresh button).
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +60,9 @@ class TopCommandBar extends StatelessWidget {
               SizedBox(width: gap),
               _buildLocaleToggleButton(isCompact),
               SizedBox(width: gap),
+              if (onRefresh != null)
+                AdminRefreshButton(
+                    onRefresh: onRefresh!, isEs: controller.isEs),
               ListenableBuilder(
                 listenable: bell,
                 builder: (context, _) => _buildNotificationBell(isCompact),

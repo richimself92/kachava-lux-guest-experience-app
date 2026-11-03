@@ -44,6 +44,7 @@ class L10n {
       'Tu enlace expiró, pide uno nuevo a tu Resort Host.');
   String get loading => _t('Loading', 'Cargando');
   String get reconnecting => _t('Reconnecting…', 'Reconectando…');
+  String get refresh => _t('Refresh', 'Actualizar');
   String get retry => _t('Retry', 'Reintentar');
   String get loadFailed => _t("Couldn't load", 'No se pudo cargar');
   String get installAppHint =>
@@ -190,10 +191,6 @@ class L10n {
   String get passengers => _t('Passengers', 'Pasajeros');
   String get bags => _t('Bags', 'Maletas');
   String get vehicle => _t('Vehicle', 'Vehículo');
-  String get pageWhen => _t('When', 'Cuándo');
-  String get pageFlight => _t('Flight', 'Vuelo');
-  String get pageRoute => _t('Route', 'Ruta');
-  String get pageGroup => _t('Group', 'Grupo');
   String get pickupInfo => _t(
       'The resort sets the pickup time from your flight.',
       'El resort fija la hora de recogida según tu vuelo.');
@@ -204,7 +201,6 @@ class L10n {
   String get rateInfo => _t('Optional. Goes only to your Resort Host.',
       'Opcional. Solo la ve tu Resort Host.');
   String seats(int n) => _t('$n seats', '$n plazas');
-  String get sendTrip => send;
   String get pickupAt => _t('Pickup', 'Recogida');
 
   String issue(FormIssue i) => switch (i) {

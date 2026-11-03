@@ -6,6 +6,7 @@ import '../../../core/stay_strings.dart';
 import '../../../core/theme/kachava_tokens.dart';
 import '../../../domain/conversation.dart';
 import '../../../domain/list_query.dart';
+import '../../../domain/realtime_change.dart';
 import '../../components/components.dart';
 
 /// One conversation: the newest messages (guest left, staff right, photos
@@ -41,7 +42,8 @@ class ConversationPanel extends StatefulWidget {
   State<ConversationPanel> createState() => _ConversationPanelState();
 }
 
-class _ConversationPanelState extends State<ConversationPanel> {
+class _ConversationPanelState extends State<ConversationPanel>
+    with AdminRealtimeRefresh<ConversationPanel> {
   final TextEditingController _reply = TextEditingController();
   List<ConversationMessage>? _messages;
   Object? _error;
@@ -72,6 +74,33 @@ class _ConversationPanelState extends State<ConversationPanel> {
       widget.onChanged();
     } catch (error) {
       if (mounted) setState(() => _error = error);
+    }
+  }
+
+  @override
+  void onRealtimeInvalidation(RealtimeInvalidation change) {
+    if (change.touchesStay(widget.stayId, const {RealtimeTopic.messages})) {
+      _reloadThread();
+    }
+  }
+
+  /// Background reload (keeps the thread on failure). Marks read only when
+  /// a new guest message arrived: marking read is itself a change event,
+  /// so an unconditional mark would loop.
+  Future<void> _reloadThread() async {
+    if (_messages == null) return _error == null ? null : _load();
+    try {
+      final page = await widget.repository
+          .messages(widget.stayId, ConversationPanel.messagesQuery);
+      if (!mounted) return;
+      final before = _messages?.lastOrNull?.id;
+      setState(() => _messages = page.items);
+      final newest = page.items.lastOrNull;
+      if (newest == null || newest.id == before || !newest.fromGuest) return;
+      await widget.repository.markRead(widget.stayId);
+      widget.onChanged();
+    } catch (error) {
+      debugPrint('Conversation refresh failed: $error');
     }
   }
 

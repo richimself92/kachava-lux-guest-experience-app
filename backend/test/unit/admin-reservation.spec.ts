@@ -2,7 +2,6 @@ import { SecurityTokenService } from '../../src/common/services/security-token.s
 import { BusinessRuleError, EntityNotFoundError } from '../../src/domain/domain-errors';
 import { OperationalAlert, StaffMember } from '../../src/domain/models/domain.models';
 import { Villa } from '../../src/domain/models/resort-config.models';
-import { FirestoreAlertRepository } from '../../src/infrastructure/repositories/firestore-alert.repository';
 import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
 import { AdminService } from '../../src/modules/admin/admin.service';
@@ -18,7 +17,6 @@ async function adminServiceOver(fake: FakeFirestore, villa: Villa | null = villa
   if (villa) await villas.create(villa);
   return new AdminService(
     new FirestoreStayRepository(db),
-    new FirestoreAlertRepository(db),
     villas,
     new SecurityTokenService(),
   );

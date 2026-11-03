@@ -30,7 +30,4 @@ class AdminI18n {
 
   static String tabLabel(AdminWorkspaceTab tab, bool isEs) =>
       isEs ? tab.labelEs : tab.label;
-
-  static String tabShortLabel(AdminWorkspaceTab tab, bool isEs) =>
-      tabLabel(tab, isEs);
 }

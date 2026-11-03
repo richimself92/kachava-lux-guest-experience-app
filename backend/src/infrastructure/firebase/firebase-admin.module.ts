@@ -2,7 +2,8 @@ import { Global, Module, Provider } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { assertFirestoreTarget } from '../../common/config/runtime-flags';
+import { assertFirestoreTarget, isFirestoreFlagEnabled } from '../../common/config/runtime-flags';
+import { REALTIME_SIGNAL_WRITER_PORT, RealtimeSignalWriterPort } from '../../domain/ports/realtime-signal.port';
 import {
   ALERT_REPOSITORY_PORT,
   CATALOG_IMAGE_STORAGE_PORT,
@@ -29,6 +30,8 @@ import { FirestoreServiceRequestRepository } from '../repositories/firestore-ser
 import { FirestoreStaffRepository, STAFF_COLLECTION } from '../repositories/firestore-staff.repository';
 import { FirestoreStayRepository, STAY_SCAN_LIMIT } from '../repositories/firestore-stay.repository';
 import { FirestoreTripRepository } from '../repositories/firestore-trip.repository';
+import { FirestoreRealtimeSignalWriter } from '../realtime/firestore-realtime-signal.writer';
+import { RecordingRealtimeSignalWriter } from '../realtime/recording-realtime-signal.writer';
 import { CatalogImageStorageAdapter } from '../storage/catalog-image-storage.adapter';
 import {
   EmulatorObjectUrlSigner,
@@ -78,6 +81,11 @@ export function createObjectUrlSigner(): ObjectUrlSigner {
   return new GcsObjectUrlSigner(bucket, bucketName);
 }
 
+/** ADR-012 signal documents in Firestore; an in-memory recorder when Firestore is off (tests). */
+export function createRealtimeSignalWriter(db: Firestore): RealtimeSignalWriterPort {
+  return isFirestoreFlagEnabled() ? new FirestoreRealtimeSignalWriter(db) : new RecordingRealtimeSignalWriter();
+}
+
 function firestoreBacked<T>(token: symbol, build: (db: Firestore) => T): Provider {
   return { provide: token, useFactory: build, inject: [FIRESTORE_DB] };
 }
@@ -89,6 +97,7 @@ const providers: Provider[] = [
     STAY_REPOSITORY_PORT,
     (db) => new FirestoreStayRepository(db, STAY_SCAN_LIMIT, async () => (await new FirestoreSettingsRepository(db).get()).timeZone),
   ),
+  firestoreBacked(REALTIME_SIGNAL_WRITER_PORT, createRealtimeSignalWriter),
   firestoreBacked(SERVICE_REQUEST_REPOSITORY_PORT, (db) => new FirestoreServiceRequestRepository(db)),
   firestoreBacked(
     STAFF_ROSTER_REPOSITORY_PORT,

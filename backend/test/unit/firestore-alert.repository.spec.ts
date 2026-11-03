@@ -23,7 +23,7 @@ describe('FirestoreAlertRepository', () => {
   });
 
   it('test_firestoreAlertRepository_newInstance_doesNotSeedDemoAlerts', async () => {
-    expect(await instanceA.listAlerts()).toEqual({ alerts: [], unreadCount: 0 });
+    expect(await instanceA.listRecent({}, 10)).toEqual([]);
   });
 
   it('test_firestoreAlertRepository_alertCreatedOnOneInstance_isListedNewestFirstByAnother', async () => {
@@ -31,12 +31,10 @@ describe('FirestoreAlertRepository', () => {
     await instanceA.createAlert(alertFixture('alt_new', '2026-11-13T10:00:00.000Z'));
 
     const acked = await instanceB.acknowledgeAlert('alt_old', 'staff-test');
-    const listed = await instanceA.listAlerts({ isAcknowledged: false });
+    const listed = await instanceA.listRecent({}, 10);
 
     expect(acked?.acknowledgedByStaffId).toBe('staff-test');
-    expect(listed.alerts.map((a) => a.alertId)).toEqual(['alt_new']);
-    expect(listed.unreadCount).toBe(1);
-    expect((await instanceB.listAlerts()).alerts.map((a) => a.alertId)).toEqual(['alt_new', 'alt_old']);
+    expect(listed.map((a) => [a.alertId, a.isAcknowledged])).toEqual([['alt_new', false], ['alt_old', true]]);
   });
 
   it('test_firestoreAlertRepository_acknowledgeUnknownAlert_returnsNull', async () => {

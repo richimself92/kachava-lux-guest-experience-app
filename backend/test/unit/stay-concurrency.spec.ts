@@ -2,20 +2,18 @@ import { CreateBookingDto } from '../../src/modules/guest/dto/guest.dto';
 import { CatalogItem, CatalogService } from '../../src/domain/catalog/catalog.models';
 import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
-import { AdminFulfillmentService } from '../../src/modules/admin/admin-fulfillment.service';
 import { GuestAlertFolioHelper } from '../../src/modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from '../../src/modules/guest/guest-booking.service';
 import { TaskAutomation } from '../../src/modules/tasks/task-automation.service';
 import { FirestoreTaskRepository } from '../../src/infrastructure/repositories/firestore-task.repository';
 import { FirestoreSettingsRepository } from '../../src/infrastructure/repositories/firestore-settings.repository';
 import { SystemClock } from '../../src/infrastructure/time/system-clock';
-import { StaffMember, StayAggregate } from '../../src/domain/models/domain.models';
+import { StayAggregate } from '../../src/domain/models/domain.models';
 import { itemFixture, serviceFixture } from '../support/catalog-fixtures';
 import { FakeFirestore } from '../support/fake-firestore';
 import { populatedStayFixture } from '../support/stay-fixtures';
 
 const PARALLEL = 20;
-const STAFF = { staffId: 'staff-test', fullName: 'Test Staff' } as StaffMember;
 const STOCKING_SERVICE = serviceFixture({
   serviceId: 'svc-stock', kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', experience: null,
   stocking: { maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null },
@@ -49,7 +47,6 @@ async function seedStay(fake: FakeFirestore) {
     booking: new GuestBookingService(repo, services, items, helper, new TaskAutomation(
       new FirestoreTaskRepository(db), new FirestoreSettingsRepository(db), new SystemClock(),
     )),
-    admin: new AdminFulfillmentService(repo, {} as never),
   };
 }
 
@@ -100,21 +97,6 @@ describe('Stay mutations under concurrency (fake Firestore with transaction conf
     await booking.updateServiceOrder(staleSnapshot, 'svc-stock', [{ itemId: 'item-1', quantity: 3 }]);
 
     const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    expect(bookingFolioLines(stored)).toBe(1);
-  });
-
-  it('test_adminApproveCheckout_afterGuestBooking_settlesTheNewCharge', async () => {
-    const fake = new FakeFirestore();
-    const { repo, stay, booking, admin } = await seedStay(fake);
-    const staleSnapshot = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    jest.spyOn(repo, 'findByStayId').mockResolvedValueOnce(structuredClone(staleSnapshot));
-
-    await booking.createBooking(staleSnapshot, paidBooking(7));
-    await admin.approveCheckout(stay.stayId, {}, STAFF);
-
-    jest.restoreAllMocks();
-    const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    expect(stored.experienceBookings.some(hasRef('ref_7'))).toBe(true);
     expect(bookingFolioLines(stored)).toBe(1);
   });
 });

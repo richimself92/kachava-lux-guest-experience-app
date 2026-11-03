@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/admin_i18n.dart';
 import '../../../core/stay_strings.dart';
 import '../../../domain/guest_profile.dart';
+import '../../../domain/realtime_change.dart';
 import '../../../domain/reservation.dart';
 import '../../../domain/staff_member.dart';
 import '../../components/components.dart';
@@ -43,10 +44,14 @@ class ReservationDetailPanel extends StatefulWidget {
   State<ReservationDetailPanel> createState() => _ReservationDetailPanelState();
 }
 
-class _ReservationDetailPanelState extends State<ReservationDetailPanel> {
+class _ReservationDetailPanelState extends State<ReservationDetailPanel>
+    with AdminRealtimeRefresh<ReservationDetailPanel> {
   StayDetail? _detail;
   Object? _error;
   bool _busy = false;
+
+  /// Resets the Summary form; a real-time reload keeps the staff's edits.
+  int _formVersion = 0;
 
   StayStrings get _s => StayStrings(widget.isEs);
   ReservationRow get _row => _detail?.row ?? widget.row;
@@ -61,10 +66,26 @@ class _ReservationDetailPanelState extends State<ReservationDetailPanel> {
     setState(() => _error = null);
     try {
       final detail = await widget.reservations.get(widget.row.id);
-      if (mounted) setState(() => _detail = detail);
+      if (mounted) setState(() => _show(detail));
     } catch (error) {
       if (mounted) setState(() => _error = error);
     }
+  }
+
+  void _show(StayDetail detail) {
+    _detail = detail;
+    _formVersion++;
+  }
+
+  @override
+  void onRealtimeInvalidation(RealtimeInvalidation change) {
+    if (!change.touchesStay(widget.row.id, const {RealtimeTopic.stay})) return;
+    if (_detail == null || _busy) return;
+    widget.reservations.get(widget.row.id).then((detail) {
+      if (mounted && !_busy) setState(() => _detail = detail);
+    }, onError: (Object error) {
+      debugPrint('Reservation refresh failed: $error');
+    });
   }
 
   /// Saves [patch]; throws on failure so the caller keeps its edits.
@@ -73,7 +94,7 @@ class _ReservationDetailPanelState extends State<ReservationDetailPanel> {
     setState(() => _busy = true);
     try {
       final updated = await widget.reservations.update(_row.id, patch);
-      if (mounted) setState(() => _detail = updated);
+      if (mounted) setState(() => _show(updated));
       widget.onChanged();
       showAdminToastOn(messenger, doneMessage);
     } catch (error) {
@@ -170,7 +191,7 @@ class _ReservationDetailPanelState extends State<ReservationDetailPanel> {
     }
     if (detail == null) return const LinearProgressIndicator();
     return ReservationSummaryTab(
-      key: ValueKey(detail),
+      key: ValueKey('summary-$_formVersion'),
       detail: detail,
       staff: widget.staff,
       onSave: (patch) => _update(patch, _s.saved),

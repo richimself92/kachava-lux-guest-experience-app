@@ -73,14 +73,6 @@ class AdminShellController extends ChangeNotifier {
         _pending = AdminOpenRequest(tab, id, section: section);
       });
 
-  /// The pending request for [tab] (consumed: returned once).
-  AdminOpenRequest? takeOpenRequest(AdminWorkspaceTab tab) {
-    final pending = _pending;
-    if (pending == null || pending.tab != tab) return null;
-    _pending = null;
-    return pending;
-  }
-
   /// The pending request for [tab] without consuming it.
   AdminOpenRequest? peekOpenRequest(AdminWorkspaceTab tab) =>
       _pending?.tab == tab ? _pending : null;

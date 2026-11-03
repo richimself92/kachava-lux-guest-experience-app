@@ -14,7 +14,6 @@ import { FakeFirestore } from '../support/fake-firestore';
 const STRONG = 'x'.repeat(MIN_SECRET_LENGTH);
 const ALL_STRONG = {
   STAFF_JWT_SECRET: STRONG,
-  STEPUP_HMAC_SECRET: STRONG,
 };
 
 describe('resolveSecret / assertProductionSecrets', () => {
@@ -26,9 +25,9 @@ describe('resolveSecret / assertProductionSecrets', () => {
   );
 
   it('test_resolveSecret_production_weakSecret_throws', () => {
-    const env = { NODE_ENV: 'production', STEPUP_HMAC_SECRET: 'short-secret' };
+    const env = { NODE_ENV: 'production', STAFF_JWT_SECRET: 'short-secret' };
 
-    expect(() => resolveSecret('STEPUP_HMAC_SECRET', env)).toThrow(/STEPUP_HMAC_SECRET/);
+    expect(() => resolveSecret('STAFF_JWT_SECRET', env)).toThrow(/STAFF_JWT_SECRET/);
   });
 
   it('test_resolveSecret_production_strongSecret_returnsIt', () => {
@@ -38,21 +37,17 @@ describe('resolveSecret / assertProductionSecrets', () => {
   it('test_resolveSecret_local_missingSecret_returnsStablePerProcessRandomSecret', () => {
     const first = resolveSecret('STAFF_JWT_SECRET', {});
     const again = resolveSecret('STAFF_JWT_SECRET', {});
-    const other = resolveSecret('STEPUP_HMAC_SECRET', {});
 
     expect(first.length).toBeGreaterThanOrEqual(MIN_SECRET_LENGTH);
     expect(again).toBe(first);
-    expect(other).not.toBe(first);
   });
 
   it('test_resolveSecret_local_configuredSecret_isUsed', () => {
-    expect(resolveSecret('STEPUP_HMAC_SECRET', { STEPUP_HMAC_SECRET: 'dev' })).toBe('dev');
+    expect(resolveSecret('STAFF_JWT_SECRET', { STAFF_JWT_SECRET: 'dev' })).toBe('dev');
   });
 
-  it('test_assertProductionSecrets_productionMissingStepUpSecret_throws', () => {
-    const env = { NODE_ENV: 'production', STAFF_JWT_SECRET: STRONG };
-
-    expect(() => assertProductionSecrets(env)).toThrow(/STEPUP_HMAC_SECRET/);
+  it('test_assertProductionSecrets_productionMissingStaffSecret_throws', () => {
+    expect(() => assertProductionSecrets({ NODE_ENV: 'production' })).toThrow(/STAFF_JWT_SECRET/);
   });
 
   it('test_assertProductionSecrets_allStrongOrLocal_passes', () => {
@@ -67,7 +62,6 @@ describe('startup in production without secrets', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'production';
     delete process.env.STAFF_JWT_SECRET;
-    delete process.env.STEPUP_HMAC_SECRET;
   });
 
   afterEach(() => {

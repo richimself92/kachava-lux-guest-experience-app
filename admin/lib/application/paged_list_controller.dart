@@ -107,6 +107,28 @@ class PagedListController<T> extends ChangeNotifier {
 
   Future<void> retry() => load();
 
+  /// Background reload of the same query and page (a real-time change):
+  /// rows stay on screen undimmed; a failure keeps them (the shell shows
+  /// "Reconnecting"). Without rows yet it is a normal [load].
+  Future<void> refresh() async {
+    if (_disposed) return;
+    if (_result == null || _error != null) return load();
+    final sequence = ++_sequence;
+    try {
+      final result = await _fetch(_query);
+      if (_isStale(sequence)) return;
+      if (result.items.isEmpty && result.total > 0 && _query.page > 1) {
+        return await _apply(_query.withPage(result.pageCount));
+      }
+      _result = result;
+    } catch (error) {
+      if (_isStale(sequence)) return;
+      debugPrint('List refresh failed: $error');
+    }
+    _loading = false;
+    _notify();
+  }
+
   /// Debounced search; the page resets to 1 when it applies.
   void search(String text) {
     _searchText = text;

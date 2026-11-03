@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../application/paged_list_controller.dart';
 import '../../../core/admin_list_strings.dart';
 import '../../../core/theme/kachava_tokens.dart';
+import '../../../domain/realtime_change.dart';
 import '../admin_data_table.dart';
 import '../info_tooltip.dart';
+import '../realtime_scope.dart';
 import 'admin_detail_panel.dart';
 import 'admin_list_parts.dart';
 import 'admin_list_shortcuts.dart';
@@ -43,6 +45,7 @@ class AdminListScreen<T> extends StatefulWidget {
     this.initialDetail,
     this.onRowTap,
     this.isEs = false,
+    this.realtimeTopics,
   });
 
   static const double wideBreakpoint = 840;
@@ -77,11 +80,16 @@ class AdminListScreen<T> extends StatefulWidget {
   final ValueChanged<T>? onRowTap;
   final bool isEs;
 
+  /// Real-time topics that reload this list (keeping query and page);
+  /// defaults to [realtimeTopicsForList] of [entity].
+  final Set<String>? realtimeTopics;
+
   @override
   State<AdminListScreen<T>> createState() => _AdminListScreenState<T>();
 }
 
-class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
+class _AdminListScreenState<T> extends State<AdminListScreen<T>>
+    with AdminRealtimeRefresh<AdminListScreen<T>> {
   final FocusNode _searchFocus = FocusNode(debugLabel: 'list-search');
 
   /// Holds keyboard focus for the list shortcuts when no row/field has it.
@@ -107,6 +115,7 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
   @override
   void initState() {
     super.initState();
+    _c.addListener(_syncSelected);
     if (_c.result == null) _c.load();
     final initial = widget.initialDetail;
     if (initial != null && widget.detailBuilder != null) {
@@ -117,7 +126,40 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
   }
 
   @override
+  void didUpdateWidget(AdminListScreen<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.controller, _c)) return;
+    oldWidget.controller.removeListener(_syncSelected);
+    _c.addListener(_syncSelected);
+  }
+
+  @override
+  void onRealtimeInvalidation(RealtimeInvalidation change) {
+    final topics =
+        widget.realtimeTopics ?? realtimeTopicsForList(widget.entity);
+    if (change.touches(topics)) _c.refresh();
+  }
+
+  /// The newest copy of [item] on the current page (after a reload).
+  T _fresh(T item) {
+    final id = widget.rowId(item);
+    for (final row in _c.items) {
+      if (widget.rowId(row) == id) return row;
+    }
+    return item;
+  }
+
+  /// Keeps the open side panel on the reloaded row.
+  void _syncSelected() {
+    final selected = _selected;
+    if (!mounted || selected == null) return;
+    final fresh = _fresh(selected);
+    if (!identical(fresh, selected)) setState(() => _selected = fresh);
+  }
+
+  @override
   void dispose() {
+    _c.removeListener(_syncSelected);
     _searchFocus.dispose();
     _listFocus.dispose();
     super.dispose();
@@ -143,8 +185,13 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
       fullscreenDialog: true,
       builder: (route) => Scaffold(
         body: SafeArea(
-          child: widget.detailBuilder!(
-              route, item, () => Navigator.of(route).pop()),
+          child: ListenableBuilder(
+            listenable: _c,
+            builder: (_, __) => widget.detailBuilder!(
+                route,
+                item == null ? null : _fresh(item),
+                () => Navigator.of(route).pop()),
+          ),
         ),
       ),
     ));

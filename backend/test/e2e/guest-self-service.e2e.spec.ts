@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { sourceTaskId } from '../../src/domain/tasks/task.models';
 import { FakeFirestore } from '../support/fake-firestore';
+import { storedAlerts } from '../support/stored-alerts';
 import { forbiddenKeysIn } from '../support/guest-view-assertions';
 import { createTestApp, createVillaAndStay, CreatedStay, TestApp } from '../support/test-app';
 import { arrivalBody, FixedClock, setUpTripWorld } from '../support/trip-setup';
@@ -103,21 +104,21 @@ describe('Guest self-service endpoints', () => {
       const booking = (await book()).body.data;
 
       const res = await request(t.server()).post(`${stayPath}/bookings/${booking.bookingId}/cancel`);
-      const folio = await request(t.server()).get(`${stayPath}/folio`);
+      const folio = await request(t.server()).get(stayPath);
       const task = await request(t.server()).get(`${ADMIN}/tasks/${sourceTaskId('BOOKING', booking.bookingId)}`).set(admin);
-      const alerts = await request(t.server()).get(`${ADMIN}/alerts?category=BOOKING`).set(admin);
+      const alerts = storedAlerts(t.fake, 'BOOKING');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toMatchObject({ bookingId: booking.bookingId, status: 'CANCELLED', cancellationReason: 'Cancelled by guest' });
       expect(forbiddenKeysIn(res.body.data)).toEqual([]);
       expect(folio.body.data.folioSummary.incidentalsSubtotalUSD).toBe(0);
       expect(task.body.data.status).toBe('CANCELLED');
-      expect(alerts.body.data.some((a: { title: string }) => a.title.includes('cancelled by guest'))).toBe(true);
+      expect(alerts.some((a) => a.title.includes('cancelled by guest'))).toBe(true);
     });
 
     it('test_cancel_confirmedBooking_is422', async () => {
       const booking = (await book()).body.data;
-      await request(t.server()).patch(`${ADMIN}/bookings/${booking.bookingId}/assign`).set(admin).send({ status: 'CONFIRMED' });
+      await request(t.server()).post(`${ADMIN}/requests/${booking.bookingId}/transition`).set(admin).send({ action: 'CONFIRM' }).expect(200);
 
       const res = await request(t.server()).post(`${stayPath}/bookings/${booking.bookingId}/cancel`);
 
@@ -142,7 +143,7 @@ describe('Guest self-service endpoints', () => {
 
       const res = await request(t.server()).patch(`${stayPath}/bookings/${booking.bookingId}`)
         .send({ scheduledDate: '2026-12-03', scheduledTimeSlot: '15:30', partySize: 3 });
-      const folio = await request(t.server()).get(`${stayPath}/folio`);
+      const folio = await request(t.server()).get(stayPath);
 
       expect(res.status).toBe(200);
       expect(res.body.data).toMatchObject({
@@ -166,7 +167,7 @@ describe('Guest self-service endpoints', () => {
 
     it('test_change_afterConfirmation_is422', async () => {
       const booking = (await book()).body.data;
-      await request(t.server()).patch(`${ADMIN}/bookings/${booking.bookingId}/assign`).set(admin).send({ status: 'CONFIRMED' });
+      await request(t.server()).post(`${ADMIN}/requests/${booking.bookingId}/transition`).set(admin).send({ action: 'CONFIRM' }).expect(200);
 
       const res = await request(t.server()).patch(`${stayPath}/bookings/${booking.bookingId}`).send({ partySize: 1 });
 
@@ -185,16 +186,6 @@ describe('Guest self-service endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.orders.map((o: { serviceId: string }) => o.serviceId).sort()).toEqual([bar.serviceId, wine.serviceId].sort());
       expect(res.body.data.folioSummary.incidentalsSubtotalUSD).toBe(18);
-    });
-
-    it('test_legacyLarderRoute_isAlsoPerService', async () => {
-      const bar = await orderService('Bar', 4);
-      const wine = await orderService('Wine', 10);
-      await request(t.server()).put(`${stayPath}/larder`).send({ serviceId: bar.serviceId, items: [{ itemId: bar.itemId, quantity: 1 }] });
-
-      const res = await request(t.server()).put(`${stayPath}/larder`).send({ serviceId: wine.serviceId, items: [{ itemId: wine.itemId, quantity: 1 }] });
-
-      expect(res.body.data.orders).toHaveLength(2);
     });
 
     it('test_emptyItems_clearsOnlyThatService', async () => {
@@ -315,13 +306,13 @@ describe('Guest trip cancel (POST /stays/:guestUuid/trips/:tripId/cancel)', () =
 
     const res = await request(t.server()).post(`${w.guestPath}/${trip.id}/cancel`);
     const task = await request(t.server()).get(`${ADMIN}/tasks/${sourceTaskId('TRIP', trip.id)}`).set(admin);
-    const alerts = await request(t.server()).get(`${ADMIN}/alerts?category=TRANSFER`).set(admin);
+    const alerts = storedAlerts(t.fake, 'TRANSFER');
 
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ id: trip.id, status: 'CANCELLED' });
     expect(res.body.data).not.toHaveProperty('statusHistory');
     expect(task.body.data.status).toBe('CANCELLED');
-    expect(alerts.body.data.some((a: { title: string }) => a.title.includes('cancelled by guest'))).toBe(true);
+    expect(alerts.some((a) => a.title.includes('cancelled by guest'))).toBe(true);
   });
 
   it('test_cancel_tripSentToProvider_is422', async () => {

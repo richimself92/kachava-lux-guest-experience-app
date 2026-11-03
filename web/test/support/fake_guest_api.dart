@@ -246,7 +246,6 @@ Future<FakeGuestApi> pumpPortal(
     photoPicker: picker ?? FakePhotoPicker(),
     installPrompt: install ?? FakeInstallPrompt(),
     clock: clockAt(now ?? DateTime.utc(2026, 11, 1, 10)),
-    pollInterval: const Duration(days: 1),
   ));
   await tester.pumpAndSettle();
   return fake;

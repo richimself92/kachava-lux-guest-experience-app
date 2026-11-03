@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { storedAlerts } from '../support/stored-alerts';
 import { FakeFirestore } from '../support/fake-firestore';
 import { createTestApp, TestApp } from '../support/test-app';
 import {
@@ -80,10 +81,10 @@ describe('Guest trips (POST/GET /stays/:guestUuid/trips)', () => {
     it('test_guestCreation_raisesHighTransferAlertTargetingTheTrip', async () => {
       const created = await post(arrivalBody(w.serviceId));
 
-      const alerts = await request(t.server()).get(`${ADMIN}/alerts?category=TRANSFER`).set(await t.adminHeaders());
+      const alerts = storedAlerts(t.fake, 'TRANSFER');
 
-      expect(alerts.body.data).toHaveLength(1);
-      expect(alerts.body.data[0]).toMatchObject({
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0]).toMatchObject({
         category: 'TRANSFER', severity: 'HIGH', stayId: w.stay.stayId, assignedDepartment: 'TRANSPORT',
         targetRef: { type: 'TRIP', id: created.body.data.id }, sourceDocumentPath: `trips/${created.body.data.id}`,
       });

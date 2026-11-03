@@ -175,8 +175,7 @@ void main() {
     Widget buildApp(_FakeBackend backend) => KachavaAdminApp(
         resort: fakeResortRepositories(),
         timeZones: testTimeZones,
-        operations: _operations(AdminApiClient(httpClient: backend.client)),
-        enableLivePolling: true);
+        operations: _operations(AdminApiClient(httpClient: backend.client)));
 
     testWidgets('test_app_showsShellDirectly_withSilentLogin', (tester) async {
       final backend = _FakeBackend();
@@ -205,7 +204,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('test_app_login401_showsNoAccess_andStopsPolling',
+    testWidgets('test_app_login401_showsNoAccess_andNeverRetries',
         (tester) async {
       final backend = _FakeBackend(loginStatus: 401);
       await tester.pumpWidget(buildApp(backend));
@@ -218,7 +217,7 @@ void main() {
       final logins = backend.logins;
       await tester.pump(const Duration(seconds: 16));
       await tester.pumpAndSettle();
-      expect(backend.logins, logins, reason: 'polling must stop');
+      expect(backend.logins, logins, reason: 'no background retries');
       await tester.pumpWidget(const SizedBox());
     });
   });

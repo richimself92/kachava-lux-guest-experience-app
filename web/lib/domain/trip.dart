@@ -91,8 +91,6 @@ class GuestTrip {
   final String vehicle;
   final DateTime? createdAt;
 
-  bool get isCancelled => status == 'CANCELLED';
-
   /// The guest may cancel only before the resort sends it to the provider.
   bool get isInitial => status == 'REQUESTED';
 }

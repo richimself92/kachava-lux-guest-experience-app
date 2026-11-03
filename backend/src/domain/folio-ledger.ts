@@ -4,7 +4,6 @@ import {
   FolioSummary,
   LarderOrderItem,
   StayAggregate,
-  StayLifecycleStatus,
 } from './models/domain.models';
 
 /** Folio line id kept for the single larder line (the shape production documents already hold). */
@@ -155,42 +154,4 @@ export function rechargeBooking(stay: StayAggregate, booking: ExperienceBooking)
     });
   }
   stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
-}
-
-/** Checkout settlement; `status` omitted keeps the current lifecycle status. */
-export interface FolioSettlement {
-  settledAt: string;
-  status?: StayLifecycleStatus;
-  lateCheckoutRequested?: boolean;
-  approvedByStaffId?: string;
-  /** Admin approval keeps the guest's original checkout time when one exists. */
-  keepFirstCheckoutTime?: boolean;
-}
-
-export interface SettledFolio {
-  folioSummary: FolioSummary;
-  folioItems: FolioItem[];
-  status: StayLifecycleStatus;
-}
-
-/** Settles every folio line currently stored on the stay. */
-export function settleFolio(stay: StayAggregate, settlement: FolioSettlement): SettledFolio {
-  const previousCheckout = stay.folioSummary.checkedOutAt;
-  stay.folioItems = stay.folioItems.map((item) => ({ ...item, status: 'SETTLED' as const }));
-  stay.folioSummary = {
-    ...stay.folioSummary,
-    paymentStatus: 'SETTLED',
-    isCheckedOut: true,
-    checkedOutAt: (settlement.keepFirstCheckoutTime && previousCheckout) || settlement.settledAt,
-    ...(settlement.approvedByStaffId ? { approvedByStaffId: settlement.approvedByStaffId } : {}),
-  };
-  if (settlement.status) stay.status = settlement.status;
-  if (settlement.lateCheckoutRequested !== undefined) {
-    stay.flightTransfer.lateCheckoutRequested = settlement.lateCheckoutRequested;
-  }
-  return {
-    folioSummary: structuredClone(stay.folioSummary),
-    folioItems: structuredClone(stay.folioItems),
-    status: stay.status,
-  };
 }

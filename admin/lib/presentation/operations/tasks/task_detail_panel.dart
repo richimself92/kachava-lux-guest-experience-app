@@ -39,6 +39,13 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   late AdminTask _task = widget.task;
   bool _busy = false;
 
+  /// A reloaded list row (real-time change) replaces the shown copy.
+  @override
+  void didUpdateWidget(TaskDetailPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.task, oldWidget.task)) _task = widget.task;
+  }
+
   OpsStrings get _s => OpsStrings(widget.isEs);
 
   Future<void> _advance() async {

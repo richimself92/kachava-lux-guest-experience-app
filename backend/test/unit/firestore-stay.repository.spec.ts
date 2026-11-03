@@ -1,4 +1,4 @@
-import { StayAggregate } from '../../src/domain/models/domain.models';
+import { StayAggregate, StayLifecycleStatus } from '../../src/domain/models/domain.models';
 import { StayPageQuery } from '../../src/domain/ports/repository.ports';
 import {
   FirestoreStayRepository,
@@ -14,7 +14,12 @@ function stayFixture(stayId: string, guestTokenUuid: string, overrides: Partial<
   return { ...populatedStayFixture(), stayId, guestTokenUuid, ...overrides };
 }
 
+function setStatus(repo: FirestoreStayRepository, stayId: string, status: StayLifecycleStatus) {
+  return repo.updateStay(stayId, (s) => ({ ...s, status }));
+}
+
 const PAGE: StayPageQuery = { page: 1, pageSize: 25, direction: 'asc' };
+const MESSAGE = { sender: 'GUEST' as const, senderName: 'Guest', text: 'Thanks', sentAt: '2026-11-13T10:00:00.000Z' };
 
 describe('FirestoreStayRepository (Firestore as single source of truth)', () => {
   let fake: FakeFirestore;
@@ -47,7 +52,7 @@ describe('FirestoreStayRepository (Firestore as single source of truth)', () => 
     await instanceA.createStay(stayFixture('stay_a', TOKEN_A));
     await instanceB.findByGuestTokenUuid(TOKEN_A);
 
-    await instanceA.updateStayStatus('stay_a', 'CHECKED_OUT');
+    await setStatus(instanceA, 'stay_a', 'CHECKED_OUT');
     const rotated = await instanceA.updateStayToken('stay_a', TOKEN_B);
 
     expect(rotated.guestTokenUuid).toBe(TOKEN_B);
@@ -59,8 +64,8 @@ describe('FirestoreStayRepository (Firestore as single source of truth)', () => 
     await instanceA.createStay(stayFixture('stay_a', TOKEN_A));
     await instanceA.createStay(stayFixture('stay_b', TOKEN_B));
 
-    await instanceB.updateStayWifi('stay_b', { wifiSsid: 'Fresh_SSID' });
-    await instanceA.updateStayStatus('stay_a', 'ACTIVE_STAY');
+    await instanceB.updateStay('stay_b', (s) => ({ ...s, villaAccess: { ...s.villaAccess, wifiSsid: 'Fresh_SSID' } }));
+    await setStatus(instanceA, 'stay_a', 'ACTIVE_STAY');
 
     expect((await instanceB.findByStayId('stay_b'))?.villaAccess.wifiSsid).toBe('Fresh_SSID');
   });
@@ -70,7 +75,7 @@ describe('FirestoreStayRepository (Firestore as single source of truth)', () => 
     fake.failWritesWith(new Error('UNAVAILABLE: firestore down'));
 
     await expect(instanceA.createStay(stayFixture('stay_b', TOKEN_B))).rejects.toThrow('UNAVAILABLE');
-    await expect(instanceA.updateStayStatus('stay_a', 'CHECKED_OUT')).rejects.toThrow('UNAVAILABLE');
+    await expect(setStatus(instanceA, 'stay_a', 'CHECKED_OUT')).rejects.toThrow('UNAVAILABLE');
     fake.failWritesWith(null);
     expect((await instanceB.findByStayId('stay_a'))?.status).toBe('ACTIVE_STAY');
   });
@@ -83,38 +88,26 @@ describe('FirestoreStayRepository (Firestore as single source of truth)', () => 
   });
 
   it('test_firestoreStayRepository_mutationOfUnknownStay_rejectsWithNotFound', async () => {
-    await expect(instanceA.updateStayStatus('missing', 'ACTIVE_STAY')).rejects.toThrow(
+    await expect(setStatus(instanceA, 'missing', 'ACTIVE_STAY')).rejects.toThrow(
       'Stay with ID missing not found',
     );
   });
 
-  it('test_firestoreStayRepository_crossStayAdminUpdates_persistToStore', async () => {
+  it('test_firestoreStayRepository_embeddedRequestMessage_persistsToStore', async () => {
     const stay = stayFixture('stay_a', TOKEN_A);
     await instanceA.createStay(stay);
     const requestId = stay.conciergeRequests[0].requestId;
-    const bookingId = stay.experienceBookings[0].bookingId;
 
-    await instanceA.updateConciergeRequestAdmin(requestId, { notes: 'Ice ready' });
-    await instanceA.appendConciergeMessage('stay_a', requestId, {
-      sender: 'GUEST', senderName: 'Guest', text: 'Thanks', sentAt: '2026-11-13T10:00:00.000Z',
-    });
-    await instanceA.updateBookingAssignment(bookingId, { status: 'CONFIRMED', cancellationReason: undefined });
-    await instanceA.updateLarderOrderStatus('stay_a', { provisioningStatus: 'Stocked' });
+    await instanceA.appendConciergeMessage('stay_a', requestId, MESSAGE);
 
-    const reread = await instanceB.findConciergeRequestById(requestId);
-    expect(reread?.notes).toBe('Ice ready');
+    const reread = (await instanceB.findByStayId('stay_a'))?.conciergeRequests.find((r) => r.requestId === requestId);
     expect(reread?.messages.at(-1)?.text).toBe('Thanks');
-    expect((await instanceB.listBookingsForStay('stay_a'))[0].status).toBe('CONFIRMED');
-    const larder = await instanceB.listLarderOrdersAcrossStays();
-    expect(larder.every((o) => o.provisioningStatus === 'Stocked')).toBe(true);
   });
 
-  it('test_firestoreStayRepository_crossStayUpdateOfUnknownItem_returnsNull', async () => {
+  it('test_firestoreStayRepository_messageToUnknownRequest_returnsNull', async () => {
     await instanceA.createStay(stayFixture('stay_a', TOKEN_A));
 
-    expect(await instanceA.updateBookingAssignment('nope', { status: 'CONFIRMED' })).toBeNull();
-    expect(await instanceA.updateConciergeRequestAdmin('nope', { notes: 'x' })).toBeNull();
-    expect(await instanceA.updateLarderOrderStatus('nope', { provisioningStatus: 'x' })).toBeNull();
+    expect(await instanceA.appendConciergeMessage('stay_a', 'nope', MESSAGE)).toBeNull();
   });
 
   it('test_firestoreStayRepository_documentWithoutEmbeddedLists_isNormalizedToEmptyLists', async () => {
@@ -126,7 +119,7 @@ describe('FirestoreStayRepository (Firestore as single source of truth)', () => 
 
     expect(stay?.larderOrders).toEqual([]);
     expect(stay?.folioItems).toEqual([]);
-    expect(await instanceA.listBookingsAcrossStays()).toEqual([]);
+    expect(await instanceA.listMidStayFeedbackAcrossStays()).toEqual([]);
     expect([larderOrders, experienceBookings, conciergeRequests, midstayFeedback, folioItems]).toHaveLength(5);
   });
 });

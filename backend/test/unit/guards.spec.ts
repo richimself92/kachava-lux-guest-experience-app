@@ -1,7 +1,6 @@
 import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GuestTokenGuard } from '../../src/common/guards/guest-token.guard';
-import { StepUpVerifiedGuard } from '../../src/common/guards/step-up-verified.guard';
 import { AdminAuthGuard } from '../../src/common/guards/admin-auth.guard';
 import {
   FirebaseIdTokenVerifier,
@@ -39,7 +38,6 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
   let staffRepository: FirestoreStaffRepository;
   let securityTokenService: SecurityTokenService;
   let guestTokenGuard: GuestTokenGuard;
-  let stepUpGuard: StepUpVerifiedGuard;
   let adminAuthGuard: AdminAuthGuard;
   let firebaseVerify: jest.Mock<Promise<VerifiedFirebaseIdentity | null>, [string]>;
 
@@ -51,7 +49,6 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
     staffRepository = new FirestoreStaffRepository(fake.asFirestore());
     securityTokenService = new SecurityTokenService();
     guestTokenGuard = new GuestTokenGuard(stayRepository);
-    stepUpGuard = new StepUpVerifiedGuard(securityTokenService);
     firebaseVerify = jest.fn().mockResolvedValue(null);
     adminAuthGuard = new AdminAuthGuard(staffRepository, securityTokenService, {
       verify: firebaseVerify,
@@ -82,7 +79,7 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
       const req = (): Record<string, unknown> => ({ method: 'GET', params: { guestUuid: uuid }, headers: {} });
       await guestTokenGuard.canActivate(createMockExecutionContext(req()));
       const stay = await stayRepository.findByGuestTokenUuid(uuid);
-      await stayRepository.updateStayStatus(stay!.stayId, 'CANCELLED');
+      await stayRepository.updateStay(stay!.stayId, (s) => ({ ...s, status: 'CANCELLED' }));
 
       await expect(guestTokenGuard.canActivate(createMockExecutionContext(req()))).rejects.toThrow(
         ForbiddenException,
@@ -143,10 +140,12 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
     it('test_guestTokenGuard_checkedOutStay_allowsGetWithinWindowAndRejectsPostWithForbidden', async () => {
       const stay = await stayRepository.findByGuestTokenUuid(TEST_GUEST_TOKEN);
       expect(stay).not.toBeNull();
-      await stayRepository.settleFolio(stay!.stayId, {
-        settledAt: new Date().toISOString(),
+      const checkedOutAt = new Date().toISOString();
+      await stayRepository.updateStay(stay!.stayId, (s) => ({
+        ...s,
         status: 'CHECKED_OUT',
-      });
+        folioSummary: { ...s.folioSummary, isCheckedOut: true, checkedOutAt },
+      }));
 
       const getReq: Record<string, unknown> = {
         method: 'GET',
@@ -167,7 +166,7 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
 
     it('test_guestTokenGuard_expiredOrCancelledStay_throwsForbiddenException', async () => {
       const stay = await stayRepository.findByGuestTokenUuid(TEST_GUEST_TOKEN);
-      await stayRepository.updateStayStatus(stay!.stayId, 'EXPIRED');
+      await stayRepository.updateStay(stay!.stayId, (s) => ({ ...s, status: 'EXPIRED' }));
 
       const req: Record<string, unknown> = {
         method: 'GET',
@@ -177,28 +176,6 @@ describe('Security & Authentication Guards (TDD Unit Suite)', () => {
       await expect(guestTokenGuard.canActivate(createMockExecutionContext(req))).rejects.toThrow(
         ForbiddenException,
       );
-    });
-  });
-
-  describe('StepUpVerifiedGuard', () => {
-    it('test_stepUpVerifiedGuard_validSignedToken_allowsHighValueMutation', () => {
-      const stayId = 'stay-test-1';
-      const token = securityTokenService.issueStepUpToken(stayId, TEST_GUEST_TOKEN);
-      const req: Record<string, unknown> = {
-        stay: { stayId, guestTokenUuid: TEST_GUEST_TOKEN },
-        headers: { 'x-stepup-session': token },
-      };
-
-      expect(stepUpGuard.canActivate(createMockExecutionContext(req))).toBe(true);
-    });
-
-    it('test_stepUpVerifiedGuard_missingOrTamperedToken_throwsForbiddenException', () => {
-      const req: Record<string, unknown> = {
-        stay: { stayId: 'stay-test-1', guestTokenUuid: TEST_GUEST_TOKEN },
-        headers: { 'x-stepup-session': 'tampered.token.signature' },
-      };
-
-      expect(() => stepUpGuard.canActivate(createMockExecutionContext(req))).toThrow(ForbiddenException);
     });
   });
 

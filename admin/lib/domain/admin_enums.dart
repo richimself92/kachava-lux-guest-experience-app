@@ -43,6 +43,4 @@ enum AdminWorkspaceTab {
   final String id;
   final String label;
   final String labelEs;
-
-  String get shortLabel => label;
 }

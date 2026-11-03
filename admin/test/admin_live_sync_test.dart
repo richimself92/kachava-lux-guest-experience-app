@@ -26,10 +26,6 @@ class _FakeServer {
 }
 
 void main() {
-  test('test_live_sync_default_interval_is_fifteen_seconds', () {
-    expect(AdminLiveSync.defaultInterval, const Duration(seconds: 15));
-  });
-
   test('test_live_sync_first_tick_loads_then_ticks_refresh', () async {
     final server = _FakeServer();
     final sync =
@@ -74,28 +70,6 @@ void main() {
     await sync.tick();
     expect(sync.status.value, AdminSyncStatus.live);
     expect(server.initialLoads, 2, reason: 'initial load retried');
-    sync.dispose();
-  });
-
-  testWidgets('test_live_sync_polls_every_15s_and_never_overlaps',
-      (tester) async {
-    final server = _FakeServer();
-    final sync =
-        AdminLiveSync(initialLoad: server.initialLoad, refresh: server.refresh);
-    await sync.tick();
-    sync.startPolling();
-
-    await tester.pump(const Duration(seconds: 14));
-    expect(server.refreshes, 0);
-    await tester.pump(const Duration(seconds: 1));
-    expect(server.refreshes, 1);
-    await tester.pump(const Duration(seconds: 45));
-    expect(server.refreshes, 1, reason: 'request still in flight');
-
-    server.pending!.complete();
-    await tester.pump(const Duration(seconds: 15));
-    expect(server.refreshes, 2);
-    server.pending!.complete();
     sync.dispose();
   });
 }

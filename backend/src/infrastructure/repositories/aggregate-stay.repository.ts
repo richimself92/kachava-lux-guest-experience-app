@@ -1,10 +1,8 @@
-import { FolioSettlement, LarderCharge, SettledFolio, settleFolio } from '../../domain/folio-ledger';
+import { LarderCharge } from '../../domain/folio-ledger';
 import {
   ConciergeMessage,
   ConciergeRequest,
   ExperienceBooking,
-  FlightTransfer,
-  FolioItem,
   FolioSummary,
   LarderOrderItem,
   MidStayFeedback,
@@ -16,18 +14,12 @@ import {
 } from '../../domain/models/domain.models';
 import { PaginatedResult } from '../../common/listing/list-query';
 import {
-  BookingFilterCriteria,
-  ConciergeFilterCriteria,
   ConversationPageQuery,
-  LarderFilterCriteria,
   StayAlertFactory,
   StayPageQuery,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
 import {
-  collectBookings,
-  collectConciergeRequests,
-  collectLarderOrders,
   collectMidStayFeedback,
 } from '../../domain/stay-projections';
 import { StayDocumentTooLargeError, StayNotFoundError } from '../../domain/stay-errors';
@@ -57,8 +49,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   protected abstract findStay(stayId: string): Promise<StayAggregate | null>;
   /** Open (pre-arrival and in-house) stays: the scope of cross-stay operational lists. */
   protected abstract listOpenStaysBounded(): Promise<StayAggregate[]>;
-  /** The stay holding the booking, larder line or concierge request `childId` (indexed lookup). */
-  protected abstract findStayByChildRef(childId: string): Promise<StayAggregate | null>;
   protected abstract insertStay(stay: StayAggregate, alert?: OperationalAlert | null): Promise<void>;
   /** Storage primitive: read, mutate and write one stay (plus its alert) atomically. */
   protected abstract transactStay<T>(
@@ -99,25 +89,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.mutateStay(stayId, (s) => mutations.rotateGuestToken(s, newUuid));
   }
 
-  updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord> {
-    return this.mutateStay(stayId, (s) => mutations.changeStayStatus(s, status));
-  }
-
-  updateStayWifi(
-    stayId: string,
-    wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
-  ): Promise<StayRecord> {
-    return this.mutateStay(stayId, (s) => mutations.patchStayWifi(s, wifiPatch));
-  }
-
-  updateTransfer(
-    stayId: string,
-    transferPatch: Partial<FlightTransfer>,
-    alertOf?: StayAlertFactory<FlightTransfer>,
-  ): Promise<FlightTransfer> {
-    return this.mutateStay(stayId, (s) => mutations.patchTransfer(s, transferPatch), alertOf);
-  }
-
   updatePersonalization(
     stayId: string,
     personalizationPatch: Partial<Personalization>,
@@ -129,10 +100,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
       (s) => mutations.patchPersonalization(s, personalizationPatch, allergiesLabel),
       alertOf,
     );
-  }
-
-  updateSignaturePrivilege(stayId: string, privilege: 'massage' | 'golf'): Promise<StayRecord> {
-    return this.mutateStay(stayId, (s) => mutations.selectSignaturePrivilege(s, privilege));
   }
 
   replaceServiceOrder(
@@ -166,23 +133,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.mutateStay(stayId, (s) => guestRules.setJourneyMarks(s, marks, nowIso()));
   }
 
-  async listLarderOrdersAcrossStays(filter?: LarderFilterCriteria): Promise<LarderOrderItem[]> {
-    return collectLarderOrders(await this.listOpenStaysBounded(), filter);
-  }
-
-  updateLarderOrderStatus(
-    orderItemId: string,
-    patch: Partial<LarderOrderItem>,
-  ): Promise<LarderOrderItem | null> {
-    const stayIds = [orderItemId, orderItemId.replace(/^larder_/, '')];
-    return this.mutateOwningStay(
-      orderItemId,
-      (s) => mutations.ownsLarderOrder(s, orderItemId),
-      (s) => mutations.applyLarderOrderStatusUpdate(s, orderItemId, patch),
-      stayIds,
-    );
-  }
-
   createBooking(
     stayId: string,
     booking: ExperienceBooking,
@@ -191,42 +141,8 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.mutateStay(stayId, (s) => mutations.addBooking(s, booking), alertOf);
   }
 
-  async listBookingsForStay(stayId: string): Promise<ExperienceBooking[]> {
-    return (await this.requireStay(stayId)).experienceBookings;
-  }
-
   async transitionServiceRequest(stayId: string, ref: RequestRef, move: RequestMove): Promise<void> {
     await this.mutateStay(stayId, (s) => applyRequestTransition(s, ref, move));
-  }
-
-  async listBookingsAcrossStays(filter?: BookingFilterCriteria): Promise<ExperienceBooking[]> {
-    return collectBookings(await this.listOpenStaysBounded(), filter);
-  }
-
-  updateBookingAssignment(
-    bookingId: string,
-    patch: Partial<ExperienceBooking>,
-  ): Promise<ExperienceBooking | null> {
-    return this.mutateOwningStay(
-      bookingId,
-      (s) => mutations.ownsBooking(s, bookingId),
-      (s) => mutations.applyBookingAssignmentUpdate(s, bookingId, patch),
-    );
-  }
-
-  async listConciergeRequestsForStay(stayId: string): Promise<ConciergeRequest[]> {
-    return (await this.requireStay(stayId)).conciergeRequests;
-  }
-
-  async listConciergeRequestsAcrossStays(
-    filter?: ConciergeFilterCriteria,
-  ): Promise<ConciergeRequest[]> {
-    return collectConciergeRequests(await this.listOpenStaysBounded(), filter);
-  }
-
-  async findConciergeRequestById(requestId: string): Promise<ConciergeRequest | null> {
-    const owner = await this.findStayByChildRef(requestId);
-    return owner?.conciergeRequests.find((r) => r.requestId === requestId) ?? null;
   }
 
   createConciergeRequest(
@@ -250,18 +166,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     );
   }
 
-  updateConciergeRequestAdmin(
-    requestId: string,
-    patch: Partial<ConciergeRequest>,
-    newMessage?: ConciergeMessage,
-  ): Promise<ConciergeRequest | null> {
-    return this.mutateOwningStay(
-      requestId,
-      (s) => mutations.ownsConciergeRequest(s, requestId),
-      (s) => mutations.applyConciergeAdminUpdate(s, requestId, patch, newMessage),
-    );
-  }
-
   createMidStayFeedback(
     stayId: string,
     feedback: MidStayFeedback,
@@ -272,21 +176,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
 
   async listMidStayFeedbackAcrossStays(): Promise<MidStayFeedback[]> {
     return collectMidStayFeedback(await this.listOpenStaysBounded());
-  }
-
-  async getFolioForStay(
-    stayId: string,
-  ): Promise<{ folioSummary: FolioSummary; folioItems: FolioItem[] }> {
-    const stay = await this.requireStay(stayId);
-    return { folioSummary: stay.folioSummary, folioItems: stay.folioItems };
-  }
-
-  settleFolio(
-    stayId: string,
-    settlement: FolioSettlement,
-    alertOf?: StayAlertFactory<SettledFolio>,
-  ): Promise<SettledFolio> {
-    return this.mutateStay(stayId, (s) => settleFolio(s, settlement), alertOf);
   }
 
   /** Every mutation is rejected (413) if it would push the stay above its byte budget. */
@@ -304,24 +193,4 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     return this.transactStay(stayId, withinBudget, alertOf);
   }
 
-  private async requireStay(stayId: string): Promise<StayAggregate> {
-    const stay = await this.findStay(stayId);
-    if (!stay) throw new StayNotFoundError(stayId);
-    return stay;
-  }
-
-  /** Finds the owner through the child-id index (or the candidate stay ids), never by scanning. */
-  private async mutateOwningStay<T>(
-    childId: string,
-    owns: (stay: StayAggregate) => boolean,
-    mutator: StayMutator<T | null>,
-    candidateStayIds: string[] = [],
-  ): Promise<T | null> {
-    const candidates = [
-      await this.findStayByChildRef(childId),
-      ...(await Promise.all(candidateStayIds.map((id) => this.findStay(id)))),
-    ];
-    const owner = candidates.find((stay): stay is StayAggregate => stay !== null && owns(stay));
-    return owner ? this.mutateStay(owner.stayId, mutator) : null;
-  }
 }

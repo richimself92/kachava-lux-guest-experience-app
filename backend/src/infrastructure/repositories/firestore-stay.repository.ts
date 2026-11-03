@@ -21,8 +21,8 @@ import { ServiceRequestIndexWriter, TimeZoneSource } from './firestore-service-r
 export const STAYS_COLLECTION = 'stays';
 /** Derived, storage-only field used for `array-contains` guest-name search. */
 export const GUEST_SEARCH_FIELD = 'guestSearchKeywords';
-/** Derived, storage-only ids of every embedded booking, larder line and concierge request. */
-export const CHILD_REFS_FIELD = 'childRefIds';
+/** Legacy derived field (child-id lookup index) still present on older documents; stripped on read. */
+const LEGACY_CHILD_REFS_FIELD = 'childRefIds';
 /** Derived, storage-only conversation summary (Messages inbox); absent when the stay has no messages. */
 export const CONVERSATION_FIELD = 'conversation';
 const LAST_MESSAGE_FIELD = `${CONVERSATION_FIELD}.lastMessageAt`;
@@ -31,7 +31,7 @@ export const MAX_SEARCH_KEYWORD_LENGTH = 40;
 export const STAY_SCAN_LIMIT = 1000;
 const OPEN_STAY_STATUSES: StayLifecycleStatus[] = ['PRE_ARRIVAL', 'ACTIVE_STAY'];
 const ARRIVAL_FIELD = 'checkInDate';
-const DERIVED_FIELDS = [GUEST_SEARCH_FIELD, CHILD_REFS_FIELD, CONVERSATION_FIELD];
+const DERIVED_FIELDS = [GUEST_SEARCH_FIELD, LEGACY_CHILD_REFS_FIELD, CONVERSATION_FIELD];
 
 /**
  * Firestore adapter where `stays/{stayId}` is the single source of truth. There is no
@@ -68,13 +68,6 @@ export class FirestoreStayRepository extends AggregateStayRepository {
 
   protected listOpenStaysBounded(): Promise<StayAggregate[]> {
     return this.listStaysByStatuses(OPEN_STAY_STATUSES);
-  }
-
-  protected async findStayByChildRef(childId: string): Promise<StayAggregate | null> {
-    const snapshot = await this.stays().where(CHILD_REFS_FIELD, 'array-contains', childId).limit(1).get();
-    if (snapshot.empty) return null;
-    const [doc] = snapshot.docs;
-    return toStayAggregate(doc.id, doc.data());
   }
 
   listStaysByStatuses(statuses: readonly StayLifecycleStatus[]): Promise<StayAggregate[]> {
@@ -206,21 +199,11 @@ export function guestSearchKeywords(guestName: string): string[] {
   return Array.from(keywords);
 }
 
-/** Ids of the stay's embedded records, so the owning stay is found with one indexed query. */
-export function childRefIds(stay: StayAggregate): string[] {
-  return [
-    ...(stay.experienceBookings ?? []).map((b) => b.bookingId),
-    ...(stay.larderOrders ?? []).map((o) => o.orderItemId),
-    ...(stay.conciergeRequests ?? []).map((r) => r.requestId),
-  ];
-}
-
 function toStayDocument(stay: StayAggregate): Record<string, unknown> {
   const conversation = conversationSummary(stay);
   return {
     ...toFirestoreDocument(stay),
     [GUEST_SEARCH_FIELD]: guestSearchKeywords(stay.guestProfile?.name ?? ''),
-    [CHILD_REFS_FIELD]: childRefIds(stay),
     ...(conversation ? { [CONVERSATION_FIELD]: { ...conversation } } : {}),
   };
 }

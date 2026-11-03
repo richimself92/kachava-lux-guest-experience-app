@@ -3,14 +3,12 @@ import {
   ConciergeMessage,
   ConciergeRequest,
   ExperienceBooking,
-  FlightTransfer,
-  LarderOrderItem,
   MidStayFeedback,
   Personalization,
   StayAggregate,
-  StayLifecycleStatus,
   StayRecord,
 } from '../../domain/models/domain.models';
+import { newStayRealtimeChannelId } from '../../domain/realtime/realtime-signal';
 import { StayLimitExceededError } from '../../domain/stay-errors';
 import {
   MAX_BOOKINGS_PER_STAY,
@@ -31,38 +29,12 @@ function touch(stay: StayAggregate): void {
   stay.updatedAt = new Date().toISOString();
 }
 
+/** The realtime channel rotates with the token, so an old link can no longer follow the stay. */
 export function rotateGuestToken(stay: StayAggregate, newUuid: string): StayRecord {
   stay.guestTokenUuid = newUuid;
+  stay.realtimeChannelId = newStayRealtimeChannelId();
   touch(stay);
   return structuredClone(stay);
-}
-
-export function changeStayStatus(stay: StayAggregate, status: StayLifecycleStatus): StayRecord {
-  stay.status = status;
-  touch(stay);
-  return structuredClone(stay);
-}
-
-export function patchStayWifi(
-  stay: StayAggregate,
-  wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
-): StayRecord {
-  stay.villaAccess = {
-    ...stay.villaAccess,
-    wifiSsid: wifiPatch.wifiSsid?.trim() || stay.villaAccess.wifiSsid,
-    wifiPasscode: wifiPatch.wifiPasscode?.trim() || stay.villaAccess.wifiPasscode,
-  };
-  touch(stay);
-  return structuredClone(stay);
-}
-
-export function patchTransfer(
-  stay: StayAggregate,
-  transferPatch: Partial<FlightTransfer>,
-): FlightTransfer {
-  stay.flightTransfer = { ...stay.flightTransfer, ...transferPatch };
-  touch(stay);
-  return structuredClone(stay.flightTransfer);
 }
 
 export function patchPersonalization(
@@ -75,15 +47,6 @@ export function patchPersonalization(
   if (allergiesLabel) stay.guestProfile.allergies = allergiesLabel;
   stay.updatedAt = now;
   return structuredClone(stay.personalization);
-}
-
-export function selectSignaturePrivilege(
-  stay: StayAggregate,
-  privilege: 'massage' | 'golf',
-): StayRecord {
-  stay.selectedSignaturePrivilege = privilege;
-  touch(stay);
-  return structuredClone(stay);
 }
 
 /** Stores the booking and charges it to the stored folio. */
@@ -105,61 +68,6 @@ export function addMidStayFeedback(stay: StayAggregate, feedback: MidStayFeedbac
   assertRoomFor(stay.midstayFeedback, MAX_MIDSTAY_FEEDBACK_PER_STAY, 'mid-stay check-ins');
   stay.midstayFeedback.unshift(structuredClone(feedback));
   return structuredClone(feedback);
-}
-
-export function ownsConciergeRequest(stay: StayAggregate, requestId: string): boolean {
-  return stay.conciergeRequests.some((r) => r.requestId === requestId);
-}
-
-export function ownsBooking(stay: StayAggregate, bookingId: string): boolean {
-  return stay.experienceBookings.some((b) => b.bookingId === bookingId);
-}
-
-/** Admin larder actions address a stay's whole order by item id, stay id or `larder_<stayId>`. */
-export function ownsLarderOrder(stay: StayAggregate, orderItemId: string): boolean {
-  const referencesStay =
-    stay.larderOrders.some((o) => o.orderItemId === orderItemId) ||
-    stay.stayId === orderItemId ||
-    orderItemId === `larder_${stay.stayId}`;
-  return referencesStay && stay.larderOrders.length > 0;
-}
-
-export function applyConciergeAdminUpdate(
-  stay: StayAggregate,
-  requestId: string,
-  patch: Partial<ConciergeRequest>,
-  newMessage?: ConciergeMessage,
-): ConciergeRequest | null {
-  const target = stay.conciergeRequests.find((r) => r.requestId === requestId);
-  if (!target) return null;
-  if (newMessage) assertRoomFor(target.messages, MAX_MESSAGES_PER_REQUEST, 'messages per request');
-  Object.assign(target, patch, { updatedAt: new Date().toISOString() });
-  if (newMessage) target.messages.push(structuredClone(newMessage));
-  return structuredClone(target);
-}
-
-export function applyLarderOrderStatusUpdate(
-  stay: StayAggregate,
-  orderItemId: string,
-  patch: Partial<LarderOrderItem>,
-): LarderOrderItem | null {
-  if (!ownsLarderOrder(stay, orderItemId)) return null;
-  const now = new Date().toISOString();
-  for (const item of stay.larderOrders) {
-    Object.assign(item, patch, { updatedAt: now });
-  }
-  return structuredClone(stay.larderOrders[0]);
-}
-
-export function applyBookingAssignmentUpdate(
-  stay: StayAggregate,
-  bookingId: string,
-  patch: Partial<ExperienceBooking>,
-): ExperienceBooking | null {
-  const target = stay.experienceBookings.find((b) => b.bookingId === bookingId);
-  if (!target) return null;
-  Object.assign(target, patch, { updatedAt: new Date().toISOString() });
-  return structuredClone(target);
 }
 
 export function appendMessageToStayRequest(

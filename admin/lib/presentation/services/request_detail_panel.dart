@@ -36,6 +36,13 @@ class _RequestDetailPanelState extends State<RequestDetailPanel> {
   late ServiceRequest _r = widget.request;
   bool _busy = false;
 
+  /// A reloaded list row (real-time change) replaces the shown copy.
+  @override
+  void didUpdateWidget(RequestDetailPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.request, oldWidget.request)) _r = widget.request;
+  }
+
   RequestStrings get _s => RequestStrings(widget.isEs);
 
   Future<void> _run(RequestAction action) async {

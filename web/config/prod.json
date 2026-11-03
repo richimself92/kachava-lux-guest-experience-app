@@ -1,6 +1,11 @@
 {
   "APP_ENV": "production",
   "API_BASE_URL": "https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1",
-  "GUEST_PORTAL_URL": "https://kavacha-app-guest-portal.web.app",
-  "SANCTUARY_PORTAL_URL": "https://kavacha-app-guest-portal.web.app"
+  "SANCTUARY_PORTAL_URL": "https://kavacha-app-guest-portal.web.app",
+  "FIREBASE_API_KEY": "",
+  "FIREBASE_APP_ID": "",
+  "FIREBASE_PROJECT_ID": "",
+  "FIREBASE_MESSAGING_SENDER_ID": "",
+  "FIRESTORE_DATABASE_ID": "kavacha-db",
+  "FIRESTORE_EMULATOR_HOST": ""
 }

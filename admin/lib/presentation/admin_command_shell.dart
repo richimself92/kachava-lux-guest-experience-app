@@ -30,6 +30,7 @@ class AdminCommandShell extends StatelessWidget {
     required this.timeZones,
     this.syncStatus,
     this.zoneResolver,
+    this.onRefresh,
   });
 
   final AdminShellController controller;
@@ -40,11 +41,14 @@ class AdminCommandShell extends StatelessWidget {
   final VillaRepository villas;
   final TimeZoneCatalog timeZones;
 
-  /// Bell poll health; unhealthy states show one small status line.
+  /// Bell sync health; unhealthy states show one small status line.
   final ValueListenable<AdminSyncStatus>? syncStatus;
 
   /// Resort wall time of the Settings zone (browser `Intl` by default).
   final ZoneOffsetResolver? zoneResolver;
+
+  /// Top-bar Refresh: the bell and every open screen.
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +94,7 @@ class AdminCommandShell extends StatelessWidget {
                 controller: controller,
                 bell: bell,
                 showMenuButton: viewport == AdminViewportSize.mobile,
+                onRefresh: onRefresh,
               ),
               Expanded(
                 child: AdminWorkspaceSwitcher(

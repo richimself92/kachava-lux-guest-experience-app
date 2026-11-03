@@ -16,6 +16,7 @@ import '../services/service_actions.dart';
 import '../services/services_tab.dart';
 import 'access_restricted_screen.dart';
 import 'reconnecting_indicator.dart';
+import 'refresh_button.dart';
 
 /// Root screen: access screen, loading skeleton or the 4-tab portal.
 class PortalRoot extends StatelessWidget {
@@ -117,7 +118,11 @@ class _PortalShellState extends State<PortalShell> {
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
                 color: KachavaColors.primary)),
-        actions: [LanguageToggle(controller: _c), const SizedBox(width: 8)],
+        actions: [
+          RefreshButton(controller: _c),
+          LanguageToggle(controller: _c),
+          const SizedBox(width: 8),
+        ],
         bottom: _c.isReconnecting
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(32),

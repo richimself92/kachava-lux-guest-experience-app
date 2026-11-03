@@ -1,5 +1,6 @@
 import 'catalog.dart';
 import 'json_read.dart';
+import 'realtime_channels.dart';
 
 /// Stay phase from the server lifecycle (used when dates are not published).
 enum StayPhase {
@@ -259,6 +260,7 @@ class GuestStay {
     this.ratingsSent = 0,
     this.skippedTaskIds = const {},
     this.completedTaskIds = const {},
+    this.realtime,
   });
 
   factory GuestStay.fromJson(String guestUuid, Json json) {
@@ -296,6 +298,7 @@ class GuestStay {
       ratingsSent: asJsonList(json['midstayFeedback']).length,
       skippedTaskIds: asStringList(json['skippedTaskIds']).toSet(),
       completedTaskIds: asStringList(json['completedTaskIds']).toSet(),
+      realtime: RealtimeChannels.fromJson(json['realtime']),
     );
   }
 
@@ -335,6 +338,9 @@ class GuestStay {
 
   /// Journey tasks the guest marked done without a request ("I arrange my own").
   final Set<String> completedTaskIds;
+
+  /// Firestore signal docs to listen to; null disables realtime.
+  final RealtimeChannels? realtime;
 
   /// Resort Host chat threads (type `ask`).
   List<HostThread> get chatThreads => threads.where((t) => t.isChat).toList();

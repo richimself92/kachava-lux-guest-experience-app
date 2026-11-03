@@ -8,6 +8,7 @@ import {
   VillaAccess,
 } from '../../domain/models/domain.models';
 import { Villa } from '../../domain/models/resort-config.models';
+import { newStayRealtimeChannelId } from '../../domain/realtime/realtime-signal';
 import { UNASSIGNED_HOST_LABEL } from '../../domain/stays/stay-admin-views';
 import { CreateReservationDto } from './dto/admin.dto';
 
@@ -32,7 +33,7 @@ export function buildNewStay(dto: CreateReservationDto, villa: Villa, identity: 
   const guestsCount = dto.guestsCount ?? 0;
   return {
     stayId: identity.stayId, guestTokenUuid: identity.guestTokenUuid,
-    magicLinkUrl: identity.magicLinkUrl, status: 'PRE_ARRIVAL',
+    magicLinkUrl: identity.magicLinkUrl, status: 'PRE_ARRIVAL', realtimeChannelId: newStayRealtimeChannelId(),
     villaId: villa.villaId, villaName: villa.name, suiteName: villa.category, sqft: '',
     stayDatesLabel: `${dto.checkIn} – ${dto.checkOut}`,
     checkInDate: dto.checkIn, checkOutDate: dto.checkOut,

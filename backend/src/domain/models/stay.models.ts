@@ -166,6 +166,8 @@ export interface StayRecord {
   /** Staff check-in / check-out / cancel moves (absent on older stays). */
   statusHistory?: StayStatusChange[];
   cancellationReason?: string | null;
+  /** ADR-012 signal doc id (`s_<uuid>`), rotated with the guest token; absent on older stays. */
+  realtimeChannelId?: string;
   /** When staff last read the guest conversation (Messages inbox); absent = never. */
   conversationReadAt?: string | null;
   /** Guest journey tasks skipped with "Not now" (`<step>:<taskId>`); absent on older stays. */

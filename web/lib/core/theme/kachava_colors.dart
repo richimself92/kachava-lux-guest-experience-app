@@ -11,7 +11,6 @@ abstract final class KachavaColors {
   static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color primaryContainer = Color(0xFF8B6339);
   static const Color onPrimaryContainer = Color(0xFFF7E8D0);
-  static const Color primaryDeep = Color(0xFF603917);
   static const Color inversePrimary = Color(0xFFC6B198);
 
   // Secondary & Tertiary Palette (Copal Resin & Caribbean Sand)
@@ -26,10 +25,8 @@ abstract final class KachavaColors {
   static const Color surface = Color(0xFFFDF9F0);
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
   static const Color surfaceContainerLow = Color(0xFFF7F3EA);
-  static const Color surfaceContainer = Color(0xFFF1EDE5);
   static const Color surfaceContainerHigh = Color(0xFFECE8DF);
   static const Color surfaceContainerHighest = Color(0xFFE6E2D9);
-  static const Color surfaceDim = Color(0xFFE8E2D6);
 
   // Typography, Outline & Semantic Status Colors
   static const Color onSurface = Color(0xFF1C1C16);
@@ -46,5 +43,4 @@ abstract final class KachavaColors {
   static const Color confirmedGreenBg = Color(0xFFEEF5ED);
   static const Color errorRed = Color(0xFFBA1A1A);
   static const Color errorRedContainer = Color(0xFFFFDAD6);
-  static const Color highlightGold = Color(0xFFFFDEAD);
 }

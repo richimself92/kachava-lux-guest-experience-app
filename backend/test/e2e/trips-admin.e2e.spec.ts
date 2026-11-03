@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { storedAlerts } from '../support/stored-alerts';
 import { FakeFirestore } from '../support/fake-firestore';
 import { createTestApp, createVillaAndStay, TestApp } from '../support/test-app';
 import {
@@ -30,8 +31,7 @@ describe('Admin trips (/admin/trips)', () => {
     request(t.server()).post(TRIPS).set(admin).send({ stayId: w.stay.stayId, ...body });
   const transition = (id: string, body: Record<string, unknown>) =>
     request(t.server()).post(`${TRIPS}/${id}/transition`).set(admin).send(body);
-  const transferAlerts = async () =>
-    (await request(t.server()).get('/api/v1/admin/alerts?category=TRANSFER').set(admin)).body.data;
+  const transferAlerts = async () => storedAlerts(t.fake, 'TRANSFER');
 
   describe('POST /admin/trips (staff on behalf of a guest)', () => {
     it('test_staffCreate_isStaffOwned_skipsLeadTime_andRaisesNoAlert', async () => {

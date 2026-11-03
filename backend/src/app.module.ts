@@ -4,16 +4,13 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminAuthGuard } from './common/guards/admin-auth.guard';
 import { GuestTokenGuard } from './common/guards/guest-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { StepUpVerifiedGuard } from './common/guards/step-up-verified.guard';
 import { buildThrottlerOptions } from './common/throttling/throttle-tracker';
 import { FirebaseIdTokenVerifier } from './common/services/firebase-id-token.verifier';
 import { SecurityTokenService } from './common/services/security-token.service';
-import { StepUpAttemptLimiter } from './common/services/step-up-attempt-limiter';
 import { CLOCK_PORT } from './domain/ports/clock.port';
 import { FirebaseInfrastructureModule } from './infrastructure/firebase/firebase-admin.module';
 import { SystemClock } from './infrastructure/time/system-clock';
 import { AdminFulfillmentService } from './modules/admin/admin-fulfillment.service';
-import { AdminSyncService } from './modules/admin/admin-sync.service';
 import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
 import { CatalogAdminService } from './modules/catalog/catalog-admin.service';
@@ -55,6 +52,9 @@ import { VillasService } from './modules/villas/villas.service';
 import { RequestsController } from './modules/requests/requests.controller';
 import { RequestsService } from './modules/requests/requests.service';
 import { StaffController } from './modules/staff/staff.controller';
+import { RealtimeEmissionInterceptor } from './modules/realtime/realtime-emission.interceptor';
+import { RealtimePublisher } from './modules/realtime/realtime-publisher.service';
+import { RealtimeChannels } from './modules/realtime/realtime-channels.service';
 import { StaffService } from './modules/staff/staff.service';
 
 @Module({
@@ -84,7 +84,6 @@ import { StaffService } from './modules/staff/staff.service';
   ],
   providers: [
     SecurityTokenService,
-    StepUpAttemptLimiter,
     FirebaseIdTokenVerifier,
     GuestAlertFolioHelper,
     GuestBookingService,
@@ -94,7 +93,6 @@ import { StaffService } from './modules/staff/staff.service';
     GuestService,
     AdminFulfillmentService,
     AdminService,
-    AdminSyncService,
     SettingsService,
     VillasService,
     TransportProvidersService,
@@ -112,9 +110,11 @@ import { StaffService } from './modules/staff/staff.service';
     ConversationsService,
     RequestsService,
     StaffService,
+    RealtimePublisher,
+    RealtimeChannels,
+    RealtimeEmissionInterceptor,
     { provide: CLOCK_PORT, useClass: SystemClock },
     GuestTokenGuard,
-    StepUpVerifiedGuard,
     AdminAuthGuard,
     RolesGuard,
     {

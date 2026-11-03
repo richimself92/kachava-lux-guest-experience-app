@@ -7,6 +7,8 @@ environment:
   sdk: '>=3.4.0 <4.0.0'
 
 dependencies:
+  cloud_firestore: ^7.1.0
+  firebase_core: ^5.1.0
   flutter:
     sdk: flutter
   http: ^1.2.2
@@ -25,17 +27,3 @@ flutter:
     - family: Roboto
       fonts:
         - asset: assets/fonts/Roboto-VariableFont.ttf
-    - family: Libre Baskerville
-      fonts:
-        - asset: assets/fonts/LibreBaskerville-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/LibreBaskerville-Italic.ttf
-          weight: 400
-          style: italic
-        - asset: assets/fonts/LibreBaskerville-Bold.ttf
-          weight: 700
-    - family: Libre Franklin
-      fonts:
-        - asset: assets/fonts/LibreFranklin-VariableFont_wght.ttf
-        - asset: assets/fonts/LibreFranklin-Italic-VariableFont_wght.ttf
-          style: italic

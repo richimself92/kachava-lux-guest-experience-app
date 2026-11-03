@@ -412,7 +412,8 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
     await waitForFlutterSemantics(page, `${RUN} Experience`);
     expect(await readSemanticsSnapshot(page)).not.toContain(`${RUN} Lux bar`);
     await page.getByRole('tab', { name: 'Requests' }).click(); // section-level tab bar, not the scrolling editor bar
-    await waitForFlutterSemantics(page, 'Request queue coming soon');
+    await waitForFlutterSemantics(page, 'Guest bookings and orders of this section.'); // the live request queue
+    expect(await readSemanticsSnapshot(page)).not.toContain('coming soon');
     await captureDualScreenshot(page, 'e2e-admin-experiences-section.png');
     expect(monitor.pageErrors).toEqual([]);
     expect(monitor.overflowErrors).toEqual([]);

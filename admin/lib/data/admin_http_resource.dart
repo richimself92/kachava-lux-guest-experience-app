@@ -5,7 +5,7 @@ import 'admin_api_client.dart';
 /// Maps one JSON record into an entity.
 typedef JsonMapper<T> = T Function(Map<String, dynamic> json);
 
-/// REST collection under `/api/v1/admin/<path>` following `api_contract.dart`.
+/// REST collection under `/api/v1/admin/<path>` (list convention: `doc/kachava-command-center/ux-patterns.md`).
 class AdminHttpResource<T> {
   const AdminHttpResource(this._client, this.path, this._map);
 

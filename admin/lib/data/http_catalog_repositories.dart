@@ -8,7 +8,7 @@ import '../domain/transport_provider.dart';
 import 'admin_api_client.dart';
 import 'admin_http_resource.dart';
 
-/// `GET/PATCH /admin/settings` (contract in `api_contract.dart`).
+/// `GET/PATCH /admin/settings`.
 class HttpSettingsRepository implements AdminSettingsRepository {
   HttpSettingsRepository(this._client);
 

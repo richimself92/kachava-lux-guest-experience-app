@@ -44,15 +44,13 @@ void main() {
     expect(const StayStrings(false).money(null), '—');
   });
 
-  test('shell open requests are delivered once to their tab', () {
+  test('shell open requests target only their tab', () {
     final shell = AdminShellController(staff: FakeStaffDirectory());
     addTearDown(shell.dispose);
     shell.openRecord(AdminWorkspaceTab.adminTasks, 'task_1');
     expect(shell.activeTab, AdminWorkspaceTab.adminTasks);
-    expect(shell.takeOpenRequest(AdminWorkspaceTab.adminStays), isNull);
+    expect(shell.peekOpenRequest(AdminWorkspaceTab.adminStays), isNull);
     expect(shell.peekOpenRequest(AdminWorkspaceTab.adminTasks)?.id, 'task_1');
-    expect(shell.takeOpenRequest(AdminWorkspaceTab.adminTasks)?.id, 'task_1');
-    expect(shell.takeOpenRequest(AdminWorkspaceTab.adminTasks), isNull);
     shell.openRecord(AdminWorkspaceTab.adminStays, 's1');
     shell.selectTab(AdminWorkspaceTab.adminVillas);
     expect(shell.peekOpenRequest(AdminWorkspaceTab.adminStays), isNull);

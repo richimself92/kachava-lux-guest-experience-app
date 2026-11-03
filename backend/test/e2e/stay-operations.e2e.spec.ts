@@ -95,20 +95,12 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       expect(res.status).toBe(status);
     });
 
-    it('test_stayAdminMutations_tokenStatusWifiTransfer', async () => {
-      const id = created.stayId;
-      const rotated = await request(t.server()).post(`${ADMIN}/stays/${id}/regenerate-token`).set(admin);
-      const status = await request(t.server()).patch(`${ADMIN}/stays/${id}/status`).set(admin).send({ status: 'ACTIVE_STAY' });
-      const wifi = await request(t.server()).patch(`${ADMIN}/stays/${id}/wifi`).set(admin).send({ wifiSsid: 'Net7' });
-      const transfer = await request(t.server()).patch(`${ADMIN}/stays/${id}/transfer`).set(admin).send({ vehicleModel: 'Van', status: 'Confirmed' });
-      const badStatus = await request(t.server()).patch(`${ADMIN}/stays/${id}/status`).set(admin).send({ status: 'GONE' });
+    it('test_regenerateToken_oldGuestLinkStopsWorking', async () => {
+      const rotated = await request(t.server()).post(`${ADMIN}/stays/${created.stayId}/regenerate-token`).set(admin);
 
       expect(rotated.body.data.guestTokenUuid).not.toBe(created.guestTokenUuid);
       expect((await request(t.server()).get(stayPath)).status).toBe(401);
-      expect(status.body.data.status).toBe('ACTIVE_STAY');
-      expect(wifi.body.data.villaAccess.wifiSsid).toBe('Net7');
-      expect(transfer.body.data).toMatchObject({ vehicleModel: 'Van', status: 'Confirmed' });
-      expect(badStatus.status).toBe(400);
+      expect((await request(t.server()).get(`/api/v1/stays/${rotated.body.data.guestTokenUuid}`)).status).toBe(200);
     });
   });
 
@@ -126,7 +118,7 @@ describe('Stays, guest orders/bookings and admin operations', () => {
           lines: [{ itemId: null, unitPriceUSD: 50, quantity: 1, lineTotalUSD: 150 }] },
       });
       expect(stored.body.data[0].snapshot.totalUSD).toBe(150);
-      const folio = await request(t.server()).get(`${stayPath}/folio`);
+      const folio = await request(t.server()).get(stayPath);
       expect(folio.body.data.folioSummary.incidentalsSubtotalUSD).toBe(150);
     });
 
@@ -152,8 +144,8 @@ describe('Stays, guest orders/bookings and admin operations', () => {
     });
 
     it('test_order_snapshotsItemNameAndPrice_andChargesFolio', async () => {
-      const res = await request(t.server()).put(`${stayPath}/larder`)
-        .send({ serviceId: orderServiceId, items: [{ itemId: orderItemId, quantity: 2 }] });
+      const res = await request(t.server()).put(`${stayPath}/orders/${orderServiceId}`)
+        .send({ items: [{ itemId: orderItemId, quantity: 2 }] });
 
       expect(res.status).toBe(200);
       expect(res.body.data.orders[0]).toMatchObject({
@@ -167,21 +159,22 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       [{ items: [{ itemId: 'missing', quantity: 1 }] }, 404],
       [{ items: [{ itemId: 'ITEM', quantity: 5 }] }, 422],
       [{ serviceId: 'BOOKING' }, 422],
-      [{ serviceId: undefined }, 400],
+      [{ items: undefined }, 400],
     ])('test_order_invalid_%j_is%s', async (override, status) => {
       const body = { serviceId: orderServiceId, items: [{ itemId: orderItemId, quantity: 1 }], ...override } as Record<string, unknown>;
-      if (body.serviceId === 'BOOKING') body.serviceId = bookingServiceId;
-      body.items = (body.items as Array<{ itemId: string }>).map((l) => ({ ...l, itemId: l.itemId === 'ITEM' ? orderItemId : l.itemId }));
+      const serviceId = body.serviceId === 'BOOKING' ? bookingServiceId : body.serviceId;
+      const items = (body.items as Array<{ itemId: string }> | undefined)
+        ?.map((l) => ({ ...l, itemId: l.itemId === 'ITEM' ? orderItemId : l.itemId }));
 
-      expect((await request(t.server()).put(`${stayPath}/larder`).send(body)).status).toBe(status);
+      expect((await request(t.server()).put(`${stayPath}/orders/${serviceId}`).send({ items })).status).toBe(status);
     });
   });
 
   describe('guest requests and admin operations lists', () => {
     beforeEach(async () => {
-      await request(t.server()).patch(`${ADMIN}/stays/${created.stayId}/status`).set(admin).send({ status: 'ACTIVE_STAY' });
+      await request(t.server()).patch(`${ADMIN}/stays/${created.stayId}`).set(admin).send({ action: 'CHECK_IN' }).expect(200);
       await request(t.server()).post(`${stayPath}/bookings`).send({ serviceId: bookingServiceId, scheduledDate: '2026-12-02', partySize: 1 });
-      await request(t.server()).put(`${stayPath}/larder`).send({ serviceId: orderServiceId, items: [{ itemId: orderItemId, quantity: 1 }] });
+      await request(t.server()).put(`${stayPath}/orders/${orderServiceId}`).send({ items: [{ itemId: orderItemId, quantity: 1 }] });
       await request(t.server()).post(`${stayPath}/concierge-requests`).send({ title: 'Towels', details: 'Two more', photoStoragePath: `/private/stays/${created.stayId}/concierge/r1/a.jpg` });
       await request(t.server()).post(`${stayPath}/midstay-checkin`).send({ rating: 2, note: 'Noise' });
     });
@@ -189,40 +182,17 @@ describe('Stays, guest orders/bookings and admin operations', () => {
     const list = (path: string) => request(t.server()).get(`${ADMIN}/${path}`).set(admin);
 
     it('test_everyOperationsList_isPaginatedWithMeta', async () => {
-      for (const path of ['alerts', 'bookings', 'larder-orders', 'concierge-requests', 'midstay-feedback', 'staff']) {
+      for (const path of ['requests', 'midstay-feedback', 'staff']) {
         const res = await list(`${path}?pageSize=10`);
         expect(res.status).toBe(200);
         expect(res.body.meta).toMatchObject({ page: 1, pageSize: 10, total: expect.any(Number) });
         expect(Array.isArray(res.body.data)).toBe(true);
       }
-      const alerts = await list('alerts?isAcknowledged=false&sort=createdAt:desc');
-      expect(alerts.body.meta.unreadCount).toBe(alerts.body.meta.total);
-      expect((await list('bookings?section=EXPERIENCES')).body.meta.total).toBe(1);
-      expect((await list('bookings?q=cenote')).body.meta.total).toBe(1);
+      expect((await list('midstay-feedback?q=noise')).body.meta.total).toBe(1);
       expect((await list('staff')).body.meta.total).toBe(0);
     });
 
-    it('test_adminActions_assignBookingLarderStatusConciergeReplyPhotoAndAck', async () => {
-      const booking = (await list('bookings')).body.data[0];
-      const request_ = (await list('concierge-requests')).body.data[0];
-      const alert = (await list('alerts')).body.data[0];
-
-      const assigned = await request(t.server()).patch(`${ADMIN}/bookings/${booking.bookingId}/assign`).set(admin).send({ status: 'CONFIRMED' });
-      const larder = await request(t.server()).patch(`${ADMIN}/larder-orders/${created.stayId}/status`).set(admin).send({ provisioningStatus: 'Stocked' });
-      const larderMissing = await request(t.server()).patch(`${ADMIN}/larder-orders/${created.stayId}/status`).set(admin).send({});
-      const reply = await request(t.server()).patch(`${ADMIN}/concierge-requests/${request_.requestId}`).set(admin).send({ status: 'Completed', replyMessage: 'Done' });
-      const photo = await request(t.server()).get(`${ADMIN}/concierge-requests/${request_.requestId}/photo-url`).set(admin);
-      const ack = await request(t.server()).patch(`${ADMIN}/alerts/${alert.alertId}/acknowledge`).set(admin);
-
-      expect(assigned.body.data.status).toBe('CONFIRMED');
-      expect(larder.body.data.provisioningStatus).toBe('Stocked');
-      expect(larderMissing.status).toBe(400);
-      expect(reply.body.data).toMatchObject({ status: 'Completed', isCompleted: true });
-      expect(photo.body.data.downloadUrl).toBe(`https://signed.test/read/private/stays/${created.stayId}/concierge/r1/a.jpg`);
-      expect(ack.body.data).toMatchObject({ isAcknowledged: true, acknowledgedByStaffId: 'admin-service' });
-    });
-
-    it('test_guestConciergeMessageUploadAndCheckoutFlows', async () => {
+    it('test_guestConciergeMessageUploadAndPersonalizationFlows', async () => {
       const [concierge] = (await request(t.server()).get(`${stayPath}/concierge-requests`)).body.data;
       const message = await request(t.server()).post(`${stayPath}/concierge-requests/${concierge.requestId}/messages`).send({ text: 'Thanks' });
       const upload = await request(t.server()).post(`${stayPath}/concierge-requests/upload-url`)
@@ -230,19 +200,11 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       const badUpload = await request(t.server()).post(`${stayPath}/concierge-requests/upload-url`)
         .send({ fileName: 'a.gif', contentType: 'image/gif', fileSizeBytes: 100 });
       const personalization = await request(t.server()).patch(`${stayPath}/personalization`).send({ pillowType: 'Soft', allergies: 'Nuts' });
-      const noStepUp = await request(t.server()).post(`${stayPath}/folio/checkout`).send({});
-      const stepUp = await request(t.server()).post(`${stayPath}/verify-step-up`).send({ lastName: 'Test' });
-      const checkout = await request(t.server()).post(`${stayPath}/folio/checkout`)
-        .set('X-StepUp-Session', stepUp.body.data.stepUpToken).send({});
-      const approved = await request(t.server()).patch(`${ADMIN}/stays/${created.stayId}/folio/approve-checkout`).set(admin).send({});
 
       expect(message.body.data.messages.at(-1).text).toBe('Thanks');
       expect(upload.body.data.uploadUrl).toContain('https://signed.test/private/stays/');
       expect(badUpload.status).toBe(400);
       expect(personalization.body.data.pillowType).toBe('Soft');
-      expect(noStepUp.status).toBe(403);
-      expect(checkout.body.data.folioSummary.paymentStatus).toBe('SETTLED');
-      expect(approved.body.data).toMatchObject({ status: 'CHECKED_OUT', approvedByStaffId: 'admin-service' });
     });
   });
 });

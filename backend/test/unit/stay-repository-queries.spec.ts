@@ -19,6 +19,7 @@ function stay(stayId: string, overrides: Partial<StayAggregate> = {}): StayAggre
     experienceBookings: base.experienceBookings.map((b) => ({ ...b, bookingId: `bk-${stayId}`, stayId })),
     conciergeRequests: base.conciergeRequests.map((r) => ({ ...r, requestId: `req-${stayId}`, stayId })),
     larderOrders: base.larderOrders.map((o) => ({ ...o, orderItemId: `larder-${stayId}`, stayId })),
+    midstayFeedback: base.midstayFeedback.map((f) => ({ ...f, stayId })),
     ...overrides,
   };
 }
@@ -56,22 +57,10 @@ describe('FirestoreStayRepository bounded queries', () => {
     expect(page.meta.total).toBe(2);
   });
 
-  it('test_crossStayLookups_useTheChildIndex_evenForClosedStays', async () => {
-    const queriesBefore = fake.queryCount;
-
-    const request = await repo.findConciergeRequestById('req-s3');
-    const updated = await repo.updateBookingAssignment('bk-s3', { status: 'CONFIRMED' });
-
-    expect(request?.stayId).toBe('s3');
-    expect(updated?.status).toBe('CONFIRMED');
-    expect(fake.queryCount - queriesBefore).toBe(2);
-    expect(fake.store('stays').get('s3')?.childRefIds).toEqual(['bk-s3', 'larder-s3', 'req-s3']);
-  });
-
   it('test_crossStayLists_coverOpenStaysOnly', async () => {
-    const bookings = await repo.listBookingsAcrossStays();
+    const feedback = await repo.listMidStayFeedbackAcrossStays();
 
-    expect(bookings.map((b) => b.stayId).sort()).toEqual(['s1', 's2']);
+    expect(feedback.map((f) => f.stayId).sort()).toEqual(['s1', 's2']);
   });
 
   it('test_createStay_withAlert_commitsBoth_andDuplicateIdConflicts', async () => {

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 import '../domain/admin_access_denied.dart';
@@ -12,33 +10,29 @@ enum AdminSyncStatus {
   /// The last sync failed transiently; the last good data stays on screen.
   reconnecting,
 
-  /// The staff role may not read the sync feed (HTTP 403); polling stops.
+  /// The staff role may not read the sync feed (HTTP 403).
   noAccess,
 }
 
-/// Drives the bell poll (unread counts every 15 s): one request per tick,
-/// never overlapping.
+/// Re-reads the bell (unread counts): one request per tick, never
+/// overlapping. There is no timer (ADR-012, scale to zero): ticks come from
+/// the first load, real-time signals and the manual Refresh.
 ///
 /// The first successful tick runs [initialLoad]; later ticks run [refresh].
 /// A failed tick keeps the last good data (the callbacks only apply state on
 /// success) and reports [AdminSyncStatus.reconnecting] until a later tick
-/// succeeds. A tick never throws, so the periodic timer cannot crash.
+/// succeeds. A tick never throws.
 class AdminLiveSync {
   AdminLiveSync({
     required Future<void> Function() initialLoad,
     required Future<void> Function() refresh,
-    this.interval = defaultInterval,
   })  : _initialLoad = initialLoad,
         _refresh = refresh;
 
-  static const Duration defaultInterval = Duration(seconds: 15);
-
-  final Duration interval;
   final Future<void> Function() _initialLoad;
   final Future<void> Function() _refresh;
   final ValueNotifier<AdminSyncStatus> _status =
       ValueNotifier<AdminSyncStatus>(AdminSyncStatus.live);
-  Timer? _timer;
   bool _loaded = false;
   bool _inFlight = false;
   bool _disposed = false;
@@ -46,16 +40,6 @@ class AdminLiveSync {
 
   /// Current sync health.
   ValueListenable<AdminSyncStatus> get status => _status;
-
-  bool get isPolling => _timer != null;
-
-  void startPolling() => _timer ??= Timer.periodic(interval, (_) => tick());
-
-  /// Stops periodic syncing (e.g. while signed out); [startPolling] resumes.
-  void stopPolling() {
-    _timer?.cancel();
-    _timer = null;
-  }
 
   /// Runs one sync unless a previous one is still in flight.
   ///
@@ -71,7 +55,6 @@ class AdminLiveSync {
       _setStatus(epoch, AdminSyncStatus.live);
     } on AdminAccessDenied catch (error) {
       debugPrint('Admin live sync denied: $error');
-      if (epoch == _epoch) stopPolling();
       _setStatus(epoch, AdminSyncStatus.noAccess);
     } catch (error) {
       // Malformed payloads may surface as Errors; the timer must survive.
@@ -97,7 +80,6 @@ class AdminLiveSync {
 
   void dispose() {
     _disposed = true;
-    stopPolling();
     _status.dispose();
   }
 }
