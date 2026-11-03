@@ -32,9 +32,18 @@ Pending from Kachava: service copy/prices/photos, real villa names, Spanish copy
 - States: skeleton, one-line empty + action, "No results" + clear filters, error + retry. Toasts one line, auto-dismiss.
 - No global top-bar search/filter chips; each screen owns its toolbar. No debug controls ("Test 10s") in production UI.
 - Chips use the shared vocabulary (no raw enums). Dates in America/Cancun. Destructive actions use `ConfirmDialog`.
-- Guest portal: brand look kept; 4 bottom tabs; min 14px text; no jargon.
 - Both apps: minimal text, `InfoTooltip` for explanations. Breakpoints reviewed at 1440, 800, 375 px; focus ring + AA contrast.
 - Phase D (admin): tokens in `core/theme/kachava_tokens.dart`; menu from `presentation/navigation/admin_nav_model.dart`; shared components in `presentation/components/`.
+
+### Guest
+Full rules and wireframes: [`guest-ux.md`](guest-ux.md). Brand look kept (not root `DESIGN.md`); text >= 14px, 48px targets, AA contrast.
+- 4 bottom tabs: Home (guided journey) · Services · Requests · Host. No "all screens" drawer.
+- Home = numbered journey built from the catalog: Step 1 Before arrival, 2 During stay, 3 Departure; tasks 1.1, 1.2... (core tasks in fixed slots, then one task per catalog section by `offeredWhen`).
+- Current step open by resort date, others collapsed (headers are buttons); "2 of 4" progress, ✓ per task; sticky "Next" + "Not now" for skippable tasks.
+- Steps with 10+ services show sections (max 5 rows, then "See all"); long forms (flight/TRIP) are wizards.
+- Services: search + section chips, photo cards (name, one line, price or "Included", lead time), detail sheet with gallery, form by usage type.
+- Requests: one list, Received → Confirmed → Preparing / On the way → Done; change/cancel while Received.
+- Success only after server confirmation; one-line toasts; skeleton, error + Retry and one-line empty states.
 
 ## Architecture
 - Firestore is the single source of truth, per-request reads, awaited writes ([adr-008](adr-008-firestore-single-source-of-truth.md)).
