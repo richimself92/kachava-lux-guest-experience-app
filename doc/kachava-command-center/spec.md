@@ -23,17 +23,18 @@ Inputs (read-only): client spec [`../improvements/spec.md`](../improvements/spec
 Pending from Kachava: service copy/prices/photos, real villa names, Spanish copy approval.
 
 ## Design
-- Admin follows root [`DESIGN.md`](../../DESIGN.md); mockups win on conflict.
-- Sidebar: "KACHAVA LUX" + gray "COMMAND CENTER" pill; selected = restrained brown (#EEE9E5 tint + #6D4627 bold text, per DESIGN.md); uppercase gray section
-  labels; items without icons + gray chevron; scroll-down button on overflow.
-- Dashboard: "Kachava Lux · Overview" + "Today" pill; 3x2 surface #F3F3F1 KPI tiles (radius 12 per DESIGN.md, ~40px number);
-  3-column activity table; chips In-house green / Arrival blue / Departure gray / overstay red; no alerts.
-- Guest portal: brand look kept; 4 bottom tabs; min 14px text (12px labels); no jargon or numbered titles.
-- Both apps: minimal text, `InfoTooltip` for explanations, one-line empty states and confirmations.
-- Breakpoints reviewed at 1440, 800, 375 px; keyboard focus ring and AA contrast.
-- Phase D (admin): tokens in `core/theme/kachava_tokens.dart`, full ThemeData (Roboto bundled); menu driven by
-  `presentation/navigation/admin_nav_model.dart` (unbuilt modules hidden; Folio reached from stay detail);
-  shared components in `presentation/components/`. Overview only restyled; KPI dashboard lands in Phase F.
+- Admin follows root [`DESIGN.md`](../../DESIGN.md); mockups win on conflict. List/screen rules live in [`ux-patterns.md`](ux-patterns.md) and are mandatory.
+- Sidebar: "KACHAVA LUX" + gray "COMMAND CENTER" pill; selected = restrained brown tint + bold brown text; uppercase gray section labels; items without icons + chevron.
+- Dashboard: "Kachava Lux · Overview" + "Today" pill; 3x2 KPI tiles; 3-column activity table (max 8 rows + "View all"); no alerts.
+- Lists: header (title + 1 primary action) > toolbar (debounced search, <= 3 filter chips, active-filter summary + "Clear") > sortable table with sticky header.
+- Pagination 10/25/50 (default 25), "1-25 of N"; one `ListQuery {page,pageSize,sort,q,filters}` (client-side now, API-ready); filters persist per screen.
+- Row click: right panel (desktop) / full-screen sheet (mobile). Mobile: compact rows (2-3 fields), filters in bottom sheet.
+- States: skeleton, one-line empty + action, "No results" + clear filters, error + retry. Toasts one line, auto-dismiss.
+- No global top-bar search/filter chips; each screen owns its toolbar. No debug controls ("Test 10s") in production UI.
+- Chips use the shared vocabulary (no raw enums). Dates in America/Cancun. Destructive actions use `ConfirmDialog`.
+- Guest portal: brand look kept; 4 bottom tabs; min 14px text; no jargon.
+- Both apps: minimal text, `InfoTooltip` for explanations. Breakpoints reviewed at 1440, 800, 375 px; focus ring + AA contrast.
+- Phase D (admin): tokens in `core/theme/kachava_tokens.dart`; menu from `presentation/navigation/admin_nav_model.dart`; shared components in `presentation/components/`.
 
 ## Architecture
 - Firestore is the single source of truth, per-request reads, awaited writes ([adr-008](adr-008-firestore-single-source-of-truth.md)).
