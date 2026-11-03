@@ -47,11 +47,11 @@ The **Kachava Lux Digital Hospitality Platform** transitions from an interactive
 
 ## 2. Monorepo Directory Structure
 
-The repository is organized as a clean, multi-package monorepo housing the **Guest Experience Portal (`web/`)**, the **Administrative & Concierge Operations Dashboard (`admin/`)**, the **Shared NestJS Backend (`backend/`)**, and **Living Documentation (`docs/`)**.
+The repository is organized as a clean, multi-package monorepo housing the **Guest Experience Portal (`web/`)**, the **Administrative & Concierge Operations Dashboard (`admin/`)**, the **Shared NestJS Backend (`backend/`)**, and **Living Documentation (`doc/`)**.
 
 ```text
 kachava-lux-guest-experience-app/
-├── docs/                                         # Living Product & Architecture Specifications
+├── doc/                                          # Living Product & Architecture Specifications
 │   ├── SPECIFICATION.md                          # Functional & Non-Functional Requirements (PRD)
 │   ├── USER_STORIES.md                           # Epics, User Stories & Gherkin Acceptance Criteria
 │   ├── UI_UX_DESIGN.md                           # Design System, Tokens, Wireframes & Navigation Flows
