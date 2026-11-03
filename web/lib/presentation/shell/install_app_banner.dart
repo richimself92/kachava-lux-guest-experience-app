@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/i18n/guest_feedback_i18n.dart';
-import '../../core/i18n/guest_i18n.dart';
+import '../../core/i18n/l10n.dart';
 import '../../core/pwa/install_prompt_port.dart';
 import '../../core/theme/kachava_colors.dart';
 
@@ -11,7 +10,7 @@ class InstallAppBanner extends StatelessWidget {
   const InstallAppBanner({super.key, required this.port, required this.i18n});
 
   final InstallPromptPort port;
-  final GuestI18n i18n;
+  final L10n i18n;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +46,7 @@ class InstallAppBanner extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: KachavaColors.onSurface,
               ),
@@ -66,7 +65,7 @@ class InstallAppBanner extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: KachavaColors.primary,
         minimumSize: const Size(48, 48),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
       onPressed: port.promptNative,
       child: Text(i18n.installAppAction),
@@ -76,7 +75,7 @@ class InstallAppBanner extends StatelessWidget {
   Widget _buildDismissButton() {
     return IconButton(
       key: const Key('install-app-dismiss'),
-      tooltip: i18n.dismissLabel,
+      tooltip: i18n.dismiss,
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       onPressed: port.dismiss,
       icon: const Icon(Icons.close,

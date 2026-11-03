@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Official Kachava Lux color tokens mapped from `docs/UI_UX_DESIGN.md`.
+/// Kachava Lux guest-portal brand tokens (the guest portal keeps its own
+/// look; root `DESIGN.md` governs the admin only).
+///
+/// Text on cream must use [onSurface], [onSurfaceVariant] (8.5:1) or
+/// [tertiary] (5.4:1). [secondary] (3.5:1) is decorative only.
 abstract final class KachavaColors {
   // Primary Palette (Mayan Zapote Timber & Espresso)
   static const Color primary = Color(0xFF754D24);
@@ -30,7 +34,9 @@ abstract final class KachavaColors {
   // Typography, Outline & Semantic Status Colors
   static const Color onSurface = Color(0xFF1C1C16);
   static const Color onSurfaceVariant = Color(0xFF544741);
-  static const Color mutedMetadata = Color(0xFF7F756A);
+
+  /// Metadata text; same value as [tertiary] so it passes WCAG AA on cream.
+  static const Color mutedMetadata = Color(0xFF736458);
   static const Color outline = Color(0xFFC6B198);
   static const Color outlineStrong = Color(0xFF988575);
   static const Color inputBorder = Color(0xFFD1C5B8);
@@ -41,10 +47,4 @@ abstract final class KachavaColors {
   static const Color errorRed = Color(0xFFBA1A1A);
   static const Color errorRedContainer = Color(0xFFFFDAD6);
   static const Color highlightGold = Color(0xFFFFDEAD);
-
-  // Kachava Caribe Maritime Sub-Brand Tokens
-  static const Color maritimeNavy = Color(0xFF0B1F33);
-  static const Color maritimeDeep = Color(0xFF07131F);
-  static const Color maritimeCyan = Color(0xFF18B7C9);
-  static const Color maritimeGold = Color(0xFFC9A45C);
 }

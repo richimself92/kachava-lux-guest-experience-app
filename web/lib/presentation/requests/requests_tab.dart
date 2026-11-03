@@ -1,0 +1,238 @@
+import 'package:flutter/material.dart';
+
+import '../../application/portal_controller.dart';
+import '../../core/i18n/l10n.dart';
+import '../../core/theme/kachava_colors.dart';
+import '../../domain/journey.dart';
+import '../../domain/requests.dart';
+import '../common/labels.dart';
+import '../common/widgets.dart';
+
+enum RequestsFilter { all, active, done }
+
+/// My requests: one list, newest first, plain statuses and a 4-dot track.
+class RequestsTab extends StatefulWidget {
+  const RequestsTab({
+    super.key,
+    required this.controller,
+    required this.onBrowse,
+    required this.onAskHost,
+  });
+
+  final PortalController controller;
+  final VoidCallback onBrowse;
+
+  /// Opens the Resort Host chat with the request attached.
+  final ValueChanged<String> onAskHost;
+
+  @override
+  State<RequestsTab> createState() => _RequestsTabState();
+}
+
+class _RequestsTabState extends State<RequestsTab> {
+  RequestsFilter _filter = RequestsFilter.all;
+
+  /// Journey number of the task a request belongs to ("1.3").
+  Map<String, String> _numbers(Journey? journey) {
+    final out = <String, String>{};
+    if (journey == null) return out;
+    for (final step in journey.steps) {
+      for (final task in step.tasks) {
+        for (final s in task.services) {
+          out.putIfAbsent(s.id, () => task.number);
+        }
+      }
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    final l10n = c.l10n;
+    final all = c.requests;
+    final list = all.where((r) => switch (_filter) {
+          RequestsFilter.all => true,
+          RequestsFilter.active => r.status.isActive,
+          RequestsFilter.done => !r.status.isActive,
+        });
+    final numbers = _numbers(c.journey);
+    return PageWidth(
+      maxWidth: 720,
+      child: ListView(
+        key: const Key('screen-requests'),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          Text(l10n.myRequests, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, children: [
+            for (final (f, label) in [
+              (RequestsFilter.all, l10n.all),
+              (RequestsFilter.active, l10n.chipActive),
+              (RequestsFilter.done, l10n.chipDone),
+            ])
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: FilterChip(
+                  key: Key('requests-${f.name}'),
+                  label: Text(label),
+                  selected: _filter == f,
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                  onSelected: (_) => setState(() => _filter = f),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 8),
+          if (all.isEmpty)
+            OneLineState(
+              key: const Key('requests-empty'),
+              message: l10n.noRequests,
+              actionLabel: l10n.browseServices,
+              onAction: widget.onBrowse,
+            )
+          else if (list.isEmpty)
+            OneLineState(message: l10n.noResults)
+          else
+            for (final r in list) _row(l10n, r, numbers[r.serviceId]),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(L10n l10n, GuestRequest r, String? number) {
+    final name = requestName(l10n, r);
+    final title = number == null ? name : '$number $name';
+    final when = requestWhen(l10n, r);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Semantics(
+        button: true,
+        label:
+            '$title, ${l10n.status(r.status)}${when.isEmpty ? '' : ', $when'}',
+        excludeSemantics: true,
+        child: InkWell(
+          key: Key('request-${r.id}'),
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openSheet(l10n, r, title),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      if (when.isNotEmpty)
+                        Text(when,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                color: KachavaColors.onSurfaceVariant)),
+                      const SizedBox(height: 6),
+                      StatusTrack(status: r.status),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(child: StatusChip(status: r.status, l10n: l10n)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openSheet(L10n l10n, GuestRequest r, String title) {
+    final steps = [
+      RequestStatus.received,
+      RequestStatus.confirmed,
+      r.kind == RequestKind.trip
+          ? RequestStatus.onTheWay
+          : RequestStatus.preparing,
+      RequestStatus.done,
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: KachavaColors.surface,
+      builder: (ctx) => ConstrainedBox(
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
+        child: ListView(
+          key: Key('request-sheet-${r.id}'),
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            Text(title, style: Theme.of(ctx).textTheme.titleLarge),
+            if (requestWhen(l10n, r).isNotEmpty)
+              Text(requestWhen(l10n, r), style: const TextStyle(fontSize: 15)),
+            const SizedBox(height: 12),
+            if (r.status == RequestStatus.cancelled)
+              StatusChip(status: r.status, l10n: l10n)
+            else
+              for (final s in steps)
+                Row(children: [
+                  Icon(
+                    s.trackIndex <= r.status.trackIndex
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    size: 20,
+                    color: s.trackIndex <= r.status.trackIndex
+                        ? KachavaColors.confirmedGreen
+                        : KachavaColors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(l10n.status(s),
+                      style: const TextStyle(fontSize: 15, height: 2)),
+                ]),
+            if (r.lines.isNotEmpty) ...[
+              const Divider(height: 24),
+              for (final line in r.lines)
+                Row(children: [
+                  Expanded(
+                    child: Text('${line.quantity} × ${l10n.text(line.name)}',
+                        style: const TextStyle(fontSize: 15)),
+                  ),
+                  if (line.lineTotalUSD != null)
+                    Text(l10n.money(line.lineTotalUSD!),
+                        style: const TextStyle(fontSize: 15)),
+                ]),
+            ],
+            if (r.totalUSD != null && r.totalUSD! > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(children: [
+                  Expanded(
+                      child: Text(l10n.total,
+                          style: const TextStyle(fontWeight: FontWeight.w700))),
+                  Text(l10n.money(r.totalUSD!),
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                ]),
+              ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: FilledButton.tonal(
+                  key: const Key('request-ask-host'),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    widget.onAskHost(title);
+                  },
+                  child: Text(l10n.askHost),
+                ),
+              ),
+              if (r.status == RequestStatus.received) InfoTip(l10n.changeInfo),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+}
