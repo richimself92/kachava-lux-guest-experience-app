@@ -16,7 +16,8 @@ enum AdminSyncStatus {
   noAccess,
 }
 
-/// Drives the admin live sync: one request per tick, never overlapping.
+/// Drives the bell poll (unread counts every 15 s): one request per tick,
+/// never overlapping.
 ///
 /// The first successful tick runs [initialLoad]; later ticks run [refresh].
 /// A failed tick keeps the last good data (the callbacks only apply state on
@@ -30,7 +31,7 @@ class AdminLiveSync {
   })  : _initialLoad = initialLoad,
         _refresh = refresh;
 
-  static const Duration defaultInterval = Duration(seconds: 5);
+  static const Duration defaultInterval = Duration(seconds: 15);
 
   final Duration interval;
   final Future<void> Function() _initialLoad;

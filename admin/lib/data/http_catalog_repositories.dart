@@ -1,13 +1,12 @@
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_settings.dart';
-import '../domain/admin_stay_entities.dart';
 import '../domain/admin_villa.dart';
 import '../domain/list_query.dart';
 import '../domain/paged_result.dart';
+import '../domain/reservation.dart';
 import '../domain/transport_provider.dart';
 import 'admin_api_client.dart';
 import 'admin_http_resource.dart';
-import 'admin_stay_wire_mapper.dart';
 
 /// `GET/PATCH /admin/settings` (contract in `api_contract.dart`).
 class HttpSettingsRepository implements AdminSettingsRepository {
@@ -85,14 +84,14 @@ class HttpTransportProviderRepository implements TransportProviderRepository {
       _providers.update(provider.id, provider.toWriteJson());
 }
 
-/// Paginated `GET /admin/stays`.
+/// Paginated `GET /admin/stays` rows (ADR-011 projection).
 class HttpStayListRepository implements StayListRepository {
   HttpStayListRepository(AdminApiClient client)
-      : _stays = AdminHttpResource(client, '/stays', AdminStayWireMapper.map);
+      : _stays = AdminHttpResource(client, '/stays', ReservationRow.fromJson);
 
-  final AdminHttpResource<AdminStayRecord> _stays;
+  final AdminHttpResource<ReservationRow> _stays;
 
   @override
-  Future<PagedResult<AdminStayRecord>> list(ListQuery query) =>
+  Future<PagedResult<ReservationRow>> list(ListQuery query) =>
       _stays.list(query);
 }

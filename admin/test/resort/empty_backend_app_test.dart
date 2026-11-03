@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
+import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/http_catalog_repositories.dart';
+import 'package:kachava_admin_dashboard/data/http_operations_repositories.dart';
+import 'package:kachava_admin_dashboard/data/http_stay_repositories.dart';
 import 'package:kachava_admin_dashboard/domain/admin_catalog_repositories.dart';
 import 'package:kachava_admin_dashboard/domain/admin_settings.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'package:kachava_admin_dashboard/presentation/operations/operations_scope.dart';
 
+import '../support/fake_operations.dart';
 import '../support/fake_resort_repositories.dart';
 import '../support/recorded_contract.dart';
 import '../support/signed_in_api_client.dart';
@@ -23,17 +27,20 @@ class _EmptyBackend {
   late final MockClient client = MockClient((request) async {
     final path = request.url.path.replaceFirst('/api/v1/admin', '');
     requests.add('${request.method} $path');
+    if (path == '/dashboard') {
+      // No time zone yet: the backend answers 422 SETTINGS_REQUIRED.
+      return http.Response(
+          jsonEncode({
+            'statusCode': 422,
+            'code': 'SETTINGS_REQUIRED',
+            'details': ['timeZone'],
+          }),
+          422);
+    }
     final body = switch ((request.method, path)) {
-      ('GET', '/sync') => {
+      ('GET', '/notifications/unread-count') => {
           'success': true,
-          'data': {
-            'stays': [],
-            'alerts': {'alerts': [], 'unreadCount': 0},
-            'bookings': [],
-            'larderOrders': [],
-            'conciergeRequests': [],
-            'midstayFeedback': [],
-          },
+          'data': {'unreadCount': 0, 'urgentUnreadCount': 0},
         },
       ('GET', '/staff' || '/villas') => recordedPage(const []),
       ('GET', '/settings') => recordedEmptySettings,
@@ -55,7 +62,8 @@ Future<_EmptyBackend> _pumpApp(WidgetTester tester, Size size) async {
   final backend = _EmptyBackend();
   final api = signedInApiClient(backend.client);
   await tester.pumpWidget(KachavaAdminApp(
-    repository: ApiAdminOperationsRepository(apiClient: api),
+    operations: _httpOperations(api),
+    staff: HttpStaffDirectoryRepository(api),
     resort: AdminResortRepositories(
         settings: HttpSettingsRepository(api),
         villas: HttpVillaRepository(api)),
@@ -77,12 +85,18 @@ void main() {
       expect(find.byKey(const Key('sync-no-access-indicator')), findsNothing);
       expect(find.byKey(const Key('admin-toast-banner')), findsNothing);
       // Dashboard shows zeros and the one-line Settings link.
-      expect(find.text('0'), findsWidgets);
       expect(find.text('Time zone not set'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      expect(backend.requests,
-          containsAll(['GET /sync', 'GET /staff', 'GET /settings']));
+      expect(
+          backend.requests,
+          containsAll([
+            'GET /dashboard',
+            'GET /notifications/unread-count',
+            'GET /staff',
+            'GET /settings'
+          ]));
+      expect(backend.requests, isNot(contains('GET /sync')));
       for (final r in backend.requests) {
         expect(r, isNot(contains('/catalog/')), reason: r);
         expect(r, isNot(endsWith('/reset')), reason: r);
@@ -117,8 +131,7 @@ void main() {
     final settings =
         FakeSettingsRepository(const AdminSettings(timeZone: 'America/Cancun'));
     await tester.pumpWidget(KachavaAdminApp(
-      repository: ApiAdminOperationsRepository(
-          apiClient: signedInApiClient(_EmptyBackend().client)),
+      operations: FakeOperations().deps,
       resort: fakeResortRepositories(settings: settings),
       timeZones: testTimeZones,
     ));
@@ -126,3 +139,13 @@ void main() {
     expect(find.byKey(const Key('setup-in-settings')), findsNothing);
   });
 }
+
+/// Every operations port over HTTP against [api].
+OperationsDeps _httpOperations(AdminApiClient api) => OperationsDeps(
+      dashboard: HttpDashboardRepository(api),
+      reservations: HttpReservationRepository(api),
+      guests: HttpGuestRepository(api),
+      tasks: HttpTaskRepository(api),
+      notifications: HttpNotificationRepository(api),
+      conversations: HttpConversationRepository(api),
+    );

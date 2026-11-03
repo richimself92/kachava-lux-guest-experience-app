@@ -23,6 +23,7 @@ class TransportationWorkspace extends StatefulWidget {
     this.now = _utcNow,
     this.onOpenSettings,
     this.onOpenServices,
+    this.openTripId,
   });
 
   final TransportRepositories repositories;
@@ -38,6 +39,9 @@ class TransportationWorkspace extends StatefulWidget {
   /// Opens Services filtered by Transportation; `null` while that screen is
   /// not available (the tab then shows only its line).
   final VoidCallback? onOpenServices;
+
+  /// A trip to open in the Trips tab.
+  final String? openTripId;
 
   static DateTime _utcNow() => DateTime.now().toUtc();
 
@@ -130,6 +134,7 @@ class _TransportationWorkspaceState extends State<TransportationWorkspace>
       now: widget.now,
       isEs: widget.isEs,
       onOpenSettings: widget.onOpenSettings,
+      openTripId: widget.openTripId,
     );
   }
 }

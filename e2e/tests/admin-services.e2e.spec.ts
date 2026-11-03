@@ -238,11 +238,9 @@ const searchTag = (page: Page) => searchFor(page, RUN);
 
 async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Promise<void> {
   const name = `${RUN} ${spec.label}`;
-  // The first tap can land before the freshly rendered list wires its handlers: retry until the editor opens.
-  await expect(async () => {
-    await clickButton(page, 'New service');
-    await waitForFlutterSemantics(page, 'Price & availability', 4000);
-  }).toPass({ timeout: 30000 });
+  // One tap: every "New" opens a fresh editor (admin_list_screen_open_test.dart).
+  await clickButton(page, 'New service');
+  await waitForFlutterSemantics(page, 'Price & availability');
   await selectDropdown(page, 'svc-kind', spec.label);
   await fillField(page, 'svc-name.en', name);
   await fillField(page, 'svc-name.es', `${name} ES`);

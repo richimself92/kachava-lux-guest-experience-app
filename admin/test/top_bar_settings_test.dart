@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
+import 'package:kachava_admin_dashboard/application/admin_shell_controller.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/domain/list_query.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'support/fake_operations.dart';
 import 'support/fake_resort_repositories.dart';
-
-import 'support/seeded_admin_repository.dart';
 
 Future<void> _pump(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
@@ -15,7 +14,7 @@ Future<void> _pump(WidgetTester tester, Size size) async {
   await tester.pumpWidget(KachavaAdminApp(
       resort: fakeResortRepositories(),
       timeZones: testTimeZones,
-      repository: SeededAdminRepository()));
+      operations: FakeOperations().deps));
   await tester.pumpAndSettle();
 }
 
@@ -59,16 +58,13 @@ void main() {
     expect(find.text('Ajustes'), findsWidgets);
   });
 
-  test('list queries persist per screen and reset with the staff session', () {
-    final controller =
-        AdminDashboardController(repository: SeededAdminRepository());
+  test('list queries persist per screen while navigating', () {
+    final controller = AdminShellController();
     addTearDown(controller.dispose);
     controller.listQueries
         .write('villas', const ListQuery().withFilter('status', 'BLOCKED'));
     controller.selectTab(AdminWorkspaceTab.adminSettings);
     expect(
         controller.listQueries.read('villas').filters, {'status': 'BLOCKED'});
-    controller.clearSessionData();
-    expect(controller.listQueries.read('villas'), const ListQuery());
   });
 }

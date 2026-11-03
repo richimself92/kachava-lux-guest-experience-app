@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../application/paged_list_controller.dart';
 import '../../../core/admin_list_strings.dart';
@@ -8,6 +7,7 @@ import '../admin_data_table.dart';
 import '../info_tooltip.dart';
 import 'admin_detail_panel.dart';
 import 'admin_list_parts.dart';
+import 'admin_list_shortcuts.dart';
 import 'admin_list_toolbar.dart';
 
 /// Builds the detail (or create, when [item] is `null`) content. [close]
@@ -40,6 +40,8 @@ class AdminListScreen<T> extends StatefulWidget {
     this.onPrimaryAction,
     this.detailBuilder,
     this.detailWidth = AdminDetailPanel.width,
+    this.initialDetail,
+    this.onRowTap,
     this.isEs = false,
   });
 
@@ -67,6 +69,12 @@ class AdminListScreen<T> extends StatefulWidget {
 
   /// Side panel width on desktop (tabbed editors may need more than 420).
   final double detailWidth;
+
+  /// Opened right after the first frame (e.g. a notification's target).
+  final T? initialDetail;
+
+  /// Replaces the detail panel on row tap (e.g. go to another screen).
+  final ValueChanged<T>? onRowTap;
   final bool isEs;
 
   @override
@@ -83,6 +91,15 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
   bool _creating = false;
   FocusNode? _returnFocus;
 
+  /// Whether the last layout had room for the side panel. The list may be
+  /// narrower than the window (sidebar), so this, not the window width,
+  /// decides between the side panel and the full-screen sheet.
+  bool _wide = true;
+
+  /// Bumped on every "New": each create opens a fresh, empty editor even
+  /// when a create panel (or a record just saved from it) is still open.
+  int _createGeneration = 0;
+
   PagedListController<T> get _c => widget.controller;
   AdminListStrings get _s => AdminListStrings(widget.isEs);
   bool get _panelOpen => _selected != null || _creating;
@@ -91,6 +108,12 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
   void initState() {
     super.initState();
     if (_c.result == null) _c.load();
+    final initial = widget.initialDetail;
+    if (initial != null && widget.detailBuilder != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _open(initial);
+      });
+    }
   }
 
   @override
@@ -108,12 +131,11 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
 
   void _open(T? item) {
     _returnFocus = FocusManager.instance.primaryFocus;
-    final wide =
-        MediaQuery.sizeOf(context).width >= AdminListScreen.wideBreakpoint;
-    if (wide) {
+    if (_wide) {
       setState(() {
         _selected = item;
         _creating = item == null;
+        if (item == null) _createGeneration++;
       });
       return;
     }
@@ -146,6 +168,7 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= AdminListScreen.wideBreakpoint;
+      _wide = wide;
       final list = _list(wide);
       final body = wide && _panelOpen && widget.detailBuilder != null
           ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -154,15 +177,16 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
               SizedBox(
                 width: widget.detailWidth,
                 child: KeyedSubtree(
-                  key: ValueKey(
-                      _creating ? 'new' : widget.rowId(_selected as T)),
+                  key: ValueKey(_creating
+                      ? 'new-$_createGeneration'
+                      : widget.rowId(_selected as T)),
                   child: widget.detailBuilder!(
                       context, _creating ? null : _selected, _close),
                 ),
               ),
             ])
           : list;
-      return _ListShortcuts(
+      return AdminListShortcuts(
         searchFocus: _searchFocus,
         onPrevious: _c.previousPage,
         onNext: _c.nextPage,
@@ -293,7 +317,7 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
         rowId: widget.rowId,
         sort: _c.query.sort,
         onSort: _c.toggleSort,
-        onRowTap: widget.detailBuilder == null ? null : _open,
+        onRowTap: _rowTap,
         selectedId: _selected == null ? null : widget.rowId(_selected as T),
         isEs: widget.isEs,
       );
@@ -305,74 +329,9 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
         title: widget.compactTitle,
         subtitle: widget.compactSubtitle,
         trailing: widget.compactTrailing,
-        onTap: widget.detailBuilder == null ? null : _open,
+        onTap: _rowTap,
       );
-}
 
-/// `/` focuses search; PageUp/PageDown page the list. Disabled while typing
-/// in a text field so the keys still reach it.
-class _ListShortcuts extends StatelessWidget {
-  const _ListShortcuts({
-    required this.searchFocus,
-    required this.onPrevious,
-    required this.onNext,
-    required this.child,
-  });
-
-  final FocusNode searchFocus;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Shortcuts(
-      shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.slash):
-            _ListKeyIntent(_ListKey.search),
-        SingleActivator(LogicalKeyboardKey.pageUp):
-            _ListKeyIntent(_ListKey.previous),
-        SingleActivator(LogicalKeyboardKey.pageDown):
-            _ListKeyIntent(_ListKey.next),
-      },
-      child: Actions(
-        actions: {
-          _ListKeyIntent: _ListKeyAction((key) => switch (key) {
-                _ListKey.search => searchFocus.requestFocus(),
-                _ListKey.previous => onPrevious(),
-                _ListKey.next => onNext(),
-              }),
-        },
-        child: child,
-      ),
-    );
-  }
-}
-
-enum _ListKey { search, previous, next }
-
-class _ListKeyIntent extends Intent {
-  const _ListKeyIntent(this.key);
-
-  final _ListKey key;
-}
-
-class _ListKeyAction extends Action<_ListKeyIntent> {
-  _ListKeyAction(this._run);
-
-  final void Function(_ListKey key) _run;
-
-  /// Not while a text field has focus (the key belongs to the text).
-  @override
-  bool isEnabled(_ListKeyIntent intent) {
-    final focused = FocusManager.instance.primaryFocus?.context;
-    return focused == null ||
-        focused.findAncestorWidgetOfExactType<EditableText>() == null;
-  }
-
-  @override
-  Object? invoke(_ListKeyIntent intent) {
-    _run(intent.key);
-    return null;
-  }
+  ValueChanged<T>? get _rowTap =>
+      widget.onRowTap ?? (widget.detailBuilder == null ? null : _open);
 }

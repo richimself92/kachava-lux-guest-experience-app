@@ -7,7 +7,7 @@ import '../../../core/theme/kachava_tokens.dart';
 import '../../../core/transport_strings.dart';
 import '../../../domain/admin_service.dart';
 import '../../../domain/admin_settings.dart';
-import '../../../domain/admin_stay_entities.dart';
+import '../../../domain/reservation.dart';
 import '../../../domain/admin_trip.dart';
 import '../../../domain/list_query.dart';
 import '../../../domain/transport_provider.dart';
@@ -60,7 +60,7 @@ class _TripCreatePanelState extends State<TripCreatePanel> {
   final _pickup = TextEditingController();
   List<AdminService> _services = const [];
   List<ServiceItem> _vehicles = const [];
-  AdminStayRecord? _stay;
+  ReservationRow? _stay;
   String? _serviceId;
   String? _itemId;
   String _type = TripValues.types.first;
@@ -128,7 +128,7 @@ class _TripCreatePanelState extends State<TripCreatePanel> {
   }
 
   NewTripRequest _request() => NewTripRequest(
-        stayId: _stay!.stayId,
+        stayId: _stay!.id,
         serviceId: _serviceId!,
         itemId: _itemId,
         type: _type,

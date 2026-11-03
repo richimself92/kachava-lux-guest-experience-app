@@ -5,7 +5,7 @@ import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_service.dart';
-import '../../domain/admin_stay_entities.dart' show StaffMember;
+import '../../domain/staff_member.dart';
 import '../components/components.dart';
 import 'service_catalog_scope.dart';
 import 'services_catalog_list.dart';

@@ -1,8 +1,7 @@
 import 'package:kachava_admin_dashboard/core/resort_time.dart';
-import 'package:kachava_admin_dashboard/data/admin_stay_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/domain/admin_catalog_repositories.dart';
 import 'package:kachava_admin_dashboard/domain/admin_service.dart';
-import 'package:kachava_admin_dashboard/domain/admin_stay_entities.dart';
+import 'package:kachava_admin_dashboard/domain/reservation.dart';
 import 'package:kachava_admin_dashboard/domain/admin_trip.dart';
 import 'package:kachava_admin_dashboard/domain/list_query.dart';
 import 'package:kachava_admin_dashboard/domain/paged_result.dart';
@@ -308,26 +307,26 @@ ServiceItem testVehicle(String id, String name, int passengers) =>
 class FakeStayList implements StayListRepository {
   FakeStayList([this.stays = const []]);
 
-  final List<AdminStayRecord> stays;
+  final List<ReservationRow> stays;
   final List<ListQuery> queries = [];
 
   @override
-  Future<PagedResult<AdminStayRecord>> list(ListQuery query) async {
+  Future<PagedResult<ReservationRow>> list(ListQuery query) async {
     queries.add(query);
     final q = query.q.toLowerCase();
     final rows = [
       for (final s in stays)
-        if (q.isEmpty || s.guestNames.toLowerCase().contains(q)) s
+        if (q.isEmpty || s.guestName.toLowerCase().contains(q)) s
     ];
     return PagedResult(
         items: rows, page: 1, pageSize: query.pageSize, total: rows.length);
   }
 }
 
-AdminStayRecord testStay(String id, String guest, String villa,
+ReservationRow testStay(String id, String guest, String villa,
         {String status = 'PRE_ARRIVAL'}) =>
-    AdminStayWireMapper.map({
-      'stayId': id,
+    ReservationRow.fromJson({
+      'id': id,
       'villaId': 'villa-$id',
       'villaName': villa,
       'guestName': guest,

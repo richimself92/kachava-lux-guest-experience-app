@@ -44,9 +44,8 @@ String _normalize(String path) {
 void main() {
   test('main.dart never reaches seeded/fixture repositories', () {
     final reachable = _reachableFromMain();
-    expect(
-        reachable, contains('lib/data/api_admin_operations_repository.dart'));
-    expect(reachable, contains('lib/data/admin_write_through_cache.dart'));
+    expect(reachable, contains('lib/data/http_stay_repositories.dart'));
+    expect(reachable, contains('lib/data/http_operations_repositories.dart'));
     for (final path in reachable) {
       expect(
           path,
@@ -75,7 +74,17 @@ void main() {
   test('main.dart wires the HTTP repositories to one silent API client', () {
     final main = File('lib/main.dart').readAsStringSync();
     expect(main, contains('final api = AdminApiClient();'));
-    expect(main, contains('ApiAdminOperationsRepository(apiClient: api)'));
+    for (final repo in [
+      'HttpDashboardRepository(api)',
+      'HttpReservationRepository(api)',
+      'HttpGuestRepository(api)',
+      'HttpTaskRepository(api)',
+      'HttpNotificationRepository(api)',
+      'HttpConversationRepository(api)',
+      'HttpStaffDirectoryRepository(api)',
+    ]) {
+      expect(main, contains(repo));
+    }
     expect(main, contains('settings: HttpSettingsRepository(api)'));
     expect(main, contains('villas: HttpVillaRepository(api)'));
     expect(main, contains('timeZones: createTimeZoneCatalog()'));

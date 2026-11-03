@@ -1,9 +1,9 @@
 import 'admin_service.dart';
 import 'admin_settings.dart';
-import 'admin_stay_entities.dart';
 import 'admin_villa.dart';
 import 'list_query.dart';
 import 'paged_result.dart';
+import 'reservation.dart';
 import 'transport_provider.dart';
 
 /// Resort settings (`GET/PATCH /admin/settings`).
@@ -66,7 +66,7 @@ abstract interface class ServiceCatalogRepository {
   Future<ServiceItem> updateItem(String serviceId, ServiceItem item);
 }
 
-/// Paginated stays (`GET /admin/stays`).
+/// Paginated stay rows (`GET /admin/stays`).
 abstract interface class StayListRepository {
-  Future<PagedResult<AdminStayRecord>> list(ListQuery query);
+  Future<PagedResult<ReservationRow>> list(ListQuery query);
 }

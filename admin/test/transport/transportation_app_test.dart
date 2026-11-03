@@ -10,7 +10,7 @@ import 'package:kachava_admin_dashboard/presentation/workspaces/transportation/t
 
 import '../support/fake_resort_repositories.dart';
 import '../support/fake_service_catalog.dart';
-import '../support/seeded_admin_repository.dart';
+import '../support/fake_operations.dart';
 import 'fake_transport_repositories.dart';
 
 Future<void> _pumpApp(WidgetTester tester, {bool withTrips = true}) async {
@@ -26,7 +26,7 @@ Future<void> _pumpApp(WidgetTester tester, {bool withTrips = true}) async {
   final app = KachavaAdminApp(
       resort: fakeResortRepositories(),
       timeZones: testTimeZones,
-      repository: SeededAdminRepository());
+      operations: FakeOperations().deps);
   await tester.pumpWidget(ServiceCatalogScope(
     deps: fakeCatalogDeps(FakeServiceCatalogRepository()),
     child: withTrips

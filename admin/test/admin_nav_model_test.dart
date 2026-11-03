@@ -3,43 +3,28 @@ import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/presentation/navigation/admin_nav_model.dart';
 
 void main() {
-  group('AdminNavModel', () {
-    test('test_visibleSections_orderAndLabels_matchMockup', () {
+  group('AdminNavModel (plan v2 menu)', () {
+    test('every plan item is visible, in order, with EN/ES labels', () {
       final sections = AdminNavModel.visibleSections();
       expect(sections.map((s) => s.label(false)).toList(),
           ['GUEST OPERATIONS', 'HOSPITALITY', 'OPERATIONS']);
       expect(sections.map((s) => s.label(true)).toList(),
           ['OPERACIONES DE HUÉSPEDES', 'HOSPITALIDAD', 'OPERACIONES']);
       expect(sections.map((s) => s.items.map((i) => i.labelEn).toList()), [
-        ['Reservations', 'Villas'],
+        ['Reservations', 'Guests', 'Villas'],
         ['Services', 'Experiences', 'Dining', 'Transportation', 'Wellness'],
-        ['Tasks'],
+        ['Tasks', 'Notifications'],
       ]);
       expect(AdminNavModel.dashboard.label(false), 'Dashboard');
       expect(AdminNavModel.dashboard.label(true), 'Panel');
+      expect(
+          AdminNavModel.sections.expand((s) => s.items).every((i) => i.visible),
+          isTrue);
     });
 
-    test('test_hiddenItems_areNotVisible', () {
-      final visible = AdminNavModel.visibleSections()
-          .expand((s) => s.items)
-          .map((i) => i.labelEn)
-          .toSet();
-      for (final hidden in [
-        'Guests',
-        'Notifications',
-      ]) {
-        expect(visible.contains(hidden), isFalse, reason: hidden);
-        final item = AdminNavModel.sections
-            .expand((s) => s.items)
-            .firstWhere((i) => i.labelEn == hidden);
-        expect(item.visible, isFalse, reason: hidden);
-      }
-    });
-
-    test('test_labels_haveNoNumericPrefix_noFolioNoTeam', () {
+    test('labels have no numeric prefix, no Folio and no TEAM', () {
       final labels = <String>[
         AdminNavModel.dashboard.labelEn,
-        AdminNavModel.dashboard.labelEs,
         for (final s in AdminNavModel.sections) ...[
           s.labelEn,
           s.labelEs,
@@ -51,61 +36,31 @@ void main() {
         expect(label.toUpperCase().contains('FOLIO'), isFalse, reason: label);
         expect(label.toUpperCase(), isNot('TEAM'));
       }
-      final mapped = AdminNavModel.sections
-          .expand((s) => s.items)
-          .map((i) => i.workspace)
-          .toList();
-      expect(mapped.contains(AdminWorkspaceTab.adminFolio), isFalse);
     });
 
-    test('test_itemForWorkspace_mapsTabs_andFolioResolvesToReservations', () {
-      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminOverview),
-          AdminNavModel.dashboard);
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminStays)?.labelEn,
-          'Reservations');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminVillas)
-              ?.labelEn,
-          'Villas');
-      // Legacy queues are not menu items (alerts still open them).
-      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminLarder),
+    test('itemForWorkspace maps every menu workspace; Settings has none', () {
+      for (final (tab, label) in [
+        (AdminWorkspaceTab.adminOverview, 'Dashboard'),
+        (AdminWorkspaceTab.adminStays, 'Reservations'),
+        (AdminWorkspaceTab.adminGuests, 'Guests'),
+        (AdminWorkspaceTab.adminVillas, 'Villas'),
+        (AdminWorkspaceTab.adminServices, 'Services'),
+        (AdminWorkspaceTab.adminTransportation, 'Transportation'),
+        (AdminWorkspaceTab.adminTasks, 'Tasks'),
+        (AdminWorkspaceTab.adminNotifications, 'Notifications'),
+      ]) {
+        expect(AdminNavModel.itemForWorkspace(tab)?.labelEn, label);
+      }
+      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminSettings),
           isNull);
-      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminExperiences),
-          isNull);
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminServices)
-              ?.labelEn,
-          'Services');
-      expect(
-          AdminNavModel.itemForWorkspace(
-                  AdminWorkspaceTab.adminSectionExperiences)
-              ?.labelEn,
-          'Experiences');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminSectionDining)
-              ?.labelEn,
-          'Dining');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminSectionWellness)
-              ?.labelEn,
-          'Wellness');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminConcierge)
-              ?.labelEn,
-          'Tasks');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminFolio)?.labelEn,
-          'Reservations');
     });
 
-    test('test_workspaceTabLabels_haveNoNumbers', () {
+    test('workspace labels have no numbers and are translated', () {
       for (final tab in AdminWorkspaceTab.values) {
         expect(RegExp(r'^\d').hasMatch(tab.label), isFalse);
-        expect(RegExp(r'^\d').hasMatch(tab.shortLabel), isFalse);
+        expect(tab.labelEs, isNotEmpty);
       }
-      expect(AdminWorkspaceTab.adminOverview.label, 'Dashboard');
-      expect(AdminWorkspaceTab.adminFolio.label, 'Stay summary');
+      expect(AdminWorkspaceTab.adminTasks.labelEs, 'Tareas');
     });
   });
 }

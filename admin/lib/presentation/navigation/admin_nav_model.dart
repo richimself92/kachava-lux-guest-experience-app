@@ -69,7 +69,13 @@ abstract final class AdminNavModel {
       labelEs: 'OPERACIONES DE HUÉSPEDES',
       items: [
         reservations,
-        AdminNavItem(id: 'guests', labelEn: 'Guests', labelEs: 'Huéspedes'),
+        AdminNavItem(
+          id: 'guests',
+          labelEn: 'Guests',
+          labelEs: 'Huéspedes',
+          workspace: AdminWorkspaceTab.adminGuests,
+          icon: Icons.people_outline,
+        ),
         AdminNavItem(
           id: 'villas',
           labelEn: 'Villas',
@@ -130,13 +136,16 @@ abstract final class AdminNavModel {
           id: 'tasks',
           labelEn: 'Tasks',
           labelEs: 'Tareas',
-          workspace: AdminWorkspaceTab.adminConcierge,
+          workspace: AdminWorkspaceTab.adminTasks,
           icon: Icons.task_alt,
         ),
         AdminNavItem(
-            id: 'notifications',
-            labelEn: 'Notifications',
-            labelEs: 'Notificaciones'),
+          id: 'notifications',
+          labelEn: 'Notifications',
+          labelEs: 'Notificaciones',
+          workspace: AdminWorkspaceTab.adminNotifications,
+          icon: Icons.notifications_none,
+        ),
       ],
     ),
   ];
@@ -153,10 +162,8 @@ abstract final class AdminNavModel {
             ),
       ];
 
-  /// The menu item highlighted for [tab]. The stay summary (folio) is not a
-  /// menu item: it keeps Reservations selected.
+  /// The menu item highlighted for [tab] (Settings has none).
   static AdminNavItem? itemForWorkspace(AdminWorkspaceTab tab) {
-    if (tab == AdminWorkspaceTab.adminFolio) return reservations;
     if (tab == dashboard.workspace) return dashboard;
     for (final item in sections.expand((s) => s.items)) {
       if (item.workspace == tab) return item;

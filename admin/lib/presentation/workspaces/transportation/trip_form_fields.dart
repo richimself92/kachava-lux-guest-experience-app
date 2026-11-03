@@ -4,9 +4,8 @@ import '../../../core/resort_time.dart';
 import '../../../core/theme/kachava_tokens.dart';
 import '../../../core/transport_strings.dart';
 import '../../../domain/admin_catalog_repositories.dart';
-import '../../../domain/admin_enums.dart';
-import '../../../domain/admin_stay_entities.dart';
 import '../../../domain/list_query.dart';
+import '../../../domain/reservation.dart';
 import '../../components/components.dart';
 
 /// Searchable stay picker: types a guest name, lists upcoming or in-house
@@ -18,30 +17,28 @@ class StayPickerField extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     required this.isEs,
+    this.isRequired = true,
   });
 
   static const int maxOptions = 10;
-  static const Set<StayLifecycleStatus> openStatuses = {
-    StayLifecycleStatus.preArrival,
-    StayLifecycleStatus.activeStay,
-  };
-
   final StayListRepository stays;
-  final AdminStayRecord? selected;
+  final ReservationRow? selected;
 
   /// `null` when the text no longer matches the picked stay.
-  final ValueChanged<AdminStayRecord?> onSelected;
+  final ValueChanged<ReservationRow?> onSelected;
   final bool isEs;
 
-  static String display(AdminStayRecord s) =>
-      '${s.guestNames} · ${s.villaName}';
+  /// Optional pickers (e.g. a task's stay) accept no selection.
+  final bool isRequired;
 
-  Future<Iterable<AdminStayRecord>> _search(TextEditingValue value) async {
+  static String display(ReservationRow s) => '${s.guestName} · ${s.villaName}';
+
+  Future<Iterable<ReservationRow>> _search(TextEditingValue value) async {
     final text = value.text.trim();
     if (text.isEmpty) return const [];
     try {
       final page = await stays.list(ListQuery(q: text, pageSize: maxOptions));
-      return page.items.where((s) => openStatuses.contains(s.lifecycleStatus));
+      return page.items.where((s) => s.isOpen);
     } catch (_) {
       return const [];
     }
@@ -54,9 +51,9 @@ class StayPickerField extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: KachavaTokens.space4),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         AdminFieldLabel(s.stay,
-            isRequired: true, info: s.stayInfo, readByInput: true),
+            isRequired: isRequired, info: s.stayInfo, readByInput: true),
         const SizedBox(height: KachavaTokens.space1),
-        Autocomplete<AdminStayRecord>(
+        Autocomplete<ReservationRow>(
           displayStringForOption: display,
           optionsBuilder: _search,
           onSelected: onSelected,
@@ -76,7 +73,8 @@ class StayPickerField extends StatelessWidget {
                   onSelected(null);
                 }
               },
-              validator: (_) => selected == null ? s.pickStay : null,
+              validator: (_) =>
+                  isRequired && selected == null ? s.pickStay : null,
             ),
           ),
         ),

@@ -12,6 +12,7 @@ import '../../../domain/list_query.dart';
 import '../../../domain/transport_provider.dart';
 import '../../../domain/trip_repository.dart';
 import '../../components/components.dart';
+import '../../operations/operations_scope.dart';
 import 'trip_create_panel.dart';
 import 'trip_detail_panel.dart';
 
@@ -27,6 +28,7 @@ class TripsTab extends StatefulWidget {
     required this.now,
     required this.isEs,
     this.onOpenSettings,
+    this.openTripId,
   });
 
   /// [ListQueryStore] key of this list.
@@ -45,6 +47,9 @@ class TripsTab extends StatefulWidget {
   final DateTime Function() now;
   final bool isEs;
   final VoidCallback? onOpenSettings;
+
+  /// A trip to open on arrival (notification, reservation).
+  final String? openTripId;
 
   @override
   State<TripsTab> createState() => _TripsTabState();
@@ -126,7 +131,13 @@ class _TripsTabState extends State<TripsTab> {
               onOpenSettings: widget.onOpenSettings ?? () {},
             ),
           ),
-        Expanded(child: _listScreen()),
+        Expanded(
+          child: OpenRecordLoader<AdminTrip>(
+            id: widget.openTripId,
+            load: widget.repositories.trips.get,
+            builder: (context, initial) => _listScreen(initial),
+          ),
+        ),
       ],
     );
   }
@@ -146,7 +157,7 @@ class _TripsTabState extends State<TripsTab> {
     return null;
   }
 
-  Widget _listScreen() => AdminListScreen<AdminTrip>(
+  Widget _listScreen(AdminTrip? initial) => AdminListScreen<AdminTrip>(
         entity: 'trips',
         title: _s.trips,
         info: _s.tripsInfo,
@@ -164,6 +175,7 @@ class _TripsTabState extends State<TripsTab> {
         emptyMessage: _s.noTrips,
         primaryActionLabel: _s.newTrip,
         detailBuilder: _detail,
+        initialDetail: initial,
         isEs: widget.isEs,
       );
 

@@ -388,15 +388,27 @@ void main() {
     });
   });
 
-  test('HttpStayListRepository pages GET /stays', () async {
+  test('HttpStayListRepository pages GET /stays (ADR-011 row shape)', () async {
     final server = _Server((_) => recordedPage([
-          {'stayId': 's1', 'guestName': 'Ana', 'status': 'PRE_ARRIVAL'}
+          {
+            'id': 's1',
+            'guestName': 'Ana',
+            'villaId': 'v1',
+            'villaName': 'Casa Ceiba',
+            'checkIn': '2026-11-03',
+            'checkOut': '2026-11-07',
+            'status': 'PRE_ARRIVAL',
+            'resortHostName': null,
+            'magicLinkUrl': 'https://guest.test/?guestId=u1',
+          }
         ], total: 40));
     final repo = HttpStayListRepository(signedInApiClient(server.client));
     final page = await repo.list(const ListQuery());
     expect(server.last.url.path, '/api/v1/admin/stays');
     expect(page.total, 40);
-    expect(page.items.single.guestNames, 'Ana');
+    expect(page.items.single.guestName, 'Ana');
+    expect(page.items.single.id, 's1');
+    expect(page.items.single.isOpen, isTrue);
   });
 
   group('uploads (recorded contract)', () {

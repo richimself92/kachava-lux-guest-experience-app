@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../application/admin_dashboard_controller.dart';
+import '../../application/admin_shell_controller.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../navigation/admin_nav_list.dart';
@@ -9,7 +9,7 @@ import '../navigation/admin_nav_model.dart';
 class TabletCompactRail extends StatelessWidget {
   const TabletCompactRail({super.key, required this.controller});
 
-  final AdminDashboardController controller;
+  final AdminShellController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +67,7 @@ class TabletCompactRail extends StatelessWidget {
 class AdminMobileNavDrawer extends StatelessWidget {
   const AdminMobileNavDrawer({super.key, required this.controller});
 
-  final AdminDashboardController controller;
+  final AdminShellController controller;
 
   @override
   Widget build(BuildContext context) {

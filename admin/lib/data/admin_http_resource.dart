@@ -37,9 +37,13 @@ class AdminHttpResource<T> {
 
   String _item(String id) => '$path/${Uri.encodeComponent(id)}';
 
-  /// `{ data: {...} }` (the client already merges `data` into the root).
-  static Map<String, dynamic> _record(Map<String, dynamic> raw) {
-    final inner = raw['data'];
-    return inner is Map ? Map<String, dynamic>.from(inner) : raw;
-  }
+  static Map<String, dynamic> _record(Map<String, dynamic> raw) =>
+      unwrapRecord(raw);
+}
+
+/// The record of a `{ data: {...} }` answer (the client already merges
+/// `data` into the root; this keeps nested objects intact).
+Map<String, dynamic> unwrapRecord(Map<String, dynamic> raw) {
+  final inner = raw['data'];
+  return inner is Map ? Map<String, dynamic>.from(inner) : raw;
 }

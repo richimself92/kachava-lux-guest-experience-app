@@ -1,6 +1,4 @@
-import '../domain/admin_enums.dart';
-import '../domain/admin_stay_entities.dart';
-import 'admin_wire_mapper.dart';
+import '../domain/staff_member.dart';
 
 /// Maps staff payloads from `GET /admin/staff` and `POST /admin/auth/login`.
 ///
@@ -8,12 +6,11 @@ import 'admin_wire_mapper.dart';
 class AdminStaffMapper {
   const AdminStaffMapper._();
 
+  /// `{ data: [...] }`, a bare list, or `{ staff: [...] }`.
   static List<StaffMember> parseDirectory(Object? raw) {
-    final data = raw is Map ? raw['data'] : raw;
-    return AdminWireMapper.extractMapList(data)
-        .map(tryMap)
-        .whereType<StaffMember>()
-        .toList();
+    final data = raw is Map ? (raw['data'] ?? raw['staff']) : raw;
+    if (data is! List) return const [];
+    return data.map(tryMap).whereType<StaffMember>().toList();
   }
 
   static StaffMember? tryMap(Object? raw) {

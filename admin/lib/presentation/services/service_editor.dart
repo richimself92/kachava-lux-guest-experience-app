@@ -5,7 +5,7 @@ import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../data/catalog_rule_violation.dart';
 import '../../domain/admin_service.dart';
-import '../../domain/admin_stay_entities.dart' show StaffMember;
+import '../../domain/staff_member.dart';
 import '../../domain/json_draft.dart';
 import '../../domain/service_kind_fields.dart';
 import '../components/components.dart';

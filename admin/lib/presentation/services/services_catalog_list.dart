@@ -7,7 +7,7 @@ import '../../core/admin_i18n.dart';
 import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../domain/admin_service.dart';
-import '../../domain/admin_stay_entities.dart' show StaffMember;
+import '../../domain/staff_member.dart';
 import '../../domain/list_query.dart';
 import '../../domain/paged_result.dart';
 import '../components/components.dart';

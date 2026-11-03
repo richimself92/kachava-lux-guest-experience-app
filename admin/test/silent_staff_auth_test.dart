@@ -10,14 +10,15 @@ import 'package:kachava_admin_dashboard/core/app_config.dart';
 import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_session.dart';
 import 'package:kachava_admin_dashboard/domain/admin_access_denied.dart';
-import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
+import 'package:kachava_admin_dashboard/data/http_operations_repositories.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'package:kachava_admin_dashboard/presentation/operations/operations_scope.dart';
 
-import 'support/admin_sync_envelope.dart';
+import 'support/fake_operations.dart';
 
 const _login = 'POST /api/v1/admin/auth/login';
-const _sync = 'GET /api/v1/admin/sync';
+const _sync = 'GET /api/v1/admin/notifications/unread-count';
 
 /// Fake backend: login issues `tok-<n>` (n = login count); [syncReply] decides
 /// how every other call answers given the bearer it carried.
@@ -28,8 +29,10 @@ class _FakeBackend {
   final int loginStatus;
   final requests = <String>[];
   final loginEmails = <String>[];
-  http.Response Function(String? auth) syncReply =
-      (_) => jsonResponse(adminSyncEnvelope(stays: [liveStayWire()]));
+  http.Response Function(String? auth) syncReply = (_) => jsonResponse({
+        'success': true,
+        'data': {'unreadCount': 0, 'urgentUnreadCount': 0}
+      });
 
   int get logins => requests.where((r) => r.startsWith(_login)).length;
 
@@ -61,8 +64,8 @@ void main() {
       final backend = _FakeBackend();
       final client = AdminApiClient(httpClient: backend.client);
 
-      await client.getJson('/sync');
-      await client.getJson('/sync');
+      await client.getJson('/notifications/unread-count');
+      await client.getJson('/notifications/unread-count');
 
       expect(backend.requests,
           ['$_login no-auth', '$_sync Bearer tok-1', '$_sync Bearer tok-1']);
@@ -76,7 +79,10 @@ void main() {
       final backend = _FakeBackend(loginGate: gate);
       final client = AdminApiClient(httpClient: backend.client);
 
-      final both = Future.wait([client.getJson('/sync'), client.getJson('/x')]);
+      final both = Future.wait([
+        client.getJson('/notifications/unread-count'),
+        client.getJson('/x')
+      ]);
       await Future<void>.delayed(Duration.zero);
       gate.complete();
       await both;
@@ -93,7 +99,7 @@ void main() {
             : jsonResponse({'data': {}});
       final client = AdminApiClient(httpClient: backend.client);
 
-      await client.getJson('/sync');
+      await client.getJson('/notifications/unread-count');
 
       expect(backend.requests, [
         '$_login no-auth',
@@ -109,8 +115,8 @@ void main() {
         ..syncReply = (_) => jsonResponse({'message': 'Unauthorized'}, 401);
       final client = AdminApiClient(httpClient: backend.client);
 
-      await expectLater(
-          client.getJson('/sync'), throwsA(isA<AdminUnauthorizedException>()));
+      await expectLater(client.getJson('/notifications/unread-count'),
+          throwsA(isA<AdminUnauthorizedException>()));
 
       expect(backend.logins, 2);
       expect(backend.requests.where((r) => r.startsWith(_sync)), hasLength(2));
@@ -124,8 +130,8 @@ void main() {
         return jsonResponse({'message': 'Invalid staff credentials'}, 401);
       }));
 
-      await expectLater(
-          client.getJson('/sync'), throwsA(isA<AdminUnauthorizedException>()));
+      await expectLater(client.getJson('/notifications/unread-count'),
+          throwsA(isA<AdminUnauthorizedException>()));
 
       expect(requests, ['/api/v1/admin/auth/login']);
       expect(client.session.isAuthenticated, isFalse);
@@ -135,8 +141,8 @@ void main() {
       for (final status in [401, 403]) {
         final backend = _FakeBackend(loginStatus: status);
         final client = AdminApiClient(httpClient: backend.client);
-        await expectLater(
-            client.getJson('/sync'), throwsA(isA<AdminAccessDenied>()),
+        await expectLater(client.getJson('/notifications/unread-count'),
+            throwsA(isA<AdminAccessDenied>()),
             reason: '$status');
       }
     });
@@ -169,8 +175,7 @@ void main() {
     Widget buildApp(_FakeBackend backend) => KachavaAdminApp(
         resort: fakeResortRepositories(),
         timeZones: testTimeZones,
-        repository: ApiAdminOperationsRepository(
-            apiClient: AdminApiClient(httpClient: backend.client)),
+        operations: _operations(AdminApiClient(httpClient: backend.client)),
         enableLivePolling: true);
 
     testWidgets('test_app_showsShellDirectly_withSilentLogin', (tester) async {
@@ -217,4 +222,16 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
+}
+
+OperationsDeps _operations(AdminApiClient api) {
+  final ops = FakeOperations();
+  return OperationsDeps(
+    dashboard: ops.dashboard,
+    reservations: ops.reservations,
+    guests: ops.guests,
+    tasks: ops.tasks,
+    notifications: HttpNotificationRepository(api),
+    conversations: ops.conversations,
+  );
 }

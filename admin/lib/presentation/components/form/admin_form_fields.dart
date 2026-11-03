@@ -314,6 +314,17 @@ class AdminAdvancedSection extends StatelessWidget {
   }
 }
 
+/// Toast width on wide screens (`ux-patterns.md` §4).
+const double adminToastWidth = 360;
+
+/// Bottom-start placement: 16px from the left and bottom edges, at most
+/// [adminToastWidth] wide (full width minus margins on narrow screens).
+EdgeInsets adminToastMargin(double screenWidth) {
+  const edge = KachavaTokens.space4;
+  final right = screenWidth - edge - adminToastWidth;
+  return EdgeInsets.fromLTRB(edge, 0, right > edge ? right : edge, edge);
+}
+
 /// One-line toast, bottom-start, auto-dismiss after 4 s (errors 8 s with
 /// "Retry", or [actionLabel]). Call only after the awaited write succeeded.
 void showAdminToast(
@@ -340,12 +351,13 @@ void showAdminToastOn(
   String? actionLabel,
   bool isEs = false,
 }) {
+  if (messenger == null) return;
   messenger
-    ?..hideCurrentSnackBar()
+    ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
       key: const Key('admin-toast'),
       behavior: SnackBarBehavior.floating,
-      width: 360,
+      margin: adminToastMargin(MediaQuery.sizeOf(messenger.context).width),
       duration: Duration(seconds: isError ? 8 : 4),
       content: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
       action: isError && onRetry != null

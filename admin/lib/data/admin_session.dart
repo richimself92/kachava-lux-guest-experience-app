@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../domain/admin_stay_entities.dart';
+import '../domain/staff_member.dart';
 
 /// Staff session for `/api/v1/admin/*`: holds the bearer token issued by the
 /// silent `POST /admin/auth/login` and the [staff] member it returned.

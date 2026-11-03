@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../application/admin_dashboard_controller.dart';
+import '../../application/admin_shell_controller.dart';
+import '../../application/notification_bell_controller.dart';
 import '../../core/admin_i18n.dart';
+import '../../core/ops_strings.dart';
 import '../../core/admin_theme.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
@@ -15,10 +17,14 @@ class TopCommandBar extends StatelessWidget {
   const TopCommandBar({
     super.key,
     required this.controller,
+    required this.bell,
     this.showMenuButton = false,
   });
 
-  final AdminDashboardController controller;
+  final AdminShellController controller;
+
+  /// Unread notification counters (polled).
+  final NotificationBellController bell;
 
   /// Shows the menu button that opens the mobile navigation drawer.
   final bool showMenuButton;
@@ -49,7 +55,10 @@ class TopCommandBar extends StatelessWidget {
               SizedBox(width: gap),
               _buildLocaleToggleButton(isCompact),
               SizedBox(width: gap),
-              _buildNotificationBell(isCompact),
+              ListenableBuilder(
+                listenable: bell,
+                builder: (context, _) => _buildNotificationBell(isCompact),
+              ),
               _buildSettingsButton(),
             ],
           );
@@ -173,12 +182,13 @@ class TopCommandBar extends StatelessWidget {
   }
 
   Widget _buildNotificationBell(bool isCompact) {
-    final unread = controller.unreadAlertsCount;
-    final tone = unread > 0 ? StatusTone.error : StatusTone.neutral;
-    final label = AdminI18n.tr(
-        controller.isEs,
-        'Unread operational alerts: $unread',
-        'Alertas operativas sin leer: $unread');
+    final unread = bell.unread;
+    final tone = bell.counts.urgentUnread > 0
+        ? StatusTone.error
+        : unread > 0
+            ? StatusTone.warning
+            : StatusTone.neutral;
+    final label = '${OpsStrings(controller.isEs).bellLabelPrefix}: $unread';
     return Semantics(
       button: true,
       label: label,
@@ -190,7 +200,8 @@ class TopCommandBar extends StatelessWidget {
           background: tone.background,
           padding:
               EdgeInsets.symmetric(horizontal: isCompact ? 6 : 10, vertical: 6),
-          onTap: () => controller.selectTab(AdminWorkspaceTab.adminOverview),
+          onTap: () =>
+              controller.selectTab(AdminWorkspaceTab.adminNotifications),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -3,10 +3,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/core/theme/kachava_tokens.dart';
-import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/navigation/admin_nav_list.dart';
+import 'support/fake_operations.dart';
 import 'support/fake_resort_repositories.dart';
 
 void main() {
@@ -24,7 +24,7 @@ void main() {
     await tester.pumpWidget(KachavaAdminApp(
         resort: fakeResortRepositories(),
         timeZones: testTimeZones,
-        repository: SeededAdminRepository()));
+        operations: FakeOperations().deps));
     await tester.pumpAndSettle();
   }
 
@@ -49,13 +49,13 @@ void main() {
         'Dining',
         'Transportation',
         'Wellness',
+        'Guests',
         'Tasks',
+        'Notifications',
       ]) {
         expect(inSidebar(find.text(label)), findsOneWidget, reason: label);
       }
       for (final hidden in [
-        'Guests',
-        'Notifications',
         'TEAM',
         'SANCTUARY COMMAND · ONLINE',
       ]) {
@@ -125,10 +125,10 @@ void main() {
             ),
           );
       // Tall enough for every visible menu item (Dining and Wellness too).
-      tester.view.physicalSize = const Size(1440, 1300);
+      tester.view.physicalSize = const Size(1440, 1500);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(host(1200));
+      await tester.pumpWidget(host(1400));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('sidebar-scroll-down')), findsNothing);
 
@@ -137,7 +137,7 @@ void main() {
       expect(find.byKey(const Key('sidebar-scroll-down')), findsOneWidget);
       // Each tap scrolls 80% of the viewport; it hides at the end.
       for (var i = 0;
-          i < 10 &&
+          i < 20 &&
               find
                   .byKey(const Key('sidebar-scroll-down'))
                   .evaluate()
@@ -185,17 +185,18 @@ void main() {
         'admin-section-experiences',
         'admin-section-dining',
         'admin-section-wellness',
-        'admin-concierge',
+        'admin-guests',
+        'admin-tasks',
+        'admin-notifications',
       ]) {
         expect(find.byKey(Key('nav-tab-$id')), findsOneWidget, reason: id);
       }
       expect(find.byKey(const Key('nav-tab-admin-larder')), findsNothing);
       expect(find.byTooltip('Reservations'), findsOneWidget);
       expect(find.byTooltip('Tasks'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('nav-tab-admin-concierge')));
+      await tester.tap(find.byKey(const Key('nav-tab-admin-tasks')));
       await tester.pumpAndSettle();
-      expect(
-          find.byKey(const Key('workspace-admin-concierge')), findsOneWidget);
+      expect(find.byKey(const Key('workspace-admin-tasks')), findsOneWidget);
     });
   });
 }

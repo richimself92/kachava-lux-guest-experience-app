@@ -4,7 +4,7 @@ import '../../application/service_catalog_deps.dart';
 import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../domain/admin_service.dart';
-import '../../domain/admin_stay_entities.dart' show StaffMember;
+import '../../domain/staff_member.dart';
 import '../../domain/json_draft.dart';
 import '../components/components.dart';
 import 'availability_fields.dart';

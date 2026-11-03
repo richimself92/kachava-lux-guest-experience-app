@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../application/admin_dashboard_controller.dart';
+import '../../application/admin_shell_controller.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../navigation/admin_nav_list.dart';
@@ -11,7 +11,7 @@ class DesktopCommandSidebar extends StatelessWidget {
 
   static const double width = AdminBreakpoints.leftRailDesktopWidth;
 
-  final AdminDashboardController controller;
+  final AdminShellController controller;
 
   @override
   Widget build(BuildContext context) {

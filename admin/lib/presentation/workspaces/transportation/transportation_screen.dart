@@ -22,6 +22,7 @@ class TransportationScreen extends StatelessWidget {
     required this.isEs,
     required this.onOpenSettings,
     required this.onOpenServicesTab,
+    this.openTripId,
     ZoneOffsetResolver? zoneResolver,
   }) : _zoneResolver = zoneResolver;
 
@@ -35,6 +36,9 @@ class TransportationScreen extends StatelessWidget {
 
   /// Selects the Services workspace.
   final VoidCallback onOpenServicesTab;
+
+  /// A trip to open (notification "Open", reservation Trips tab).
+  final String? openTripId;
   final ZoneOffsetResolver? _zoneResolver;
 
   /// Services opens filtered by the Transportation section.
@@ -72,6 +76,7 @@ class TransportationScreen extends StatelessWidget {
       isEs: isEs,
       onOpenSettings: onOpenSettings,
       onOpenServices: _openServices,
+      openTripId: openTripId,
     );
   }
 }
