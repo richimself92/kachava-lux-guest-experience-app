@@ -30,6 +30,34 @@ enum AdminWorkspaceTab {
     shortLabel: 'Experiences',
     subtitle: 'Yacht, Private Dining, Excursions & Privileges Reservations',
   ),
+
+  /// HOSPITALITY › Services: the service catalog (every section).
+  adminServices(
+    id: 'admin-services',
+    label: 'Services',
+    shortLabel: 'Services',
+    subtitle: 'Service catalog',
+  ),
+
+  /// Section views of the catalog (plus their request queues).
+  adminSectionExperiences(
+    id: 'admin-section-experiences',
+    label: 'Experiences',
+    shortLabel: 'Experiences',
+    subtitle: 'Experiences catalog',
+  ),
+  adminSectionDining(
+    id: 'admin-section-dining',
+    label: 'Dining',
+    shortLabel: 'Dining',
+    subtitle: 'Dining catalog',
+  ),
+  adminSectionWellness(
+    id: 'admin-section-wellness',
+    label: 'Wellness',
+    shortLabel: 'Wellness',
+    subtitle: 'Wellness catalog',
+  ),
   adminConcierge(
     id: 'admin-concierge',
     label: 'Tasks',

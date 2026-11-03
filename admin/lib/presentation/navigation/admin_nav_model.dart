@@ -84,17 +84,38 @@ abstract final class AdminNavModel {
       labelEn: 'HOSPITALITY',
       labelEs: 'HOSPITALIDAD',
       items: [
-        // Hidden until Phase 4: the legacy Services/Larder and Experiences
-        // workspaces depended on the removed `/admin/catalog/*` endpoints.
-        AdminNavItem(id: 'services', labelEn: 'Services', labelEs: 'Servicios'),
         AdminNavItem(
-            id: 'experiences', labelEn: 'Experiences', labelEs: 'Experiencias'),
-        AdminNavItem(id: 'dining', labelEn: 'Dining', labelEs: 'Gastronomía'),
+          id: 'services',
+          labelEn: 'Services',
+          labelEs: 'Servicios',
+          workspace: AdminWorkspaceTab.adminServices,
+          icon: Icons.room_service_outlined,
+        ),
+        AdminNavItem(
+          id: 'experiences',
+          labelEn: 'Experiences',
+          labelEs: 'Experiencias',
+          workspace: AdminWorkspaceTab.adminSectionExperiences,
+          icon: Icons.explore_outlined,
+        ),
+        AdminNavItem(
+          id: 'dining',
+          labelEn: 'Dining',
+          labelEs: 'Gastronomía',
+          workspace: AdminWorkspaceTab.adminSectionDining,
+          icon: Icons.restaurant_outlined,
+        ),
         AdminNavItem(
             id: 'transportation',
             labelEn: 'Transportation',
             labelEs: 'Transporte'),
-        AdminNavItem(id: 'wellness', labelEn: 'Wellness', labelEs: 'Bienestar'),
+        AdminNavItem(
+          id: 'wellness',
+          labelEn: 'Wellness',
+          labelEs: 'Bienestar',
+          workspace: AdminWorkspaceTab.adminSectionWellness,
+          icon: Icons.spa_outlined,
+        ),
       ],
     ),
     AdminNavSection(

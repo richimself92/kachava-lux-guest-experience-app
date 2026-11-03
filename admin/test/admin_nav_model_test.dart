@@ -6,14 +6,13 @@ void main() {
   group('AdminNavModel', () {
     test('test_visibleSections_orderAndLabels_matchMockup', () {
       final sections = AdminNavModel.visibleSections();
-      // HOSPITALITY is empty until Phase 4 rebuilds Services/Experiences on
-      // the new catalog, so the section is dropped.
       expect(sections.map((s) => s.label(false)).toList(),
-          ['GUEST OPERATIONS', 'OPERATIONS']);
+          ['GUEST OPERATIONS', 'HOSPITALITY', 'OPERATIONS']);
       expect(sections.map((s) => s.label(true)).toList(),
-          ['OPERACIONES DE HUÉSPEDES', 'OPERACIONES']);
+          ['OPERACIONES DE HUÉSPEDES', 'HOSPITALIDAD', 'OPERACIONES']);
       expect(sections.map((s) => s.items.map((i) => i.labelEn).toList()), [
         ['Reservations', 'Villas'],
+        ['Services', 'Experiences', 'Dining', 'Wellness'],
         ['Tasks'],
       ]);
       expect(AdminNavModel.dashboard.label(false), 'Dashboard');
@@ -27,11 +26,7 @@ void main() {
           .toSet();
       for (final hidden in [
         'Guests',
-        'Services',
-        'Experiences',
-        'Dining',
         'Transportation',
-        'Wellness',
         'Notifications',
       ]) {
         expect(visible.contains(hidden), isFalse, reason: hidden);
@@ -74,11 +69,28 @@ void main() {
           AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminVillas)
               ?.labelEn,
           'Villas');
-      // Legacy workspaces are not menu items any more.
+      // Legacy queues are not menu items (alerts still open them).
       expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminLarder),
           isNull);
       expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminExperiences),
           isNull);
+      expect(
+          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminServices)
+              ?.labelEn,
+          'Services');
+      expect(
+          AdminNavModel.itemForWorkspace(
+                  AdminWorkspaceTab.adminSectionExperiences)
+              ?.labelEn,
+          'Experiences');
+      expect(
+          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminSectionDining)
+              ?.labelEn,
+          'Dining');
+      expect(
+          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminSectionWellness)
+              ?.labelEn,
+          'Wellness');
       expect(
           AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminConcierge)
               ?.labelEn,

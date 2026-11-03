@@ -225,6 +225,14 @@ class AdminI18n {
         return 'Servicios';
       case AdminWorkspaceTab.adminExperiences:
         return 'Experiencias';
+      case AdminWorkspaceTab.adminServices:
+        return 'Servicios';
+      case AdminWorkspaceTab.adminSectionExperiences:
+        return 'Experiencias';
+      case AdminWorkspaceTab.adminSectionDining:
+        return 'Gastronomía';
+      case AdminWorkspaceTab.adminSectionWellness:
+        return 'Bienestar';
       case AdminWorkspaceTab.adminConcierge:
         return 'Tareas';
       case AdminWorkspaceTab.adminFolio:

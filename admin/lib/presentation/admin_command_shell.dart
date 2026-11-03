@@ -9,6 +9,8 @@ import '../core/responsive_breakpoints.dart';
 import '../core/time_zone_catalog.dart';
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_enums.dart';
+import '../domain/service_catalog_enums.dart';
+import 'services/services_workspace.dart';
 import 'widgets/admin_navigation_bars.dart';
 import 'widgets/reconnecting_indicator.dart';
 import 'widgets/slide_over_inspector_drawer.dart';
@@ -148,6 +150,17 @@ class AdminCommandShell extends StatelessWidget {
         return ExperiencesWorkspace(controller: controller);
       case AdminWorkspaceTab.adminLarder:
         return LarderWorkspace(controller: controller);
+      case AdminWorkspaceTab.adminServices:
+        return ServicesWorkspace(
+            queryStore: controller.listQueries,
+            staff: controller.staffDirectory,
+            isEs: controller.isEs);
+      case AdminWorkspaceTab.adminSectionExperiences:
+        return _section(ServiceSection.experiences);
+      case AdminWorkspaceTab.adminSectionDining:
+        return _section(ServiceSection.dining);
+      case AdminWorkspaceTab.adminSectionWellness:
+        return _section(ServiceSection.wellness);
       case AdminWorkspaceTab.adminConcierge:
         return ConciergeWorkspace(controller: controller);
       case AdminWorkspaceTab.adminFolio:
@@ -159,6 +172,14 @@ class AdminCommandShell extends StatelessWidget {
             isEs: controller.isEs);
     }
   }
+
+  Widget _section(ServiceSection section) => ServiceSectionWorkspace(
+        key: ValueKey(section),
+        section: section,
+        queryStore: controller.listQueries,
+        staff: controller.staffDirectory,
+        isEs: controller.isEs,
+      );
 
   /// One-line neutral banner; the chime state only adds a short prefix.
   Widget _buildToastBanner(String message) {

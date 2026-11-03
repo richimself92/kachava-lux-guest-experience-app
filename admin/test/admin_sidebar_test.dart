@@ -44,18 +44,17 @@ void main() {
         'Dashboard',
         'Reservations',
         'Villas',
+        'Services',
+        'Experiences',
+        'Dining',
+        'Wellness',
         'Tasks',
       ]) {
         expect(inSidebar(find.text(label)), findsOneWidget, reason: label);
       }
       for (final hidden in [
         'Guests',
-        'HOSPITALITY',
-        'Services',
-        'Experiences',
-        'Dining',
         'Transportation',
-        'Wellness',
         'Notifications',
         'TEAM',
         'SANCTUARY COMMAND · ONLINE',
@@ -125,7 +124,11 @@ void main() {
               ),
             ),
           );
-      await tester.pumpWidget(host(900));
+      // Tall enough for every visible menu item (Dining and Wellness too).
+      tester.view.physicalSize = const Size(1440, 1300);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(host(1200));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('sidebar-scroll-down')), findsNothing);
 
@@ -178,6 +181,10 @@ void main() {
         'admin-overview',
         'admin-stays',
         'admin-villas',
+        'admin-services',
+        'admin-section-experiences',
+        'admin-section-dining',
+        'admin-section-wellness',
         'admin-concierge',
       ]) {
         expect(find.byKey(Key('nav-tab-$id')), findsOneWidget, reason: id);

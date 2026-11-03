@@ -5,7 +5,9 @@ import '../domain/paged_result.dart';
 import 'admin_api_client.dart';
 import 'admin_http_resource.dart';
 
-/// `/admin/services` and `/admin/services/:id/items`.
+/// `/admin/services` and `/admin/services/:id/items` (backend
+/// `modules/catalog`). A 422 (activation rules) is an `AdminApiException`;
+/// read it with `CatalogRuleViolation.tryParse`.
 class HttpServiceCatalogRepository implements ServiceCatalogRepository {
   HttpServiceCatalogRepository(this._client)
       : _services =
@@ -28,11 +30,11 @@ class HttpServiceCatalogRepository implements ServiceCatalogRepository {
 
   @override
   Future<AdminService> create(AdminService service) =>
-      _services.create(service.toWriteJson());
+      _services.create(service.toCreateJson());
 
   @override
   Future<AdminService> update(AdminService service) =>
-      _services.update(service.id, service.toWriteJson());
+      _services.update(service.id, service.toPatchJson());
 
   @override
   Future<PagedResult<ServiceItem>> listItems(

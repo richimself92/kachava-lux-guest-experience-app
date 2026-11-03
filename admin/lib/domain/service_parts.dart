@@ -1,50 +1,54 @@
 import 'catalog_values.dart';
 import 'json_read.dart';
+import 'service_catalog_enums.dart';
 
-/// Price block of a service.
+/// Price block of a service (`pricing`). Currency is always USD.
 class ServicePricing {
   const ServicePricing({
-    this.mode = '',
+    this.mode = PricingMode.onRequest,
     this.amount,
-    this.currency = 'USD',
     this.chargeToFolio = false,
     this.note = const LocalizedText(),
   });
 
   factory ServicePricing.fromJson(Map<String, dynamic> json) => ServicePricing(
-        mode: JsonRead.text(json, 'mode'),
+        mode: json['mode'] == null
+            ? PricingMode.onRequest
+            : PricingMode.parse(json['mode']),
         amount: JsonRead.doubleOrNull(json, 'amount'),
-        currency: JsonRead.textOrNull(json, 'currency') ?? 'USD',
         chargeToFolio: JsonRead.flag(json, 'chargeToFolio'),
         note: LocalizedText.fromJson(json['note']),
       );
 
-  /// `INCLUDED | FIXED | PER_PERSON | PER_UNIT | PER_HOUR | ON_REQUEST`.
-  final String mode;
+  static const String currency = 'USD';
 
-  /// USD; `null` for INCLUDED / ON_REQUEST or when items carry the price.
+  final PricingMode mode;
+
+  /// `null` when the price lives on the items (or for price-free modes).
   final double? amount;
-
-  /// The contract only accepts `USD`.
-  final String currency;
   final bool chargeToFolio;
   final LocalizedText note;
 
   Map<String, dynamic> toJson() => {
-        'mode': mode,
-        'amount': amount,
+        'mode': mode.wire,
+        'amount': mode.hasAmount ? amount : null,
         'currency': currency,
         'chargeToFolio': chargeToFolio,
         'note': note.toJson(),
       };
 }
 
-/// A `HH:mm`-`HH:mm` window in resort time.
+/// `{start, end}` in `HH:mm`, resort time.
 class TimeSlot {
-  const TimeSlot({required this.start, required this.end});
+  const TimeSlot(this.start, this.end);
 
-  factory TimeSlot.fromJson(Map<String, dynamic> json) => TimeSlot(
-      start: JsonRead.text(json, 'start'), end: JsonRead.text(json, 'end'));
+  static TimeSlot? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = Map<String, dynamic>.from(json);
+    final start = JsonRead.text(map, 'start');
+    final end = JsonRead.text(map, 'end');
+    return start.isEmpty || end.isEmpty ? null : TimeSlot(start, end);
+  }
 
   final String start;
   final String end;
@@ -52,7 +56,7 @@ class TimeSlot {
   Map<String, dynamic> toJson() => {'start': start, 'end': end};
 }
 
-/// When a service can be requested.
+/// When a service can be requested (`availability`).
 class ServiceAvailability {
   const ServiceAvailability({
     this.weekdays = const [],
@@ -68,10 +72,13 @@ class ServiceAvailability {
 
   factory ServiceAvailability.fromJson(Map<String, dynamic> json) =>
       ServiceAvailability(
-        weekdays: JsonRead.strings(json, 'weekdays'),
+        weekdays: [
+          for (final raw in JsonRead.strings(json, 'weekdays'))
+            if (Weekday.tryParse(raw) case final day?) day
+        ],
         timeSlots: [
-          for (final slot in JsonRead.objects(json, 'timeSlots'))
-            TimeSlot.fromJson(slot)
+          for (final raw in (json['timeSlots'] as List? ?? const []))
+            if (TimeSlot.fromJson(raw) case final slot?) slot
         ],
         blockedDates: JsonRead.strings(json, 'blockedDates'),
         minLeadHours: JsonRead.intOrNull(json, 'minLeadHours'),
@@ -79,11 +86,10 @@ class ServiceAvailability {
         minGuests: JsonRead.intOrNull(json, 'minGuests'),
         maxGuests: JsonRead.intOrNull(json, 'maxGuests'),
         durationMinutes: JsonRead.intOrNull(json, 'durationMinutes'),
-        offeredWhen: JsonRead.textOrNull(json, 'offeredWhen'),
+        offeredWhen: OfferedWhen.tryParse(json['offeredWhen']),
       );
 
-  /// `MON` .. `SUN`.
-  final List<String> weekdays;
+  final List<Weekday> weekdays;
   final List<TimeSlot> timeSlots;
 
   /// `YYYY-MM-DD`.
@@ -93,12 +99,10 @@ class ServiceAvailability {
   final int? minGuests;
   final int? maxGuests;
   final int? durationMinutes;
-
-  /// `BEFORE_ARRIVAL | DURING_STAY | BOTH`.
-  final String? offeredWhen;
+  final OfferedWhen? offeredWhen;
 
   Map<String, dynamic> toJson() => {
-        'weekdays': weekdays,
+        'weekdays': [for (final d in weekdays) d.wire],
         'timeSlots': [for (final s in timeSlots) s.toJson()],
         'blockedDates': blockedDates,
         'minLeadHours': minLeadHours,
@@ -106,11 +110,11 @@ class ServiceAvailability {
         'minGuests': minGuests,
         'maxGuests': maxGuests,
         'durationMinutes': durationMinutes,
-        'offeredWhen': offeredWhen,
+        'offeredWhen': offeredWhen?.wire,
       };
 }
 
-/// Guest-facing information blocks.
+/// Guest-facing information (`guestInfo`), EN/ES each.
 class ServiceGuestInfo {
   const ServiceGuestInfo({
     this.includes = const LocalizedText(),
@@ -131,6 +135,15 @@ class ServiceGuestInfo {
         cancellationPolicy: LocalizedText.fromJson(json['cancellationPolicy']),
       );
 
+  static const List<String> keys = [
+    'includes',
+    'excludes',
+    'whatToBring',
+    'location',
+    'restrictions',
+    'cancellationPolicy',
+  ];
+
   final LocalizedText includes;
   final LocalizedText excludes;
   final LocalizedText whatToBring;
@@ -148,7 +161,7 @@ class ServiceGuestInfo {
       };
 }
 
-/// Which inputs the guest form asks for.
+/// Which inputs the guest form asks for (`guestForm`).
 class ServiceGuestForm {
   const ServiceGuestForm({
     this.date = false,
@@ -186,7 +199,7 @@ class ServiceGuestForm {
       };
 }
 
-/// Staff-only operation block (never sent to guests).
+/// Staff-only operation data (`operation`); never shown to guests.
 class ServiceOperation {
   const ServiceOperation({
     this.providerId,
@@ -206,11 +219,11 @@ class ServiceOperation {
         internalInstructions: JsonRead.text(json, 'internalInstructions'),
       );
 
-  /// External transport provider, if any.
+  /// A transport provider id (`/admin/transport-providers`).
   final String? providerId;
 
-  /// `CONCIERGE | CULINARY | MARINE | TRANSPORT | HOUSEKEEPING | ENGINEERING
-  /// | WELLNESS`.
+  /// `CONCIERGE | CULINARY | MARINE | TRANSPORT | HOUSEKEEPING | ENGINEERING |
+  /// WELLNESS`.
   final String? responsibleDepartment;
   final String? responsibleStaffId;
   final bool requiresConfirmation;
@@ -223,25 +236,4 @@ class ServiceOperation {
         'requiresConfirmation': requiresConfirmation,
         'internalInstructions': internalInstructions,
       };
-}
-
-/// Passengers and luggage of a transport vehicle item.
-class VehicleCapacity {
-  const VehicleCapacity({required this.passengers, required this.luggage});
-
-  static VehicleCapacity? fromJson(Object? json) {
-    if (json is! Map) return null;
-    final map = Map<String, dynamic>.from(json);
-    final passengers = JsonRead.intOrNull(map, 'passengers');
-    if (passengers == null) return null;
-    return VehicleCapacity(
-        passengers: passengers,
-        luggage: JsonRead.intOrNull(map, 'luggage') ?? 0);
-  }
-
-  final int passengers;
-  final int luggage;
-
-  Map<String, dynamic> toJson() =>
-      {'passengers': passengers, 'luggage': luggage};
 }

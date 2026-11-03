@@ -68,6 +68,9 @@ class CatalogImage {
         'alt': alt.toJson(),
         'usageRightsConfirmed': usageRightsConfirmed,
       };
+
+  /// Editor draft shape: [toJson] plus the `url` for previews (never sent).
+  Map<String, dynamic> toDraftJson() => {...toJson(), 'url': url};
 }
 
 /// Who created/changed a record and when (server-owned, read-only).

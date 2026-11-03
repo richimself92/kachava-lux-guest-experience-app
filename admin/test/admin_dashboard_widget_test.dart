@@ -5,17 +5,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
-import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
 import 'support/fake_resort_repositories.dart';
+import 'package:kachava_admin_dashboard/presentation/services/service_catalog_scope.dart';
+import 'support/fake_service_catalog.dart';
 
 /// Folio (stay summary) is not a menu item; tests reach it via the controller.
-Future<void> openFolio(WidgetTester tester) async {
-  tester
-      .widget<AdminCommandShell>(find.byType(AdminCommandShell))
-      .controller
-      .selectTab(AdminWorkspaceTab.adminFolio);
-  await tester.pumpAndSettle();
-}
+Future<void> openFolio(WidgetTester tester) =>
+    openWorkspace(tester, AdminWorkspaceTab.adminFolio);
+
+/// The app with an empty in-memory service catalog (test-only fakes).
+Widget appWithCatalog() => ServiceCatalogScope(
+      deps: fakeCatalogDeps(FakeServiceCatalogRepository()),
+      child: KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: SeededAdminRepository()),
+    );
+
+const _menuWorkspaces = [
+  'admin-stays',
+  'admin-villas',
+  'admin-services',
+  'admin-section-experiences',
+  'admin-section-dining',
+  'admin-section-wellness',
+  'admin-concierge',
+];
 
 void main() {
   Future<void> pumpDesktopApp(WidgetTester tester) async {
@@ -65,11 +80,7 @@ void main() {
       expect(find.text('Pending Bookings & Services'), findsOneWidget);
       expect(find.text('Urgent SLA Alerts'), findsOneWidget);
 
-      for (final tab in [
-        'admin-stays',
-        'admin-villas',
-        'admin-concierge',
-      ]) {
+      for (final tab in _menuWorkspaces) {
         await tester.tap(find.byKey(Key('nav-tab-$tab')));
         await tester.pumpAndSettle();
         expect(find.byKey(Key('workspace-$tab')), findsOneWidget);
@@ -301,18 +312,10 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      await tester.pumpWidget(KachavaAdminApp(
-          resort: fakeResortRepositories(),
-          timeZones: testTimeZones,
-          repository: SeededAdminRepository()));
+      await tester.pumpWidget(appWithCatalog());
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('workspace-admin-overview')), findsOneWidget);
-      for (final tabId in [
-        'admin-stays',
-        'admin-villas',
-        'admin-concierge',
-        'admin-overview'
-      ]) {
+      for (final tabId in [..._menuWorkspaces, 'admin-overview']) {
         await tester.tap(find.byKey(const Key('mobile-nav-menu-button')));
         await tester.pumpAndSettle();
         final navItem = find.byKey(Key('nav-tab-$tabId'));
@@ -321,6 +324,7 @@ void main() {
         await tester.tap(navItem);
         await tester.pumpAndSettle();
         expect(find.byKey(Key('workspace-$tabId')), findsOneWidget);
+        expect(tester.takeException(), isNull, reason: tabId);
       }
       await openFolio(tester);
       expect(find.byKey(const Key('workspace-admin-folio')), findsOneWidget);

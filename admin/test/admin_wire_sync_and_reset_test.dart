@@ -260,6 +260,17 @@ void main() {
       expect(find.textContaining('Synced with live backend'), findsOneWidget);
 
       expect(find.textContaining('8 Villas'), findsNothing); // no fixed count
+
+      for (final tab in [
+        'nav-tab-admin-stays',
+        'nav-tab-admin-villas',
+        'nav-tab-admin-services',
+        'nav-tab-admin-section-experiences',
+        'nav-tab-admin-concierge',
+      ]) {
+        await tester.tap(find.byKey(Key(tab)));
+        await tester.pumpAndSettle();
+      }
     });
 
     testWidgets('test_live_polling_refreshes_automatically_every_5_seconds',

@@ -250,25 +250,25 @@ void main() {
               .items
               .single;
       expect(server.last.url.queryParameters['section'], 'DINING');
-      expect(service.kind, 'BAR');
-      expect(service.usageType, 'ORDER');
+      expect(service.kind, ServiceKind.bar);
+      expect(service.usageType, UsageType.order);
       expect(service.order, 2);
       expect(service.category, 'Drinks');
       expect(service.cover?.storagePath, 'catalog/services/cover.jpg');
       expect(service.cover?.url, startsWith('http://127.0.0.1:9199/'));
       expect(service.pricing.chargeToFolio, isTrue);
-      expect(service.availability.weekdays, ['MON', 'FRI']);
+      expect(service.availability.weekdays, [Weekday.mon, Weekday.fri]);
       expect(service.availability.timeSlots.single.start, '17:00');
       expect(service.availability.timeSlots.single.end, '22:00');
       expect(service.availability.minLeadHours, 2);
-      expect(service.availability.offeredWhen, 'DURING_STAY');
+      expect(service.availability.offeredWhen, OfferedWhen.duringStay);
       expect(service.guestForm.date, isTrue);
       expect(service.guestForm.dietary, isFalse);
       expect(service.operation.responsibleDepartment, 'CULINARY');
       expect(service.operation.internalInstructions, 'Check ID');
-      expect(service.kindBlock, 'bar');
-      expect(service.kindDetails, {'ageConfirmationRequired': true});
-      expect(service.status, 'ACTIVE');
+      expect(service.kind.detailField, 'bar');
+      expect(service.details, {'ageConfirmationRequired': true});
+      expect(service.status, CatalogStatus.active);
       expect(service.canActivate, isTrue);
     });
 
@@ -278,19 +278,19 @@ void main() {
       final repo =
           HttpServiceCatalogRepository(signedInApiClient(server.client));
       await repo.create(const AdminService(
-        kind: 'BREAKFAST',
-        section: 'DINING',
-        usageType: 'BOOKING',
+        kind: ServiceKind.breakfast,
+        section: ServiceSection.dining,
+        usageType: UsageType.booking,
         name: LocalizedText(en: 'Breakfast', es: 'Desayuno'),
         cover: CatalogImage(storagePath: 'catalog/s/a.jpg', url: 'https://x'),
         availability: ServiceAvailability(
-            weekdays: ['SAT'],
-            timeSlots: [TimeSlot(start: '07:00', end: '10:00')],
+            weekdays: [Weekday.sat],
+            timeSlots: [TimeSlot('07:00', '10:00')],
             minLeadHours: 12,
-            offeredWhen: 'BEFORE_ARRIVAL'),
+            offeredWhen: OfferedWhen.beforeArrival),
         guestForm: ServiceGuestForm(date: true, dietary: true),
         operation: ServiceOperation(internalInstructions: 'Fresh juice'),
-        kindDetails: {'pairingAvailable': false},
+        details: {'pairingAvailable': false},
       ));
       final body = server.lastBody;
       expect(server.last.method, 'POST');
@@ -360,7 +360,7 @@ void main() {
           (await repo.listItems('svc-1', const ListQuery())).items.single;
       expect(server.last.url.path, '/api/v1/admin/services/svc-1/items');
       expect(item.priceUSD, 12.5);
-      expect(item.status, 'ACTIVE');
+      expect(item.status, CatalogStatus.active);
       expect(item.dietaryTags, ['vegan']);
       expect(item.origin, 'Oaxaca');
       expect(item.unit, 'glass');
@@ -371,6 +371,7 @@ void main() {
           const ServiceItem(
               name: LocalizedText(en: 'Van'),
               priceUSD: 90,
+              status: CatalogStatus.active,
               capacity: VehicleCapacity(passengers: 6, luggage: 4)));
       final body = server.lastBody;
       expect(body['priceUSD'], 90);

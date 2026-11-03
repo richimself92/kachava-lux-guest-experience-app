@@ -3,16 +3,21 @@ import 'package:flutter/semantics.dart';
 import 'application/admin_dashboard_controller.dart';
 import 'application/admin_live_sync.dart';
 import 'application/resort_settings_controller.dart';
+import 'application/service_catalog_deps.dart';
 import 'core/admin_theme.dart';
 import 'core/app_config.dart';
 import 'core/guest_portal_link.dart';
+import 'core/image_file_picker.dart';
 import 'core/time_zone_catalog.dart';
 import 'data/admin_api_client.dart';
 import 'data/api_admin_operations_repository.dart';
 import 'data/http_catalog_repositories.dart';
+import 'data/http_service_catalog_repository.dart';
+import 'data/http_uploads.dart';
 import 'domain/admin_catalog_repositories.dart';
 import 'domain/admin_repository.dart';
 import 'presentation/admin_command_shell.dart';
+import 'presentation/services/service_catalog_scope.dart';
 
 void main() {
   GuestPortalLink.configure(AdminAppConfig.guestPortalUrl);
@@ -20,14 +25,23 @@ void main() {
   SemanticsBinding.instance.ensureSemantics();
   // One API client: one silent staff session for every repository.
   final api = AdminApiClient();
-  runApp(KachavaAdminApp(
-    repository: ApiAdminOperationsRepository(apiClient: api),
-    resort: AdminResortRepositories(
-      settings: HttpSettingsRepository(api),
-      villas: HttpVillaRepository(api),
+  runApp(ServiceCatalogScope(
+    deps: ServiceCatalogDeps(
+      services: HttpServiceCatalogRepository(api),
+      providers: HttpTransportProviderRepository(api),
+      signer: HttpUploadSigner(api),
+      transport: HttpSignedUploadTransport(),
+      picker: createImageFilePicker(),
     ),
-    timeZones: createTimeZoneCatalog(),
-    enableLivePolling: true,
+    child: KachavaAdminApp(
+      repository: ApiAdminOperationsRepository(apiClient: api),
+      resort: AdminResortRepositories(
+        settings: HttpSettingsRepository(api),
+        villas: HttpVillaRepository(api),
+      ),
+      timeZones: createTimeZoneCatalog(),
+      enableLivePolling: true,
+    ),
   ));
 }
 

@@ -6,6 +6,7 @@ import '../../../core/admin_list_strings.dart';
 import '../../../core/theme/kachava_tokens.dart';
 import '../admin_data_table.dart';
 import '../info_tooltip.dart';
+import 'admin_detail_panel.dart';
 import 'admin_list_parts.dart';
 import 'admin_list_toolbar.dart';
 
@@ -38,6 +39,7 @@ class AdminListScreen<T> extends StatefulWidget {
     this.primaryActionLabel,
     this.onPrimaryAction,
     this.detailBuilder,
+    this.detailWidth = AdminDetailPanel.width,
     this.isEs = false,
   });
 
@@ -62,6 +64,9 @@ class AdminListScreen<T> extends StatefulWidget {
   final String? primaryActionLabel;
   final VoidCallback? onPrimaryAction;
   final AdminDetailBuilder<T>? detailBuilder;
+
+  /// Side panel width on desktop (tabbed editors may need more than 420).
+  final double detailWidth;
   final bool isEs;
 
   @override
@@ -147,7 +152,7 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
               Expanded(child: list),
               const VerticalDivider(width: 1),
               SizedBox(
-                width: 420,
+                width: widget.detailWidth,
                 child: KeyedSubtree(
                   key: ValueKey(
                       _creating ? 'new' : widget.rowId(_selected as T)),

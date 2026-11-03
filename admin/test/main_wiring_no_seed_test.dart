@@ -79,5 +79,7 @@ void main() {
     expect(main, contains('settings: HttpSettingsRepository(api)'));
     expect(main, contains('villas: HttpVillaRepository(api)'));
     expect(main, contains('timeZones: createTimeZoneCatalog()'));
+    expect(main, contains('HttpServiceCatalogRepository(api)'));
+    expect(main, contains('HttpUploadSigner(api)'));
   });
 }
