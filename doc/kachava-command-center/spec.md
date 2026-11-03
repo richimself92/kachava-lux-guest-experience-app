@@ -24,9 +24,9 @@ Pending from Kachava: service copy/prices/photos, real villa names, Spanish copy
 
 ## Design
 - Admin follows root [`DESIGN.md`](../../DESIGN.md); mockups win on conflict.
-- Sidebar: "KACHAVA LUX" + gray "COMMAND CENTER" pill; selected = gray bg + bold; uppercase gray section
+- Sidebar: "KACHAVA LUX" + gray "COMMAND CENTER" pill; selected = restrained brown (#EEE9E5 tint + #6D4627 bold text, per DESIGN.md); uppercase gray section
   labels; items without icons + gray chevron; scroll-down button on overflow.
-- Dashboard: "Kachava Lux · Overview" + "Today" pill; 3x2 gray KPI tiles (radius 16, ~40px number);
+- Dashboard: "Kachava Lux · Overview" + "Today" pill; 3x2 surface #F3F3F1 KPI tiles (radius 12 per DESIGN.md, ~40px number);
   3-column activity table; chips In-house green / Arrival blue / Departure gray / overstay red; no alerts.
 - Guest portal: brand look kept; 4 bottom tabs; min 14px text (12px labels); no jargon or numbered titles.
 - Both apps: minimal text, `InfoTooltip` for explanations, one-line empty states and confirmations.

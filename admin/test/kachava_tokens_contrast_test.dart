@@ -33,5 +33,22 @@ void main() {
       expect(contrastRatio(KachavaTokens.onPrimary, KachavaTokens.primary),
           greaterThanOrEqualTo(4.5));
     });
+
+    test('test_selectedNav_brownText_meetsAA_onBrownTint', () {
+      expect(
+          contrastRatio(KachavaTokens.primary, KachavaTokens.primarySelected),
+          greaterThanOrEqualTo(4.5));
+    });
+
+    test('test_radii_stayWithinDesignRange_4to12', () {
+      for (final r in [
+        KachavaTokens.radiusSm,
+        KachavaTokens.radiusMd,
+        KachavaTokens.radiusLg,
+        KachavaTokens.radiusTile,
+      ]) {
+        expect(r, inInclusiveRange(4, 12));
+      }
+    });
   });
 }

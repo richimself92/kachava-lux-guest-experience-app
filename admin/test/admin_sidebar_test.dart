@@ -81,19 +81,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('test_selectedItem_isBoldOnGraySurface_andTapSwitches',
+    testWidgets('test_selectedItem_usesRestrainedBrownTreatment_andTapSwitches',
         (tester) async {
       await pumpApp(tester, const Size(1440, 900));
       final dashText = tester.widget<Text>(inSidebar(find.text('Dashboard')));
       expect(dashText.style?.fontWeight, FontWeight.w700);
+      expect(dashText.style?.color, KachavaTokens.primary);
       final resText = tester.widget<Text>(inSidebar(find.text('Reservations')));
       expect(resText.style?.fontWeight, isNot(FontWeight.w700));
+      expect(resText.style?.color, KachavaTokens.text);
 
       final selectedBox = tester.widget<Ink>(find.descendant(
           of: find.byKey(const Key('nav-tab-admin-overview')),
           matching: find.byType(Ink)));
       final decoration = selectedBox.decoration! as BoxDecoration;
-      expect(decoration.color, KachavaTokens.surface);
+      // DESIGN.md: "Selected item uses a restrained brown treatment".
+      expect(decoration.color, KachavaTokens.primarySelected);
       expect(decoration.color, isNot(KachavaTokens.primary));
 
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));

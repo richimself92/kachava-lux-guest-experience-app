@@ -13,6 +13,10 @@ abstract final class KachavaTokens {
   static const Color primary = Color(0xFF6D4627);
   static const Color onPrimary = Color(0xFFFFFFFF);
 
+  /// Restrained brown treatment for the selected navigation item: primary
+  /// blended at 12% over white, paired with primary-colored bold text.
+  static const Color primarySelected = Color(0xFFEEE9E5);
+
   /// Rare accent; never text and never the only carrier of status.
   static const Color accent = Color(0xFF989166);
   static const Color text = Color(0xFF202124);
@@ -39,7 +43,7 @@ abstract final class KachavaTokens {
   static const double radiusSm = 4;
   static const double radiusMd = 8;
   static const double radiusLg = 12;
-  static const double radiusTile = 16;
+  static const double radiusTile = 12;
   static const double radiusPill = 999;
 
   // Spacing.
