@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/application/admin_activity_tracker.dart';
-import 'package:kachava_admin_dashboard/data/admin_seed_operations.dart';
+import 'support/admin_seed_operations.dart';
 import 'package:kachava_admin_dashboard/domain/admin_sync_snapshot.dart';
 
 AdminSyncSnapshot _snapshotWith({

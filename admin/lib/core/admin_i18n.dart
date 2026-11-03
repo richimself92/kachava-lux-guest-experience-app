@@ -1,4 +1,5 @@
 import '../domain/admin_enums.dart';
+import 'status_vocabulary.dart';
 
 /// Supported bilingual locales for the Admin Dashboard (English default & Español).
 enum AdminLocale { en, es }
@@ -176,10 +177,15 @@ class AdminI18n {
     return _esPrefMap[clean] ?? clean;
   }
 
+  /// Short status label from the single [StatusVocabulary]; values outside
+  /// it use the legacy ES map or are humanized (never a raw enum).
   static String statusLabel(String raw, [bool? isEs]) {
     final useEs = isEs ?? currentIsEs;
-    if (!useEs) return raw;
-    return _esStatusMap[raw] ?? raw;
+    if (StatusVocabulary.lookup(raw) != null) {
+      return StatusVocabulary.label(raw, isEs: useEs);
+    }
+    if (useEs && _esStatusMap.containsKey(raw)) return _esStatusMap[raw]!;
+    return StatusVocabulary.humanize(raw);
   }
 
   /// Display label for an alert category; the wire value stays unchanged.
@@ -221,6 +227,8 @@ class AdminI18n {
         return 'Tareas';
       case AdminWorkspaceTab.adminFolio:
         return 'Resumen de estancia';
+      case AdminWorkspaceTab.adminSettings:
+        return 'Ajustes';
     }
   }
 

@@ -15,6 +15,7 @@ import 'workspaces/experiences_workspace.dart';
 import 'workspaces/folio_workspace.dart';
 import 'workspaces/larder_workspace.dart';
 import 'workspaces/overview_workspace.dart';
+import 'workspaces/settings_workspace.dart';
 import 'workspaces/stays_workspace.dart';
 
 /// Responsive shell: sidebar (desktop), icon rail (tablet), drawer (mobile).
@@ -130,6 +131,8 @@ class AdminCommandShell extends StatelessWidget {
         return ConciergeWorkspace(controller: controller);
       case AdminWorkspaceTab.adminFolio:
         return FolioWorkspace(controller: controller);
+      case AdminWorkspaceTab.adminSettings:
+        return SettingsWorkspace(isEs: controller.isEs);
     }
   }
 

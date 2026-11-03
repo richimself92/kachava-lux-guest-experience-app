@@ -8,7 +8,7 @@ import 'admin_api_client.dart';
 import 'admin_staff_mapper.dart';
 import 'admin_sync_mapper.dart';
 import 'admin_wire_mapper.dart';
-import 'seeded_admin_repository.dart';
+import 'admin_write_through_cache.dart';
 
 /// Live repository for `/api/v1/admin/*`.
 ///
@@ -19,12 +19,11 @@ import 'seeded_admin_repository.dart';
 class ApiAdminOperationsRepository implements AdminOperationsRepository {
   ApiAdminOperationsRepository({AdminApiClient? apiClient})
       : _apiClient = apiClient ?? AdminApiClient() {
-    _cache = SeededAdminRepository(
-        apiClient: _apiClient, initialData: AdminSyncSnapshot.empty);
+    _cache = AdminWriteThroughCache(gateway: _apiClient);
   }
 
   final AdminApiClient _apiClient;
-  late final SeededAdminRepository _cache;
+  late final AdminWriteThroughCache _cache;
 
   @override
   Future<AdminSyncSnapshot> fetchSnapshot() async {

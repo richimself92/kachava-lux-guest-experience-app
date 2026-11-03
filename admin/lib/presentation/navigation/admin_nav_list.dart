@@ -233,17 +233,14 @@ class AdminNavTile extends StatelessWidget {
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: selected ? KachavaTokens.primarySelected : null,
+                  // DESIGN.md: light gray background + bold text (no brown).
+                  color: selected ? KachavaTokens.surface : null,
                   borderRadius: radius,
                 ),
                 child: Row(
                   children: [
                     if (isDashboard && item.icon != null) ...[
-                      Icon(item.icon,
-                          size: 22,
-                          color: selected
-                              ? KachavaTokens.primary
-                              : KachavaTokens.text),
+                      Icon(item.icon, size: 22, color: KachavaTokens.text),
                       const SizedBox(width: 12),
                     ],
                     Expanded(
@@ -256,9 +253,7 @@ class AdminNavTile extends StatelessWidget {
                           height: 22 / 15,
                           fontWeight:
                               selected ? FontWeight.w700 : FontWeight.w400,
-                          color: selected
-                              ? KachavaTokens.primary
-                              : KachavaTokens.text,
+                          color: KachavaTokens.text,
                         ),
                       ),
                     ),

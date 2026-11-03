@@ -76,9 +76,6 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     await waitForFlutterSemantics(page, 'Villas Ocupadas');
     expect(await clickSemanticsByText(page, 'ES | EN')).toBe(true);
     await waitForFlutterSemantics(page, 'Active Residencies');
-    expect(await clickSemanticsByText(page, '🔔 Test 10s')).toBe(true);
-    await waitForFlutterSemantics(page, 'New guest update');
-    expect(await clickSemanticsByText(page, 'Mute / Dismiss')).toBe(true);
     expect([...monitor.pageErrors, ...monitor.consoleErrors, ...monitor.overflowErrors]).toEqual([]);
   });
 
@@ -97,8 +94,8 @@ test.describe('Kachava Lux Admin Operations Dashboard E2E (http://localhost:3002
     const alertsAfterReset = await browserFetchJson(page, `${API_BASE_URL}/admin/alerts`, 'GET', undefined, authHeader);
     expect((staysAfterReset.body.data as unknown[]).length).toBe(0);
     expect(((alertsAfterReset.body.data as Record<string, unknown>).alerts as unknown[]).length).toBe(0);
-    // Act & Assert — Navigate to Reservations & verify 8 FREE villas
-    await selectAdminTabAndVerify(page, 'Reservations', 'All 8 Villas are FREE');
+    // Act & Assert — Navigate to Reservations & verify the one-line empty state
+    await selectAdminTabAndVerify(page, 'Reservations', 'No reservations yet');
     // The console lists only server-known villas: prepare one free villa, then create the stay through the UI
     await prepareFreeVilla(page, 'villa-110', 'Villa-110');
     await submitNewStayDialog(page, 'Villa-110', 'Marcus & Elena Sterling');

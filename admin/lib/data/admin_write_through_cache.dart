@@ -3,32 +3,28 @@ import '../domain/admin_enums.dart';
 import '../domain/admin_repository.dart';
 import '../domain/admin_stay_entities.dart';
 import '../domain/admin_sync_snapshot.dart';
-import 'admin_api_client.dart';
+import '../domain/admin_villa_directory.dart';
+import 'admin_cache_mutations.dart';
 import 'admin_cached_records.dart';
-import 'admin_seed_concierge_folio.dart';
 import 'admin_server_confirmation.dart';
-import 'admin_seed_fixtures.dart';
-import 'admin_seed_operations.dart';
 import 'admin_wire_mapper.dart';
 import 'admin_wire_values.dart';
+import 'admin_write_gateway.dart';
 
-/// In-memory admin store.
+/// Write-through cache of server records (starts empty).
 ///
-/// Without an [AdminApiClient] it is an offline fake pre-populated with seed
-/// fixtures (tests/demo only). With a client it is a write-through cache:
-/// every mutation is sent to `/api/v1/admin/*` first and applied locally only
-/// after the server confirms; failures propagate and nothing is invented.
-class SeededAdminRepository implements AdminOperationsRepository {
-  SeededAdminRepository(
-      {AdminApiClient? apiClient, AdminSyncSnapshot? initialData})
-      : _apiClient = apiClient {
-    applySnapshot(initialData ?? _seedSnapshot());
-    if (initialData == null) {
-      _staff.addAll(AdminSeedFixtures.buildStaffDirectory());
-    }
+/// Every mutation is sent to `/api/v1/admin/*` through the [AdminWriteGateway]
+/// first and applied locally only after the server confirms; failures
+/// propagate and nothing is invented. There is no seeded or offline mode.
+class AdminWriteThroughCache implements AdminOperationsRepository {
+  AdminWriteThroughCache({
+    required AdminWriteGateway gateway,
+    AdminSyncSnapshot initialData = AdminSyncSnapshot.empty,
+  }) : _gateway = gateway {
+    applySnapshot(initialData);
   }
 
-  final AdminApiClient? _apiClient;
+  final AdminWriteGateway _gateway;
   final List<StaffMember> _staff = [];
   final List<AdminStayRecord> _stays = [];
   final List<OperationalAlert> _alerts = [];
@@ -39,18 +35,6 @@ class SeededAdminRepository implements AdminOperationsRepository {
   final List<FolioLineItem> _folioItems = [];
   final List<AdminExperienceCatalogItem> _experienceCatalog = [];
   final List<AdminLarderCatalogItem> _larderCatalog = [];
-  int _uuidCounter = 100;
-
-  static AdminSyncSnapshot _seedSnapshot() => AdminSyncSnapshot(
-      stays: AdminSeedFixtures.buildStays(),
-      alerts: AdminSeedOperations.buildAlerts(),
-      bookings: AdminSeedOperations.buildBookings(),
-      larderOrders: AdminSeedOperations.buildLarderOrders(),
-      conciergeTickets: AdminSeedOperations.buildConciergeTickets(),
-      midStayPulses: AdminSeedOperations.buildMidStayPulses(),
-      experienceCatalog: AdminSeedConciergeFolio.buildExperienceCatalog(),
-      larderCatalog: AdminSeedConciergeFolio.buildLarderCatalog(),
-      folioItems: AdminSeedOperations.buildFolioItems());
 
   void applySnapshot(AdminSyncSnapshot s) => syncCache(
       stays: s.stays,
@@ -133,14 +117,14 @@ class SeededAdminRepository implements AdminOperationsRepository {
   Future<List<StaffMember>> fetchStaffDirectory() async =>
       List.unmodifiable(_staff);
 
-  /// Offline fake: the first seeded staff member acts as the session.
+  /// The signed-in staff member comes from the API session, not the cache.
   @override
-  StaffMember? get sessionStaff => _staff.isEmpty ? null : _staff.first;
+  StaffMember? get sessionStaff => null;
 
-  /// Offline fake: the seeded resort villas.
+  /// Villas known from server stays.
   @override
   List<AdminVillaInfo> villasFor(List<AdminStayRecord> stays) =>
-      AdminSeedFixtures.buildVillas();
+      AdminVillaDirectory.fromStays(stays);
   @override
   Future<List<OperationalAlert>> fetchAlerts() async =>
       List.unmodifiable(_alerts);
@@ -198,34 +182,17 @@ class SeededAdminRepository implements AdminOperationsRepository {
       if (wifiPasscode != null && wifiPasscode.isNotEmpty)
         'wifiPasscode': wifiPasscode,
     };
-    final res = await _syncPost('/stays', payload);
-    final created = res == null
-        ? _offlineStay(payload)
-        : AdminServerConfirmation.createdStay(res);
+    final created = AdminServerConfirmation.createdStay(
+        await _gateway.postJson('/stays', payload));
     upsertStay(created);
     return created;
   }
 
-  /// Offline fake only: a stay built from the create payload.
-  AdminStayRecord _offlineStay(Map<String, String> p) =>
-      AdminSeedFixtures.buildCreatedStay(
-          counter: ++_uuidCounter,
-          uuid: '550e8400-e29b-41d4-a716-446655440$_uuidCounter',
-          villaName: p['villaName']!,
-          guestNames: p['guestName']!,
-          checkInDate: p['checkIn']!,
-          checkOutDate: p['checkOut']!,
-          occasion: p['occasion']!,
-          wifiSsid: p['wifiSsid'],
-          wifiPasscode: p['wifiPasscode']);
-
   @override
   Future<AdminStayRecord> regenerateGuestUuid(String stayId) async {
     final cur = _stay(stayId);
-    final res = await _syncPost('/stays/$stayId/regenerate-token', {});
-    final rotated = res == null
-        ? 'a8098c1a-f86e-41da-bd1a-00112444b${++_uuidCounter}'
-        : AdminServerConfirmation.rotatedToken(res);
+    final rotated = AdminServerConfirmation.rotatedToken(
+        await _gateway.postJson('/stays/$stayId/regenerate-token', {}));
     return _putStay(cur.copyWith(guestTokenUuid: rotated));
   }
 
@@ -329,31 +296,18 @@ class SeededAdminRepository implements AdminOperationsRepository {
     bool isIncluded = false,
     String description = '',
   }) async {
-    _uuidCounter++;
     final priceText =
         isIncluded ? 'Included' : '\$${basePriceUSD.toStringAsFixed(0)} USD';
-    final res = await _syncPost('/catalog/experiences', {
+    final res = await _gateway.postJson('/catalog/experiences', {
       'title': title,
       'category': category,
       'duration': duration,
-      'location': 'Riviera Maya',
       'priceText': priceText,
       'basePriceUSD': basePriceUSD,
       'isIncluded': isIncluded,
       'description': description,
     });
-    final item = res != null
-        ? AdminWireMapper.mapExperienceCatalogItem(_confirmedId(res))
-        : AdminExperienceCatalogItem(
-            id: 'exp_$_uuidCounter',
-            title: title,
-            category: category,
-            duration: duration,
-            location: 'Riviera Maya',
-            priceText: priceText,
-            basePriceUSD: basePriceUSD,
-            isIncluded: isIncluded,
-            description: description);
+    final item = AdminWireMapper.mapExperienceCatalogItem(_confirmedId(res));
     _experienceCatalog.insert(0, item);
     return item;
   }
@@ -397,25 +351,14 @@ class SeededAdminRepository implements AdminOperationsRepository {
     required String storageType,
     String description = '',
   }) async {
-    _uuidCounter++;
-    final res = await _syncPost('/catalog/larder', {
+    final res = await _gateway.postJson('/catalog/larder', {
       'name': name,
-      'origin': 'Riviera Maya Sanctuary',
       'description': description,
       'price': price,
       'category': category,
       'storageType': storageType
     });
-    final item = res != null
-        ? AdminWireMapper.mapLarderCatalogItem(_confirmedId(res))
-        : AdminLarderCatalogItem(
-            id: 'lrd_$_uuidCounter',
-            name: name,
-            origin: 'Riviera Maya Sanctuary',
-            price: price,
-            category: category,
-            storageType: storageType,
-            description: description);
+    final item = AdminWireMapper.mapLarderCatalogItem(_confirmedId(res));
     _larderCatalog.insert(0, item);
     return item;
   }
@@ -439,7 +382,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
       'currentStep': stage.step,
       if (staff != null) 'assignedStaffId': staff.staffId
     });
-    return AdminSeedConciergeFolio.applyStageUpdate(
+    return AdminCacheMutations.applyStageUpdate(
         tickets: _tickets,
         current: cur,
         stage: stage,
@@ -456,7 +399,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
     final cur = CachedRecords.find(_tickets, (t) => t.requestId, requestId);
     await _syncPatch('/concierge-requests/$requestId',
         {'replyMessage': messageText, 'message': messageText});
-    return AdminSeedConciergeFolio.applyReply(
+    return AdminCacheMutations.applyReply(
         tickets: _tickets,
         current: cur,
         senderName: senderName,
@@ -472,7 +415,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
     final cur = CachedRecords.find(_pulses, (p) => p.checkInId, checkInId);
     await _syncPatch('/midstay-checkins/$checkInId',
         {'status': 'ATTENDED', 'followUpNote': followUpNote});
-    return AdminSeedConciergeFolio.applyPulseUpdate(
+    return AdminCacheMutations.applyPulseUpdate(
         pulses: _pulses,
         current: cur,
         followUpNote: followUpNote,
@@ -490,7 +433,7 @@ class SeededAdminRepository implements AdminOperationsRepository {
       'categoryLabel': categoryLabel,
       'amountUsd': amountUsd
     });
-    return AdminSeedConciergeFolio.applyAddedFolioItem(
+    return AdminCacheMutations.applyAddedFolioItem(
         items: _folioItems,
         title: title,
         categoryLabel: categoryLabel,
@@ -533,17 +476,17 @@ class SeededAdminRepository implements AdminOperationsRepository {
     return res;
   }
 
-  Future<Map<String, dynamic>?> _syncPatch(
-          String path, Map<String, dynamic> payload) async =>
-      _apiClient?.patchJson(path, payload);
+  Future<Map<String, dynamic>> _syncPatch(
+          String path, Map<String, dynamic> payload) =>
+      _gateway.patchJson(path, payload);
 
-  Future<Map<String, dynamic>?> _syncPost(
-          String path, Map<String, dynamic> payload) async =>
-      _apiClient?.postJson(path, payload);
+  Future<Map<String, dynamic>> _syncPost(
+          String path, Map<String, dynamic> payload) =>
+      _gateway.postJson(path, payload);
 
-  Future<Map<String, dynamic>?> _syncDelete(String path) async =>
-      _apiClient?.deleteJson(path);
+  Future<Map<String, dynamic>> _syncDelete(String path) =>
+      _gateway.deleteJson(path);
 
   @override
-  void dispose() => _apiClient?.dispose();
+  void dispose() => _gateway.dispose();
 }

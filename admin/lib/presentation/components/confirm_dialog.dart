@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Shows a one-line confirmation; resolves `true` only when confirmed.
+/// Shows a one-line confirmation ("Disable this villa?"); resolves `true`
+/// only when confirmed. Focus starts on Cancel.
 ///
-/// [destructive] paints the confirm button with the error color.
+/// [destructive] paints the confirm button with the error color. [message]
+/// is optional: the title alone is usually enough.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
-  required String message,
+  String message = '',
   required String confirmLabel,
   String cancelLabel = 'Cancel',
   bool destructive = false,
@@ -17,10 +19,11 @@ Future<bool> showConfirmDialog(
     builder: (dialogContext) => AlertDialog(
       key: const Key('confirm-dialog'),
       title: Text(title),
-      content: Text(message),
+      content: message.isEmpty ? null : Text(message),
       actions: [
         TextButton(
           key: const Key('confirm-dialog-cancel'),
+          autofocus: true,
           onPressed: () => Navigator.of(dialogContext).pop(false),
           child: Text(cancelLabel),
         ),

@@ -6,8 +6,9 @@ import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
 import '../components/focus_ring.dart';
 
-/// White 64px top bar: page title, search, quick filters, test chime,
-/// EN|ES toggle and alert bell. Mobile adds the drawer menu button.
+/// White 64px top bar: page title, EN|ES toggle, alert bell and the
+/// Settings gear. No global search or filters: each list has its own toolbar.
+/// Mobile adds the drawer menu button.
 class TopCommandBar extends StatelessWidget {
   static const TextTheme _text = KachavaAdminTheme.textTheme;
 
@@ -44,19 +45,12 @@ class TopCommandBar extends StatelessWidget {
                   icon: const Icon(Icons.menu, color: KachavaTokens.text),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
-              if (constraints.maxWidth >= 600) ...[
-                _buildTitle(isCompact ? 130 : 220),
-                SizedBox(width: gap),
-              ],
-              _buildSearchField(isCompact ? 44.0 : 200.0),
-              SizedBox(width: gap),
-              Expanded(child: _buildQuickFiltersStrip()),
-              SizedBox(width: gap),
-              _buildTestSoundButton(isCompact),
+              Expanded(child: _buildTitle()),
               SizedBox(width: gap),
               _buildLocaleToggleButton(isCompact),
               SizedBox(width: gap),
               _buildNotificationBell(isCompact),
+              _buildSettingsButton(),
             ],
           );
         },
@@ -64,9 +58,25 @@ class TopCommandBar extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(double maxWidth) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
+  Widget _buildSettingsButton() {
+    final selected = controller.activeTab == AdminWorkspaceTab.adminSettings;
+    return IconButton(
+      key: const Key('top-bar-settings'),
+      tooltip:
+          AdminI18n.tabLabel(AdminWorkspaceTab.adminSettings, controller.isEs),
+      isSelected: selected,
+      style: IconButton.styleFrom(
+        fixedSize: const Size(48, 48),
+        backgroundColor: selected ? KachavaTokens.surface : null,
+      ),
+      icon: const Icon(Icons.settings_outlined, color: KachavaTokens.text),
+      onPressed: () => controller.selectTab(AdminWorkspaceTab.adminSettings),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Align(
+      alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 8),
         child: Text(
@@ -84,84 +94,7 @@ class TopCommandBar extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchField(double width) {
-    return SizedBox(
-      width: width,
-      height: 36,
-      child: TextField(
-        key: const Key('global-search-input'),
-        onChanged: controller.setSearchQuery,
-        decoration: InputDecoration(
-          hintText: AdminI18n.searchHint(controller.isEs),
-          hintStyle:
-              _text.bodyMedium?.copyWith(color: KachavaTokens.textSecondary),
-          prefixIcon: const Icon(Icons.search,
-              size: 18, color: KachavaTokens.textSecondary),
-          filled: true,
-          fillColor: KachavaTokens.surface,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
-            borderSide: const BorderSide(color: KachavaTokens.focus, width: 2),
-          ),
-        ),
-        style: _text.bodyMedium?.copyWith(color: KachavaTokens.text),
-      ),
-    );
-  }
-
-  Widget _buildQuickFiltersStrip() {
-    final isEs = controller.isEs;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildFilterChip(
-            key: const Key('quick-filter-all-villas'),
-            label: AdminI18n.allVillas(isEs),
-            selected: controller.villaFilter == 'All Villas' &&
-                !controller.urgentOnly &&
-                controller.lifecycleFilter == null,
-            onTap: () => controller.setQuickFilter(
-                villa: 'All Villas', urgentOnly: false, clearLifecycle: true),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-urgent-only'),
-            label: AdminI18n.urgentOnly(isEs),
-            selected: controller.urgentOnly,
-            onTap: () =>
-                controller.toggleUrgentOnlyFilter(!controller.urgentOnly),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-active-stay'),
-            label: AdminI18n.activeStay(isEs),
-            selected:
-                controller.lifecycleFilter == StayLifecycleStatus.activeStay,
-            onTap: () => controller.setQuickFilter(
-                lifecycle: StayLifecycleStatus.activeStay),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-pre-arrival'),
-            label: AdminI18n.preArrival(isEs),
-            selected:
-                controller.lifecycleFilter == StayLifecycleStatus.preArrival,
-            onTap: () => controller.setQuickFilter(
-                lifecycle: StayLifecycleStatus.preArrival),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Neutral pill: gray when idle, darker gray + bold when selected.
+  /// Neutral gray pill (or [background]).
   ///
   /// The visible pill stays compact, but its tap target is at least 48dp
   /// (DESIGN.md) and keyboard focus draws the shared [FocusRing].
@@ -169,7 +102,6 @@ class TopCommandBar extends StatelessWidget {
     required Key key,
     required Widget child,
     required VoidCallback onTap,
-    bool selected = false,
     Color? background,
     EdgeInsets padding =
         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -191,14 +123,8 @@ class TopCommandBar extends StatelessWidget {
               child: Ink(
                 padding: padding,
                 decoration: BoxDecoration(
-                  color: background ??
-                      (selected
-                          ? KachavaTokens.surfaceHover
-                          : KachavaTokens.surface),
+                  color: background ?? KachavaTokens.surface,
                   borderRadius: radius,
-                  border: selected
-                      ? Border.all(color: KachavaTokens.inputBorder)
-                      : null,
                 ),
                 child: child,
               ),
@@ -206,60 +132,6 @@ class TopCommandBar extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required Key key,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: _pill(
-        key: key,
-        selected: selected,
-        onTap: onTap,
-        child: Text(
-          label,
-          style: _text.labelLarge?.copyWith(
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: KachavaTokens.text,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTestSoundButton(bool isCompact) {
-    final isEs = controller.isEs, ringing = controller.isChimeRinging;
-    final label = isCompact
-        ? (ringing ? '🔇' : '🔔')
-        : (ringing
-            ? (isEs ? '🔇 Silenciar' : '🔇 Mute 10s')
-            : (isEs ? '🔔 Probar 10s' : '🔔 Test 10s'));
-    final pill = _pill(
-      key: const Key('test-alert-sound-btn'),
-      background: ringing ? KachavaTokens.warningBackground : null,
-      padding:
-          EdgeInsets.symmetric(horizontal: isCompact ? 6 : 12, vertical: 6),
-      onTap: controller.triggerTestAlertSound,
-      child: Text(
-        label,
-        style: _text.labelLarge?.copyWith(
-          color: ringing ? KachavaTokens.warningForeground : KachavaTokens.text,
-        ),
-      ),
-    );
-    if (!isCompact) return pill;
-    // Compact mode shows only an emoji, so the tooltip names the action.
-    return Tooltip(
-      message: ringing
-          ? AdminI18n.tr(isEs, 'Mute test sound', 'Silenciar sonido de prueba')
-          : AdminI18n.tr(
-              isEs, 'Test alert sound (10s)', 'Probar sonido de alerta (10s)'),
-      child: pill,
     );
   }
 

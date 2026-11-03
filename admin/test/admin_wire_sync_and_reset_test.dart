@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
@@ -258,9 +258,11 @@ void main() {
 
       expect(find.byKey(const Key('admin-refresh-btn')), findsNothing);
       expect(find.byKey(const Key('admin-reset-data-btn')), findsNothing);
-      expect(find.byKey(const Key('global-search-input')), findsOneWidget);
-      expect(find.byKey(const Key('quick-filter-all-villas')), findsOneWidget);
-      expect(find.byKey(const Key('test-alert-sound-btn')), findsOneWidget);
+      // Global search/filters and the "Test 10s" button were removed.
+      expect(find.byKey(const Key('global-search-input')), findsNothing);
+      expect(find.byKey(const Key('quick-filter-all-villas')), findsNothing);
+      expect(find.byKey(const Key('test-alert-sound-btn')), findsNothing);
+      expect(find.byKey(const Key('top-bar-settings')), findsOneWidget);
 
       final controller = tester
           .widget<AdminCommandShell>(find.byType(AdminCommandShell))
@@ -271,7 +273,8 @@ void main() {
 
       await controller.resetAllOperationalData();
       await tester.pumpAndSettle();
-      expect(find.textContaining('All 8 Villas are FREE'), findsOneWidget);
+      expect(find.textContaining('Data reset'), findsOneWidget);
+      expect(find.textContaining('8 Villas'), findsNothing); // no fixed count
 
       for (final tab in [
         'nav-tab-admin-stays',

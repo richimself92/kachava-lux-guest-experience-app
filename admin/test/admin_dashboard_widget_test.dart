@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
@@ -88,28 +88,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(
           find.byKey(const Key('slide-over-inspector-drawer')), findsOneWidget);
-    });
-
-    testWidgets(
-        'test_global_search_and_urgency_filter_chips_filter_alerts_stream',
-        (tester) async {
-      await pumpDesktopApp(tester);
-      await tester.tap(find.byKey(const Key('quick-filter-urgent-only')));
-      await tester.pumpAndSettle();
-
-      expect(
-          find.text(
-              'Villa 102 reported Air Conditioning issue (Photo attached)'),
-          findsOneWidget);
-      expect(find.text('Villa 102 Curated Larder Provisioning (\$128.00 USD)'),
-          findsNothing);
-
-      await tester.enterText(
-          find.byKey(const Key('global-search-input')), 'Shellfish');
-      await tester.pumpAndSettle();
-      expect(
-          find.text('Allergy Caution: Shellfish · Chef & Yacht Crew Briefing'),
-          findsOneWidget);
     });
 
     testWidgets(
@@ -219,13 +197,6 @@ void main() {
       expect(find.text('✓ ES'), findsOneWidget);
       expect(find.text('Villas (8)'), findsOneWidget);
       expect(find.text('Reservas'), findsWidgets);
-
-      await tester.tap(find.byKey(const Key('test-alert-sound-btn')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('admin-toast-banner')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('dismiss-alert-chime-btn')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('admin-toast-banner')), findsNothing);
     });
 
     testWidgets(

@@ -8,7 +8,7 @@ import 'package:kachava_admin_dashboard/application/inspector_selection.dart';
 import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'support/signed_in_api_client.dart';
 

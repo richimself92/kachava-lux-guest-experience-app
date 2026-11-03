@@ -35,6 +35,14 @@ enum AdminWorkspaceTab {
     label: 'Stay summary',
     shortLabel: 'Stay summary',
     subtitle: 'Stay Summary, Acquired Services & Guest Feedback',
+  ),
+
+  /// Opened from the top bar gear; not a menu item.
+  adminSettings(
+    id: 'admin-settings',
+    label: 'Settings',
+    shortLabel: 'Settings',
+    subtitle: 'Resort settings',
   );
 
   const AdminWorkspaceTab({

@@ -1,5 +1,5 @@
-import '../domain/admin_enums.dart';
-import '../domain/admin_stay_entities.dart';
+import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
+import 'package:kachava_admin_dashboard/domain/admin_stay_entities.dart';
 
 /// Canonical seeded operational records for Kachava Lux Sanctuary (8 Villas & Resort).
 class AdminSeedFixtures {

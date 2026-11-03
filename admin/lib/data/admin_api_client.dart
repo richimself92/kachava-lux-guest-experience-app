@@ -4,6 +4,7 @@ import '../core/app_config.dart';
 import '../domain/admin_access_denied.dart';
 import 'admin_session.dart';
 import 'admin_staff_mapper.dart';
+import 'admin_write_gateway.dart';
 
 /// REST API client for `/api/v1/admin/*` protected by `AdminAuthGuard`.
 ///
@@ -13,7 +14,7 @@ import 'admin_staff_mapper.dart';
 /// in-flight login. A 401 expires the token, logs in again and retries the
 /// call once; a second 401 surfaces as [AdminUnauthorizedException]. A
 /// rejected login (401/403) is terminal and surfaces as [AdminAccessDenied].
-class AdminApiClient {
+class AdminApiClient implements AdminWriteGateway {
   AdminApiClient({
     this.baseUrl = AdminAppConfig.apiBaseUrl,
     this.staffEmail = AdminAppConfig.adminStaffEmail,
@@ -109,6 +110,7 @@ class AdminApiClient {
   Future<Map<String, dynamic>> getJson(String path) =>
       _send((headers) => _client.get(_resolveUri(path), headers: headers));
 
+  @override
   Future<Map<String, dynamic>> postJson(
     String path,
     Map<String, dynamic> body,
@@ -116,6 +118,7 @@ class AdminApiClient {
       _send((headers) => _client.post(_resolveUri(path),
           headers: headers, body: jsonEncode(body)));
 
+  @override
   Future<Map<String, dynamic>> patchJson(
     String path,
     Map<String, dynamic> body,
@@ -123,6 +126,7 @@ class AdminApiClient {
       _send((headers) => _client.patch(_resolveUri(path),
           headers: headers, body: jsonEncode(body)));
 
+  @override
   Future<Map<String, dynamic>> deleteJson(String path) =>
       _send((headers) => _client.delete(_resolveUri(path), headers: headers));
 
@@ -156,6 +160,7 @@ class AdminApiClient {
     return <String, dynamic>{'data': decoded};
   }
 
+  @override
   void dispose() {
     if (_ownsClient) {
       _client.close();

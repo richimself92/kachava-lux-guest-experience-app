@@ -1,0 +1,47 @@
+import 'admin_service.dart';
+import 'admin_settings.dart';
+import 'admin_stay_entities.dart';
+import 'admin_villa.dart';
+import 'list_query.dart';
+import 'paged_result.dart';
+import 'transport_provider.dart';
+
+/// Resort settings (`GET/PATCH /admin/settings`).
+abstract interface class AdminSettingsRepository {
+  Future<AdminSettings> fetch();
+
+  /// Saves and returns the server-confirmed settings.
+  Future<AdminSettings> update(AdminSettings settings);
+}
+
+/// Villas (`GET/POST/PATCH /admin/villas`). Disabling is an update with
+/// `isActive: false`.
+abstract interface class VillaRepository {
+  Future<PagedResult<AdminVilla>> list(ListQuery query);
+  Future<AdminVilla> create(AdminVilla villa);
+  Future<AdminVilla> update(AdminVilla villa);
+}
+
+/// External transport providers (`/admin/transport-providers`).
+abstract interface class TransportProviderRepository {
+  Future<PagedResult<TransportProvider>> list(ListQuery query);
+  Future<TransportProvider> create(TransportProvider provider);
+  Future<TransportProvider> update(TransportProvider provider);
+}
+
+/// The single service catalog and its items (`/admin/services`,
+/// `/admin/services/:id/items`).
+abstract interface class ServiceCatalogRepository {
+  Future<PagedResult<AdminService>> list(ListQuery query);
+  Future<AdminService> get(String id);
+  Future<AdminService> create(AdminService service);
+  Future<AdminService> update(AdminService service);
+  Future<PagedResult<ServiceItem>> listItems(String serviceId, ListQuery query);
+  Future<ServiceItem> createItem(String serviceId, ServiceItem item);
+  Future<ServiceItem> updateItem(String serviceId, ServiceItem item);
+}
+
+/// Paginated stays (`GET /admin/stays`).
+abstract interface class StayListRepository {
+  Future<PagedResult<AdminStayRecord>> list(ListQuery query);
+}

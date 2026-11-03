@@ -9,7 +9,7 @@ import 'package:kachava_admin_dashboard/core/alert_chime_port.dart';
 import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_entities.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 

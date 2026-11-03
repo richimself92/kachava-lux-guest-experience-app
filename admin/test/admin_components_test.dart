@@ -61,7 +61,8 @@ void main() {
 
   testWidgets('test_statusChip_fromStatus_usesToneColors', (tester) async {
     await tester.pumpWidget(host(StatusChip.fromStatus('URGENT')));
-    final text = tester.widget<Text>(find.text('URGENT'));
+    expect(find.text('URGENT'), findsNothing); // never a raw enum
+    final text = tester.widget<Text>(find.text('Urgent'));
     expect(text.style?.color, StatusTone.error.foreground);
   });
 

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
 import 'package:kachava_admin_dashboard/core/rating_label.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_sync_snapshot.dart';
 import 'package:kachava_admin_dashboard/presentation/workspaces/folio_workspace.dart';
 import 'package:kachava_admin_dashboard/presentation/workspaces/stay_dialogs.dart';

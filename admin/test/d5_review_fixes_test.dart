@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_views.dart';
 import 'package:kachava_admin_dashboard/core/admin_i18n.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
@@ -52,11 +52,6 @@ void main() {
 
   group('Top command bar', () {
     const keys = [
-      'quick-filter-all-villas',
-      'quick-filter-urgent-only',
-      'quick-filter-active-stay',
-      'quick-filter-pre-arrival',
-      'test-alert-sound-btn',
       'admin-locale-toggle-btn',
       'top-bar-alert-bell',
     ];
@@ -73,19 +68,19 @@ void main() {
             reason: k);
       }
       expect(find.bySemanticsLabel(RegExp(r'^EN \| ES')), findsOneWidget);
-      expect(find.text('🔔 Test 10s'), findsOneWidget);
+      expect(find.textContaining('Test 10s'), findsNothing);
       semantics.dispose();
     });
 
-    testWidgets('test_compactBar_buttonsAre48x48_andSoundHasTooltip',
+    testWidgets('test_compactBar_buttonsAre48x48_andGearHasTooltip',
         (tester) async {
       await pumpApp(tester, const Size(375, 812));
-      for (final k in ['test-alert-sound-btn', 'top-bar-alert-bell']) {
+      for (final k in ['top-bar-settings', 'top-bar-alert-bell']) {
         final size = tester.getSize(find.byKey(Key(k)));
         expect(size.height, greaterThanOrEqualTo(48), reason: k);
         expect(size.width, greaterThanOrEqualTo(48), reason: k);
       }
-      expect(find.byTooltip('Test alert sound (10s)'), findsOneWidget);
+      expect(find.byTooltip('Settings'), findsOneWidget);
     });
 
     testWidgets('test_bell_tooltipAndSemantics_areLocalized', (tester) async {

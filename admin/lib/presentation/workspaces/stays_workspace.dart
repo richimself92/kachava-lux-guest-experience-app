@@ -44,8 +44,8 @@ class StaysWorkspace extends StatelessWidget {
             state: AsyncViewState.empty,
             emptyMessage: AdminI18n.tr(
               isEs,
-              'No active stays. All 8 Villas are FREE.',
-              'No hay huéspedes activos. Las 8 Villas están LIBRES.',
+              'No reservations yet',
+              'Sin reservas aún',
             ),
             builder: (_) => const SizedBox.shrink(),
           )

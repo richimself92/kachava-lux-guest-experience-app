@@ -48,15 +48,14 @@ class TabletCompactRail extends StatelessWidget {
           isSelected: selected,
           style: IconButton.styleFrom(
             fixedSize: const Size(48, 48),
-            backgroundColor: selected ? KachavaTokens.primarySelected : null,
+            backgroundColor: selected ? KachavaTokens.surface : null,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(KachavaTokens.radiusLg)),
           ),
           onPressed: () => controller.selectTab(item.workspace!),
           icon: Icon(item.icon,
-              color: selected
-                  ? KachavaTokens.primary
-                  : KachavaTokens.textSecondary),
+              color:
+                  selected ? KachavaTokens.text : KachavaTokens.textSecondary),
         ),
       ),
     );

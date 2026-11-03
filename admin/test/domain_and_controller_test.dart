@@ -8,7 +8,7 @@ import 'package:kachava_admin_dashboard/core/responsive_breakpoints.dart';
 import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_session.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
-import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 
 import 'support/admin_sync_envelope.dart';
@@ -364,7 +364,7 @@ void main() {
       expect(updatedStay.lateCheckoutApproved, isTrue);
       expect(controller.isChimeRinging, isFalse);
 
-      controller.triggerTestAlertSound();
+      controller.showToast('New guest request', playChime: true);
       expect(controller.isChimeRinging, isTrue);
       controller.dismissToastAndStopChime();
       expect(controller.isChimeRinging, isFalse);

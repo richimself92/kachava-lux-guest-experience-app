@@ -1,5 +1,5 @@
-import '../domain/admin_entities.dart';
-import '../domain/admin_enums.dart';
+import 'package:kachava_admin_dashboard/domain/admin_entities.dart';
+import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'admin_seed_concierge_folio.dart';
 
 /// Seeded operational alerts, bookings, larder orders, concierge tickets, and folio records.

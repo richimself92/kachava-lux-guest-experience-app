@@ -34,21 +34,17 @@ void main() {
           greaterThanOrEqualTo(4.5));
     });
 
-    test('test_selectedNav_brownText_meetsAA_onBrownTint', () {
-      expect(
-          contrastRatio(KachavaTokens.primary, KachavaTokens.primarySelected),
+    test('test_selectedNav_text_meetsAA_onSoftGray', () {
+      expect(contrastRatio(KachavaTokens.text, KachavaTokens.surface),
           greaterThanOrEqualTo(4.5));
     });
 
-    test('test_radii_stayWithinDesignRange_4to12', () {
-      for (final r in [
-        KachavaTokens.radiusSm,
-        KachavaTokens.radiusMd,
-        KachavaTokens.radiusLg,
-        KachavaTokens.radiusTile,
-      ]) {
-        expect(r, inInclusiveRange(4, 12));
-      }
+    test('test_radii_matchDesignMd', () {
+      // DESIGN.md: --kl-radius-sm 4, md 8, lg 12, tile 16.
+      expect(KachavaTokens.radiusSm, 4);
+      expect(KachavaTokens.radiusMd, 8);
+      expect(KachavaTokens.radiusLg, 12);
+      expect(KachavaTokens.radiusTile, 16);
     });
   });
 }

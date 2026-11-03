@@ -10,6 +10,7 @@ import '../domain/admin_sync_snapshot.dart';
 import 'admin_activity_tracker.dart';
 import 'admin_dashboard_views.dart';
 import 'inspector_selection.dart';
+import 'list_query_store.dart';
 import 'server_confirmed_action.dart';
 
 export 'admin_dashboard_views.dart';
@@ -52,6 +53,9 @@ class AdminDashboardController extends ChangeNotifier {
   AdminSyncSnapshot? _snapshot;
   bool _isDisposed = false;
   int _epoch = 0; // bumped when the staff session changes
+
+  /// Per-screen list search/filters/sort/page, kept while navigating.
+  final ListQueryStore listQueries = ListQueryStore();
 
   AdminLocale get locale => _locale;
   bool get isEs => _locale == AdminLocale.es;
@@ -109,6 +113,7 @@ class AdminDashboardController extends ChangeNotifier {
         _inspectorSelection = null;
         _activeLightboxTicketId = _lastToastMessage = null;
         _searchQuery = '';
+        listQueries.clear();
       });
 
   AdminSyncSnapshot _apply(AdminSyncSnapshot s) {
@@ -166,9 +171,7 @@ class AdminDashboardController extends ChangeNotifier {
         await _live(_repository.resetAllData());
         _activity.clear();
         if (await _reread(_repository.fetchSnapshot) case final s?) _apply(s);
-        showToast(isEs
-            ? 'Datos reiniciados: Las 8 Villas están LIBRES (🟢) para probar desde cero'
-            : 'All data reset: All 8 Villas are FREE (🟢) to test from scratch');
+        showToast(isEs ? 'Datos reiniciados' : 'Data reset');
       });
 
   void _update(VoidCallback fn) {
@@ -203,11 +206,6 @@ class AdminDashboardController extends ChangeNotifier {
         _chime.stopChime();
         _lastToastMessage = null;
       });
-  void triggerTestAlertSound() => showToast(
-      isEs
-          ? 'NUEVA SOLICITUD DE HUÉSPED · Requiere atención de HOST ADMIN (Sonando 10s)'
-          : 'NEW GUEST REQUEST · Requires HOST ADMIN attention (Ringing 10s)',
-      playChime: true);
 
   void setQuickFilter(
           {String? villa,
