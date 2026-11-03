@@ -9,7 +9,8 @@ import '../info_tooltip.dart';
 import 'admin_form_fields.dart';
 
 /// Image field: pick -> check type/size (JPEG/PNG/WebP, <= 5 MB) -> ask the
-/// [signer] for a signed URL -> `PUT` with [transport] -> preview. The value
+/// [signer] for a signed URL -> send with [transport] (signed method and
+/// headers) -> preview. The value
 /// changes only after the upload succeeded.
 class AdminImageUploadField extends StatelessWidget {
   const AdminImageUploadField({
@@ -92,7 +93,7 @@ class _UploadBodyState extends State<_UploadBody> {
           contentType: file.contentType,
           sizeBytes: file.sizeBytes,
           folder: _c.folder);
-      await _c.transport.put(signed.uploadUrl, file.bytes, file.contentType);
+      await _c.transport.send(signed.request, file.bytes);
       if (!mounted) return;
       final image = UploadedImage(
           storagePath: signed.storagePath, publicUrl: signed.publicUrl);

@@ -21,9 +21,11 @@ class ServicePricing {
 
   /// `INCLUDED | FIXED | PER_PERSON | PER_UNIT | PER_HOUR | ON_REQUEST`.
   final String mode;
+
+  /// USD; `null` for INCLUDED / ON_REQUEST or when items carry the price.
   final double? amount;
 
-  /// ISO currency of [amount]; the plan fixes USD.
+  /// The contract only accepts `USD`.
   final String currency;
   final bool chargeToFolio;
   final LocalizedText note;
@@ -37,55 +39,69 @@ class ServicePricing {
       };
 }
 
+/// A `HH:mm`-`HH:mm` window in resort time.
+class TimeSlot {
+  const TimeSlot({required this.start, required this.end});
+
+  factory TimeSlot.fromJson(Map<String, dynamic> json) => TimeSlot(
+      start: JsonRead.text(json, 'start'), end: JsonRead.text(json, 'end'));
+
+  final String start;
+  final String end;
+
+  Map<String, dynamic> toJson() => {'start': start, 'end': end};
+}
+
 /// When a service can be requested.
 class ServiceAvailability {
   const ServiceAvailability({
-    this.daysOfWeek = const [],
+    this.weekdays = const [],
     this.timeSlots = const [],
     this.blockedDates = const [],
-    this.leadTimeHours,
+    this.minLeadHours,
     this.cancellationHours,
     this.minGuests,
     this.maxGuests,
     this.durationMinutes,
-    this.offeredWhen = '',
+    this.offeredWhen,
   });
 
   factory ServiceAvailability.fromJson(Map<String, dynamic> json) =>
       ServiceAvailability(
-        daysOfWeek: JsonRead.ints(json, 'daysOfWeek'),
-        timeSlots: JsonRead.strings(json, 'timeSlots'),
+        weekdays: JsonRead.strings(json, 'weekdays'),
+        timeSlots: [
+          for (final slot in JsonRead.objects(json, 'timeSlots'))
+            TimeSlot.fromJson(slot)
+        ],
         blockedDates: JsonRead.strings(json, 'blockedDates'),
-        leadTimeHours: JsonRead.intOrNull(json, 'leadTimeHours'),
+        minLeadHours: JsonRead.intOrNull(json, 'minLeadHours'),
         cancellationHours: JsonRead.intOrNull(json, 'cancellationHours'),
         minGuests: JsonRead.intOrNull(json, 'minGuests'),
         maxGuests: JsonRead.intOrNull(json, 'maxGuests'),
         durationMinutes: JsonRead.intOrNull(json, 'durationMinutes'),
-        offeredWhen: JsonRead.text(json, 'offeredWhen'),
+        offeredWhen: JsonRead.textOrNull(json, 'offeredWhen'),
       );
 
-  /// ISO weekdays 1 (Mon) .. 7 (Sun).
-  final List<int> daysOfWeek;
-
-  /// `HH:mm-HH:mm` windows in resort time.
-  final List<String> timeSlots;
+  /// `MON` .. `SUN`.
+  final List<String> weekdays;
+  final List<TimeSlot> timeSlots;
 
   /// `YYYY-MM-DD`.
   final List<String> blockedDates;
-  final int? leadTimeHours;
+  final int? minLeadHours;
   final int? cancellationHours;
   final int? minGuests;
   final int? maxGuests;
   final int? durationMinutes;
 
-  /// `BEFORE_STAY | DURING_STAY | BOTH`.
-  final String offeredWhen;
+  /// `BEFORE_ARRIVAL | DURING_STAY | BOTH`.
+  final String? offeredWhen;
 
   Map<String, dynamic> toJson() => {
-        'daysOfWeek': daysOfWeek,
-        'timeSlots': timeSlots,
+        'weekdays': weekdays,
+        'timeSlots': [for (final s in timeSlots) s.toJson()],
         'blockedDates': blockedDates,
-        'leadTimeHours': leadTimeHours,
+        'minLeadHours': minLeadHours,
         'cancellationHours': cancellationHours,
         'minGuests': minGuests,
         'maxGuests': maxGuests,
@@ -132,70 +148,100 @@ class ServiceGuestInfo {
       };
 }
 
-/// Which questions the guest form asks.
+/// Which inputs the guest form asks for.
 class ServiceGuestForm {
   const ServiceGuestForm({
-    this.askDate = false,
-    this.askTime = false,
-    this.askGuests = false,
-    this.askNotes = false,
-    this.askDiet = false,
-    this.askHealth = false,
+    this.date = false,
+    this.time = false,
+    this.guests = false,
+    this.notes = false,
+    this.dietary = false,
+    this.health = false,
   });
 
   factory ServiceGuestForm.fromJson(Map<String, dynamic> json) =>
       ServiceGuestForm(
-        askDate: JsonRead.flag(json, 'askDate'),
-        askTime: JsonRead.flag(json, 'askTime'),
-        askGuests: JsonRead.flag(json, 'askGuests'),
-        askNotes: JsonRead.flag(json, 'askNotes'),
-        askDiet: JsonRead.flag(json, 'askDiet'),
-        askHealth: JsonRead.flag(json, 'askHealth'),
+        date: JsonRead.flag(json, 'date'),
+        time: JsonRead.flag(json, 'time'),
+        guests: JsonRead.flag(json, 'guests'),
+        notes: JsonRead.flag(json, 'notes'),
+        dietary: JsonRead.flag(json, 'dietary'),
+        health: JsonRead.flag(json, 'health'),
       );
 
-  final bool askDate;
-  final bool askTime;
-  final bool askGuests;
-  final bool askNotes;
-  final bool askDiet;
-  final bool askHealth;
+  final bool date;
+  final bool time;
+  final bool guests;
+  final bool notes;
+  final bool dietary;
+  final bool health;
 
   Map<String, dynamic> toJson() => {
-        'askDate': askDate,
-        'askTime': askTime,
-        'askGuests': askGuests,
-        'askNotes': askNotes,
-        'askDiet': askDiet,
-        'askHealth': askHealth,
+        'date': date,
+        'time': time,
+        'guests': guests,
+        'notes': notes,
+        'dietary': dietary,
+        'health': health,
       };
 }
 
-/// Staff-only operation block.
+/// Staff-only operation block (never sent to guests).
 class ServiceOperation {
   const ServiceOperation({
     this.providerId,
-    this.internalOwner = '',
+    this.responsibleDepartment,
+    this.responsibleStaffId,
     this.requiresConfirmation = false,
-    this.internalNotes = '',
+    this.internalInstructions = '',
   });
 
   factory ServiceOperation.fromJson(Map<String, dynamic> json) =>
       ServiceOperation(
         providerId: JsonRead.textOrNull(json, 'providerId'),
-        internalOwner: JsonRead.text(json, 'internalOwner'),
+        responsibleDepartment:
+            JsonRead.textOrNull(json, 'responsibleDepartment'),
+        responsibleStaffId: JsonRead.textOrNull(json, 'responsibleStaffId'),
         requiresConfirmation: JsonRead.flag(json, 'requiresConfirmation'),
-        internalNotes: JsonRead.text(json, 'internalNotes'),
+        internalInstructions: JsonRead.text(json, 'internalInstructions'),
       );
 
+  /// External transport provider, if any.
   final String? providerId;
-  final String internalOwner;
+
+  /// `CONCIERGE | CULINARY | MARINE | TRANSPORT | HOUSEKEEPING | ENGINEERING
+  /// | WELLNESS`.
+  final String? responsibleDepartment;
+  final String? responsibleStaffId;
   final bool requiresConfirmation;
-  final String internalNotes;
+  final String internalInstructions;
 
   Map<String, dynamic> toJson() => {
         'providerId': providerId,
-        'internalOwner': internalOwner,
+        'responsibleDepartment': responsibleDepartment,
+        'responsibleStaffId': responsibleStaffId,
         'requiresConfirmation': requiresConfirmation,
-        'internalNotes': internalNotes,
+        'internalInstructions': internalInstructions,
       };
+}
+
+/// Passengers and luggage of a transport vehicle item.
+class VehicleCapacity {
+  const VehicleCapacity({required this.passengers, required this.luggage});
+
+  static VehicleCapacity? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = Map<String, dynamic>.from(json);
+    final passengers = JsonRead.intOrNull(map, 'passengers');
+    if (passengers == null) return null;
+    return VehicleCapacity(
+        passengers: passengers,
+        luggage: JsonRead.intOrNull(map, 'luggage') ?? 0);
+  }
+
+  final int passengers;
+  final int luggage;
+
+  Map<String, dynamic> toJson() =>
+      {'passengers': passengers, 'luggage': luggage};
 }

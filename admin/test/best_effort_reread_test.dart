@@ -10,6 +10,7 @@ import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dar
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 
@@ -102,8 +103,10 @@ void main() {
     }
 
     testWidgets('test_app_staff403_showsShellNotNoAccess', (tester) async {
-      await tester
-          .pumpWidget(KachavaAdminApp(repository: _repo(staffStatus: 403)));
+      await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: _repo(staffStatus: 403)));
       await tester.pumpAndSettle();
 
       expect(find.byType(AdminCommandShell), findsOneWidget);

@@ -7,6 +7,7 @@ import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
 import 'package:kachava_admin_dashboard/presentation/components/components.dart';
+import 'support/fake_resort_repositories.dart';
 
 /// Track D5: review fixes (category labels, top-bar tap targets & a11y).
 void main() {
@@ -14,8 +15,10 @@ void main() {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    await tester
-        .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+    await tester.pumpWidget(KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
+        repository: SeededAdminRepository()));
     await tester.pumpAndSettle();
     return tester.widget<AdminCommandShell>(find.byType(AdminCommandShell));
   }

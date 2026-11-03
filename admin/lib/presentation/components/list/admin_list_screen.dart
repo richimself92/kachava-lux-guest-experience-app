@@ -123,7 +123,9 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
     ));
   }
 
+  /// Safe after dispose (e.g. a toast action that runs after navigating).
   void _close() {
+    if (!mounted) return;
     setState(() {
       _selected = null;
       _creating = false;
@@ -208,15 +210,19 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>> {
       padding: const EdgeInsets.fromLTRB(KachavaTokens.space4,
           KachavaTokens.space4, KachavaTokens.space4, KachavaTokens.space2),
       child: Row(children: [
-        Flexible(
-          child: Text(widget.title,
-              key: Key('list-${widget.entity}-title'),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.headlineSmall),
+        // Title + ⓘ take the free space so the primary action sits right.
+        Expanded(
+          child: Row(children: [
+            Flexible(
+              child: Text(widget.title,
+                  key: Key('list-${widget.entity}-title'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall),
+            ),
+            if (widget.info != null) InfoTooltip(widget.info!),
+          ]),
         ),
-        if (widget.info != null) InfoTooltip(widget.info!),
-        const Spacer(),
         if (action != null)
           FilledButton.icon(
             key: Key('primary-${widget.entity}'),

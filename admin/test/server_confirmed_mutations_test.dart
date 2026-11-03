@@ -7,6 +7,7 @@ import 'package:kachava_admin_dashboard/data/admin_api_client.dart';
 import 'package:kachava_admin_dashboard/data/admin_server_confirmation.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -142,14 +143,16 @@ void main() {
     addTearDown(tester.view.reset);
     // Villas are derived from server stays: a checked-out stay frees Villa 106.
     await tester.pumpWidget(KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
         repository:
             _repoWith(() => http.Response('unavailable', 503), pastStays: [
-      {
-        ...liveStayWire(stayId: 'stay_past_106', villaName: 'Villa 106'),
-        'villaId': 'villa-106',
-        'status': 'CHECKED_OUT',
-      }
-    ])));
+          {
+            ...liveStayWire(stayId: 'stay_past_106', villaName: 'Villa 106'),
+            'villaId': 'villa-106',
+            'status': 'CHECKED_OUT',
+          }
+        ])));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
     await tester.pumpAndSettle();

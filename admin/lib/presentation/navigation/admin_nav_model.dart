@@ -70,7 +70,13 @@ abstract final class AdminNavModel {
       items: [
         reservations,
         AdminNavItem(id: 'guests', labelEn: 'Guests', labelEs: 'Huéspedes'),
-        AdminNavItem(id: 'villas', labelEn: 'Villas', labelEs: 'Villas'),
+        AdminNavItem(
+          id: 'villas',
+          labelEn: 'Villas',
+          labelEs: 'Villas',
+          workspace: AdminWorkspaceTab.adminVillas,
+          icon: Icons.villa_outlined,
+        ),
       ],
     ),
     AdminNavSection(
@@ -78,20 +84,11 @@ abstract final class AdminNavModel {
       labelEn: 'HOSPITALITY',
       labelEs: 'HOSPITALIDAD',
       items: [
+        // Hidden until Phase 4: the legacy Services/Larder and Experiences
+        // workspaces depended on the removed `/admin/catalog/*` endpoints.
+        AdminNavItem(id: 'services', labelEn: 'Services', labelEs: 'Servicios'),
         AdminNavItem(
-          id: 'services',
-          labelEn: 'Services',
-          labelEs: 'Servicios',
-          workspace: AdminWorkspaceTab.adminLarder,
-          icon: Icons.room_service_outlined,
-        ),
-        AdminNavItem(
-          id: 'experiences',
-          labelEn: 'Experiences',
-          labelEs: 'Experiencias',
-          workspace: AdminWorkspaceTab.adminExperiences,
-          icon: Icons.explore_outlined,
-        ),
+            id: 'experiences', labelEn: 'Experiences', labelEs: 'Experiencias'),
         AdminNavItem(id: 'dining', labelEn: 'Dining', labelEs: 'Gastronomía'),
         AdminNavItem(
             id: 'transportation',

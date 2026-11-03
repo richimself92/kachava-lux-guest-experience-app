@@ -30,6 +30,13 @@ void main() {
   }
 
   group('desktop (1440)', () {
+    testWidgets('header: the one primary action sits at the right edge',
+        (tester) async {
+      await pumpList(tester);
+      final right = tester.getTopRight(find.byKey(const Key('primary-items')));
+      expect(right.dx, greaterThan(1440 - 16 - 1));
+    });
+
     testWidgets('pagination footer: range, next/prev, rows per page',
         (tester) async {
       await pumpList(tester);

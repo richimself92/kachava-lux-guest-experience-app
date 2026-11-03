@@ -54,8 +54,9 @@ class TabletCompactRail extends StatelessWidget {
           ),
           onPressed: () => controller.selectTab(item.workspace!),
           icon: Icon(item.icon,
-              color:
-                  selected ? KachavaTokens.primary : KachavaTokens.textSecondary),
+              color: selected
+                  ? KachavaTokens.primary
+                  : KachavaTokens.textSecondary),
         ),
       ),
     );

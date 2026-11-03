@@ -10,6 +10,7 @@ import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -191,18 +192,10 @@ void main() {
     });
   });
 
-  group('Live Sync, Chime on New Alert & Zero-State Reset', () {
-    test('test_live_refresh_triggers_chime_on_new_alert_and_reset_clears_all',
-        () async {
+  group('Live Sync & Chime on New Alert', () {
+    test('test_live_refresh_triggers_chime_on_new_alert', () async {
       var alertsList = <Map<String, dynamic>>[];
-      var resetCalled = false;
       final mockHttp = MockClient((request) async {
-        final p = request.url.path;
-        if (p.endsWith('/reset')) {
-          resetCalled = true;
-          alertsList = [];
-          return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
-        }
         if (isSyncRequest(request)) {
           return jsonResponse(adminSyncEnvelope(alerts: alertsList));
         }
@@ -233,18 +226,10 @@ void main() {
       expect(controller.lastToastMessage,
           contains('NEW GUEST UPDATE · Villa 101 — Booked Yacht Charter'));
 
-      await controller.resetAllOperationalData();
-      expect(resetCalled, isTrue);
-      expect(controller.stays, isEmpty);
-      expect(
-          controller.villas
-              .every((v) => !controller.isVillaOccupied(v.displayLabel)),
-          isTrue);
       controller.dispose();
     });
 
-    testWidgets(
-        'test_top_command_bar_omits_manual_sync_reset_and_controller_reset_shows_empty_states',
+    testWidgets('test_top_command_bar_omits_manual_sync_and_reset_buttons',
         (tester) async {
       tester.view.physicalSize = const Size(1440, 960);
       tester.view.devicePixelRatio = 1.0;
@@ -253,7 +238,10 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
       await tester.pumpWidget(KachavaAdminApp(
-          repository: SeededAdminRepository(), enableLivePolling: true));
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: SeededAdminRepository(),
+          enableLivePolling: true));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('admin-refresh-btn')), findsNothing);
@@ -271,24 +259,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('Synced with live backend'), findsOneWidget);
 
-      await controller.resetAllOperationalData();
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Data reset'), findsOneWidget);
       expect(find.textContaining('8 Villas'), findsNothing); // no fixed count
-
-      for (final tab in [
-        'nav-tab-admin-stays',
-        'nav-tab-admin-larder',
-        'nav-tab-admin-experiences',
-        'nav-tab-admin-concierge',
-      ]) {
-        await tester.tap(find.byKey(Key(tab)));
-        await tester.pumpAndSettle();
-      }
-      controller.selectTab(AdminWorkspaceTab.adminFolio);
-      await tester.pumpAndSettle();
-      expect(find.text('No feedback yet.'), findsOneWidget);
-      expect(find.text('No stays yet.'), findsOneWidget);
     });
 
     testWidgets('test_live_polling_refreshes_automatically_every_5_seconds',
@@ -302,8 +273,11 @@ void main() {
       });
       final repo =
           ApiAdminOperationsRepository(apiClient: signedInApiClient(mockHttp));
-      await tester.pumpWidget(
-          KachavaAdminApp(repository: repo, enableLivePolling: true));
+      await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: repo,
+          enableLivePolling: true));
       await tester.pumpAndSettle();
 
       final shell =

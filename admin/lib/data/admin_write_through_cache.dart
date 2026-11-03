@@ -7,7 +7,6 @@ import '../domain/admin_villa_directory.dart';
 import 'admin_cache_mutations.dart';
 import 'admin_cached_records.dart';
 import 'admin_server_confirmation.dart';
-import 'admin_wire_mapper.dart';
 import 'admin_wire_values.dart';
 import 'admin_write_gateway.dart';
 
@@ -33,8 +32,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
   final List<AdminConciergeTicket> _tickets = [];
   final List<AdminMidStayPulse> _pulses = [];
   final List<FolioLineItem> _folioItems = [];
-  final List<AdminExperienceCatalogItem> _experienceCatalog = [];
-  final List<AdminLarderCatalogItem> _larderCatalog = [];
 
   void applySnapshot(AdminSyncSnapshot s) => syncCache(
       stays: s.stays,
@@ -43,9 +40,7 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
       larderOrders: s.larderOrders,
       tickets: s.conciergeTickets,
       pulses: s.midStayPulses,
-      folioItems: s.folioItems,
-      experienceCatalog: s.experienceCatalog,
-      larderCatalog: s.larderCatalog);
+      folioItems: s.folioItems);
 
   void syncCache({
     List<OperationalAlert>? alerts,
@@ -55,8 +50,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
     List<AdminConciergeTicket>? tickets,
     List<AdminMidStayPulse>? pulses,
     List<FolioLineItem>? folioItems,
-    List<AdminExperienceCatalogItem>? experienceCatalog,
-    List<AdminLarderCatalogItem>? larderCatalog,
   }) {
     _replace(_alerts, alerts);
     _replace(_stays, stays);
@@ -65,8 +58,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
     _replace(_tickets, tickets);
     _replace(_pulses, pulses);
     _replace(_folioItems, folioItems);
-    _replace(_experienceCatalog, experienceCatalog);
-    _replace(_larderCatalog, larderCatalog);
   }
 
   static void _replace<T>(List<T> target, List<T>? values) {
@@ -96,22 +87,7 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
       larderOrders: List.unmodifiable(_larderOrders),
       conciergeTickets: List.unmodifiable(_tickets),
       midStayPulses: List.unmodifiable(_pulses),
-      experienceCatalog: List.unmodifiable(_experienceCatalog),
-      larderCatalog: List.unmodifiable(_larderCatalog),
       folioItems: List.unmodifiable(_folioItems));
-
-  @override
-  Future<void> resetAllData() async {
-    await _syncPost('/reset', {});
-    syncCache(
-        stays: const [],
-        alerts: const [],
-        bookings: const [],
-        larderOrders: const [],
-        tickets: const [],
-        pulses: const [],
-        folioItems: const []);
-  }
 
   @override
   Future<List<StaffMember>> fetchStaffDirectory() async =>
@@ -134,14 +110,8 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
   Future<List<AdminBookingRecord>> fetchBookings() async =>
       List.unmodifiable(_bookings);
   @override
-  Future<List<AdminExperienceCatalogItem>> fetchExperienceCatalog() async =>
-      List.unmodifiable(_experienceCatalog);
-  @override
   Future<List<AdminLarderOrder>> fetchLarderOrders() async =>
       List.unmodifiable(_larderOrders);
-  @override
-  Future<List<AdminLarderCatalogItem>> fetchLarderCatalog() async =>
-      List.unmodifiable(_larderCatalog);
   @override
   Future<List<AdminConciergeTicket>> fetchConciergeTickets() async =>
       List.unmodifiable(_tickets);
@@ -288,37 +258,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
   }
 
   @override
-  Future<AdminExperienceCatalogItem> createExperienceCatalogItem({
-    required String title,
-    required String category,
-    required String duration,
-    required double basePriceUSD,
-    bool isIncluded = false,
-    String description = '',
-  }) async {
-    final priceText =
-        isIncluded ? 'Included' : '\$${basePriceUSD.toStringAsFixed(0)} USD';
-    final res = await _gateway.postJson('/catalog/experiences', {
-      'title': title,
-      'category': category,
-      'duration': duration,
-      'priceText': priceText,
-      'basePriceUSD': basePriceUSD,
-      'isIncluded': isIncluded,
-      'description': description,
-    });
-    final item = AdminWireMapper.mapExperienceCatalogItem(_confirmedId(res));
-    _experienceCatalog.insert(0, item);
-    return item;
-  }
-
-  @override
-  Future<void> deleteExperienceCatalogItem(String id) async {
-    await _syncDelete('/catalog/experiences/$id');
-    _experienceCatalog.removeWhere((e) => e.id == id);
-  }
-
-  @override
   Future<AdminLarderOrder> updateLarderOrder(
       {required String orderId,
       required String status,
@@ -341,32 +280,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
               for (final i in cur.items)
                 i.copyWith(isStocked: markStocked || i.isStocked)
             ]));
-  }
-
-  @override
-  Future<AdminLarderCatalogItem> createLarderCatalogItem({
-    required String name,
-    required String category,
-    required double price,
-    required String storageType,
-    String description = '',
-  }) async {
-    final res = await _gateway.postJson('/catalog/larder', {
-      'name': name,
-      'description': description,
-      'price': price,
-      'category': category,
-      'storageType': storageType
-    });
-    final item = AdminWireMapper.mapLarderCatalogItem(_confirmedId(res));
-    _larderCatalog.insert(0, item);
-    return item;
-  }
-
-  @override
-  Future<void> deleteLarderCatalogItem(String id) async {
-    await _syncDelete('/catalog/larder/$id');
-    _larderCatalog.removeWhere((i) => i.id == id);
   }
 
   @override
@@ -471,11 +384,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
     return _staff.where((s) => s.staffId == staffId).firstOrNull;
   }
 
-  static Map<String, dynamic> _confirmedId(Map<String, dynamic> res) {
-    AdminServerConfirmation.requireText(res, 'id');
-    return res;
-  }
-
   Future<Map<String, dynamic>> _syncPatch(
           String path, Map<String, dynamic> payload) =>
       _gateway.patchJson(path, payload);
@@ -483,9 +391,6 @@ class AdminWriteThroughCache implements AdminOperationsRepository {
   Future<Map<String, dynamic>> _syncPost(
           String path, Map<String, dynamic> payload) =>
       _gateway.postJson(path, payload);
-
-  Future<Map<String, dynamic>> _syncDelete(String path) =>
-      _gateway.deleteJson(path);
 
   @override
   void dispose() => _gateway.dispose();

@@ -251,21 +251,6 @@ class AdminWireMapper {
           ..._parse(s['folioItems'], AdminCatalogWireMapper.folioItem),
       ];
 
-  static List<AdminExperienceCatalogItem> parseExperienceCatalog(Object? raw) =>
-      _parse(raw, AdminCatalogWireMapper.experience);
-
-  static AdminExperienceCatalogItem mapExperienceCatalogItem(
-          Map<String, dynamic> m) =>
-      AdminCatalogWireMapper.experience(m) ??
-      (throw const FormatException('Experience without id.'));
-
-  static List<AdminLarderCatalogItem> parseLarderCatalog(Object? raw) =>
-      _parse(raw, AdminCatalogWireMapper.larderItem);
-
-  static AdminLarderCatalogItem mapLarderCatalogItem(Map<String, dynamic> m) =>
-      AdminCatalogWireMapper.larderItem(m) ??
-      (throw const FormatException('Larder item without id.'));
-
   static AlertCategory _parseAlertCategory(String? s) =>
       AlertCategory.values.firstWhere((e) => e.label == s?.toUpperCase(),
           orElse: () => AlertCategory.concierge);

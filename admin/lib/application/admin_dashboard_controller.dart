@@ -30,9 +30,7 @@ class AdminDashboardController extends ChangeNotifier {
   List<OperationalAlert> _alerts = const [];
   List<AdminStayRecord> _stays = const [];
   List<AdminBookingRecord> _bookings = const [];
-  List<AdminExperienceCatalogItem> _experienceCatalog = const [];
   List<AdminLarderOrder> _larderOrders = const [];
-  List<AdminLarderCatalogItem> _larderCatalog = const [];
   List<AdminConciergeTicket> _conciergeTickets = const [];
   List<AdminMidStayPulse> _midStayPulses = const [];
   List<FolioLineItem> _folioItems = const [];
@@ -81,9 +79,7 @@ class AdminDashboardController extends ChangeNotifier {
   List<OperationalAlert> get alerts => _alerts;
   List<AdminStayRecord> get stays => _stays;
   List<AdminBookingRecord> get bookings => _bookings;
-  List<AdminExperienceCatalogItem> get experienceCatalog => _experienceCatalog;
   List<AdminLarderOrder> get larderOrders => _larderOrders;
-  List<AdminLarderCatalogItem> get larderCatalog => _larderCatalog;
   List<AdminConciergeTicket> get conciergeTickets => _conciergeTickets;
   List<AdminMidStayPulse> get midStayPulses => _midStayPulses;
   List<FolioLineItem> get folioItems => _folioItems;
@@ -121,9 +117,7 @@ class AdminDashboardController extends ChangeNotifier {
     _stays = s.stays;
     _alerts = s.alerts;
     _bookings = s.bookings;
-    _experienceCatalog = s.experienceCatalog;
     _larderOrders = s.larderOrders;
-    _larderCatalog = s.larderCatalog;
     _conciergeTickets = s.conciergeTickets;
     _midStayPulses = s.midStayPulses;
     _folioItems = s.folioItems;
@@ -166,13 +160,6 @@ class AdminDashboardController extends ChangeNotifier {
     if (fresh.isNotEmpty) return fresh.first;
     return unreadAlertsCount > prevUnread ? _alerts.first : null;
   }
-
-  Future<void> resetAllOperationalData() => _guard(() async {
-        await _live(_repository.resetAllData());
-        _activity.clear();
-        if (await _reread(_repository.fetchSnapshot) case final s?) _apply(s);
-        showToast(isEs ? 'Datos reiniciados' : 'Data reset');
-      });
 
   void _update(VoidCallback fn) {
     if (_isDisposed) return;
@@ -363,40 +350,6 @@ class AdminDashboardController extends ChangeNotifier {
             : 'Booking "${u.title}" — Assigned & Notified ${u.assignedStaffName} (${u.status})');
       });
 
-  Future<void> addExperienceCatalogItem({
-    required String title,
-    required String category,
-    required String duration,
-    required double basePriceUSD,
-    bool isIncluded = false,
-    String description = '',
-  }) =>
-      _guard(() async {
-        final item = await _live(_repository.createExperienceCatalogItem(
-            title: title,
-            category: category,
-            duration: duration,
-            basePriceUSD: basePriceUSD,
-            isIncluded: isIncluded,
-            description: description));
-        _experienceCatalog =
-            await _reread(_repository.fetchExperienceCatalog) ??
-                _experienceCatalog;
-        showToast(isEs
-            ? 'Experiencia agregada al catálogo: ${item.title}'
-            : 'Experience added to catalog: ${item.title}');
-      });
-
-  Future<void> deleteExperienceCatalogItem(String id) => _guard(() async {
-        await _live(_repository.deleteExperienceCatalogItem(id));
-        _experienceCatalog =
-            await _reread(_repository.fetchExperienceCatalog) ??
-                _experienceCatalog;
-        showToast(isEs
-            ? 'Experiencia eliminada del catálogo'
-            : 'Experience removed from catalog');
-      });
-
   Future<void> updateLarderOrderStatus(
           {required String orderId,
           required String status,
@@ -409,36 +362,6 @@ class AdminDashboardController extends ChangeNotifier {
         showToast(isEs
             ? 'Pedido de Minibar (${u.villaName}) actualizado a: ${AdminI18n.statusLabel(status, true)}'
             : 'Minibar order (${u.villaName}) marked ${u.status} (${u.assignedStaffName})');
-      });
-
-  Future<void> addLarderCatalogItem({
-    required String name,
-    required String category,
-    required double price,
-    required String storageType,
-    String description = '',
-  }) =>
-      _guard(() async {
-        final item = await _live(_repository.createLarderCatalogItem(
-            name: name,
-            category: category,
-            price: price,
-            storageType: storageType,
-            description: description));
-        _larderCatalog =
-            await _reread(_repository.fetchLarderCatalog) ?? _larderCatalog;
-        showToast(isEs
-            ? 'Producto agregado al catálogo: ${item.name}'
-            : 'Product added to minibar catalog: ${item.name}');
-      });
-
-  Future<void> deleteLarderCatalogItem(String id) => _guard(() async {
-        await _live(_repository.deleteLarderCatalogItem(id));
-        _larderCatalog =
-            await _reread(_repository.fetchLarderCatalog) ?? _larderCatalog;
-        showToast(isEs
-            ? 'Producto eliminado del catálogo'
-            : 'Product removed from minibar catalog');
       });
 
   Future<void> advanceConciergeTicketStage(

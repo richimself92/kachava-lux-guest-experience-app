@@ -32,9 +32,6 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
     return snapshot;
   }
 
-  @override
-  Future<void> resetAllData() => _cache.resetAllData();
-
   /// Live staff roster from `GET /admin/staff`.
   @override
   Future<List<StaffMember>> fetchStaffDirectory() async {
@@ -150,35 +147,6 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
           cancellationReason: cancellationReason);
 
   @override
-  Future<List<AdminExperienceCatalogItem>> fetchExperienceCatalog() async {
-    final parsed = AdminWireMapper.parseExperienceCatalog(
-        await _apiClient.getJson('/catalog/experiences'));
-    _cache.syncCache(experienceCatalog: parsed);
-    return parsed;
-  }
-
-  @override
-  Future<AdminExperienceCatalogItem> createExperienceCatalogItem({
-    required String title,
-    required String category,
-    required String duration,
-    required double basePriceUSD,
-    bool isIncluded = false,
-    String description = '',
-  }) =>
-      _cache.createExperienceCatalogItem(
-          title: title,
-          category: category,
-          duration: duration,
-          basePriceUSD: basePriceUSD,
-          isIncluded: isIncluded,
-          description: description);
-
-  @override
-  Future<void> deleteExperienceCatalogItem(String id) =>
-      _cache.deleteExperienceCatalogItem(id);
-
-  @override
   Future<List<AdminLarderOrder>> fetchLarderOrders() async {
     final parsed = AdminWireMapper.parseLarderOrders(
         await _apiClient.getJson('/larder-orders'), await _cache.fetchStays());
@@ -194,33 +162,6 @@ class ApiAdminOperationsRepository implements AdminOperationsRepository {
   }) =>
       _cache.updateLarderOrder(
           orderId: orderId, status: status, staffId: staffId);
-
-  @override
-  Future<List<AdminLarderCatalogItem>> fetchLarderCatalog() async {
-    final parsed = AdminWireMapper.parseLarderCatalog(
-        await _apiClient.getJson('/catalog/larder'));
-    _cache.syncCache(larderCatalog: parsed);
-    return parsed;
-  }
-
-  @override
-  Future<AdminLarderCatalogItem> createLarderCatalogItem({
-    required String name,
-    required String category,
-    required double price,
-    required String storageType,
-    String description = '',
-  }) =>
-      _cache.createLarderCatalogItem(
-          name: name,
-          category: category,
-          price: price,
-          storageType: storageType,
-          description: description);
-
-  @override
-  Future<void> deleteLarderCatalogItem(String id) =>
-      _cache.deleteLarderCatalogItem(id);
 
   @override
   Future<List<AdminConciergeTicket>> fetchConciergeTickets() async {

@@ -3,7 +3,6 @@ import 'package:kachava_admin_dashboard/data/admin_write_through_cache.dart';
 import 'package:kachava_admin_dashboard/domain/admin_stay_entities.dart';
 import 'package:kachava_admin_dashboard/domain/admin_sync_snapshot.dart';
 
-import 'admin_seed_concierge_folio.dart';
 import 'admin_seed_fixtures.dart';
 import 'admin_seed_operations.dart';
 
@@ -25,8 +24,6 @@ class SeededAdminRepository extends AdminWriteThroughCache {
       larderOrders: AdminSeedOperations.buildLarderOrders(),
       conciergeTickets: AdminSeedOperations.buildConciergeTickets(),
       midStayPulses: AdminSeedOperations.buildMidStayPulses(),
-      experienceCatalog: AdminSeedConciergeFolio.buildExperienceCatalog(),
-      larderCatalog: AdminSeedConciergeFolio.buildLarderCatalog(),
       folioItems: AdminSeedOperations.buildFolioItems());
 
   List<StaffMember> _roster = const [];
@@ -91,10 +88,6 @@ class OfflineEchoGateway implements AdminWriteGateway {
       return {
         'guestTokenUuid': 'a8098c1a-f86e-41da-bd1a-00112444b${++_counter}'
       };
-    }
-    if (path.startsWith('/catalog/')) {
-      final prefix = path.endsWith('experiences') ? 'exp' : 'lrd';
-      return {...body, 'id': '${prefix}_${++_counter}'};
     }
     return {};
   }

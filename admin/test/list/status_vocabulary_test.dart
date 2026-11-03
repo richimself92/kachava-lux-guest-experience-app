@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/core/admin_i18n.dart';
 import 'package:kachava_admin_dashboard/core/status_vocabulary.dart';
 import 'package:kachava_admin_dashboard/core/theme/kachava_tokens.dart';
+import 'package:kachava_admin_dashboard/domain/admin_villa.dart';
 import 'package:kachava_admin_dashboard/presentation/components/status_chip.dart';
 
 void main() {
@@ -28,6 +29,22 @@ void main() {
         expect(StatusVocabulary.label(raw, isEs: true), es, reason: raw);
         expect(StatusVocabulary.tone(raw), tone, reason: raw);
       }
+    });
+
+    test('every villa status enum has an EN/ES term (never humanized)', () {
+      for (final raw in [
+        ...VillaStatusValues.operational,
+        ...VillaStatusValues.housekeeping,
+        ...VillaStatusValues.maintenance,
+      ]) {
+        expect(StatusVocabulary.lookup(raw), isNotNull, reason: raw);
+      }
+      expect(StatusVocabulary.label('ISSUE_REPORTED', isEs: false),
+          'Issue reported');
+      expect(StatusVocabulary.label('IN_MAINTENANCE', isEs: true),
+          'En mantenimiento');
+      expect(StatusVocabulary.tone('BLOCKED'), StatusTone.error);
+      expect(StatusVocabulary.tone('AVAILABLE'), StatusTone.success);
     });
 
     test('accepts any casing and separators of the same status', () {

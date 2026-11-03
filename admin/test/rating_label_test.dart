@@ -30,8 +30,6 @@ Future<AdminDashboardController> _controllerWithUnratedPulse() async {
               larderOrders: const [],
               conciergeTickets: const [],
               midStayPulses: pulses,
-              experienceCatalog: const [],
-              larderCatalog: const [],
               folioItems: const [])));
   await controller.initialize();
   return controller;

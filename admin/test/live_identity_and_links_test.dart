@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'support/fake_resort_repositories.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,6 +157,8 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
           repository: ApiAdminOperationsRepository(
               apiClient: signedInApiClient(MockClient((request) async =>
                   isSyncRequest(request)
@@ -198,6 +201,8 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
           repository: ApiAdminOperationsRepository(
               apiClient: signedInApiClient(MockClient((request) async =>
                   isSyncRequest(request)

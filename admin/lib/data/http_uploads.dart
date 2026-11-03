@@ -6,7 +6,8 @@ import '../domain/json_read.dart';
 import '../domain/uploads.dart';
 import 'admin_api_client.dart';
 
-/// `POST /admin/uploads/sign` -> `{ uploadUrl, storagePath, publicUrl }`.
+/// `POST /admin/uploads/sign` -> `{ uploadUrl, method, headers, storagePath,
+/// publicUrl, expiresAt, maxBytes }`.
 class HttpUploadSigner implements UploadSigner {
   HttpUploadSigner(this._client);
 
@@ -25,21 +26,33 @@ class HttpUploadSigner implements UploadSigner {
       'sizeBytes': sizeBytes,
       'folder': folder,
     });
-    final data = raw['data'] is Map
-        ? Map<String, dynamic>.from(raw['data'] as Map)
-        : raw;
+    final data = JsonRead.object(raw, 'data').isEmpty
+        ? raw
+        : JsonRead.object(raw, 'data');
     final url = Uri.tryParse(JsonRead.text(data, 'uploadUrl'));
+    final method = JsonRead.text(data, 'method').toUpperCase();
     final path = JsonRead.text(data, 'storagePath');
     final publicUrl = JsonRead.text(data, 'publicUrl');
-    if (url == null || !url.hasScheme || path.isEmpty || publicUrl.isEmpty) {
+    if (url == null ||
+        !url.hasScheme ||
+        !SignedUploadRequest.methods.contains(method) ||
+        path.isEmpty ||
+        publicUrl.isEmpty) {
       throw const FormatException('Upload sign response is incomplete.');
     }
+    final headers = JsonRead.object(data, 'headers');
     return SignedUpload(
-        uploadUrl: url, storagePath: path, publicUrl: publicUrl);
+      request: SignedUploadRequest(url: url, method: method, headers: {
+        for (final e in headers.entries) e.key: '${e.value}',
+      }),
+      storagePath: path,
+      publicUrl: publicUrl,
+    );
   }
 }
 
-/// `PUT`s the bytes to the signed Cloud Storage URL (no admin token).
+/// Sends the bytes straight to Storage (no admin token) with the signed
+/// method and headers.
 class HttpSignedUploadTransport implements SignedUploadTransport {
   HttpSignedUploadTransport([http.Client? client])
       : _client = client ?? http.Client();
@@ -47,16 +60,19 @@ class HttpSignedUploadTransport implements SignedUploadTransport {
   final http.Client _client;
 
   @override
-  Future<void> put(Uri uploadUrl, Uint8List bytes, String contentType) async {
-    final response = await _client.put(uploadUrl,
-        headers: {'Content-Type': contentType}, body: bytes);
+  Future<void> send(SignedUploadRequest request, Uint8List bytes) async {
+    final outgoing = http.Request(request.method, request.url)
+      ..headers.addAll(request.headers)
+      ..bodyBytes = bytes;
+    final response =
+        await http.Response.fromStream(await _client.send(outgoing));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw SignedUploadException(response.statusCode);
     }
   }
 }
 
-/// The storage `PUT` was refused.
+/// Storage refused the upload.
 class SignedUploadException implements Exception {
   const SignedUploadException(this.statusCode);
 

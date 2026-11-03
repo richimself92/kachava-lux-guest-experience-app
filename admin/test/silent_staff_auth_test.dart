@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'support/fake_resort_repositories.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -166,6 +167,8 @@ void main() {
 
   group('App without any sign-in', () {
     Widget buildApp(_FakeBackend backend) => KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
         repository: ApiAdminOperationsRepository(
             apiClient: AdminApiClient(httpClient: backend.client)),
         enableLivePolling: true);

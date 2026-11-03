@@ -5,6 +5,7 @@ import 'package:http/testing.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -22,6 +23,8 @@ void main() {
       return jsonResponse(adminSyncEnvelope(stays: [liveStayWire()]));
     });
     return KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
         repository:
             ApiAdminOperationsRepository(apiClient: signedInApiClient(client)),
         enableLivePolling: true);

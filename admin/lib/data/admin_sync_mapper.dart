@@ -17,8 +17,6 @@ class AdminSyncMapper {
     'larderOrders',
     'conciergeRequests',
     'midstayFeedback',
-    'experiences',
-    'larder',
   ];
 
   /// Throws [FormatException] for any malformed payload (never an [Error]).
@@ -46,9 +44,6 @@ class AdminSyncMapper {
           payload['conciergeRequests'], stays),
       midStayPulses:
           AdminWireMapper.parseMidStayPulses(payload['midstayFeedback'], stays),
-      experienceCatalog:
-          AdminWireMapper.parseExperienceCatalog(payload['experiences']),
-      larderCatalog: AdminWireMapper.parseLarderCatalog(payload['larder']),
       fingerprint: jsonEncode(payload),
     );
   }

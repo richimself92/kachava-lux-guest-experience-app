@@ -14,6 +14,7 @@ import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_sync_snapshot.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -96,6 +97,8 @@ void main() {
     late Object syncBody;
 
     KachavaAdminApp buildApp() => KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
         repository: ApiAdminOperationsRepository(
             apiClient: signedInApiClient(MockClient((request) async {
           if (!isSyncRequest(request)) return jsonResponse({'data': []});
@@ -166,8 +169,6 @@ void main() {
           larderOrders: next.larderOrders,
           conciergeTickets: next.conciergeTickets,
           midStayPulses: next.midStayPulses,
-          experienceCatalog: next.experienceCatalog,
-          larderCatalog: next.larderCatalog,
           folioItems: next.folioItems));
 
       await expectLater(inFlight, completes);

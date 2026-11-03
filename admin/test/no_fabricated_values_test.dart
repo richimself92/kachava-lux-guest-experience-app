@@ -1,3 +1,5 @@
+import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
+import 'support/open_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/application/admin_dashboard_controller.dart';
@@ -11,6 +13,7 @@ import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_stay_entities.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/widgets/slide_over_inspector_drawer.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 
@@ -308,8 +311,10 @@ void main() {
       tester.view.physicalSize = const Size(1440, 960);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
-      await tester
-          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+      await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
       await tester.pumpAndSettle();
@@ -349,7 +354,10 @@ void main() {
         {'orderItemId': 'li_bare', 'stayId': 'stay_bare', 'name': 'Mezcal'}
       ])))
         ..syncStaff(AdminStaffMapper.parseDirectory(_staffWire));
-      await tester.pumpWidget(KachavaAdminApp(repository: repo));
+      await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: repo));
       await tester.pumpAndSettle();
     }
 
@@ -358,7 +366,7 @@ void main() {
       // Arrange
       await pumpLive(tester);
       // Act
-      await tester.tap(find.byKey(const Key('nav-tab-admin-experiences')));
+      await openWorkspace(tester, AdminWorkspaceTab.adminExperiences);
       await tester.pumpAndSettle();
       // Assert
       expect(find.text('Assigned: Unassigned'), findsOneWidget);
@@ -370,7 +378,7 @@ void main() {
         (tester) async {
       // Arrange
       await pumpLive(tester);
-      await tester.tap(find.byKey(const Key('nav-tab-admin-larder')));
+      await openWorkspace(tester, AdminWorkspaceTab.adminLarder);
       await tester.pumpAndSettle();
       expect(find.textContaining('Unassigned'), findsOneWidget);
       expect(find.textContaining('Complimentary Staples'), findsNothing);

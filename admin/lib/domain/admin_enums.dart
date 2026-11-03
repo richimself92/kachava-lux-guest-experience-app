@@ -12,6 +12,12 @@ enum AdminWorkspaceTab {
     shortLabel: 'Reservations',
     subtitle: 'Stays, Personalization, Magic Link & Aviation Transfers',
   ),
+  adminVillas(
+    id: 'admin-villas',
+    label: 'Villas',
+    shortLabel: 'Villas',
+    subtitle: 'Villa inventory and status',
+  ),
   adminLarder(
     id: 'admin-larder',
     label: 'Services',

@@ -5,6 +5,7 @@ import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
 import 'package:kachava_admin_dashboard/presentation/components/components.dart';
+import 'support/fake_resort_repositories.dart';
 
 /// Track D2b: clean-UI restyle of Services, Experiences, Tasks and Stay summary.
 void main() {
@@ -12,8 +13,10 @@ void main() {
     tester.view.physicalSize = const Size(1440, 960);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    await tester
-        .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+    await tester.pumpWidget(KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
+        repository: SeededAdminRepository()));
     await tester.pumpAndSettle();
     return tester.widget<AdminCommandShell>(find.byType(AdminCommandShell));
   }
@@ -49,7 +52,8 @@ void main() {
     expect(inWorkspace('admin-larder', find.text('Services')), findsOneWidget);
     expect(inWorkspace('admin-larder', find.byType(StatusChip)), findsWidgets);
     expectNoEyebrows('admin-larder');
-    expect(find.byKey(const Key('add-catalog-larder-btn')), findsOneWidget);
+    // The legacy catalog (removed `/admin/catalog/*`) has no add button.
+    expect(find.byKey(const Key('add-catalog-larder-btn')), findsNothing);
   });
 
   testWidgets('test_experiences_pageHeaderAndNoEyebrows', (tester) async {
@@ -61,7 +65,7 @@ void main() {
     expect(inWorkspace('admin-experiences', find.byType(StatusChip)),
         findsWidgets);
     expectNoEyebrows('admin-experiences');
-    expect(find.byKey(const Key('add-catalog-experience-btn')), findsOneWidget);
+    expect(find.byKey(const Key('add-catalog-experience-btn')), findsNothing);
   });
 
   testWidgets('test_tasks_titleAndResortHostInsteadOfConcierge',

@@ -66,19 +66,6 @@ abstract class AdminOperationsRepository {
     String? cancellationReason,
   });
 
-  Future<List<AdminExperienceCatalogItem>> fetchExperienceCatalog();
-
-  Future<AdminExperienceCatalogItem> createExperienceCatalogItem({
-    required String title,
-    required String category,
-    required String duration,
-    required double basePriceUSD,
-    bool isIncluded = false,
-    String description = '',
-  });
-
-  Future<void> deleteExperienceCatalogItem(String id);
-
   Future<List<AdminLarderOrder>> fetchLarderOrders();
 
   Future<AdminLarderOrder> updateLarderOrder({
@@ -86,18 +73,6 @@ abstract class AdminOperationsRepository {
     required String status,
     required String staffId,
   });
-
-  Future<List<AdminLarderCatalogItem>> fetchLarderCatalog();
-
-  Future<AdminLarderCatalogItem> createLarderCatalogItem({
-    required String name,
-    required String category,
-    required double price,
-    required String storageType,
-    String description = '',
-  });
-
-  Future<void> deleteLarderCatalogItem(String id);
 
   Future<List<AdminConciergeTicket>> fetchConciergeTickets();
 
@@ -135,8 +110,6 @@ abstract class AdminOperationsRepository {
     required String stayId,
     required bool approveLateCheckout,
   });
-
-  Future<void> resetAllData();
 
   /// Drops every cached record of the previous staff session.
   void clearCache();

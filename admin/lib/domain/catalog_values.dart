@@ -31,22 +31,23 @@ class LocalizedText {
   int get hashCode => Object.hash(en, es);
 }
 
-/// An uploaded image in Cloud Storage plus its EN/ES alt text.
+/// An uploaded image in Cloud Storage plus its EN/ES alt text. The backend
+/// stores `storagePath` and resolves the read-only `url` on every read.
 class CatalogImage {
   const CatalogImage({
     required this.storagePath,
-    required this.url,
+    this.url = '',
     this.alt = const LocalizedText(),
     this.usageRightsConfirmed = false,
   });
 
-  /// `null` when the server sent no `storagePath`/`url` pair.
+  /// `null` when the server sent no image (`null` or no `storagePath`).
   static CatalogImage? fromJson(Object? json) {
     if (json is! Map) return null;
     final map = Map<String, dynamic>.from(json);
     final path = JsonRead.text(map, 'storagePath');
     final url = JsonRead.text(map, 'url');
-    if (path.isEmpty || url.isEmpty) return null;
+    if (path.isEmpty) return null;
     return CatalogImage(
       storagePath: path,
       url: url,
@@ -56,13 +57,14 @@ class CatalogImage {
   }
 
   final String storagePath;
+
+  /// Server-resolved; never written back.
   final String url;
   final LocalizedText alt;
   final bool usageRightsConfirmed;
 
   Map<String, dynamic> toJson() => {
         'storagePath': storagePath,
-        'url': url,
         'alt': alt.toJson(),
         'usageRightsConfirmed': usageRightsConfirmed,
       };

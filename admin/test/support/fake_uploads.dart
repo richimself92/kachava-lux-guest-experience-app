@@ -24,20 +24,23 @@ class FakeUploadSigner implements UploadSigner {
     });
     if (failWith != null) throw failWith!;
     return SignedUpload(
-      uploadUrl: Uri.parse('https://storage.test/put/$folder/$fileName'),
+      request: SignedUploadRequest(
+          url: Uri.parse('https://storage.test/put/$folder/$fileName'),
+          method: 'PUT',
+          headers: {'Content-Type': contentType}),
       storagePath: '$folder/$fileName',
       publicUrl: 'https://cdn.test/$folder/$fileName',
     );
   }
 }
 
-/// Records signed PUTs instead of sending them.
+/// Records signed uploads instead of sending them.
 class FakeSignedUploadTransport implements SignedUploadTransport {
   final List<(Uri, int, String)> puts = [];
 
   @override
-  Future<void> put(Uri uploadUrl, Uint8List bytes, String contentType) async =>
-      puts.add((uploadUrl, bytes.length, contentType));
+  Future<void> send(SignedUploadRequest request, Uint8List bytes) async =>
+      puts.add((request.url, bytes.length, request.method));
 }
 
 /// Returns a preset file (or `null` = cancelled).

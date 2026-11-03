@@ -14,8 +14,6 @@ AdminSyncSnapshot _snapshotWith({
       larderOrders: const [],
       conciergeTickets: const [],
       midStayPulses: const [],
-      experienceCatalog: const [],
-      larderCatalog: const [],
       folioItems: const [],
     );
 

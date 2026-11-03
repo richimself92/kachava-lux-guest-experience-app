@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../application/inspector_selection.dart';
+import '../../application/resort_settings_controller.dart';
 import '../../core/admin_i18n.dart';
+import '../../core/resort_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
 import '../../domain/admin_enums.dart';
@@ -9,9 +11,16 @@ import '../components/components.dart';
 
 /// Tab 1: `admin-overview` — live operational alerts and headline counts.
 class OverviewWorkspace extends StatelessWidget {
-  const OverviewWorkspace({super.key, required this.controller});
+  const OverviewWorkspace({
+    super.key,
+    required this.controller,
+    required this.resortSettings,
+  });
 
   final AdminDashboardController controller;
+
+  /// The dashboard date needs the resort time zone from Settings.
+  final ResortSettingsController resortSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +38,7 @@ class OverviewWorkspace extends StatelessWidget {
             'Las alertas aparecen solo cuando un huésped actúa desde su link, nunca por acciones del personal.',
           ),
         ),
+        _buildSettingsLink(isEs),
         const SizedBox(height: KachavaTokens.space4),
         _buildKpiRow(isEs),
         const SizedBox(height: KachavaTokens.space6),
@@ -46,6 +56,27 @@ class OverviewWorkspace extends StatelessWidget {
       ],
     );
   }
+
+  /// "Time zone not set · Set up in Settings" until it is configured.
+  Widget _buildSettingsLink(bool isEs) => ListenableBuilder(
+        listenable: resortSettings,
+        builder: (context, _) {
+          if (!resortSettings.isMissing(ResortSetting.timeZone)) {
+            return const SizedBox.shrink();
+          }
+          final s = ResortStrings(isEs);
+          return Padding(
+            padding: const EdgeInsets.only(top: KachavaTokens.space2),
+            child: SettingsSetupLink(
+              key: const Key('overview-time-zone-missing'),
+              message: s.timeZoneMissing,
+              linkLabel: s.setUpInSettings,
+              onOpenSettings: () =>
+                  controller.selectTab(AdminWorkspaceTab.adminSettings),
+            ),
+          );
+        },
+      );
 
   Widget _buildKpiRow(bool isEs) {
     return LayoutBuilder(builder: (context, constraints) {

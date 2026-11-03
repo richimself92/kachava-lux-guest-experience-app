@@ -14,12 +14,37 @@ abstract interface class AdminSettingsRepository {
   Future<AdminSettings> update(AdminSettings settings);
 }
 
-/// Villas (`GET/POST/PATCH /admin/villas`). Disabling is an update with
-/// `isActive: false`.
+/// Villas (`GET/POST/PATCH/DELETE /admin/villas`). Filters: `isActive`,
+/// `operationalStatus`, `category`; sortable by `name`, `category`,
+/// `capacity`, `operationalStatus`.
 abstract interface class VillaRepository {
   Future<PagedResult<AdminVilla>> list(ListQuery query);
   Future<AdminVilla> create(AdminVilla villa);
   Future<AdminVilla> update(AdminVilla villa);
+
+  /// Deactivates (`false`) or reactivates a villa; sends only `isActive`.
+  Future<AdminVilla> setActive(String id, bool isActive);
+
+  /// Throws [VillaHasStaysException] when stays reference the villa.
+  Future<void> delete(String id);
+}
+
+/// The villa has stays, so the backend keeps it (HTTP 409): deactivate it.
+class VillaHasStaysException implements Exception {
+  const VillaHasStaysException(this.villaId);
+
+  final String villaId;
+
+  @override
+  String toString() => 'VillaHasStaysException($villaId)';
+}
+
+/// Repositories of the resort configuration screens (Settings, Villas).
+class AdminResortRepositories {
+  const AdminResortRepositories({required this.settings, required this.villas});
+
+  final AdminSettingsRepository settings;
+  final VillaRepository villas;
 }
 
 /// External transport providers (`/admin/transport-providers`).

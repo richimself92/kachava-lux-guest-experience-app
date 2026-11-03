@@ -219,6 +219,8 @@ class AdminI18n {
         return 'Panel';
       case AdminWorkspaceTab.adminStays:
         return 'Reservas';
+      case AdminWorkspaceTab.adminVillas:
+        return 'Villas';
       case AdminWorkspaceTab.adminLarder:
         return 'Servicios';
       case AdminWorkspaceTab.adminExperiences:

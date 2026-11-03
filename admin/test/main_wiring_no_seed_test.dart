@@ -72,9 +72,12 @@ void main() {
     expect(offenders, isEmpty);
   });
 
-  test('main.dart wires the HTTP repository with the silent API client', () {
+  test('main.dart wires the HTTP repositories to one silent API client', () {
     final main = File('lib/main.dart').readAsStringSync();
-    expect(main,
-        contains('ApiAdminOperationsRepository(apiClient: AdminApiClient())'));
+    expect(main, contains('final api = AdminApiClient();'));
+    expect(main, contains('ApiAdminOperationsRepository(apiClient: api)'));
+    expect(main, contains('settings: HttpSettingsRepository(api)'));
+    expect(main, contains('villas: HttpVillaRepository(api)'));
+    expect(main, contains('timeZones: createTimeZoneCatalog()'));
   });
 }

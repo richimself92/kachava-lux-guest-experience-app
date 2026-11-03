@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../application/admin_dashboard_controller.dart';
 import '../application/admin_live_sync.dart';
+import '../application/resort_settings_controller.dart';
 import '../core/admin_i18n.dart';
 import '../core/theme/kachava_tokens.dart';
 import '../core/responsive_breakpoints.dart';
+import '../core/time_zone_catalog.dart';
+import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_enums.dart';
 import 'widgets/admin_navigation_bars.dart';
 import 'widgets/reconnecting_indicator.dart';
@@ -17,13 +20,25 @@ import 'workspaces/larder_workspace.dart';
 import 'workspaces/overview_workspace.dart';
 import 'workspaces/settings_workspace.dart';
 import 'workspaces/stays_workspace.dart';
+import 'workspaces/villas_workspace.dart';
 
 /// Responsive shell: sidebar (desktop), icon rail (tablet), drawer (mobile).
 class AdminCommandShell extends StatelessWidget {
-  const AdminCommandShell(
-      {super.key, required this.controller, this.syncStatus});
+  const AdminCommandShell({
+    super.key,
+    required this.controller,
+    required this.resortSettings,
+    required this.villas,
+    required this.timeZones,
+    this.syncStatus,
+  });
 
   final AdminDashboardController controller;
+
+  /// Shared resort settings (Settings screen + "Set up in Settings" links).
+  final ResortSettingsController resortSettings;
+  final VillaRepository villas;
+  final TimeZoneCatalog timeZones;
 
   /// Live sync health; unhealthy states show one small status line.
   final ValueListenable<AdminSyncStatus>? syncStatus;
@@ -120,9 +135,15 @@ class AdminCommandShell extends StatelessWidget {
   Widget _buildActiveWorkspace() {
     switch (controller.activeTab) {
       case AdminWorkspaceTab.adminOverview:
-        return OverviewWorkspace(controller: controller);
+        return OverviewWorkspace(
+            controller: controller, resortSettings: resortSettings);
       case AdminWorkspaceTab.adminStays:
         return StaysWorkspace(controller: controller);
+      case AdminWorkspaceTab.adminVillas:
+        return VillasWorkspace(
+            repository: villas,
+            queries: controller.listQueries,
+            isEs: controller.isEs);
       case AdminWorkspaceTab.adminExperiences:
         return ExperiencesWorkspace(controller: controller);
       case AdminWorkspaceTab.adminLarder:
@@ -132,7 +153,10 @@ class AdminCommandShell extends StatelessWidget {
       case AdminWorkspaceTab.adminFolio:
         return FolioWorkspace(controller: controller);
       case AdminWorkspaceTab.adminSettings:
-        return SettingsWorkspace(isEs: controller.isEs);
+        return SettingsWorkspace(
+            settings: resortSettings,
+            timeZones: timeZones,
+            isEs: controller.isEs);
     }
   }
 

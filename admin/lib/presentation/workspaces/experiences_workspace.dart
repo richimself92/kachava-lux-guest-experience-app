@@ -6,9 +6,9 @@ import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
 import '../components/components.dart';
 import '../widgets/semantic_status_badge.dart' show AdminEmptyStateBox;
-import 'catalog_dialogs.dart';
 
-/// `admin-experiences` — experience catalog and guest bookings.
+/// `admin-experiences` — guest experience bookings. Hidden from the menu
+/// until the Phase 4 catalog replaces it.
 class ExperiencesWorkspace extends StatelessWidget {
   const ExperiencesWorkspace({super.key, required this.controller});
 
@@ -37,19 +37,7 @@ class ExperiencesWorkspace extends StatelessWidget {
             'Yacht, private dining, excursions and included privileges booked by guests, updated live.',
             'Yate, cenas privadas, excursiones y privilegios reservados por huéspedes, en vivo.',
           ),
-          actions: [
-            ElevatedButton.icon(
-              key: const Key('add-catalog-experience-btn'),
-              onPressed: () =>
-                  showAddExperienceCatalogDialog(context, controller),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
-                  AdminI18n.tr(isEs, 'Add experience', 'Nueva experiencia')),
-            ),
-          ],
         ),
-        const SizedBox(height: KachavaTokens.space4),
-        _buildCatalogStrip(context, isEs),
         const SizedBox(height: KachavaTokens.space4),
         _buildCategoryTabs(isEs),
         const SizedBox(height: KachavaTokens.space4),
@@ -61,32 +49,6 @@ class ExperiencesWorkspace extends StatelessWidget {
         else
           ...bookings
               .map((booking) => _buildBookingCard(context, booking, isEs)),
-      ],
-    );
-  }
-
-  Widget _buildCatalogStrip(BuildContext context, bool isEs) {
-    final items = controller.experienceCatalog;
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${AdminI18n.tr(isEs, 'Catalog', 'Catálogo')} (${items.length})',
-            style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: KachavaTokens.space2),
-        Wrap(
-          spacing: KachavaTokens.space2,
-          runSpacing: KachavaTokens.space2,
-          children: items
-              .map((item) => InputChip(
-                    key: Key('catalog-experience-chip-${item.id}'),
-                    label: Text('${item.title} (${item.priceText})'),
-                    deleteIcon: const Icon(Icons.close, size: 16),
-                    onDeleted: () =>
-                        controller.deleteExperienceCatalogItem(item.id),
-                  ))
-              .toList(),
-        ),
       ],
     );
   }

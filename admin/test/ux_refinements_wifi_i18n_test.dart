@@ -1,3 +1,5 @@
+import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
+import 'support/open_workspace.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +11,7 @@ import 'package:kachava_admin_dashboard/core/admin_i18n.dart';
 import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -104,8 +107,10 @@ void main() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();
         });
-        await tester
-            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+        await tester.pumpWidget(KachavaAdminApp(
+            resort: fakeResortRepositories(),
+            timeZones: testTimeZones,
+            repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
         await tester.pumpAndSettle();
@@ -158,11 +163,13 @@ void main() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();
         });
-        await tester
-            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+        await tester.pumpWidget(KachavaAdminApp(
+            resort: fakeResortRepositories(),
+            timeZones: testTimeZones,
+            repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byKey(const Key('nav-tab-admin-larder')));
+        await openWorkspace(tester, AdminWorkspaceTab.adminLarder);
         await tester.pumpAndSettle();
 
         expect(
@@ -171,16 +178,8 @@ void main() {
         );
         expect(find.text('CHILLED IN LARDER'), findsNothing);
 
-        await tester.tap(find.byKey(const Key('add-catalog-larder-btn')));
-        await tester.pumpAndSettle();
-        expect(
-            find.byKey(const Key('catalog-larder-name-input')), findsOneWidget);
-        expect(find.byKey(const Key('catalog-larder-price-input')),
-            findsOneWidget);
-        expect(find.byKey(const Key('catalog-larder-category-input')),
-            findsNothing);
-        await tester.tap(find.text('Cancel'));
-        await tester.pumpAndSettle();
+        // The legacy catalog dialog left with `/admin/catalog/*`.
+        expect(find.byKey(const Key('add-catalog-larder-btn')), findsNothing);
 
         await tester.tap(find.byKey(const Key('nav-tab-admin-concierge')));
         await tester.pumpAndSettle();

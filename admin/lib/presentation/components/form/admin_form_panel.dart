@@ -17,11 +17,15 @@ class AdminFormPanel extends StatefulWidget {
     required this.onSave,
     required this.onClose,
     this.closeOnSave = true,
+    this.actions = const [],
     this.isEs = false,
   });
 
   final String title;
   final List<Widget> children;
+
+  /// Header actions before the close button (e.g. a ⋮ menu).
+  final List<Widget> actions;
 
   /// Persists the saved form values; throw to keep the form open and show
   /// "Couldn't save". Fields' `onSaved` run before it.
@@ -85,6 +89,7 @@ class _AdminFormPanelState extends State<AdminFormPanel> {
       child: AdminDetailPanel(
         title: widget.title,
         onClose: _requestClose,
+        actions: widget.actions,
         isEs: widget.isEs,
         body: Form(
           key: _formKey,

@@ -47,6 +47,21 @@ class HttpVillaRepository implements VillaRepository {
   @override
   Future<AdminVilla> update(AdminVilla villa) =>
       _villas.update(villa.id, villa.toWriteJson());
+
+  @override
+  Future<AdminVilla> setActive(String id, bool isActive) =>
+      _villas.update(id, {'isActive': isActive});
+
+  /// A 409 means stays reference the villa: it can only be deactivated.
+  @override
+  Future<void> delete(String id) async {
+    try {
+      await _villas.delete(id);
+    } on AdminApiException catch (error) {
+      if (error.statusCode == 409) throw VillaHasStaysException(id);
+      rethrow;
+    }
+  }
 }
 
 /// `/admin/transport-providers`.

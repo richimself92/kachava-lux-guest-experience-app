@@ -40,17 +40,38 @@ Map<String, dynamic> _fullEnvelope() => adminSyncEnvelope(
       midstayFeedback: [
         {'feedbackId': 'fb_1', 'stayId': 'stay_live_101', 'status': 'NEW'}
       ],
-      experiences: [
-        {'id': 'exp_live', 'title': 'Cenote Swim', 'basePriceUSD': 120}
-      ],
-      larder: [
-        {'id': 'lrd_live', 'name': 'Cacao Nibs', 'price': 18}
-      ],
     );
+
+/// `GET /admin/sync` recorded from the live backend with an empty database.
+const Map<String, dynamic> _recordedEmptySync = {
+  'success': true,
+  'data': {
+    'stays': [],
+    'alerts': {'alerts': [], 'unreadCount': 0},
+    'bookings': [],
+    'larderOrders': [],
+    'conciergeRequests': [],
+    'midstayFeedback': [],
+  },
+  'meta': {
+    'timestamp': '2026-11-03T04:09:05.163Z',
+    'requestId': 'req_28aaa14a'
+  },
+};
 
 void main() {
   group('AdminSyncMapper', () {
-    test('test_sync_mapper_maps_all_eight_keys_with_existing_wire_mappers', () {
+    test('test_sync_mapper_parses_the_recorded_empty_backend_sync', () {
+      final snapshot = AdminSyncMapper.parse(_recordedEmptySync);
+      expect(snapshot.stays, isEmpty);
+      expect(snapshot.alerts, isEmpty);
+      expect(snapshot.bookings, isEmpty);
+      expect(snapshot.larderOrders, isEmpty);
+      expect(snapshot.conciergeTickets, isEmpty);
+      expect(snapshot.midStayPulses, isEmpty);
+    });
+
+    test('test_sync_mapper_maps_all_six_keys_with_existing_wire_mappers', () {
       final snapshot = AdminSyncMapper.parse(_fullEnvelope());
 
       expect(snapshot.stays.single.stayId, 'stay_live_101');
@@ -63,13 +84,11 @@ void main() {
       expect(snapshot.larderOrders.single.stayId, 'stay_live_101');
       expect(snapshot.conciergeTickets.single.requestId, 'req_1');
       expect(snapshot.midStayPulses.single.checkInId, 'fb_1');
-      expect(snapshot.experienceCatalog.single.id, 'exp_live');
-      expect(snapshot.larderCatalog.single.id, 'lrd_live');
     });
 
     test('test_sync_mapper_missing_key_throws_format_exception', () {
       final envelope = _fullEnvelope();
-      (envelope['data'] as Map).remove('larder');
+      (envelope['data'] as Map).remove('midstayFeedback');
 
       expect(() => AdminSyncMapper.parse(envelope),
           throwsA(isA<FormatException>()));

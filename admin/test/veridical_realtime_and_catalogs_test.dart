@@ -11,6 +11,7 @@ import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dar
 import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'support/signed_in_api_client.dart';
+import 'support/fake_resort_repositories.dart';
 
 void main() {
   group('ADR-002 Veridical Wire Mapping, Timeout & Canonical Stay Sync', () {
@@ -27,8 +28,8 @@ void main() {
       });
       final mockClient = signedInApiClient(mockHttp);
       expect(mockClient.timeout, const Duration(milliseconds: 900));
-      await mockClient.deleteJson('/catalog/experiences/exp_1');
-      expect(deletedPath, 'DELETE /api/v1/admin/catalog/experiences/exp_1');
+      await mockClient.deleteJson('/villas/v_1');
+      expect(deletedPath, 'DELETE /api/v1/admin/villas/v_1');
       mockClient.dispose();
     });
 
@@ -157,8 +158,10 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      await tester
-          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+      await tester.pumpWidget(KachavaAdminApp(
+          resort: fakeResortRepositories(),
+          timeZones: testTimeZones,
+          repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
 
       // Clean UI: no instruction banner on the dashboard.
@@ -208,44 +211,6 @@ void main() {
       await tester.tap(find.byKey(const Key('confirm-assign-transfer-btn')));
       await tester.pumpAndSettle();
       expect(find.textContaining('FBO Private Lounge'), findsWidgets);
-    });
-
-    testWidgets('test_experiences_and_larder_catalog_add_and_delete',
-        (tester) async {
-      tester.view.physicalSize = const Size(1440, 960);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-      await tester
-          .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('nav-tab-admin-experiences')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('add-catalog-experience-btn')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-          find.byKey(const Key('catalog-exp-title-input')), 'Mayan Stargazing');
-      await tester.enterText(
-          find.byKey(const Key('catalog-exp-price-input')), '320');
-      await tester
-          .tap(find.byKey(const Key('confirm-add-catalog-experience-btn')));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Mayan Stargazing'), findsWidgets);
-
-      await tester.tap(find.byKey(const Key('nav-tab-admin-larder')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('add-catalog-larder-btn')));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('catalog-larder-name-input')),
-          'Kombucha Hibiscus');
-      await tester.enterText(
-          find.byKey(const Key('catalog-larder-price-input')), '24');
-      await tester.tap(find.byKey(const Key('confirm-add-catalog-larder-btn')));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Kombucha Hibiscus'), findsWidgets);
     });
   });
 }

@@ -7,6 +7,7 @@ import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/navigation/admin_nav_list.dart';
+import 'support/fake_resort_repositories.dart';
 
 void main() {
   Future<void> pumpApp(WidgetTester tester, Size size) async {
@@ -20,8 +21,10 @@ void main() {
       tester.binding.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, null);
     });
-    await tester
-        .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+    await tester.pumpWidget(KachavaAdminApp(
+        resort: fakeResortRepositories(),
+        timeZones: testTimeZones,
+        repository: SeededAdminRepository()));
     await tester.pumpAndSettle();
   }
 
@@ -37,19 +40,19 @@ void main() {
       expect(inSidebar(find.text('COMMAND CENTER')), findsOneWidget);
       for (final label in [
         'GUEST OPERATIONS',
-        'HOSPITALITY',
         'OPERATIONS',
         'Dashboard',
         'Reservations',
-        'Services',
-        'Experiences',
+        'Villas',
         'Tasks',
       ]) {
         expect(inSidebar(find.text(label)), findsOneWidget, reason: label);
       }
       for (final hidden in [
         'Guests',
-        'Villas',
+        'HOSPITALITY',
+        'Services',
+        'Experiences',
         'Dining',
         'Transportation',
         'Wellness',
@@ -126,14 +129,21 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('sidebar-scroll-down')), findsNothing);
 
-      await tester.pumpWidget(host(300));
+      await tester.pumpWidget(host(150));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('sidebar-scroll-down')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('sidebar-scroll-down')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('sidebar-scroll-down')),
-          warnIfMissed: false);
-      await tester.pumpAndSettle();
+      // Each tap scrolls 80% of the viewport; it hides at the end.
+      for (var i = 0;
+          i < 10 &&
+              find
+                  .byKey(const Key('sidebar-scroll-down'))
+                  .evaluate()
+                  .isNotEmpty;
+          i++) {
+        await tester.tap(find.byKey(const Key('sidebar-scroll-down')),
+            warnIfMissed: false);
+        await tester.pumpAndSettle();
+      }
       expect(find.byKey(const Key('sidebar-scroll-down')), findsNothing);
     });
   });
@@ -150,7 +160,7 @@ void main() {
       await tester.pumpAndSettle();
       final drawer = find.byKey(const Key('mobile-nav-drawer'));
       expect(drawer, findsOneWidget);
-      for (final label in ['Dashboard', 'Reservations', 'Services', 'Tasks']) {
+      for (final label in ['Dashboard', 'Reservations', 'Villas', 'Tasks']) {
         expect(find.descendant(of: drawer, matching: find.text(label)),
             findsOneWidget);
       }
@@ -167,12 +177,12 @@ void main() {
       for (final id in [
         'admin-overview',
         'admin-stays',
-        'admin-larder',
-        'admin-experiences',
+        'admin-villas',
         'admin-concierge',
       ]) {
         expect(find.byKey(Key('nav-tab-$id')), findsOneWidget, reason: id);
       }
+      expect(find.byKey(const Key('nav-tab-admin-larder')), findsNothing);
       expect(find.byTooltip('Reservations'), findsOneWidget);
       expect(find.byTooltip('Tasks'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-tab-admin-concierge')));

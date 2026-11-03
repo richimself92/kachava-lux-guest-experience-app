@@ -5,9 +5,9 @@ import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
 import '../components/components.dart';
 import '../widgets/semantic_status_badge.dart' show AdminEmptyStateBox;
-import 'catalog_dialogs.dart';
 
-/// `admin-larder` — shown as "Services": minibar & larder catalog and orders.
+/// `admin-larder` — guest minibar & larder orders. Hidden from the menu until
+/// the Phase 4 catalog replaces it.
 class LarderWorkspace extends StatelessWidget {
   const LarderWorkspace({super.key, required this.controller});
   final AdminDashboardController controller;
@@ -26,20 +26,10 @@ class LarderWorkspace extends StatelessWidget {
           title: AdminI18n.tr(isEs, 'Services', 'Servicios'),
           info: AdminI18n.tr(
             isEs,
-            'Minibar and larder catalog plus guest orders, updated live.',
-            'Catálogo de minibar y despensa y pedidos de huéspedes, en vivo.',
+            'Guest minibar and larder orders, updated live.',
+            'Pedidos de minibar y despensa de huéspedes, en vivo.',
           ),
-          actions: [
-            ElevatedButton.icon(
-              key: const Key('add-catalog-larder-btn'),
-              onPressed: () => showAddLarderCatalogDialog(context, controller),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(AdminI18n.tr(isEs, 'New product', 'Nuevo producto')),
-            ),
-          ],
         ),
-        const SizedBox(height: KachavaTokens.space4),
-        _buildLarderCatalogStrip(context, isEs),
         const SizedBox(height: KachavaTokens.space4),
         _buildFilterRow(isEs),
         const SizedBox(height: KachavaTokens.space4),
@@ -52,29 +42,6 @@ class LarderWorkspace extends StatelessWidget {
           ...orders.map((order) => _buildLarderOrderCard(context, order, isEs)),
       ],
     );
-  }
-
-  Widget _buildLarderCatalogStrip(BuildContext context, bool isEs) {
-    final items = controller.larderCatalog;
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('${AdminI18n.tr(isEs, 'Catalog', 'Catálogo')} (${items.length})',
-          style: Theme.of(context).textTheme.titleLarge),
-      const SizedBox(height: KachavaTokens.space2),
-      Wrap(
-        spacing: KachavaTokens.space2,
-        runSpacing: KachavaTokens.space2,
-        children: items
-            .map((item) => InputChip(
-                  key: Key('catalog-larder-chip-${item.id}'),
-                  label:
-                      Text('${item.name} (\$${item.price.toStringAsFixed(0)})'),
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                  onDeleted: () => controller.deleteLarderCatalogItem(item.id),
-                ))
-            .toList(),
-      ),
-    ]);
   }
 
   Widget _buildFilterRow(bool isEs) {

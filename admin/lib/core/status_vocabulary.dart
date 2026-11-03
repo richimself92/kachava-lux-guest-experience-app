@@ -35,6 +35,11 @@ abstract final class StatusVocabulary {
     'BLOCKED': StatusTerm('Blocked', 'Bloqueada', StatusTone.error),
     'CLEAN': StatusTerm('Clean', 'Limpia', StatusTone.success),
     'DIRTY': StatusTerm('Needs cleaning', 'Por limpiar', StatusTone.warning),
+    'OK': StatusTerm('OK', 'OK', StatusTone.success),
+    'ISSUE_REPORTED':
+        StatusTerm('Issue reported', 'Incidencia', StatusTone.warning),
+    'IN_MAINTENANCE':
+        StatusTerm('In maintenance', 'En mantenimiento', StatusTone.warning),
     // Catalog.
     'DRAFT': StatusTerm('Draft', 'Borrador', StatusTone.neutral),
     'ACTIVE': StatusTerm('Active', 'Activo', StatusTone.success),

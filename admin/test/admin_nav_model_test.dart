@@ -6,13 +6,14 @@ void main() {
   group('AdminNavModel', () {
     test('test_visibleSections_orderAndLabels_matchMockup', () {
       final sections = AdminNavModel.visibleSections();
+      // HOSPITALITY is empty until Phase 4 rebuilds Services/Experiences on
+      // the new catalog, so the section is dropped.
       expect(sections.map((s) => s.label(false)).toList(),
-          ['GUEST OPERATIONS', 'HOSPITALITY', 'OPERATIONS']);
+          ['GUEST OPERATIONS', 'OPERATIONS']);
       expect(sections.map((s) => s.label(true)).toList(),
-          ['OPERACIONES DE HUÉSPEDES', 'HOSPITALIDAD', 'OPERACIONES']);
+          ['OPERACIONES DE HUÉSPEDES', 'OPERACIONES']);
       expect(sections.map((s) => s.items.map((i) => i.labelEn).toList()), [
-        ['Reservations'],
-        ['Services', 'Experiences'],
+        ['Reservations', 'Villas'],
         ['Tasks'],
       ]);
       expect(AdminNavModel.dashboard.label(false), 'Dashboard');
@@ -26,7 +27,8 @@ void main() {
           .toSet();
       for (final hidden in [
         'Guests',
-        'Villas',
+        'Services',
+        'Experiences',
         'Dining',
         'Transportation',
         'Wellness',
@@ -69,13 +71,14 @@ void main() {
           AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminStays)?.labelEn,
           'Reservations');
       expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminLarder)
+          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminVillas)
               ?.labelEn,
-          'Services');
-      expect(
-          AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminExperiences)
-              ?.labelEn,
-          'Experiences');
+          'Villas');
+      // Legacy workspaces are not menu items any more.
+      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminLarder),
+          isNull);
+      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminExperiences),
+          isNull);
       expect(
           AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminConcierge)
               ?.labelEn,

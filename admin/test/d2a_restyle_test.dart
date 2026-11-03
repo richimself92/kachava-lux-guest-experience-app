@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/seeded_admin_repository.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/components/components.dart';
+import 'support/fake_resort_repositories.dart';
 
 Future<void> _pumpDesktop(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1440, 960);
@@ -16,7 +17,10 @@ Future<void> _pumpDesktop(WidgetTester tester) async {
     tester.binding.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
   });
-  await tester.pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+  await tester.pumpWidget(KachavaAdminApp(
+      resort: fakeResortRepositories(),
+      timeZones: testTimeZones,
+      repository: SeededAdminRepository()));
   await tester.pumpAndSettle();
 }
 

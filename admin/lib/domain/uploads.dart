@@ -15,18 +15,39 @@ class PickedImageFile {
   int get sizeBytes => bytes.lengthInBytes;
 }
 
+/// How to send the bytes: the signed URL plus the HTTP method and headers
+/// the backend chose (`PUT` on Cloud Storage, `POST` on the emulator).
+class SignedUploadRequest {
+  const SignedUploadRequest({
+    required this.url,
+    required this.method,
+    required this.headers,
+  });
+
+  static const Set<String> methods = {'PUT', 'POST'};
+
+  final Uri url;
+  final String method;
+  final Map<String, String> headers;
+}
+
 /// Server answer of `POST /admin/uploads/sign`.
 class SignedUpload {
   const SignedUpload({
-    required this.uploadUrl,
+    required this.request,
     required this.storagePath,
     required this.publicUrl,
   });
 
-  /// Short-lived signed `PUT` URL.
-  final Uri uploadUrl;
+  final SignedUploadRequest request;
+
+  /// Save this as the image `storagePath`.
   final String storagePath;
   final String publicUrl;
+
+  Uri get uploadUrl => request.url;
+  String get method => request.method;
+  Map<String, String> get headers => request.headers;
 }
 
 /// An image already stored in Cloud Storage.
@@ -47,9 +68,9 @@ abstract interface class UploadSigner {
   });
 }
 
-/// Port: `PUT`s the bytes to the signed URL.
+/// Port: sends the bytes to the signed URL with its method and headers.
 abstract interface class SignedUploadTransport {
-  Future<void> put(Uri uploadUrl, Uint8List bytes, String contentType);
+  Future<void> send(SignedUploadRequest request, Uint8List bytes);
 }
 
 /// Port: lets staff pick one image file; `null` when cancelled.

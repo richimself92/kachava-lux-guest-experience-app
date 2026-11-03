@@ -10,8 +10,6 @@ class AdminSyncSnapshot {
     required this.larderOrders,
     required this.conciergeTickets,
     required this.midStayPulses,
-    required this.experienceCatalog,
-    required this.larderCatalog,
     required this.folioItems,
     this.fingerprint,
   });
@@ -23,8 +21,6 @@ class AdminSyncSnapshot {
     larderOrders: [],
     conciergeTickets: [],
     midStayPulses: [],
-    experienceCatalog: [],
-    larderCatalog: [],
     folioItems: [],
   );
 
@@ -34,8 +30,6 @@ class AdminSyncSnapshot {
   final List<AdminLarderOrder> larderOrders;
   final List<AdminConciergeTicket> conciergeTickets;
   final List<AdminMidStayPulse> midStayPulses;
-  final List<AdminExperienceCatalogItem> experienceCatalog;
-  final List<AdminLarderCatalogItem> larderCatalog;
   final List<FolioLineItem> folioItems;
 
   /// Canonical form of the server payload this snapshot was parsed from, or

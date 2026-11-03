@@ -30,6 +30,11 @@ class AdminHttpResource<T> {
     return _map(_record(await _client.patchJson(_item(id), body)));
   }
 
+  Future<void> delete(String id) async {
+    if (id.isEmpty) throw ArgumentError.value(id, 'id', 'Not saved yet');
+    await _client.deleteJson(_item(id));
+  }
+
   String _item(String id) => '$path/${Uri.encodeComponent(id)}';
 
   /// `{ data: {...} }` (the client already merges `data` into the root).

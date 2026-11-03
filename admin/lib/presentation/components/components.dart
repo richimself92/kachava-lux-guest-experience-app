@@ -16,4 +16,5 @@ export 'list/admin_list_parts.dart';
 export 'list/admin_list_screen.dart';
 export 'list/admin_list_toolbar.dart';
 export 'page_header.dart';
+export 'settings_setup_link.dart';
 export 'status_chip.dart';

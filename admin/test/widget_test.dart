@@ -1,3 +1,4 @@
+import 'support/open_workspace.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,7 @@ import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dar
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
 import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+import 'support/fake_resort_repositories.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -208,8 +210,10 @@ void main() {
           tester.view.resetDevicePixelRatio();
         });
 
-        await tester
-            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+        await tester.pumpWidget(KachavaAdminApp(
+            resort: fakeResortRepositories(),
+            timeZones: testTimeZones,
+            repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
@@ -271,18 +275,20 @@ void main() {
           tester.view.resetDevicePixelRatio();
         });
 
-        await tester
-            .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
+        await tester.pumpWidget(KachavaAdminApp(
+            resort: fakeResortRepositories(),
+            timeZones: testTimeZones,
+            repository: SeededAdminRepository()));
         await tester.pumpAndSettle();
 
         // Tab 3: Larder quantities (English default)
-        await tester.tap(find.byKey(const Key('nav-tab-admin-larder')));
+        await openWorkspace(tester, AdminWorkspaceTab.adminLarder);
         await tester.pumpAndSettle();
         expect(find.textContaining('Qty: 1'), findsWidgets);
         expect(find.textContaining('Qty: 2'), findsWidgets);
 
         // Tab 4: Experiences approve & cancel with reason (English default)
-        await tester.tap(find.byKey(const Key('nav-tab-admin-experiences')));
+        await openWorkspace(tester, AdminWorkspaceTab.adminExperiences);
         await tester.pumpAndSettle();
         expect(find.text('Approve / Confirm'), findsWidgets);
         expect(find.text('Cancel with Reason'), findsWidgets);
