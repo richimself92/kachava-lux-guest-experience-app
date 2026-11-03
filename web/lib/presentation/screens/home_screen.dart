@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import '../../application/sanctuary_controller.dart';
 import '../../core/constants/screen_id.dart';
 import '../../core/i18n/guest_feedback_i18n.dart';
+import '../../core/pwa/install_prompt_port.dart';
 import '../../core/theme/kachava_colors.dart';
 import '../../core/theme/kachava_theme.dart';
 import '../../domain/entities/stay_entities.dart';
+import '../shell/install_app_banner.dart';
 
 /// Screen 1: Residency Home (`home`).
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.controller});
+  const HomeScreen({super.key, required this.controller, this.installPrompt});
 
   final SanctuaryController controller;
+  final InstallPromptPort? installPrompt;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +39,8 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (installPrompt case final port?)
+            InstallAppBanner(port: port, i18n: i18n),
           _buildHeroCard(stay),
           const SizedBox(height: 12),
           _buildResidenceSummaryCard(stay),

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'application/sanctuary_controller.dart';
 import 'core/audio/soundscape_port.dart';
+import 'core/auth/guest_link_resolver.dart';
+import 'core/pwa/install_prompt_port.dart';
+import 'core/storage/guest_id_store.dart';
 import 'core/theme/kachava_theme.dart';
 import 'data/repositories/api_sanctuary_repository.dart';
 import 'domain/repositories/sanctuary_repository.dart';
@@ -21,11 +24,23 @@ class KachavaGuestPortalApp extends StatefulWidget {
     this.controller,
     this.repository,
     this.enableLivePolling = false,
+    this.guestIdStore,
+    this.installPrompt,
+    this.initialUri,
   });
 
   final SanctuaryController? controller;
   final SanctuaryRepository? repository;
   final bool enableLivePolling;
+
+  /// Remembered guest link; defaults to browser storage on the web.
+  final GuestIdStore? guestIdStore;
+
+  /// Install hint on Home; defaults to the browser implementation.
+  final InstallPromptPort? installPrompt;
+
+  /// Page URL; defaults to [Uri.base].
+  final Uri? initialUri;
 
   @override
   State<KachavaGuestPortalApp> createState() => _KachavaGuestPortalAppState();
@@ -34,6 +49,8 @@ class KachavaGuestPortalApp extends StatefulWidget {
 class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
   late SanctuaryController _controller;
   late bool _ownsController;
+  late final InstallPromptPort _installPrompt =
+      widget.installPrompt ?? createInstallPromptPort();
 
   @override
   void initState() {
@@ -49,10 +66,14 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
       _ownsController = false;
     } else {
       _ownsController = true;
+      final store = widget.guestIdStore ?? createGuestIdStore();
       _controller = SanctuaryController(
         repository: widget.repository ?? ApiSanctuaryRepository(),
         soundscape: SanctuarySoundscapeSynthesizer(),
         requireExplicitGuestId: true,
+        initialUri:
+            GuestLinkResolver.resolve(widget.initialUri ?? Uri.base, store),
+        onLinkRejected: store.clear,
       );
       unawaited(_controller.initialize());
     }
@@ -78,6 +99,7 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
   @override
   void dispose() {
     _releaseController();
+    if (widget.installPrompt == null) _installPrompt.dispose();
     super.dispose();
   }
 
@@ -87,7 +109,10 @@ class _KachavaGuestPortalAppState extends State<KachavaGuestPortalApp> {
       title: 'Kachava Lux · Guest Portal',
       debugShowCheckedModeBanner: false,
       theme: KachavaTheme.buildTheme(),
-      home: SanctuaryShell(controller: _controller),
+      home: SanctuaryShell(
+        controller: _controller,
+        installPrompt: _installPrompt,
+      ),
     );
   }
 }

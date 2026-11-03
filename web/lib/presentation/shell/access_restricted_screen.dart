@@ -11,12 +11,21 @@ class AccessRestrictedScreen extends StatelessWidget {
     super.key,
     required this.i18n,
     this.isLinkInvalid = false,
+    this.isLinkExpired = false,
   });
 
   final GuestI18n i18n;
 
   /// True when a link was given but is malformed, revoked, or expired.
   final bool isLinkInvalid;
+
+  /// True when the server rejected the link this device remembered.
+  final bool isLinkExpired;
+
+  String get _message {
+    if (isLinkExpired) return i18n.accessLinkExpired;
+    return isLinkInvalid ? i18n.accessLinkInvalid : i18n.accessLinkMissing;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +66,7 @@ class AccessRestrictedScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          isLinkInvalid ? i18n.accessLinkInvalid : i18n.accessLinkMissing,
+          _message,
           textAlign: TextAlign.center,
           style: const TextStyle(
               fontSize: 13, color: KachavaColors.onSurfaceVariant),

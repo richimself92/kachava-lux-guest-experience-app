@@ -24,8 +24,10 @@ class SanctuaryController extends ChangeNotifier {
     Uri? initialUri,
     bool requireExplicitGuestId = false,
     Duration pollInterval = SanctuaryPoller.defaultInterval,
+    void Function()? onLinkRejected,
   })  : _repository = repository,
         _soundscape = soundscape,
+        _onLinkRejected = onLinkRejected,
         _requireExplicitGuestId = requireExplicitGuestId,
         _authResult = MagicLinkParser.parseUri(initialUri ?? Uri.base) {
     _poller = SanctuaryPoller(
@@ -38,6 +40,9 @@ class SanctuaryController extends ChangeNotifier {
   final SanctuaryRepository _repository;
   final SoundscapePort _soundscape;
   final bool _requireExplicitGuestId;
+
+  /// Called once when the server rejects the link (HTTP 401/404).
+  final void Function()? _onLinkRejected;
   final MagicLinkParseResult _authResult;
   late final SanctuaryPoller _poller;
   final SanctuaryConnection _connection = SanctuaryConnection();
@@ -83,6 +88,9 @@ class SanctuaryController extends ChangeNotifier {
   /// A link was given but is malformed or the server rejected it.
   bool get isLinkInvalid =>
       _authResult.errorMessage != null || _connection.isLinkRejected;
+
+  /// The server rejected a well-formed link: it expired or was revoked.
+  bool get isLinkExpired => _connection.isLinkRejected;
   bool get isStepUpVerified => _isStepUpVerified;
   bool get isReadOnly =>
       _stay.lifecycleStatus == StayLifecycleStatus.checkedOut;
@@ -214,11 +222,13 @@ class SanctuaryController extends ChangeNotifier {
   void _applyFetchResult(SanctuaryFetchResult result) {
     if (_isDisposed) return;
     final hadServerData = _connection.hasServerData;
+    final wasRejected = _connection.isLinkRejected;
     final (:fresh, :changed) = _connection.record(result);
     if (fresh != null) {
       _hydrateFromSnapshot(fresh, isBackgroundPoll: hadServerData);
     }
     if (_connection.isLinkRejected) _poller.stop();
+    if (_connection.isLinkRejected && !wasRejected) _onLinkRejected?.call();
     if (changed) _notify();
   }
 

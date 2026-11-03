@@ -16,6 +16,7 @@ import '../screens/profile_screen.dart';
 import '../screens/stock_villa_screen.dart';
 import '../screens/transport_screen.dart';
 import '../screens/yacht_screen.dart';
+import '../../core/pwa/install_prompt_port.dart';
 import 'access_restricted_screen.dart';
 import 'reconnecting_indicator.dart';
 import 'sanctuary_bottom_nav.dart';
@@ -26,9 +27,13 @@ import 'screen_switcher_drawer.dart';
 /// Adaptive Sanctuary Shell (`< 768px` exact Mobile canvas, `>= 768px` centered
 /// responsive canvas with `maxWidth: 960` and `TextScaler.linear(1.18)`).
 class SanctuaryShell extends StatelessWidget {
-  const SanctuaryShell({super.key, required this.controller});
+  const SanctuaryShell(
+      {super.key, required this.controller, this.installPrompt});
 
   final SanctuaryController controller;
+
+  /// Offers "Install app" on Home; null hides the hint.
+  final InstallPromptPort? installPrompt;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +44,7 @@ class SanctuaryShell extends StatelessWidget {
           return AccessRestrictedScreen(
             i18n: controller.i18n,
             isLinkInvalid: controller.isLinkInvalid,
+            isLinkExpired: controller.isLinkExpired,
           );
         }
         if (!controller.hasServerData) {
@@ -238,7 +244,7 @@ class SanctuaryShell extends StatelessWidget {
   Widget _buildCurrentScreen() {
     switch (controller.currentScreen) {
       case ScreenId.home:
-        return HomeScreen(controller: controller);
+        return HomeScreen(controller: controller, installPrompt: installPrompt);
       case ScreenId.transport:
         return TransportScreen(controller: controller);
       case ScreenId.personalize:

@@ -36,6 +36,24 @@ extension GuestFeedbackI18n on GuestI18n {
         'Este enlace de huésped no es válido o ha expirado.',
       );
 
+  /// The server rejected a link this device remembered (HTTP 401/404).
+  String get accessLinkExpired => t(
+        'Your link has expired. Ask your Resort Host for a new one.',
+        'Tu enlace expiró, pide uno nuevo a tu Resort Host.',
+      );
+
+  String get installAppHint =>
+      t('Keep your stay one tap away.', 'Ten tu estancia a un toque.');
+
+  String get installAppAction => t('Install app', 'Instalar app');
+
+  String get installIosGuide => t(
+        'Tap Share → Add to Home Screen',
+        'Toca Compartir → Agregar a pantalla de inicio',
+      );
+
+  String get dismissLabel => t('Dismiss', 'Cerrar');
+
   String get accessLinkMissing => t(
         'Open the invitation link your host sent you.',
         'Abre el enlace de invitación que te envió tu anfitrión.',
