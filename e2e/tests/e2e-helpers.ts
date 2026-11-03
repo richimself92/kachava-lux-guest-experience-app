@@ -53,15 +53,12 @@ export async function assertNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 /**
- * Opens the admin app and signs in through the Staff Sign-In screen
- * (keys `staff-sign-in-email` / `staff-sign-in-submit`), exactly as staff would.
+ * Opens the admin app and waits for the Command Center. There is no sign-in:
+ * the app authenticates silently (`POST /admin/auth/login`) on its own.
  */
-export async function signInAsStaff(page: Page, email = ADMIN_STAFF_EMAIL): Promise<void> {
+export async function openAdminDashboard(page: Page): Promise<void> {
   await page.goto(ADMIN_DASHBOARD_URL);
-  await waitForFlutterSemantics(page, 'Staff Sign-In');
-  expect(await fillSemanticsTextField(page, 'Staff email', email)).toBe(true);
-  expect(await clickSemanticsExact(page, 'Sign in')).toBe(true);
-  await waitForFlutterSemantics(page, 'HOST ADMIN');
+  await waitForFlutterSemantics(page, 'Unread operational alerts'); // top-bar bell of the Command Center shell
 }
 
 export async function readSemanticsSnapshot(page: Page): Promise<string> {
@@ -314,9 +311,9 @@ async function pickFutureDate(page: Page, fieldLabel: string, day: number): Prom
   expect(await clickSemanticsExact(page, 'OK')).toBe(true);
 }
 
-/** Drives Tab 2 "+ New Guest Stay" dialog for an AVAILABLE villa. */
+/** Drives the Reservations "+ New Guest Stay" dialog for an AVAILABLE villa. */
 export async function submitNewStayDialog(page: Page, villaLabel: string, guestName: string): Promise<void> {
-  expect(await clickSemanticsByText(page, '2. Villas, Guests & Magic Links')).toBe(true);
+  expect(await clickSemanticsExact(page, 'Reservations')).toBe(true);
   expect(await clickSemanticsByText(page, '+ New Guest Stay')).toBe(true);
   await waitForFlutterSemantics(page, 'New Guest Stay & Magic Link');
   expect(await clickSemanticsByText(page, 'Select Villa')).toBe(true);

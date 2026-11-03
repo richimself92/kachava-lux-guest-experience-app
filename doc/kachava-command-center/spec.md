@@ -31,6 +31,9 @@ Pending from Kachava: service copy/prices/photos, real villa names, Spanish copy
 - Guest portal: brand look kept; 4 bottom tabs; min 14px text (12px labels); no jargon or numbered titles.
 - Both apps: minimal text, `InfoTooltip` for explanations, one-line empty states and confirmations.
 - Breakpoints reviewed at 1440, 800, 375 px; keyboard focus ring and AA contrast.
+- Phase D (admin): tokens in `core/theme/kachava_tokens.dart`, full ThemeData (Roboto bundled); menu driven by
+  `presentation/navigation/admin_nav_model.dart` (unbuilt modules hidden; Folio reached from stay detail);
+  shared components in `presentation/components/`. Overview only restyled; KPI dashboard lands in Phase F.
 
 ## Architecture
 - Firestore is the single source of truth, per-request reads, awaited writes ([adr-008](adr-008-firestore-single-source-of-truth.md)).

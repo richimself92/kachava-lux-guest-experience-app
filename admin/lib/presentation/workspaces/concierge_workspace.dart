@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
+import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
 import '../../domain/admin_enums.dart';
-import '../widgets/semantic_status_badge.dart';
+import '../components/components.dart';
+import '../widgets/semantic_status_badge.dart' show AdminEmptyStateBox;
 
-/// Tab 5: `admin-concierge` — 24/7 Concierge Dispatch, 4-Stage Lifecycle & Live Host Chat (FR-18).
+/// `admin-concierge` — shown as "Tasks": guest requests, stages and chat.
 class ConciergeWorkspace extends StatefulWidget {
   const ConciergeWorkspace({super.key, required this.controller});
   final AdminDashboardController controller;
@@ -47,33 +48,30 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
     final isEs = widget.controller.isEs;
     return ListView(
       key: const Key('workspace-admin-concierge'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(KachavaTokens.space6),
       children: [
-        AdminSectionHeader(
-          eyebrow: AdminI18n.tr(
+        PageHeader(
+          title: AdminI18n.tr(isEs, 'Tasks', 'Tareas'),
+          info: AdminI18n.tr(
             isEs,
-            '24/7 CONCIERGE DISPATCH & LIVE CHAT · FR-18',
-            'CONCIERGE 24/7 Y CHAT EN VIVO · FR-18',
+            'Guest requests and maintenance, handled by the Resort Host team in four stages, with live chat.',
+            'Solicitudes y mantenimiento, atendidos por el equipo de Resort Host en cuatro etapas, con chat en vivo.',
           ),
-          title: AdminI18n.conciergeTitle(isEs),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: KachavaTokens.space4),
         _buildStageFilterRow(isEs),
         if (lightboxId != null) ...[
-          const SizedBox(height: 14),
-          _buildPhotoLightbox(lightboxId),
+          const SizedBox(height: KachavaTokens.space4),
+          _buildPhotoLightbox(context, lightboxId, isEs),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: KachavaTokens.space4),
         if (tickets.isEmpty)
           AdminEmptyStateBox(
             message: AdminI18n.tr(
-              isEs,
-              'No active 24/7 concierge or chat requests yet. Guest messages and maintenance tickets will appear here live.',
-              'No hay solicitudes de concierge ni mensajes de chat activos. Los mensajes del huésped aparecerán aquí en vivo.',
-            ),
+                isEs, 'No open requests.', 'No hay solicitudes abiertas.'),
           )
         else
-          ...tickets.map((t) => _buildTicketCard(t, isEs)),
+          ...tickets.map((t) => _buildTicketCard(context, t, isEs)),
       ],
     );
   }
@@ -84,14 +82,14 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
       scrollDirection: Axis.horizontal,
       child: Row(children: [
         Padding(
-          padding: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsets.only(right: KachavaTokens.space2),
           child: ChoiceChip(
-              label: Text(AdminI18n.tr(isEs, 'All Stages', 'Todas las Etapas')),
+              label: Text(AdminI18n.tr(isEs, 'All', 'Todas')),
               selected: ctrl.conciergeStageFilter == null,
               onSelected: (_) => ctrl.setConciergeFilters(clearStage: true)),
         ),
         ...ConciergeStage.values.map((stage) => Padding(
-            padding: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.only(right: KachavaTokens.space2),
             child: ChoiceChip(
                 key: Key('filter-stage-${stage.label}'),
                 label: Text(AdminI18n.statusLabel(stage.label, isEs)),
@@ -101,94 +99,94 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
     );
   }
 
-  Widget _buildPhotoLightbox(String requestId) {
+  Widget _buildPhotoLightbox(
+      BuildContext context, String requestId, bool isEs) {
+    final theme = Theme.of(context);
+    final secondary = theme.textTheme.bodySmall
+        ?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final ticket = widget.controller.conciergeTickets.firstWhere(
       (t) => t.requestId == requestId,
       orElse: () => widget.controller.conciergeTickets.first,
     );
     return Container(
       key: const Key('maintenance-photo-lightbox'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(KachavaTokens.space4),
       decoration: BoxDecoration(
-        color: KachavaAdminColors.obsidian,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'FIREBASE CLOUD STORAGE · V4 SIGNED GET PHOTO INSPECTOR',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: KachavaAdminColors.copalGold),
-                ),
+              Expanded(
+                child: Text(AdminI18n.tr(isEs, 'Photo', 'Foto'),
+                    style: theme.textTheme.titleLarge),
               ),
               IconButton(
                 key: const Key('close-photo-lightbox'),
-                tooltip: 'Close photo inspector',
+                tooltip: AdminI18n.tr(isEs, 'Close', 'Cerrar'),
                 onPressed: () => widget.controller.setLightboxTicket(null),
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close),
               ),
             ],
           ),
-          Text('Path: ${ticket.photoStoragePath ?? "N/A"}',
-              style: const TextStyle(fontSize: 11, color: Colors.white70)),
-          const SizedBox(height: 4),
-          Text('Signed V4 URL: ${ticket.signedPhotoGetUrl ?? "N/A"}',
-              style: const TextStyle(fontSize: 11, color: Colors.white)),
+          SelectableText(
+              '${AdminI18n.tr(isEs, 'Path', 'Ruta')}: ${AdminI18n.orDash(ticket.photoStoragePath ?? '')}',
+              style: secondary),
+          const SizedBox(height: KachavaTokens.space1),
+          SelectableText(
+              'URL: ${AdminI18n.orDash(ticket.signedPhotoGetUrl ?? '')}',
+              style: secondary),
         ],
       ),
     );
   }
 
-  Widget _buildTicketCard(AdminConciergeTicket ticket, bool isEs) {
+  Widget _buildTicketCard(
+      BuildContext context, AdminConciergeTicket ticket, bool isEs) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: KachavaTokens.space4),
+      padding: const EdgeInsets.all(KachavaTokens.space4),
       decoration: BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KachavaAdminColors.borderLimestone),
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTicketHeader(ticket, isEs),
-          const SizedBox(height: 10),
+          _buildTicketHeader(context, ticket, isEs),
+          const SizedBox(height: KachavaTokens.space3),
           _buildStageStepper(ticket, isEs),
-          const SizedBox(height: 12),
-          _buildChatMessagesList(ticket),
-          const SizedBox(height: 10),
+          const SizedBox(height: KachavaTokens.space3),
+          _buildChatMessagesList(context, ticket),
+          const SizedBox(height: KachavaTokens.space2),
           _buildChatReplyInput(ticket, isEs),
         ],
       ),
     );
   }
 
-  Widget _buildTicketHeader(AdminConciergeTicket ticket, bool isEs) {
+  Widget _buildTicketHeader(
+      BuildContext context, AdminConciergeTicket ticket, bool isEs) {
+    final theme = Theme.of(context);
     final titleColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
             '${AdminI18n.orDash(ticket.title)} · ${AdminI18n.orDash(ticket.villaName)}',
-            style: const TextStyle(
-                fontFamily: 'Libre Baskerville',
-                fontSize: 16,
-                fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
+            style: theme.textTheme.titleMedium),
+        const SizedBox(height: KachavaTokens.space1),
         Text(
             '${ticket.details} (${AdminI18n.staffLabel(ticket.assignedStaffName, isEs)})',
-            style: const TextStyle(
-                fontSize: 12, color: KachavaAdminColors.neutralMuted)),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
     final actionsWrap = Wrap(
-      spacing: 8,
-      runSpacing: 6,
+      spacing: KachavaTokens.space2,
+      runSpacing: KachavaTokens.space2,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (ticket.hasPhoto)
@@ -196,20 +194,22 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
             key: Key('open-photo-lightbox-${ticket.requestId}'),
             onPressed: () =>
                 widget.controller.setLightboxTicket(ticket.requestId),
-            icon: const Icon(Icons.photo_camera_outlined, size: 15),
-            label: Text(AdminI18n.tr(isEs, 'Inspect Photo', 'Ver Foto')),
+            icon: const Icon(Icons.photo_camera_outlined, size: 18),
+            label: Text(AdminI18n.tr(isEs, 'Photo', 'Foto')),
           ),
-        SemanticStatusBadge(label: ticket.stage.label),
+        StatusChip.fromStatus(ticket.stage.label),
       ],
     );
     return LayoutBuilder(
       builder: (context, constraints) => constraints.maxWidth < 480
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [titleColumn, const SizedBox(height: 8), actionsWrap])
+          ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              titleColumn,
+              const SizedBox(height: KachavaTokens.space2),
+              actionsWrap
+            ])
           : Row(children: [
               Expanded(child: titleColumn),
-              const SizedBox(width: 8),
+              const SizedBox(width: KachavaTokens.space2),
               actionsWrap
             ]),
     );
@@ -217,8 +217,8 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
 
   Widget _buildStageStepper(AdminConciergeTicket ticket, bool isEs) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 6,
+      spacing: KachavaTokens.space2,
+      runSpacing: KachavaTokens.space2,
       children: ConciergeStage.values
           .map((stage) => ChoiceChip(
                 key: Key('stage-btn-${ticket.requestId}-${stage.label}'),
@@ -235,32 +235,30 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
     );
   }
 
-  Widget _buildChatMessagesList(AdminConciergeTicket ticket) {
+  Widget _buildChatMessagesList(
+      BuildContext context, AdminConciergeTicket ticket) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: ticket.messages.map((msg) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 6),
-          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.only(bottom: KachavaTokens.space2),
+          padding: const EdgeInsets.all(KachavaTokens.space3),
           decoration: BoxDecoration(
             color: msg.isStaff
-                ? KachavaAdminColors.canvasLow
-                : KachavaAdminColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(10),
+                ? theme.colorScheme.surfaceContainerLowest
+                : KachavaTokens.surfaceHover,
+            borderRadius: BorderRadius.circular(KachavaTokens.radiusMd),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                   '${msg.senderName} (${msg.senderRole}) · ${msg.timestampLabel}',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: KachavaAdminColors.mutedBronze)),
-              const SizedBox(height: 3),
-              Text(msg.body,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(height: KachavaTokens.space1),
+              Text(msg.body, style: theme.textTheme.bodyMedium),
             ],
           ),
         );
@@ -288,22 +286,17 @@ class _ConciergeWorkspaceState extends State<ConciergeWorkspace> {
             textInputAction: TextInputAction.send,
             onSubmitted: (_) => _submitReply(ticket.requestId, textCtrl),
             decoration: InputDecoration(
-              hintText: AdminI18n.tr(isEs, 'Reply as HOST ADMIN...',
-                  'Responder como HOST ADMIN...'),
+              hintText: AdminI18n.tr(
+                  isEs, 'Reply as Resort Host', 'Responder como Resort Host'),
               isDense: true,
-              border: const OutlineInputBorder(),
             ),
-            style: const TextStyle(fontSize: 14.5),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: KachavaTokens.space2),
         ElevatedButton(
           key: Key('chat-send-${ticket.requestId}'),
-          style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.zapotePrimary,
-              foregroundColor: Colors.white),
           onPressed: () => _submitReply(ticket.requestId, textCtrl),
-          child: Text(AdminI18n.tr(isEs, 'Send Reply', 'Enviar')),
+          child: Text(AdminI18n.tr(isEs, 'Send', 'Enviar')),
         ),
       ],
     );

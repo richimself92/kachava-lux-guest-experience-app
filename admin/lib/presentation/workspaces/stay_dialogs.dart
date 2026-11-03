@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
 import '../../core/rating_label.dart';
 import '../../domain/admin_stay_entities.dart';
 
@@ -32,24 +31,17 @@ class _ConfirmCheckoutDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEs = controller.isEs;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
       title: Text(
         AdminI18n.tr(
           isEs,
           'Confirm Check-Out & Release ${stay.villaName}?',
           '¿Estás seguro de realizar el Check-Out y liberar ${stay.villaName}?',
         ),
-        style: const TextStyle(
-          fontFamily: 'Libre Baskerville',
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: KachavaAdminColors.obsidian,
-        ),
       ),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
-          child: _buildStaySummaryBody(isEs),
+          child: _buildStaySummaryBody(Theme.of(context), isEs),
         ),
       ),
       actions: [
@@ -59,10 +51,6 @@ class _ConfirmCheckoutDialog extends StatelessWidget {
         ),
         ElevatedButton(
           key: Key('confirm-release-villa-${stay.stayId}'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KachavaAdminColors.zapotePrimary,
-            foregroundColor: Colors.white,
-          ),
           onPressed: () async {
             await controller.checkOutAndReleaseVilla(stay.stayId);
             if (context.mounted) {
@@ -81,7 +69,7 @@ class _ConfirmCheckoutDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildStaySummaryBody(bool isEs) {
+  Widget _buildStaySummaryBody(ThemeData theme, bool isEs) {
     final orders =
         controller.larderOrders.where((o) => o.stayId == stay.stayId).toList();
     final bookings =
@@ -102,115 +90,100 @@ class _ConfirmCheckoutDialog extends StatelessWidget {
         '⭐ ${RatingLabel.score(pulse.rating)} · "${pulse.sentiment}" — ${pulse.guestNote}',
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.canvasLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: KachavaAdminColors.borderWarm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            AdminI18n.tr(
-              isEs,
-              'Stay Summary',
-              'Resumen de la Estancia',
-            ),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: KachavaAdminColors.zapotePrimary,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          AdminI18n.tr(
+            isEs,
+            'Stay Summary',
+            'Resumen de la Estancia',
           ),
-          const SizedBox(height: 10),
-          _summarySection(
-            AdminI18n.tr(isEs, 'Guest & Stay', 'Huésped y Estancia'),
-            [
-              '${stay.guestNames} · ${stay.checkInDate} – ${stay.checkOutDate} (${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")})'
-            ],
+          style: theme.textTheme.titleSmall,
+        ),
+        const SizedBox(height: 12),
+        _summarySection(
+          theme,
+          AdminI18n.tr(isEs, 'Guest & Stay', 'Huésped y Estancia'),
+          [
+            '${stay.guestNames} · ${stay.checkInDate} – ${stay.checkOutDate} (${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")})'
+          ],
+        ),
+        const SizedBox(height: 8),
+        _summarySection(
+          theme,
+          AdminI18n.tr(
+            isEs,
+            'Minibar & Pantry Ordered',
+            'Minibar y Despensa Solicitados',
           ),
-          const SizedBox(height: 8),
-          _summarySection(
-            AdminI18n.tr(
-              isEs,
-              'Minibar & Pantry Ordered',
-              'Minibar y Despensa Solicitados',
-            ),
-            larderLines.isEmpty
-                ? [
-                    AdminI18n.tr(
-                      isEs,
-                      'No minibar orders',
-                      'Sin pedidos de minibar',
-                    ),
-                  ]
-                : larderLines,
+          larderLines.isEmpty
+              ? [
+                  AdminI18n.tr(
+                    isEs,
+                    'No minibar orders',
+                    'Sin pedidos de minibar',
+                  ),
+                ]
+              : larderLines,
+        ),
+        const SizedBox(height: 8),
+        _summarySection(
+          theme,
+          AdminI18n.tr(
+            isEs,
+            'Experiences, Yacht & Private Dining',
+            'Experiencias, Yate y Cena Privada',
           ),
-          const SizedBox(height: 8),
-          _summarySection(
-            AdminI18n.tr(
-              isEs,
-              'Experiences, Yacht & Private Dining',
-              'Experiencias, Yate y Cena Privada',
-            ),
-            bookingLines.isEmpty
-                ? [
-                    AdminI18n.tr(
-                      isEs,
-                      'No bookings registered',
-                      'Sin reservas registradas',
-                    ),
-                  ]
-                : bookingLines,
+          bookingLines.isEmpty
+              ? [
+                  AdminI18n.tr(
+                    isEs,
+                    'No bookings registered',
+                    'Sin reservas registradas',
+                  ),
+                ]
+              : bookingLines,
+        ),
+        const SizedBox(height: 8),
+        _summarySection(
+          theme,
+          AdminI18n.tr(
+            isEs,
+            'Stay Rating & Feedback Survey',
+            'Calificación / Encuesta de Estancia',
           ),
-          const SizedBox(height: 8),
-          _summarySection(
-            AdminI18n.tr(
-              isEs,
-              'Stay Rating & Feedback Survey',
-              'Calificación / Encuesta de Estancia',
-            ),
-            pulseLines.isEmpty
-                ? [
-                    AdminI18n.tr(
-                      isEs,
-                      'No survey submitted',
-                      'Sin encuesta enviada',
-                    ),
-                  ]
-                : pulseLines,
-          ),
-        ],
-      ),
+          pulseLines.isEmpty
+              ? [
+                  AdminI18n.tr(
+                    isEs,
+                    'No survey submitted',
+                    'Sin encuesta enviada',
+                  ),
+                ]
+              : pulseLines,
+        ),
+      ],
     );
   }
 
-  Widget _summarySection(String title, List<String> lines) {
+  Widget _summarySection(ThemeData theme, String title, List<String> lines) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            color: KachavaAdminColors.mutedBronze,
-          ),
+          style: theme.textTheme.labelLarge
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         ...lines.map(
           (line) => Padding(
             padding: const EdgeInsets.only(bottom: 2),
             child: Text(
               line,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: KachavaAdminColors.obsidian,
-              ),
+              style: theme.textTheme.bodyMedium,
             ),
           ),
         ),

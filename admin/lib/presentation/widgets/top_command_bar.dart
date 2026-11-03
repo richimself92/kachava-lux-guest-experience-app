@@ -4,12 +4,23 @@ import '../../core/admin_i18n.dart';
 import '../../core/admin_theme.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
+import '../components/focus_ring.dart';
 
-/// Sticky 64px Top Command Bar with Global Search, Quick Filter Chips, Test 10s Sound, EN|ES Toggle & Alert Bell.
+/// White 64px top bar: page title, search, quick filters, test chime,
+/// EN|ES toggle and alert bell. Mobile adds the drawer menu button.
 class TopCommandBar extends StatelessWidget {
-  const TopCommandBar({super.key, required this.controller});
+  static const TextTheme _text = KachavaAdminTheme.textTheme;
+
+  const TopCommandBar({
+    super.key,
+    required this.controller,
+    this.showMenuButton = false,
+  });
 
   final AdminDashboardController controller;
+
+  /// Shows the menu button that opens the mobile navigation drawer.
+  final bool showMenuButton;
 
   @override
   Widget build(BuildContext context) {
@@ -17,18 +28,27 @@ class TopCommandBar extends StatelessWidget {
       height: AdminBreakpoints.topBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        border: Border(
-            bottom: BorderSide(color: KachavaAdminColors.borderLimestone)),
+        color: KachavaTokens.background,
+        border: Border(bottom: BorderSide(color: KachavaTokens.border)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 760;
-          final searchWidth = isCompact ? 44.0 : 185.0;
-          final gap = isCompact ? 2.0 : 6.0;
+          final gap = isCompact ? 2.0 : 8.0;
           return Row(
             children: [
-              _buildSearchField(searchWidth),
+              if (showMenuButton)
+                IconButton(
+                  key: const Key('mobile-nav-menu-button'),
+                  tooltip: AdminI18n.tr(controller.isEs, 'Menu', 'Menú'),
+                  icon: const Icon(Icons.menu, color: KachavaTokens.text),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              if (constraints.maxWidth >= 600) ...[
+                _buildTitle(isCompact ? 130 : 220),
+                SizedBox(width: gap),
+              ],
+              _buildSearchField(isCompact ? 44.0 : 200.0),
               SizedBox(width: gap),
               Expanded(child: _buildQuickFiltersStrip()),
               SizedBox(width: gap),
@@ -44,6 +64,26 @@ class TopCommandBar extends StatelessWidget {
     );
   }
 
+  Widget _buildTitle(double maxWidth) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Text(
+          AdminI18n.tabLabel(controller.activeTab, controller.isEs),
+          key: const Key('top-bar-page-title'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+              fontSize: 20,
+              height: 28 / 20,
+              fontWeight: FontWeight.w500,
+              color: KachavaTokens.text),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchField(double width) {
     return SizedBox(
       width: width,
@@ -53,17 +93,27 @@ class TopCommandBar extends StatelessWidget {
         onChanged: controller.setSearchQuery,
         decoration: InputDecoration(
           hintText: AdminI18n.searchHint(controller.isEs),
-          hintStyle: const TextStyle(fontSize: 12),
-          prefixIcon: const Icon(Icons.search, size: 15),
+          hintStyle:
+              _text.bodyMedium?.copyWith(color: KachavaTokens.textSecondary),
+          prefixIcon: const Icon(Icons.search,
+              size: 18, color: KachavaTokens.textSecondary),
           filled: true,
-          fillColor: KachavaAdminColors.surfaceContainer,
+          fillColor: KachavaTokens.surface,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
             borderSide: BorderSide.none,
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+            borderSide: const BorderSide(color: KachavaTokens.focus, width: 2),
+          ),
         ),
-        style: const TextStyle(fontSize: 12),
+        style: _text.bodyMedium?.copyWith(color: KachavaTokens.text),
       ),
     );
   }
@@ -111,6 +161,54 @@ class TopCommandBar extends StatelessWidget {
     );
   }
 
+  /// Neutral pill: gray when idle, darker gray + bold when selected.
+  ///
+  /// The visible pill stays compact, but its tap target is at least 48dp
+  /// (DESIGN.md) and keyboard focus draws the shared [FocusRing].
+  Widget _pill({
+    required Key key,
+    required Widget child,
+    required VoidCallback onTap,
+    bool selected = false,
+    Color? background,
+    EdgeInsets padding =
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  }) {
+    final radius = BorderRadius.circular(KachavaTokens.radiusPill);
+    return FocusRing(
+      borderRadius: KachavaTokens.radiusPill,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: key,
+          borderRadius: radius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Ink(
+                padding: padding,
+                decoration: BoxDecoration(
+                  color: background ??
+                      (selected
+                          ? KachavaTokens.surfaceHover
+                          : KachavaTokens.surface),
+                  borderRadius: radius,
+                  border: selected
+                      ? Border.all(color: KachavaTokens.inputBorder)
+                      : null,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChip({
     required Key key,
     required String label,
@@ -119,61 +217,16 @@ class TopCommandBar extends StatelessWidget {
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 6),
-      child: InkWell(
+      child: _pill(
         key: key,
-        borderRadius: BorderRadius.circular(999),
+        selected: selected,
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? KachavaAdminColors.zapotePrimary
-                : KachavaAdminColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: selected
-                  ? KachavaAdminColors.zapotePrimary
-                  : KachavaAdminColors.borderLimestone,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : KachavaAdminColors.obsidian,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionPill({
-    required Key key,
-    required String label,
-    required bool isCompact,
-    required VoidCallback onTap,
-    Color bgColor = KachavaAdminColors.surfaceContainer,
-    Color borderColor = KachavaAdminColors.borderLimestone,
-    Color fgColor = KachavaAdminColors.obsidian,
-  }) {
-    return InkWell(
-      key: key,
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding:
-            EdgeInsets.symmetric(horizontal: isCompact ? 5 : 9, vertical: 6),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor),
-        ),
         child: Text(
           label,
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: fgColor),
+          style: _text.labelLarge?.copyWith(
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: KachavaTokens.text,
+          ),
         ),
       ),
     );
@@ -186,20 +239,27 @@ class TopCommandBar extends StatelessWidget {
         : (ringing
             ? (isEs ? '🔇 Silenciar' : '🔇 Mute 10s')
             : (isEs ? '🔔 Probar 10s' : '🔔 Test 10s'));
-    return _buildActionPill(
+    final pill = _pill(
       key: const Key('test-alert-sound-btn'),
-      label: label,
-      isCompact: isCompact,
-      bgColor: ringing
-          ? KachavaAdminColors.copalGold
-          : KachavaAdminColors.surfaceContainer,
-      borderColor: ringing
-          ? KachavaAdminColors.obsidian
-          : KachavaAdminColors.borderLimestone,
-      fgColor: ringing
-          ? KachavaAdminColors.obsidian
-          : KachavaAdminColors.zapotePrimary,
+      background: ringing ? KachavaTokens.warningBackground : null,
+      padding:
+          EdgeInsets.symmetric(horizontal: isCompact ? 6 : 12, vertical: 6),
       onTap: controller.triggerTestAlertSound,
+      child: Text(
+        label,
+        style: _text.labelLarge?.copyWith(
+          color: ringing ? KachavaTokens.warningForeground : KachavaTokens.text,
+        ),
+      ),
+    );
+    if (!isCompact) return pill;
+    // Compact mode shows only an emoji, so the tooltip names the action.
+    return Tooltip(
+      message: ringing
+          ? AdminI18n.tr(isEs, 'Mute test sound', 'Silenciar sonido de prueba')
+          : AdminI18n.tr(
+              isEs, 'Test alert sound (10s)', 'Probar sonido de alerta (10s)'),
+      child: pill,
     );
   }
 
@@ -208,24 +268,16 @@ class TopCommandBar extends StatelessWidget {
     return Semantics(
       button: true,
       label: isEs ? 'ES | EN' : 'EN | ES',
-      child: InkWell(
+      child: _pill(
         key: const Key('admin-locale-toggle-btn'),
+        padding: const EdgeInsets.all(2),
         onTap: controller.toggleLocale,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: KachavaAdminColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: KachavaAdminColors.borderLimestone),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildLocaleSegment(!isEs ? '✓ EN' : 'EN', !isEs, isCompact),
-              _buildLocaleSegment(isEs ? '✓ ES' : 'ES', isEs, isCompact),
-            ],
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLocaleSegment(!isEs ? '✓ EN' : 'EN', !isEs, isCompact),
+            _buildLocaleSegment(isEs ? '✓ ES' : 'ES', isEs, isCompact),
+          ],
         ),
       ),
     );
@@ -233,17 +285,16 @@ class TopCommandBar extends StatelessWidget {
 
   Widget _buildLocaleSegment(String label, bool active, bool isCompact) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 5 : 7, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 5 : 8, vertical: 4),
       decoration: BoxDecoration(
-        color: active ? KachavaAdminColors.zapotePrimary : Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
+        color: active ? KachavaTokens.background : Colors.transparent,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: isCompact ? 10 : 11,
-          fontWeight: FontWeight.w700,
-          color: active ? Colors.white : KachavaAdminColors.mutedBronze,
+        style: _text.labelMedium?.copyWith(
+          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          color: active ? KachavaTokens.text : KachavaTokens.textSecondary,
         ),
       ),
     );
@@ -251,34 +302,33 @@ class TopCommandBar extends StatelessWidget {
 
   Widget _buildNotificationBell(bool isCompact) {
     final unread = controller.unreadAlertsCount;
+    final tone = unread > 0 ? StatusTone.error : StatusTone.neutral;
+    final label = AdminI18n.tr(
+        controller.isEs,
+        'Unread operational alerts: $unread',
+        'Alertas operativas sin leer: $unread');
     return Semantics(
       button: true,
-      label: 'Unread operational alerts: $unread',
-      child: InkWell(
-        key: const Key('top-bar-alert-bell'),
-        onTap: () => controller.selectTab(AdminWorkspaceTab.adminOverview),
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
+      label: label,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: _pill(
+          key: const Key('top-bar-alert-bell'),
+          background: tone.background,
           padding:
-              EdgeInsets.symmetric(horizontal: isCompact ? 6 : 9, vertical: 6),
-          decoration: BoxDecoration(
-            color: KachavaAdminColors.criticalAllergySla.background,
-            borderRadius: BorderRadius.circular(999),
-            border:
-                Border.all(color: KachavaAdminColors.criticalAllergySla.border),
-          ),
+              EdgeInsets.symmetric(horizontal: isCompact ? 6 : 10, vertical: 6),
+          onTap: () => controller.selectTab(AdminWorkspaceTab.adminOverview),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.notifications_active,
-                  size: 14, color: Color(0xFF93000A)),
-              const SizedBox(width: 3),
+              Icon(Icons.notifications_none, size: 16, color: tone.foreground),
+              const SizedBox(width: 4),
               Text(
                 '$unread',
                 key: const Key('unread-alerts-badge'),
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF93000A)),
+                style: _text.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700, color: tone.foreground),
               ),
             ],
           ),

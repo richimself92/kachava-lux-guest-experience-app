@@ -10,6 +10,7 @@ import 'package:kachava_admin_dashboard/data/admin_wire_mapper.dart';
 import 'package:kachava_admin_dashboard/data/api_admin_operations_repository.dart';
 import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
 
 import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
@@ -217,11 +218,11 @@ void main() {
         expect(find.textContaining('(3 nights) · HOST ADMIN'), findsWidgets);
         expect(
             find.textContaining(
-                '🧹 Housekeeping Schedule: 10:30 AM & 7:30 PM Turndown'),
+                'Housekeeping Schedule: 10:30 AM & 7:30 PM Turndown'),
             findsOneWidget);
-        expect(find.textContaining('📅 Date:'), findsWidgets);
-        expect(find.textContaining('🛬 Airport:'), findsWidgets);
-        expect(find.textContaining('🚘 Chauffeur / Vehicle:'), findsWidgets);
+        expect(find.textContaining('Date:'), findsWidgets);
+        expect(find.textContaining('Airport:'), findsWidgets);
+        expect(find.textContaining('Chauffeur / Vehicle:'), findsWidgets);
 
         final releaseBtn =
             find.byKey(const Key('release-villa-stay_villa_102'));
@@ -253,10 +254,10 @@ void main() {
         await tester.tap(find.byKey(const Key('admin-locale-toggle-btn')));
         await tester.pumpAndSettle();
         expect(find.text('VILLA LIBRE / SALIDA'), findsWidgets);
-        expect(find.textContaining('🧹 Horario de Limpieza:'), findsWidgets);
-        expect(find.textContaining('📅 Fecha:'), findsWidgets);
-        expect(find.textContaining('🛬 Aeropuerto:'), findsWidgets);
-        expect(find.textContaining('🚘 Chofer / Vehículo:'), findsWidgets);
+        expect(find.textContaining('Horario de Limpieza:'), findsWidgets);
+        expect(find.textContaining('Fecha:'), findsWidgets);
+        expect(find.textContaining('Aeropuerto:'), findsWidgets);
+        expect(find.textContaining('Chofer / Vehículo:'), findsWidgets);
       },
     );
 
@@ -313,20 +314,23 @@ void main() {
           findsOneWidget,
         );
 
-        // Tab 6: Stay Summary & Feedback (Zero billing/cards)
-        expect(
-            AdminWorkspaceTab.adminFolio.label, '6. Stay Summary & Feedback');
-        expect(AdminWorkspaceTab.adminFolio.shortLabel, '6. Summary');
+        // Stay summary (folio): zero billing/cards; reached from the stay,
+        // not from the menu.
+        expect(AdminWorkspaceTab.adminFolio.label, 'Stay summary');
+        expect(AdminWorkspaceTab.adminFolio.shortLabel, 'Stay summary');
         expect(
           AdminI18n.tabLabel(AdminWorkspaceTab.adminFolio, true),
-          '6. Resumen de Estancia y Calificación',
+          'Resumen de estancia',
         );
         expect(
           AdminI18n.tabShortLabel(AdminWorkspaceTab.adminFolio, true),
-          '6. Resumen',
+          'Resumen de estancia',
         );
 
-        await tester.tap(find.byKey(const Key('nav-tab-admin-folio')));
+        tester
+            .widget<AdminCommandShell>(find.byType(AdminCommandShell))
+            .controller
+            .selectTab(AdminWorkspaceTab.adminFolio);
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Card on File'), findsNothing);
@@ -336,33 +340,21 @@ void main() {
         expect(find.byKey(const Key('approve-express-checkout-btn')),
             findsNothing);
 
-        expect(
-          find.text('Guest Stay Rating & Feedback ("How Is Your Stay Going?")'),
-          findsOneWidget,
-        );
-        expect(find.text('Acknowledge & Mark Attended'), findsOneWidget);
-        expect(
-          find.text('Acquired Services & Stay Activity Summary'),
-          findsOneWidget,
-        );
+        expect(find.text('Guest feedback'), findsOneWidget);
+        expect(find.text('Mark attended'), findsOneWidget);
+        expect(find.text('Services by stay'), findsOneWidget);
         expect(find.text('Minibar & Pantry'), findsWidgets);
-        expect(find.text('Experiences, Yacht & Private Dining'), findsWidgets);
-        expect(find.text('Concierge Requests'), findsWidgets);
+        expect(find.text('Experiences'), findsWidgets);
+        expect(find.text('Tasks'), findsWidgets);
         expect(
             find.byKey(const Key('attend-pulse-pulse_102_01')), findsOneWidget);
 
         // Toggle to Spanish on Tab 6
         await tester.tap(find.byKey(const Key('admin-locale-toggle-btn')));
         await tester.pumpAndSettle();
-        expect(
-          find.text('Calificación y Comentarios: "¿Cómo va tu estancia?"'),
-          findsOneWidget,
-        );
-        expect(find.text('Confirmar Atención del Host'), findsOneWidget);
-        expect(
-          find.text('Resumen de lo Adquirido y Solicitado por Estancia'),
-          findsOneWidget,
-        );
+        expect(find.text('Comentarios del huésped'), findsOneWidget);
+        expect(find.text('Marcar atendido'), findsOneWidget);
+        expect(find.text('Servicios por estancia'), findsOneWidget);
       },
     );
   });

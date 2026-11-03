@@ -21,6 +21,10 @@ flutter:
   assets:
     - assets/fonts/
   fonts:
+    # Admin UI font (OFL, see assets/fonts/Roboto-OFL.txt). Variable wght axis.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-VariableFont.ttf
     - family: Libre Baskerville
       fonts:
         - asset: assets/fonts/LibreBaskerville-Regular.ttf

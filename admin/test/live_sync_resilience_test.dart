@@ -19,7 +19,7 @@ import 'support/admin_sync_envelope.dart';
 import 'support/signed_in_api_client.dart';
 
 const _reconnecting = Key('sync-reconnecting-indicator');
-const _noAccess = Key('admin-no-access-screen');
+const _noAccess = Key('sync-no-access-indicator');
 
 class _RecordingChime implements AlertChimePort {
   int triggers = 0;
@@ -125,7 +125,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('test_app_sync403_showsNoAccessScreenInsteadOfShell',
+    testWidgets('test_app_sync403_showsNoAccessLineInsideShell',
         (tester) async {
       syncStatus = 403;
       await tester.pumpWidget(buildApp());
@@ -134,7 +134,7 @@ void main() {
 
       expect(find.byKey(_noAccess), findsOneWidget);
       expect(find.text('No access'), findsOneWidget);
-      expect(find.byType(AdminCommandShell), findsNothing);
+      expect(find.byType(AdminCommandShell), findsOneWidget);
       expect(find.byKey(_reconnecting), findsNothing);
       await tester.pumpWidget(const SizedBox());
     });

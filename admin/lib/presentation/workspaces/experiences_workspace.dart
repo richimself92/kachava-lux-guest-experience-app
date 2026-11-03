@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../application/inspector_selection.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
+import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
-import '../widgets/semantic_status_badge.dart';
+import '../components/components.dart';
+import '../widgets/semantic_status_badge.dart' show AdminEmptyStateBox;
 import 'catalog_dialogs.dart';
 
-/// Tab 3: `admin-experiences` — Yacht, Private Dining, Excursions & Privileges (FR-16).
+/// `admin-experiences` — experience catalog and guest bookings.
 class ExperiencesWorkspace extends StatelessWidget {
   const ExperiencesWorkspace({super.key, required this.controller});
 
@@ -27,40 +28,35 @@ class ExperiencesWorkspace extends StatelessWidget {
     final isEs = controller.isEs;
     return ListView(
       key: const Key('workspace-admin-experiences'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(KachavaTokens.space6),
       children: [
-        AdminSectionHeader(
-          eyebrow: AdminI18n.tr(
+        PageHeader(
+          title: AdminI18n.tr(isEs, 'Experiences', 'Experiencias'),
+          info: AdminI18n.tr(
             isEs,
-            'EXPERIENCES, MARITIME & CULINARY · FR-16',
-            'EXPERIENCIAS, YATE Y GASTRONOMÍA · FR-16',
+            'Yacht, private dining, excursions and included privileges booked by guests, updated live.',
+            'Yate, cenas privadas, excursiones y privilegios reservados por huéspedes, en vivo.',
           ),
-          title: AdminI18n.experiencesTitle(isEs),
-          trailing: ElevatedButton.icon(
-            key: const Key('add-catalog-experience-btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.zapotePrimary,
-              foregroundColor: Colors.white,
+          actions: [
+            ElevatedButton.icon(
+              key: const Key('add-catalog-experience-btn'),
+              onPressed: () =>
+                  showAddExperienceCatalogDialog(context, controller),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                  AdminI18n.tr(isEs, 'Add experience', 'Nueva experiencia')),
             ),
-            onPressed: () =>
-                showAddExperienceCatalogDialog(context, controller),
-            icon: const Icon(Icons.add, size: 16),
-            label: Text(AdminI18n.tr(isEs, '+ Add Experience to Catalog',
-                '+ Nueva Experiencia al Catálogo')),
-          ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _buildCatalogStrip(isEs),
-        const SizedBox(height: 14),
+        const SizedBox(height: KachavaTokens.space4),
+        _buildCatalogStrip(context, isEs),
+        const SizedBox(height: KachavaTokens.space4),
         _buildCategoryTabs(isEs),
-        const SizedBox(height: 16),
+        const SizedBox(height: KachavaTokens.space4),
         if (bookings.isEmpty)
           AdminEmptyStateBox(
-            message: AdminI18n.tr(
-              isEs,
-              'No experience or yacht bookings yet. Guest reservations from the Sanctuary Portal will appear here live.',
-              'Aún no hay reservas de experiencias o yate. Las reservas que haga el huésped aparecerán aquí en vivo.',
-            ),
+            message:
+                AdminI18n.tr(isEs, 'No bookings yet.', 'Aún no hay reservas.'),
           )
         else
           ...bookings
@@ -69,46 +65,29 @@ class ExperiencesWorkspace extends StatelessWidget {
     );
   }
 
-  Widget _buildCatalogStrip(bool isEs) {
+  Widget _buildCatalogStrip(BuildContext context, bool isEs) {
     final items = controller.experienceCatalog;
     if (items.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: KachavaAdminColors.borderLimestone),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AdminI18n.tr(isEs, 'LIVE EXPERIENCES CATALOG (${items.length})',
-                'CATÁLOGO DE EXPERIENCIAS EN VIVO (${items.length})'),
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.4,
-              color: KachavaAdminColors.mutedBronze,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: items
-                .map((item) => InputChip(
-                      key: Key('catalog-experience-chip-${item.id}'),
-                      label: Text('${item.title} (${item.priceText})',
-                          style: const TextStyle(fontSize: 11)),
-                      deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () =>
-                          controller.deleteExperienceCatalogItem(item.id),
-                    ))
-                .toList(),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${AdminI18n.tr(isEs, 'Catalog', 'Catálogo')} (${items.length})',
+            style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: KachavaTokens.space2),
+        Wrap(
+          spacing: KachavaTokens.space2,
+          runSpacing: KachavaTokens.space2,
+          children: items
+              .map((item) => InputChip(
+                    key: Key('catalog-experience-chip-${item.id}'),
+                    label: Text('${item.title} (${item.priceText})'),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () =>
+                        controller.deleteExperienceCatalogItem(item.id),
+                  ))
+              .toList(),
+        ),
+      ],
     );
   }
 
@@ -118,7 +97,7 @@ class ExperiencesWorkspace extends StatelessWidget {
       child: Row(
         children: _categories.map((cat) {
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: KachavaTokens.space2),
             child: ChoiceChip(
               key: Key('exp-cat-$cat'),
               label: Text(AdminI18n.statusLabel(cat, isEs)),
@@ -133,100 +112,71 @@ class ExperiencesWorkspace extends StatelessWidget {
 
   Widget _buildBookingCard(
       BuildContext context, AdminBookingRecord booking, bool isEs) {
-    final isYacht = booking.category == 'Yacht Charters';
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: KachavaTokens.space4),
+      padding: const EdgeInsets.all(KachavaTokens.space4),
       decoration: BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KachavaAdminColors.borderLimestone),
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildBookingHeader(booking, isYacht),
-          const SizedBox(height: 10),
-          Text(
-            booking.title,
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.obsidian,
-            ),
-          ),
-          const SizedBox(height: 4),
+          _buildBookingHeader(context, booking, isEs),
+          const SizedBox(height: KachavaTokens.space2),
+          Text(booking.title, style: theme.textTheme.titleMedium),
+          const SizedBox(height: KachavaTokens.space1),
           Text(
             '${AdminI18n.orDash(booking.villaName)} · ${AdminI18n.orDash(booking.guestNames)} · ${AdminI18n.orDash(booking.scheduledTime)}',
-            style: const TextStyle(
-                fontSize: 12, color: KachavaAdminColors.neutralMuted),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
           if (booking.allergyWarning != null) ...[
-            const SizedBox(height: 8),
-            SemanticStatusBadge(
-              label: booking.allergyWarning!,
-              customStyle: KachavaAdminColors.criticalAllergySla,
-            ),
+            const SizedBox(height: KachavaTokens.space2),
+            StatusChip(label: booking.allergyWarning!, tone: StatusTone.error),
           ],
           if (booking.status == 'Cancelled' &&
               booking.cancellationReason.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFDAD6),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFBA1A1A)),
-              ),
-              child: Text(
-                '❌ ${AdminI18n.tr(isEs, "Cancellation reason", "Motivo de cancelación")}: ${booking.cancellationReason}',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF93000A),
-                ),
-              ),
+            const SizedBox(height: KachavaTokens.space2),
+            Text(
+              '❌ ${AdminI18n.tr(isEs, "Cancellation reason", "Motivo de cancelación")}: ${booking.cancellationReason}',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: StatusTone.error.foreground),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: KachavaTokens.space3),
           _buildBookingActions(context, booking, isEs),
         ],
       ),
     );
   }
 
-  Widget _buildBookingHeader(AdminBookingRecord booking, bool isYacht) {
+  Widget _buildBookingHeader(
+      BuildContext context, AdminBookingRecord booking, bool isEs) {
     return SizedBox(
       width: double.infinity,
       child: Wrap(
-        spacing: 8,
-        runSpacing: 6,
+        spacing: KachavaTokens.space2,
+        runSpacing: KachavaTokens.space2,
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Wrap(
-            spacing: 8,
-            runSpacing: 6,
+            spacing: KachavaTokens.space2,
+            runSpacing: KachavaTokens.space2,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              SemanticStatusBadge(
-                label: booking.category,
-                customStyle:
-                    isYacht ? KachavaAdminColors.maritimeCharter : null,
+              StatusChip(
+                label: AdminI18n.statusLabel(booking.category, isEs),
+                tone: StatusTone.neutral,
               ),
-              SemanticStatusBadge(label: booking.status),
+              StatusChip.fromStatus(booking.status),
             ],
           ),
           Text(
             '\$${booking.priceUsd.toStringAsFixed(2)} USD',
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.zapotePrimary,
-            ),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ],
       ),
@@ -235,50 +185,40 @@ class ExperiencesWorkspace extends StatelessWidget {
 
   Widget _buildBookingActions(
       BuildContext context, AdminBookingRecord booking, bool isEs) {
+    final error = Theme.of(context).colorScheme.error;
     return Wrap(
-      spacing: 10,
-      runSpacing: 8,
+      spacing: KachavaTokens.space2,
+      runSpacing: KachavaTokens.space2,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           '${AdminI18n.tr(isEs, "Assigned", "Asignado")}: ${AdminI18n.staffLabel(booking.assignedStaffName, isEs)}',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         ElevatedButton.icon(
           key: Key('assign-booking-${booking.bookingId}'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF065F46),
-            foregroundColor: Colors.white,
-          ),
           onPressed: () => controller.assignAndNotifyBooking(
             bookingId: booking.bookingId,
             status: 'CONFIRMED',
           ),
-          icon: const Icon(Icons.check_circle_outline, size: 15),
+          icon: const Icon(Icons.check, size: 18),
           label: Text(
               AdminI18n.tr(isEs, 'Approve / Confirm', 'Aprobar / Confirmar')),
         ),
         OutlinedButton.icon(
           key: Key('cancel-booking-${booking.bookingId}'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF93000A),
-            side: const BorderSide(color: Color(0xFFBA1A1A)),
-          ),
+          style: OutlinedButton.styleFrom(foregroundColor: error),
           onPressed: () => showDialog<void>(
             context: context,
             builder: (_) =>
                 _CancelBookingDialog(controller: controller, booking: booking),
           ),
-          icon: const Icon(Icons.cancel_outlined, size: 15),
+          icon: const Icon(Icons.close, size: 18),
           label: Text(
               AdminI18n.tr(isEs, 'Cancel with Reason', 'Cancelar con Motivo')),
         ),
-        ElevatedButton(
+        TextButton(
           key: Key('inspect-booking-${booking.bookingId}'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KachavaAdminColors.zapotePrimary,
-            foregroundColor: Colors.white,
-          ),
           onPressed: () => controller.openInspector(
             AdminDrawerSelection(
               type: InspectorRecordType.booking,
@@ -287,8 +227,7 @@ class ExperiencesWorkspace extends StatelessWidget {
               subtitle: '${booking.villaName} · ${booking.scheduledTime}',
             ),
           ),
-          child: Text(
-              AdminI18n.tr(isEs, 'Inspect & Assign Staff', 'Inspeccionar')),
+          child: Text(AdminI18n.tr(isEs, 'Details', 'Detalles')),
         ),
       ],
     );
@@ -335,19 +274,13 @@ class _CancelBookingDialogState extends State<_CancelBookingDialog> {
   @override
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
+    final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
       title: Text(
         AdminI18n.tr(
           isEs,
           'Cancel Booking with Reason',
           'Cancelar Reserva con Motivo',
-        ),
-        style: const TextStyle(
-          fontFamily: 'Libre Baskerville',
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: KachavaAdminColors.obsidian,
         ),
       ),
       content: SizedBox(
@@ -363,10 +296,9 @@ class _CancelBookingDialogState extends State<_CancelBookingDialog> {
             ),
             hintText: AdminI18n.tr(
               isEs,
-              'e.g. Offshore weather conditions / Time slot unavailable',
-              'Ej. Condiciones climáticas en altamar / Horario no disponible',
+              'Time slot unavailable',
+              'Horario no disponible',
             ),
-            border: const OutlineInputBorder(),
           ),
         ),
       ),
@@ -378,8 +310,8 @@ class _CancelBookingDialogState extends State<_CancelBookingDialog> {
         ElevatedButton(
           key: const Key('confirm-cancel-booking-btn'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF93000A),
-            foregroundColor: Colors.white,
+            backgroundColor: scheme.error,
+            foregroundColor: scheme.onError,
           ),
           onPressed: _submit,
           child: Text(AdminI18n.tr(

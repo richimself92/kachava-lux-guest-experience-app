@@ -7,12 +7,16 @@ import 'admin_staff_mapper.dart';
 
 /// REST API client for `/api/v1/admin/*` protected by `AdminAuthGuard`.
 ///
-/// Every call carries `Authorization: Bearer <token>` from [session]; without a
-/// session no request is sent. A 401 expires the session so the app can return
-/// to the sign-in screen.
+/// Authentication is silent: before the first call (and whenever [session]
+/// holds no token) it logs in as [staffEmail] via `POST /admin/auth/login`,
+/// then sends `Authorization: Bearer <token>`. Concurrent callers share one
+/// in-flight login. A 401 expires the token, logs in again and retries the
+/// call once; a second 401 surfaces as [AdminUnauthorizedException]. A
+/// rejected login (401/403) is terminal and surfaces as [AdminAccessDenied].
 class AdminApiClient {
   AdminApiClient({
     this.baseUrl = AdminAppConfig.apiBaseUrl,
+    this.staffEmail = AdminAppConfig.adminStaffEmail,
     AdminSession? session,
     Duration? timeout,
     http.Client? httpClient,
@@ -30,10 +34,12 @@ class AdminApiClient {
   };
 
   final String baseUrl;
+  final String staffEmail;
   final AdminSession session;
   final Duration timeout;
   final bool _ownsClient;
   final http.Client _client;
+  Future<String>? _loginInFlight;
 
   String get _adminBaseUrl {
     var trimmed = baseUrl.trim();
@@ -43,26 +49,30 @@ class AdminApiClient {
     return trimmed.endsWith('/admin') ? trimmed : '$trimmed/admin';
   }
 
-  Map<String, String> _authorizedHeaders() {
-    final token = session.token;
-    if (token == null) {
-      throw const AdminUnauthorizedException(
-          'No staff session: sign in first.');
-    }
-    return {..._jsonHeaders, 'Authorization': 'Bearer $token'};
-  }
-
   Uri _resolveUri(String path) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse('$_adminBaseUrl$normalizedPath');
   }
 
-  /// Exchanges staff credentials for a session token (`POST /admin/auth/login`).
-  Future<void> signIn(String email) async {
+  /// The current token, logging in first when there is none. Every caller
+  /// waiting on a login shares the same request.
+  Future<String> _ensureToken() {
+    final token = session.token;
+    if (token != null) return Future.value(token);
+    return _loginInFlight ??=
+        _login().whenComplete(() => _loginInFlight = null);
+  }
+
+  Future<String> _login() async {
     final response = await _client
         .post(_resolveUri('/auth/login'),
-            headers: _jsonHeaders, body: jsonEncode({'email': email.trim()}))
+            headers: _jsonHeaders, body: jsonEncode({'email': staffEmail}))
         .timeout(timeout);
+    if (response.statusCode == 401) {
+      // The configured staff identity itself is refused: retrying won't help.
+      throw AdminLoginRejectedException(
+          'Admin staff login rejected (HTTP 401): ${response.body}');
+    }
     final body = _decodeResponse(response);
     final token = body['token'];
     if (token is! String || token.isEmpty) {
@@ -71,47 +81,53 @@ class AdminApiClient {
           message: 'Admin API login response carried no token.');
     }
     session.open(token, staff: AdminStaffMapper.tryMap(body['staff']));
+    return token;
   }
 
-  Future<Map<String, dynamic>> getJson(String path) async {
-    final response = await _client
-        .get(_resolveUri(path), headers: _authorizedHeaders())
-        .timeout(timeout);
+  /// Sends an authorized request; on a 401 re-authenticates and retries once.
+  Future<Map<String, dynamic>> _send(
+      Future<http.Response> Function(Map<String, String> headers)
+          request) async {
+    var token = await _ensureToken();
+    var response = await request(_bearer(token)).timeout(timeout);
+    if (response.statusCode == 401) {
+      // Only drop the token this call used; a concurrent re-login may have
+      // already replaced it.
+      if (session.token == token) session.expire();
+      token = await _ensureToken();
+      response = await request(_bearer(token)).timeout(timeout);
+      if (response.statusCode == 401 && session.token == token) {
+        session.expire();
+      }
+    }
     return _decodeResponse(response);
   }
+
+  Map<String, String> _bearer(String token) =>
+      {..._jsonHeaders, 'Authorization': 'Bearer $token'};
+
+  Future<Map<String, dynamic>> getJson(String path) =>
+      _send((headers) => _client.get(_resolveUri(path), headers: headers));
 
   Future<Map<String, dynamic>> postJson(
     String path,
     Map<String, dynamic> body,
-  ) async {
-    final response = await _client
-        .post(_resolveUri(path),
-            headers: _authorizedHeaders(), body: jsonEncode(body))
-        .timeout(timeout);
-    return _decodeResponse(response);
-  }
+  ) =>
+      _send((headers) => _client.post(_resolveUri(path),
+          headers: headers, body: jsonEncode(body)));
 
   Future<Map<String, dynamic>> patchJson(
     String path,
     Map<String, dynamic> body,
-  ) async {
-    final response = await _client
-        .patch(_resolveUri(path),
-            headers: _authorizedHeaders(), body: jsonEncode(body))
-        .timeout(timeout);
-    return _decodeResponse(response);
-  }
+  ) =>
+      _send((headers) => _client.patch(_resolveUri(path),
+          headers: headers, body: jsonEncode(body)));
 
-  Future<Map<String, dynamic>> deleteJson(String path) async {
-    final response = await _client
-        .delete(_resolveUri(path), headers: _authorizedHeaders())
-        .timeout(timeout);
-    return _decodeResponse(response);
-  }
+  Future<Map<String, dynamic>> deleteJson(String path) =>
+      _send((headers) => _client.delete(_resolveUri(path), headers: headers));
 
   Map<String, dynamic> _decodeResponse(http.Response response) {
     if (response.statusCode == 401) {
-      session.expire();
       throw AdminUnauthorizedException('Admin API HTTP 401: ${response.body}');
     }
     if (response.statusCode == 403) {
@@ -162,6 +178,14 @@ class AdminApiException implements Exception {
 class AdminUnauthorizedException extends AdminApiException {
   const AdminUnauthorizedException(String message)
       : super(statusCode: 401, message: message);
+}
+
+/// The silent staff login itself was refused (HTTP 401). Terminal: the live
+/// sync shows "No access" and stops polling instead of reconnecting forever.
+/// (A 403 login surfaces as [AdminForbiddenException], also terminal.)
+class AdminLoginRejectedException extends AdminUnauthorizedException
+    implements AdminAccessDenied {
+  const AdminLoginRejectedException(super.message);
 }
 
 /// The staff role is not allowed to use the resource (HTTP 403).

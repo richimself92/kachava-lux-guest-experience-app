@@ -161,8 +161,8 @@ void main() {
           .pumpWidget(KachavaAdminApp(repository: SeededAdminRepository()));
       await tester.pumpAndSettle();
 
-      expect(
-          find.byKey(const Key('alerts-explanation-banner')), findsOneWidget);
+      // Clean UI: no instruction banner on the dashboard.
+      expect(find.byKey(const Key('alerts-explanation-banner')), findsNothing);
       await tester.tap(find.byKey(const Key('goto-alert-section-alt_001')));
       await tester.pumpAndSettle();
       expect(

@@ -106,7 +106,6 @@ void main() {
 
     test('test_apiController_noSeedVillasOrStaff_usesServerAndSessionStaff',
         () async {
-      await client.signIn('ana@kachavalux.com');
       final controller = AdminDashboardController(
           repository: ApiAdminOperationsRepository(apiClient: client),
           alertChime: _SilentChime());
@@ -122,7 +121,6 @@ void main() {
 
     test('test_apiController_acknowledge_sendsSignedInSessionStaffId',
         () async {
-      await client.signIn('ana@kachavalux.com');
       final controller = AdminDashboardController(
           repository: ApiAdminOperationsRepository(apiClient: client),
           alertChime: _SilentChime());

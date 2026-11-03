@@ -12,6 +12,12 @@ class AdminAppConfig {
     defaultValue: 'http://localhost:3001/api/v1/admin',
   );
 
+  /// Rostered staff email the app silently signs in with (no login screen).
+  static const String adminStaffEmail = String.fromEnvironment(
+    'ADMIN_STAFF_EMAIL',
+    defaultValue: 'eduardo.rivera@kachavalux.com',
+  );
+
   /// Required: no default. Validated at startup by `GuestPortalLink.configure`.
   static const String guestPortalUrl = String.fromEnvironment(
     'GUEST_PORTAL_URL',

@@ -10,7 +10,7 @@ import {
   GUEST_PORTAL_URL,
   prepareFreeVilla,
   readSemanticsSnapshot,
-  signInAsStaff,
+  openAdminDashboard,
   waitForAdminSyncCycles,
   submitNewStayDialog,
   waitForFlutterSemantics,
@@ -42,7 +42,7 @@ test.describe('Phase A: guest magic link reliability', () => {
     const guestMon = attachErrorMonitor(guestPage);
     const villa = uniqueVilla();
     const guestName = `Marisol Quintana ${villa.name.slice(-4)}`;
-    await signInAsStaff(adminPage);
+    await openAdminDashboard(adminPage);
     await prepareFreeVilla(adminPage, villa.id, villa.name);
     // Act 1 — create through the admin UI, filter the list to the new card and copy its link
     await submitNewStayDialog(adminPage, villa.name, guestName);
@@ -163,7 +163,7 @@ test.describe('Phase A: guest magic link reliability', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const villa = uniqueVilla();
     const guestName = `Failing Create ${villa.name.slice(-4)}`;
-    await signInAsStaff(page);
+    await openAdminDashboard(page);
     await prepareFreeVilla(page, villa.id, villa.name);
     await page.route('**/api/v1/admin/stays', async (route) => {
       if (route.request().method() === 'POST') {
@@ -190,7 +190,7 @@ test('E2E-PA06: admin UI creates a stay for a standard "Villa NNN" villa name (r
   await page.setViewportSize({ width: 1440, height: 900 });
   const n = String(Date.now()).slice(-4);
   const guestName = `Space Villa ${n}`;
-  await signInAsStaff(page);
+  await openAdminDashboard(page);
   await prepareFreeVilla(page, `villa-${n}`, `Villa ${n}`);
   const creates: number[] = [];
   page.on('response', (res) => {

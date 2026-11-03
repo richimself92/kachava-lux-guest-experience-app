@@ -278,15 +278,14 @@ void main() {
         'nav-tab-admin-larder',
         'nav-tab-admin-experiences',
         'nav-tab-admin-concierge',
-        'nav-tab-admin-folio'
       ]) {
         await tester.tap(find.byKey(Key(tab)));
         await tester.pumpAndSettle();
       }
-      expect(
-          find.textContaining(
-              'No active guest folio or mid-stay pulse reviews'),
-          findsOneWidget);
+      controller.selectTab(AdminWorkspaceTab.adminFolio);
+      await tester.pumpAndSettle();
+      expect(find.text('No feedback yet.'), findsOneWidget);
+      expect(find.text('No stays yet.'), findsOneWidget);
     });
 
     testWidgets('test_live_polling_refreshes_automatically_every_5_seconds',

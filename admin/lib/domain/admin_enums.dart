@@ -1,39 +1,39 @@
-/// The 6 Administrative & Concierge Operational Workspace Tabs (FR-14 to FR-19).
+/// Admin workspaces. Ids are stable (keys `nav-tab-<id>` / `workspace-<id>`).
 enum AdminWorkspaceTab {
   adminOverview(
     id: 'admin-overview',
-    label: '1. Live Summary & Alerts',
-    shortLabel: '1. Summary',
+    label: 'Dashboard',
+    shortLabel: 'Dashboard',
     subtitle: 'Live Alerts, Arrivals & Command Center',
   ),
   adminStays(
     id: 'admin-stays',
-    label: '2. Villas, Guests & Magic Links',
-    shortLabel: '2. Villas',
+    label: 'Reservations',
+    shortLabel: 'Reservations',
     subtitle: 'Stays, Personalization, Magic Link & Aviation Transfers',
   ),
   adminLarder(
     id: 'admin-larder',
-    label: '3. Pre-Arrival: Minibar & Pantry',
-    shortLabel: '3. Minibar',
+    label: 'Services',
+    shortLabel: 'Services',
     subtitle: 'Villa Stocking & Larder Provisioning Queue',
   ),
   adminExperiences(
     id: 'admin-experiences',
-    label: '4. Stay: Yacht, Dining & Tours',
-    shortLabel: '4. Tours',
+    label: 'Experiences',
+    shortLabel: 'Experiences',
     subtitle: 'Yacht, Private Dining, Excursions & Privileges Reservations',
   ),
   adminConcierge(
     id: 'admin-concierge',
-    label: '5. Stay: 24/7 Chat & Requests',
-    shortLabel: '5. Chat',
-    subtitle: '24/7 Concierge Dispatch, 4-Stage Lifecycle & Live Host Chat',
+    label: 'Tasks',
+    shortLabel: 'Tasks',
+    subtitle: '24/7 Resort Host Dispatch, 4-Stage Lifecycle & Live Host Chat',
   ),
   adminFolio(
     id: 'admin-folio',
-    label: '6. Stay Summary & Feedback',
-    shortLabel: '6. Summary',
+    label: 'Stay summary',
+    shortLabel: 'Stay summary',
     subtitle: 'Stay Summary, Acquired Services & Guest Feedback',
   );
 

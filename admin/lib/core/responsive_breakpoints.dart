@@ -16,7 +16,7 @@ class AdminBreakpoints {
 
   static const double mobileMaxWidth = 600.0;
   static const double desktopMinWidth = 1024.0;
-  static const double leftRailDesktopWidth = 260.0;
+  static const double leftRailDesktopWidth = 300.0;
   static const double leftRailTabletWidth = 72.0;
   static const double inspectorDrawerWidth = 420.0;
   static const double topBarHeight = 64.0;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../application/inspector_selection.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
+import '../../core/theme/kachava_tokens.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
 import 'drawer_staff_dropdown.dart';
@@ -145,6 +145,7 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
   @override
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
+    final theme = Theme.of(context);
     final options = _statusOptionsForType(widget.selection.type);
     if (!options.contains(_selectedStatus)) {
       _selectedStatus = options.first;
@@ -152,37 +153,44 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
     return Container(
       key: const Key('slide-over-inspector-drawer'),
       width: AdminBreakpoints.inspectorDrawerWidth,
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
+      padding: const EdgeInsets.all(KachavaTokens.space6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         border: Border(
-          left: BorderSide(color: KachavaAdminColors.borderLimestone),
+          left: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildDrawerHeader(isEs),
-          const SizedBox(height: 16),
+          _buildDrawerHeader(theme, isEs),
+          const SizedBox(height: KachavaTokens.space3),
           Text(
             AdminI18n.translateText(widget.selection.title, isEs),
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.obsidian,
-            ),
+            style: theme.textTheme.titleMedium,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: KachavaTokens.space1),
           Text(
             widget.selection.subtitle,
-            style: const TextStyle(
-              fontSize: 12,
-              color: KachavaAdminColors.neutralMuted,
-            ),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          if (widget.selection.type == InspectorRecordType.stay) ...[
+            const SizedBox(height: KachavaTokens.space2),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                key: const Key('open-stay-summary-btn'),
+                onPressed: () =>
+                    widget.controller.selectTab(AdminWorkspaceTab.adminFolio),
+                icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                label: Text(
+                    AdminI18n.tr(isEs, 'Stay summary', 'Resumen de estancia')),
+              ),
+            ),
+          ],
+          const SizedBox(height: KachavaTokens.space6),
           KeyedSubtree(
             key: ValueKey('drawer-staff-${widget.selection.recordId}'),
             child: DrawerStaffDropdown(
@@ -192,29 +200,19 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
               onChanged: (id) => setState(() => _selectedStaffId = id),
             ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            AdminI18n.tr(isEs, 'OPERATIONAL STATUS', 'ESTADO OPERATIVO'),
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.4,
-              color: KachavaAdminColors.mutedBronze,
-            ),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: KachavaTokens.space4),
           DropdownButtonFormField<String>(
             key: const Key('drawer-status-dropdown'),
             isExpanded: true,
             initialValue: _selectedStatus,
+            decoration: InputDecoration(
+              labelText: AdminI18n.tr(isEs, 'Status', 'Estado'),
+            ),
             items: options
                 .map(
                   (status) => DropdownMenuItem<String>(
                     value: status,
-                    child: Text(
-                      AdminI18n.statusLabel(status, isEs),
-                      style: const TextStyle(fontSize: 12),
-                    ),
+                    child: Text(AdminI18n.statusLabel(status, isEs)),
                   ),
                 )
                 .toList(),
@@ -222,17 +220,12 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
               if (val != null) setState(() => _selectedStatus = val);
             },
           ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
+          const SizedBox(height: KachavaTokens.space6),
+          FilledButton(
             key: const Key('drawer-assign-notify-btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.zapotePrimary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
             onPressed: _submitAssignment,
-            icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: Text(
+            child: Text(
               AdminI18n.tr(
                 isEs,
                 'Save & Update Status',
@@ -245,28 +238,20 @@ class _SlideOverInspectorDrawerState extends State<SlideOverInspectorDrawer> {
     );
   }
 
-  Widget _buildDrawerHeader(bool isEs) {
+  Widget _buildDrawerHeader(ThemeData theme, bool isEs) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          AdminI18n.tr(
-            isEs,
-            'UPDATE STATUS · HOST ADMIN',
-            'CAMBIAR ESTADO · HOST ADMIN',
-          ),
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.6,
-            color: KachavaAdminColors.mutedBronze,
+        Expanded(
+          child: Text(
+            AdminI18n.tr(isEs, 'Update status', 'Cambiar estado'),
+            style: theme.textTheme.titleLarge,
           ),
         ),
         IconButton(
           key: const Key('close-inspector-drawer'),
-          tooltip: 'Close inspector drawer',
+          tooltip: AdminI18n.tr(isEs, 'Close', 'Cerrar'),
           onPressed: widget.controller.closeInspector,
-          icon: const Icon(Icons.close, size: 18),
+          icon: const Icon(Icons.close, size: 20),
         ),
       ],
     );

@@ -55,11 +55,10 @@ class DrawerStaffDropdown extends StatelessWidget {
       key: const Key('drawer-staff-dropdown'),
       isExpanded: true,
       initialValue: value,
-      hint: Text(unassigned, style: const TextStyle(fontSize: 12)),
-      disabledHint: Text(unassigned, style: const TextStyle(fontSize: 12)),
+      hint: Text(unassigned),
+      disabledHint: Text(unassigned),
       decoration: InputDecoration(
-          labelText: AdminI18n.tr(isEs, 'Assigned to', 'Responsable'),
-          border: const OutlineInputBorder()),
+          labelText: AdminI18n.tr(isEs, 'Assigned to', 'Responsable')),
       items: [
         for (final s in staff)
           DropdownMenuItem<String>(
@@ -67,8 +66,7 @@ class DrawerStaffDropdown extends StatelessWidget {
             child: Text(
                 AdminI18n.staffLabel(
                     s.fullName.isNotEmpty ? s.fullName : s.shortName, isEs),
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12)),
+                overflow: TextOverflow.ellipsis),
           ),
       ],
       onChanged: staff.isEmpty ? null : onChanged,

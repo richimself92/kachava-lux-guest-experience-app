@@ -2,10 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/admin_stay_entities.dart';
 
-/// Staff session for `/api/v1/admin/*`: holds the bearer token issued by
-/// `POST /admin/auth/login` and the signed-in [staff] member it returned.
-/// Listeners are notified when the session opens or expires so the app can
-/// return to the sign-in screen.
+/// Staff session for `/api/v1/admin/*`: holds the bearer token issued by the
+/// silent `POST /admin/auth/login` and the [staff] member it returned.
+/// Listeners are notified when the session opens or expires.
 class AdminSession extends ChangeNotifier {
   AdminSession({String? token, StaffMember? staff})
       : _token = token,

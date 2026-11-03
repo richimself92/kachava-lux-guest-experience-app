@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
 import '../../core/rating_label.dart';
-import '../../core/admin_theme.dart';
+import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_entities.dart';
+import '../../domain/admin_enums.dart';
 import '../../domain/admin_stay_entities.dart';
-import '../widgets/semantic_status_badge.dart';
+import '../components/components.dart';
+import '../widgets/semantic_status_badge.dart' show AdminEmptyStateBox;
 
-/// Tab 6: `admin-folio` — Stay Summary, Acquired Services & Guest Feedback (FR-19).
+/// `admin-folio` — "Stay summary": guest feedback and services per stay.
+/// Reached from a stay, so it offers a way back to Reservations.
 class FolioWorkspace extends StatelessWidget {
   const FolioWorkspace({super.key, required this.controller});
 
@@ -21,142 +24,112 @@ class FolioWorkspace extends StatelessWidget {
 
     return ListView(
       key: const Key('workspace-admin-folio'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(KachavaTokens.space6),
       children: [
-        AdminSectionHeader(
-          eyebrow: AdminI18n.tr(
-            isEs,
-            'STAY SUMMARY & GUEST FEEDBACK · FR-19',
-            'RESUMEN DE ESTANCIA Y CALIFICACIÓN · FR-19',
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            key: const Key('stay-summary-back-btn'),
+            onPressed: () => controller.selectTab(AdminWorkspaceTab.adminStays),
+            icon: const Icon(Icons.arrow_back, size: 18),
+            label: Text(AdminI18n.tr(isEs, 'Reservations', 'Reservas')),
           ),
-          title: AdminI18n.folioTitle(isEs),
         ),
-        const SizedBox(height: 16),
-        _buildFeedbackSection(pulses, isEs),
-        const SizedBox(height: 20),
-        _buildAcquiredServicesSection(stays, isEs),
+        const SizedBox(height: KachavaTokens.space2),
+        PageHeader(
+          title: AdminI18n.tr(isEs, 'Stay summary', 'Resumen de estancia'),
+          info: AdminI18n.tr(
+            isEs,
+            'Guest feedback and everything ordered, booked or requested per stay. No billing.',
+            'Comentarios del huésped y todo lo pedido, reservado o solicitado por estancia. Sin cobros.',
+          ),
+        ),
+        const SizedBox(height: KachavaTokens.space6),
+        _buildFeedbackSection(context, pulses, isEs),
+        const SizedBox(height: KachavaTokens.space8),
+        _buildAcquiredServicesSection(context, stays, isEs),
       ],
     );
   }
 
-  Widget _buildFeedbackSection(List<AdminMidStayPulse> pulses, bool isEs) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KachavaAdminColors.borderLimestone),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AdminI18n.tr(
-              isEs,
-              'Guest Stay Rating & Feedback ("How Is Your Stay Going?")',
-              'Calificación y Comentarios: "¿Cómo va tu estancia?"',
-            ),
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.obsidian,
+  Widget _buildFeedbackSection(
+      BuildContext context, List<AdminMidStayPulse> pulses, bool isEs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Flexible(
+            child: Text(
+              AdminI18n.tr(isEs, 'Guest feedback', 'Comentarios del huésped'),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
-          const SizedBox(height: 12),
-          if (pulses.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: KachavaAdminColors.canvasLow,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: KachavaAdminColors.borderWarm),
-              ),
-              child: Text(
-                AdminI18n.tr(
-                  isEs,
-                  'No guest stay ratings or comments submitted yet.',
-                  'El huésped aún no ha enviado su calificación o comentario en "¿Cómo va tu estancia?".',
-                ),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: KachavaAdminColors.obsidian,
-                ),
-              ),
-            )
-          else
-            ...pulses.map((pulse) => _buildMidStayPulseCard(pulse, isEs)),
-        ],
-      ),
+          InfoTooltip(AdminI18n.tr(
+            isEs,
+            'Answers to "How is your stay going?"',
+            'Respuestas a "¿Cómo va tu estancia?"',
+          )),
+        ]),
+        const SizedBox(height: KachavaTokens.space2),
+        if (pulses.isEmpty)
+          AdminEmptyStateBox(
+            message: AdminI18n.tr(
+                isEs, 'No feedback yet.', 'Aún no hay comentarios.'),
+          )
+        else
+          ...pulses
+              .map((pulse) => _buildMidStayPulseCard(context, pulse, isEs)),
+      ],
     );
   }
 
-  Widget _buildMidStayPulseCard(AdminMidStayPulse pulse, bool isEs) {
+  Widget _buildMidStayPulseCard(
+      BuildContext context, AdminMidStayPulse pulse, bool isEs) {
+    final theme = Theme.of(context);
     final stars = RatingLabel.stars(pulse.rating);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: KachavaTokens.space3),
+      padding: const EdgeInsets.all(KachavaTokens.space4),
       decoration: BoxDecoration(
-        color: KachavaAdminColors.canvasLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KachavaAdminColors.borderWarm),
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: 8,
-            runSpacing: 6,
+            spacing: KachavaTokens.space2,
+            runSpacing: KachavaTokens.space2,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              SemanticStatusBadge(label: pulse.status),
+              StatusChip.fromStatus(pulse.status),
               Text(
                 '${AdminI18n.orDash(pulse.villaName)} · ${AdminI18n.orDash(pulse.guestNames)}',
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleMedium,
               ),
-              Text(
-                stars,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: KachavaAdminColors.zapotePrimary,
-                ),
-              ),
+              Text(stars, style: theme.textTheme.titleMedium),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KachavaTokens.space2),
           Text(
             AdminI18n.translateText(pulse.sentiment, isEs),
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.obsidian,
-            ),
+            style: theme.textTheme.bodyLarge,
           ),
           if (pulse.guestNote.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(pulse.guestNote, style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: KachavaTokens.space1),
+            Text(pulse.guestNote,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: KachavaTokens.space3),
           ElevatedButton(
             key: Key('attend-pulse-${pulse.checkInId}'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.zapotePrimary,
-              foregroundColor: Colors.white,
-            ),
             onPressed: () => controller.attendMidStayPulse(
               checkInId: pulse.checkInId,
               followUpNote: 'Atendido por HOST ADMIN',
             ),
             child: Text(
-              AdminI18n.tr(
-                isEs,
-                'Acknowledge & Mark Attended',
-                'Confirmar Atención del Host',
-              ),
+              AdminI18n.tr(isEs, 'Mark attended', 'Marcar atendido'),
             ),
           ),
         ],
@@ -164,47 +137,33 @@ class FolioWorkspace extends StatelessWidget {
     );
   }
 
-  Widget _buildAcquiredServicesSection(List<AdminStayRecord> stays, bool isEs) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KachavaAdminColors.borderLimestone),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AdminI18n.tr(
-              isEs,
-              'Acquired Services & Stay Activity Summary',
-              'Resumen de lo Adquirido y Solicitado por Estancia',
-            ),
-            style: const TextStyle(
-              fontFamily: 'Libre Baskerville',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: KachavaAdminColors.obsidian,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (stays.isEmpty)
-            AdminEmptyStateBox(
-              message: AdminI18n.tr(
-                isEs,
-                'No active guest folio or mid-stay pulse reviews yet. Create a guest stay first.',
-                'No hay estancias ni comentarios activos. Crea primero un huésped.',
-              ),
-            )
-          else
-            ...stays.map((stay) => _buildStaySummaryCard(stay, isEs)),
-        ],
-      ),
+  Widget _buildAcquiredServicesSection(
+      BuildContext context, List<AdminStayRecord> stays, bool isEs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AdminI18n.tr(isEs, 'Services by stay', 'Servicios por estancia'),
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: KachavaTokens.space3),
+        if (stays.isEmpty)
+          AdminEmptyStateBox(
+            message:
+                AdminI18n.tr(isEs, 'No stays yet.', 'Aún no hay estancias.'),
+          )
+        else
+          ...stays.map((stay) => _buildStaySummaryCard(context, stay, isEs)),
+      ],
     );
   }
 
-  Widget _buildStaySummaryCard(AdminStayRecord stay, bool isEs) {
+  Widget _buildStaySummaryCard(
+      BuildContext context, AdminStayRecord stay, bool isEs) {
+    final theme = Theme.of(context);
+    final itemStyle = theme.textTheme.bodyMedium;
+    final emptyStyle = theme.textTheme.bodyMedium
+        ?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final orders =
         controller.larderOrders.where((o) => o.stayId == stay.stayId).toList();
     final bookings =
@@ -214,126 +173,103 @@ class FolioWorkspace extends StatelessWidget {
         .toList();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: KachavaTokens.space3),
+      padding: const EdgeInsets.all(KachavaTokens.space4),
       decoration: BoxDecoration(
-        color: KachavaAdminColors.canvasLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: KachavaAdminColors.borderWarm),
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: 10,
-            runSpacing: 6,
+            spacing: KachavaTokens.space3,
+            runSpacing: KachavaTokens.space2,
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 '${AdminI18n.orDash(stay.villaName)} · ${AdminI18n.orDash(stay.guestNames)} (${AdminI18n.orDash(stay.checkInDate)} – ${AdminI18n.orDash(stay.checkOutDate)} · ${stay.nights} ${AdminI18n.tr(isEs, "nights", "noches")})',
-                style: const TextStyle(
-                  fontFamily: 'Libre Baskerville',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: KachavaAdminColors.obsidian,
-                ),
+                style: theme.textTheme.titleMedium,
               ),
-              SemanticStatusBadge(label: stay.lifecycleStatus.label),
+              StatusChip.fromStatus(stay.lifecycleStatus.label),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: KachavaTokens.space3),
           _buildSubHeading(
+            context,
             AdminI18n.tr(isEs, 'Minibar & Pantry', 'Minibar y Despensa'),
           ),
           if (orders.isEmpty)
             Text(
               AdminI18n.tr(isEs, 'No minibar orders', 'Sin pedidos de minibar'),
-              style: const TextStyle(
-                  fontSize: 12, color: KachavaAdminColors.neutralMuted),
+              style: emptyStyle,
             )
           else
             ...orders.expand((order) => order.items.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: KachavaTokens.space1),
                   child: Wrap(
-                      spacing: 8,
+                      spacing: KachavaTokens.space2,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text('${item.quantity}x ${item.name}',
-                            style: const TextStyle(
-                                fontSize: 12.5, fontWeight: FontWeight.w600)),
-                        SemanticStatusBadge(label: order.status),
+                            style: itemStyle),
+                        StatusChip.fromStatus(order.status),
                       ]),
                 ))),
-          const SizedBox(height: 8),
+          const SizedBox(height: KachavaTokens.space3),
           _buildSubHeading(
-            AdminI18n.tr(
-              isEs,
-              'Experiences, Yacht & Private Dining',
-              'Experiencias, Yate y Cena Privada',
-            ),
+            context,
+            AdminI18n.tr(isEs, 'Experiences', 'Experiencias'),
           ),
           if (bookings.isEmpty)
             Text(
               AdminI18n.tr(
                   isEs, 'No bookings registered', 'Sin reservas registradas'),
-              style: const TextStyle(
-                  fontSize: 12, color: KachavaAdminColors.neutralMuted),
+              style: emptyStyle,
             )
           else
             ...bookings.map((b) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: KachavaTokens.space1),
                   child: Wrap(
-                      spacing: 8,
+                      spacing: KachavaTokens.space2,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text('${b.title} (${b.category}) — ${b.scheduledTime}',
-                            style: const TextStyle(
-                                fontSize: 12.5, fontWeight: FontWeight.w600)),
-                        SemanticStatusBadge(label: b.status),
+                            style: itemStyle),
+                        StatusChip.fromStatus(b.status),
                         if (b.status == 'Cancelled' &&
                             b.cancellationReason.isNotEmpty)
                           Text('(${b.cancellationReason})',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF93000A))),
+                              style: itemStyle?.copyWith(
+                                  color: StatusTone.error.foreground)),
                       ]),
                 )),
-          const SizedBox(height: 8),
+          const SizedBox(height: KachavaTokens.space3),
           _buildSubHeading(
-            AdminI18n.tr(
-                isEs, 'Concierge Requests', 'Solicitudes de Concierge'),
+            context,
+            AdminI18n.tr(isEs, 'Tasks', 'Tareas'),
           ),
           if (tickets.isEmpty)
             Text(
               AdminI18n.tr(isEs, 'No requests registered',
                   'Sin solicitudes registradas'),
-              style: const TextStyle(
-                  fontSize: 12, color: KachavaAdminColors.neutralMuted),
+              style: emptyStyle,
             )
           else
             ...tickets.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: KachavaTokens.space1),
                   child: Text(
                       '${t.title} — ${AdminI18n.statusLabel(t.stage.label, isEs)}',
-                      style: const TextStyle(
-                          fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      style: itemStyle),
                 )),
         ],
       ),
     );
   }
 
-  Widget _buildSubHeading(String label) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            color: KachavaAdminColors.zapotePrimary,
-          ),
-        ),
+  Widget _buildSubHeading(BuildContext context, String label) => Padding(
+        padding: const EdgeInsets.only(bottom: KachavaTokens.space1),
+        child: Text(label, style: Theme.of(context).textTheme.titleSmall),
       );
 }

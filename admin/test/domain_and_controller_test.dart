@@ -79,7 +79,7 @@ void main() {
       expect(AdminAppConfig.apiBaseUrl, isNotEmpty);
     });
 
-    test('test_api_client_signIn_posts_email_then_sends_issued_token_on_sync',
+    test('test_api_client_silentLogin_posts_staff_email_then_sends_token',
         () async {
       final requests = <String>[];
       String? loginBody;
@@ -99,9 +99,9 @@ void main() {
         syncAuth = request.headers['Authorization'];
         return http.Response(jsonEncode({'success': true, 'data': {}}), 200);
       });
-      final client = AdminApiClient(httpClient: mockHttp);
+      final client = AdminApiClient(
+          httpClient: mockHttp, staffEmail: 'mateo@kachavalux.com');
 
-      await client.signIn('mateo@kachavalux.com');
       await client.getJson('/sync');
 
       expect(requests,
@@ -109,31 +109,6 @@ void main() {
       expect(jsonDecode(loginBody!), {'email': 'mateo@kachavalux.com'});
       expect(syncAuth, 'Bearer hmac_signed_staff_jwt');
       expect(client.session.isAuthenticated, isTrue);
-    });
-
-    test('test_api_client_without_session_refuses_call_and_sends_nothing',
-        () async {
-      var calls = 0;
-      final mockHttp = MockClient((_) async {
-        calls++;
-        return http.Response('{}', 200);
-      });
-      final client = AdminApiClient(httpClient: mockHttp);
-
-      await expectLater(
-          client.getJson('/sync'), throwsA(isA<AdminUnauthorizedException>()));
-      expect(calls, 0);
-    });
-
-    test('test_api_client_signIn_rejected_throws_and_stays_signed_out',
-        () async {
-      final mockHttp = MockClient(
-          (_) async => http.Response('{"message":"Invalid credentials"}', 401));
-      final client = AdminApiClient(httpClient: mockHttp);
-
-      await expectLater(client.signIn('nobody@example.com'),
-          throwsA(isA<AdminUnauthorizedException>()));
-      expect(client.session.isAuthenticated, isFalse);
     });
 
     test('test_api_client_401_response_expires_session_and_throws', () async {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../application/admin_dashboard_controller.dart';
 import '../application/admin_live_sync.dart';
 import '../core/admin_i18n.dart';
-import '../core/admin_theme.dart';
+import '../core/theme/kachava_tokens.dart';
 import '../core/responsive_breakpoints.dart';
 import '../domain/admin_enums.dart';
 import 'widgets/admin_navigation_bars.dart';
@@ -17,7 +17,7 @@ import 'workspaces/larder_workspace.dart';
 import 'workspaces/overview_workspace.dart';
 import 'workspaces/stays_workspace.dart';
 
-/// 3-Breakpoint Responsive Browser & Mobile-Adaptive Command Shell.
+/// Responsive shell: sidebar (desktop), icon rail (tablet), drawer (mobile).
 class AdminCommandShell extends StatelessWidget {
   const AdminCommandShell(
       {super.key, required this.controller, this.syncStatus});
@@ -37,9 +37,8 @@ class AdminCommandShell extends StatelessWidget {
           builder: (context, constraints) {
             final viewport = AdminBreakpoints.resolve(constraints.maxWidth);
             return Scaffold(
-              backgroundColor: KachavaAdminColors.canvasLow,
-              bottomNavigationBar: viewport == AdminViewportSize.mobile
-                  ? MobileCommandBottomNav(controller: controller)
+              drawer: viewport == AdminViewportSize.mobile
+                  ? AdminMobileNavDrawer(controller: controller)
                   : null,
               body: Column(
                 children: [
@@ -72,7 +71,10 @@ class AdminCommandShell extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              TopCommandBar(controller: controller),
+              TopCommandBar(
+                controller: controller,
+                showMenuButton: viewport == AdminViewportSize.mobile,
+              ),
               Expanded(
                 child: Stack(
                   children: [
@@ -131,72 +133,40 @@ class AdminCommandShell extends StatelessWidget {
     }
   }
 
+  /// One-line neutral banner; the chime state only adds a short prefix.
   Widget _buildToastBanner(String message) {
     final isEs = controller.isEs;
-    final ringing = controller.isChimeRinging;
-    final headerText = isEs
-        ? (ringing
-            ? 'ALERTA ENTRANTE · NUEVA ACTUALIZACIÓN (SONANDO 10S)'
-            : 'NOTIFICACIÓN DE OPERACIONES · HOST ADMIN')
-        : (ringing
-            ? 'INCOMING GUEST UPDATE · LIVE ALERT (10S CHIME ACTIVE)'
-            : 'OPERATIONS NOTIFICATION · HOST ADMIN');
+    final header = controller.isChimeRinging
+        ? AdminI18n.tr(isEs, 'New guest update', 'Nueva actualización')
+        : null;
+    const onDark = TextStyle(
+        fontSize: 14, height: 20 / 14, color: KachavaTokens.onPrimary);
     return Container(
       key: const Key('admin-toast-banner'),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.obsidian,
-        border: Border.all(color: KachavaAdminColors.copalGold, width: 1.5),
-      ),
+      color: KachavaTokens.text,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          const Icon(
-            Icons.notifications_active,
-            size: 18,
-            color: KachavaAdminColors.copalGold,
-          ),
-          const SizedBox(width: 8),
+          const Icon(Icons.notifications_none,
+              size: 18, color: KachavaTokens.onPrimary),
+          const SizedBox(width: 12),
+          if (header != null) ...[
+            Text(header, style: onDark.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(width: 8),
+          ],
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  headerText,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                    color: KachavaAdminColors.copalGold,
-                  ),
-                ),
-                SelectableText(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
+            child: Text(message,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: onDark),
           ),
           const SizedBox(width: 8),
-          ElevatedButton.icon(
+          TextButton.icon(
             key: const Key('dismiss-alert-chime-btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.copalGold,
-              foregroundColor: KachavaAdminColors.obsidian,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            ),
+            style:
+                TextButton.styleFrom(foregroundColor: KachavaTokens.onPrimary),
             onPressed: controller.dismissToastAndStopChime,
-            icon: const Icon(Icons.volume_off, size: 14),
-            label: Text(
-              isEs ? 'Silenciar / Cerrar' : 'Mute / Dismiss',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-            ),
+            icon: const Icon(Icons.volume_off_outlined, size: 18),
+            label: Text(isEs ? 'Silenciar / Cerrar' : 'Mute / Dismiss'),
           ),
         ],
       ),

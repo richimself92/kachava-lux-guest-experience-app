@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
 
 /// Opens the modal dialog to add a new Experience to the live catalog.
 Future<void> showAddExperienceCatalogDialog(
@@ -71,9 +70,7 @@ class _AddExperienceCatalogDialogState
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(AdminI18n.tr(
-          isEs, 'New Experience in Catalog', 'Nueva Experiencia al Catálogo')),
+      title: Text(AdminI18n.tr(isEs, 'New experience', 'Nueva experiencia')),
       content: SizedBox(
         width: 420,
         child: Column(
@@ -87,21 +84,21 @@ class _AddExperienceCatalogDialogState
               hint: AdminI18n.tr(isEs, 'e.g. Sian Ka\'an Sunset Tour',
                   'Ej. Expedición Sian Ka\'an'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             _catalogInput(
               key: const Key('catalog-exp-duration-input'),
               ctrl: _durationCtrl,
               label: AdminI18n.tr(isEs, 'Duration', 'Duración'),
               hint: AdminI18n.tr(isEs, 'e.g. 4 Hours', 'Ej. 4 Horas'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             _catalogInput(
               key: const Key('catalog-exp-price-input'),
               ctrl: _priceCtrl,
               label: AdminI18n.tr(isEs, 'Price (USD)', 'Precio (USD)'),
               hint: AdminI18n.tr(isEs, 'e.g. 350', 'Ej. 350'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             _catalogInput(
               key: const Key('catalog-exp-desc-input'),
               ctrl: _descCtrl,
@@ -119,10 +116,6 @@ class _AddExperienceCatalogDialogState
         ),
         ElevatedButton(
           key: const Key('confirm-add-catalog-experience-btn'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KachavaAdminColors.zapotePrimary,
-            foregroundColor: Colors.white,
-          ),
           onPressed: _submit,
           child: Text(
               AdminI18n.tr(isEs, 'Save Experience', 'Guardar Experiencia')),
@@ -170,9 +163,7 @@ class _AddLarderCatalogDialogState extends State<_AddLarderCatalogDialog> {
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(AdminI18n.tr(
-          isEs, 'New Minibar / Larder Product', 'Nuevo Producto de Minibar')),
+      title: Text(AdminI18n.tr(isEs, 'New product', 'Nuevo producto')),
       content: SizedBox(
         width: 400,
         child: Column(
@@ -185,7 +176,7 @@ class _AddLarderCatalogDialogState extends State<_AddLarderCatalogDialog> {
               hint: AdminI18n.tr(
                   isEs, 'e.g. Kombucha Hibiscus', 'Ej. Kombucha de Jamaica'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             _catalogInput(
               key: const Key('catalog-larder-price-input'),
               ctrl: _priceCtrl,
@@ -202,10 +193,6 @@ class _AddLarderCatalogDialogState extends State<_AddLarderCatalogDialog> {
         ),
         ElevatedButton(
           key: const Key('confirm-add-catalog-larder-btn'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KachavaAdminColors.zapotePrimary,
-            foregroundColor: Colors.white,
-          ),
           onPressed: _submit,
           child: Text(AdminI18n.tr(isEs, 'Save Product', 'Guardar Producto')),
         ),
@@ -226,6 +213,5 @@ Widget _catalogInput({
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        border: const OutlineInputBorder(),
       ),
     );

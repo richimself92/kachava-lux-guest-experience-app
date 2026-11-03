@@ -73,7 +73,7 @@ class AdminI18n {
     'Dietary & Allergy Update': 'Actualización de Dieta y Alergias',
     'Larder Stocking Order': 'Pedido de Minibar y Despensa',
     'New Booking': 'Nueva Reserva',
-    'New Concierge Request': 'Nueva Solicitud de Concierge',
+    'New Concierge Request': 'Nueva Solicitud al Resort Host',
     'New Chat Message': 'Nuevo Mensaje de Chat',
     'Mid-Stay Check-In': 'Comentario de Estancia',
     'Express Checkout': 'Solicitud de Salida Express',
@@ -140,7 +140,7 @@ class AdminI18n {
     'Dietary & Allergy Update': 'Actualización de Dieta y Alergias',
     'Larder Stocking Order': 'Pedido de Minibar y Despensa',
     'New Booking': 'Nueva Reserva',
-    'New Concierge Request': 'Nueva Solicitud de Concierge',
+    'New Concierge Request': 'Nueva Solicitud al Resort Host',
     'New Chat Message': 'Nuevo Mensaje de Chat',
     'Mid-Stay Check-In': 'Comentario de Estancia',
     'Express Checkout': 'Solicitud de Salida Express',
@@ -182,6 +182,15 @@ class AdminI18n {
     return _esStatusMap[raw] ?? raw;
   }
 
+  /// Display label for an alert category; the wire value stays unchanged.
+  static String alertCategoryLabel(AlertCategory category, bool isEs) =>
+      switch (category) {
+        AlertCategory.concierge => 'Resort Host',
+        AlertCategory.larder => tr(isEs, 'Services', 'Servicios'),
+        AlertCategory.midstay => tr(isEs, 'Mid-stay', 'Mitad de estancia'),
+        _ => statusLabel(category.label, isEs),
+      };
+
   static String translateText(String text, [bool? isEs]) {
     final useEs = isEs ?? currentIsEs;
     if (!useEs) return text;
@@ -201,37 +210,22 @@ class AdminI18n {
     if (!isEs) return tab.label;
     switch (tab) {
       case AdminWorkspaceTab.adminOverview:
-        return '1. Resumen y Alertas en Vivo';
+        return 'Panel';
       case AdminWorkspaceTab.adminStays:
-        return '2. Villas, Huéspedes y Crear Link';
+        return 'Reservas';
       case AdminWorkspaceTab.adminLarder:
-        return '3. Pre-Llegada: Minibar y Despensa';
+        return 'Servicios';
       case AdminWorkspaceTab.adminExperiences:
-        return '4. Estancia: Yate, Cenas y Tours';
+        return 'Experiencias';
       case AdminWorkspaceTab.adminConcierge:
-        return '5. Estancia: Chat 24/7 y Solicitudes';
+        return 'Tareas';
       case AdminWorkspaceTab.adminFolio:
-        return '6. Resumen de Estancia y Calificación';
+        return 'Resumen de estancia';
     }
   }
 
-  static String tabShortLabel(AdminWorkspaceTab tab, bool isEs) {
-    if (!isEs) return tab.shortLabel;
-    switch (tab) {
-      case AdminWorkspaceTab.adminOverview:
-        return '1. Resumen';
-      case AdminWorkspaceTab.adminStays:
-        return '2. Villas';
-      case AdminWorkspaceTab.adminLarder:
-        return '3. Despensa';
-      case AdminWorkspaceTab.adminExperiences:
-        return '4. Tours';
-      case AdminWorkspaceTab.adminConcierge:
-        return '5. Chat';
-      case AdminWorkspaceTab.adminFolio:
-        return '6. Resumen';
-    }
-  }
+  static String tabShortLabel(AdminWorkspaceTab tab, bool isEs) =>
+      isEs ? tabLabel(tab, true) : tab.shortLabel;
 
   static String searchHint(bool isEs) => tr(
         isEs,
@@ -249,9 +243,9 @@ class AdminI18n {
   static String kpiResidencies(bool isEs) =>
       tr(isEs, 'Active Residencies', 'Villas Ocupadas');
   static String kpiConcierge(bool isEs) =>
-      tr(isEs, 'Open Concierge Tickets', 'Solicitudes Abiertas');
-  static String kpiBookings(bool isEs) =>
-      tr(isEs, 'Pending Bookings & Larder', 'Reservas y Minibar Pendientes');
+      tr(isEs, 'Open Resort Host Tickets', 'Solicitudes Abiertas');
+  static String kpiBookings(bool isEs) => tr(
+      isEs, 'Pending Bookings & Services', 'Reservas y Servicios Pendientes');
   static String kpiUrgent(bool isEs) =>
       tr(isEs, 'Urgent SLA Alerts', 'Alertas Urgentes');
 
@@ -281,7 +275,7 @@ class AdminI18n {
 
   static String conciergeTitle(bool isEs) => tr(
         isEs,
-        '24/7 Concierge Dispatch, 4-Stage Lifecycle & Live Host Chat',
+        '24/7 Resort Host Dispatch, 4-Stage Lifecycle & Live Host Chat',
         'Atención de Solicitudes, Mantenimiento y Chat en Vivo',
       );
 

@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../application/admin_dashboard_controller.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/admin_theme.dart';
+import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_stay_entities.dart';
-
-const _dialogTitleStyle = TextStyle(
-  fontFamily: 'Libre Baskerville',
-  fontSize: 18,
-  fontWeight: FontWeight.w700,
-  color: KachavaAdminColors.obsidian,
-);
 
 /// Opens the modal dialog to create a new Guest Stay & generate a Magic Link.
 Future<void> showNewStayDialog(
@@ -137,11 +130,8 @@ class _NewStayDialogState extends State<_NewStayDialog> {
     final isEs = widget.controller.isEs,
         occ = widget.controller.activeStayForVilla(_selectedVilla ?? '');
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(
-          AdminI18n.tr(isEs, 'New Guest Stay & Magic Link',
-              'Nuevo Huésped y Crear Link'),
-          style: _dialogTitleStyle),
+      title: Text(AdminI18n.tr(
+          isEs, 'New Guest Stay & Magic Link', 'Nuevo Huésped y Crear Link')),
       content: SizedBox(
           width: 460,
           child: SingleChildScrollView(child: _buildForm(isEs, occ))),
@@ -210,21 +200,18 @@ class _NewStayDialogState extends State<_NewStayDialog> {
       initialValue: _selectedVilla,
       isExpanded: true,
       disabledHint: Text(
-          AdminI18n.tr(isEs, 'No villas yet', 'Aún no hay villas'),
-          style: const TextStyle(fontSize: 12)),
+        AdminI18n.tr(isEs, 'No villas yet', 'Aún no hay villas'),
+      ),
       decoration: InputDecoration(
-          labelText: AdminI18n.tr(isEs, 'Select Villa', 'Seleccionar Villa'),
-          border: const OutlineInputBorder()),
+          labelText: AdminI18n.tr(isEs, 'Select Villa', 'Seleccionar Villa')),
       items: widget.controller.villas.map((v) {
         final occ = widget.controller.activeStayForVilla(v.displayLabel);
         final text = occ != null
-            ? '🔴 ${v.displayLabel} — ${AdminI18n.tr(isEs, "OCCUPIED", "OCUPADA")} (${occ.guestNames})'
-            : '🟢 ${v.displayLabel} — ${AdminI18n.tr(isEs, "AVAILABLE", "LIBRE")}';
+            ? '${v.displayLabel} — ${AdminI18n.tr(isEs, "OCCUPIED", "OCUPADA")} (${occ.guestNames})'
+            : '${v.displayLabel} — ${AdminI18n.tr(isEs, "AVAILABLE", "LIBRE")}';
         return DropdownMenuItem(
             value: v.displayLabel,
-            child: Text(text,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12)));
+            child: Text(text, overflow: TextOverflow.ellipsis));
       }).toList(),
       onChanged: (val) {
         if (val != null) setState(() => _selectedVilla = val);
@@ -235,20 +222,19 @@ class _NewStayDialogState extends State<_NewStayDialog> {
   Widget _buildOccupiedWarning(String guestNames, bool isEs) {
     return Container(
       key: const Key('occupied-villa-warning'),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(KachavaTokens.space3),
       decoration: BoxDecoration(
-          color: const Color(0xFFFFDAD6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFBA1A1A))),
+          color: StatusTone.error.background,
+          borderRadius: BorderRadius.circular(KachavaTokens.radiusMd)),
       child: Text(
           AdminI18n.tr(
               isEs,
-              '⚠️ Villa Occupied by $guestNames. Please Check-Out / Release this villa first, or select a FREE (🟢) villa.',
-              '⚠️ Villa Ocupada por $guestNames. Primero pulsa "Dar Salida / Liberar Villa" en su tarjeta o elige una villa LIBRE (🟢).'),
-          style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF93000A))),
+              'Villa occupied by $guestNames. Release it first or pick a free villa.',
+              'Villa ocupada por $guestNames. Libérala primero o elige una villa libre.'),
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: StatusTone.error.foreground)),
     );
   }
 }
@@ -284,11 +270,8 @@ class _ConfigureWifiDialogState extends State<_ConfigureWifiDialog> {
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(
-          AdminI18n.tr(isEs, 'Configure Villa Wi-Fi Network',
-              'Configurar Red Wi-Fi de la Villa'),
-          style: _dialogTitleStyle),
+      title: Text(AdminI18n.tr(isEs, 'Configure Villa Wi-Fi Network',
+          'Configurar Red Wi-Fi de la Villa')),
       content: SizedBox(
         width: 400,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -349,11 +332,8 @@ class _AssignTransferDialogState extends State<_AssignTransferDialog> {
   Widget build(BuildContext context) {
     final isEs = widget.controller.isEs;
     return AlertDialog(
-      backgroundColor: KachavaAdminColors.surfacePaper,
-      title: Text(
-          AdminI18n.tr(isEs, 'Assign Chauffeur & Meeting Point',
-              'Asignar Chofer y Punto de Encuentro'),
-          style: _dialogTitleStyle),
+      title: Text(AdminI18n.tr(isEs, 'Assign Chauffeur & Meeting Point',
+          'Asignar Chofer y Punto de Encuentro')),
       content: SizedBox(
         width: 440,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -377,8 +357,7 @@ class _AssignTransferDialogState extends State<_AssignTransferDialog> {
               isExpanded: true,
               decoration: InputDecoration(
                   labelText: AdminI18n.tr(
-                      isEs, 'Transfer Status', 'Estatus del Traslado'),
-                  border: const OutlineInputBorder()),
+                      isEs, 'Transfer Status', 'Estatus del Traslado')),
               items: _statuses
                   .map((s) => DropdownMenuItem(
                       value: s, child: Text(AdminI18n.statusLabel(s, isEs))))
@@ -423,13 +402,7 @@ List<Widget> _dialogActions(BuildContext context, bool isEs, Key btnKey,
       TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(AdminI18n.tr(isEs, 'Cancel', 'Cancelar'))),
-      ElevatedButton(
-          key: btnKey,
-          style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.zapotePrimary,
-              foregroundColor: Colors.white),
-          onPressed: onPressed,
-          child: Text(label)),
+      ElevatedButton(key: btnKey, onPressed: onPressed, child: Text(label)),
     ];
 
 Widget _field(
@@ -443,7 +416,4 @@ Widget _field(
         onTap: onTap,
         onChanged: onChanged,
         decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
-            suffixIcon: suffixIcon,
-            border: const OutlineInputBorder()));
+            labelText: label, hintText: hint, suffixIcon: suffixIcon));

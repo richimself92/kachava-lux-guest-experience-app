@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/data/seeded_admin_repository.dart';
+import 'package:kachava_admin_dashboard/domain/admin_enums.dart';
 import 'package:kachava_admin_dashboard/main.dart';
+import 'package:kachava_admin_dashboard/presentation/admin_command_shell.dart';
+
+/// Folio (stay summary) is not a menu item; tests reach it via the controller.
+Future<void> openFolio(WidgetTester tester) async {
+  tester
+      .widget<AdminCommandShell>(find.byType(AdminCommandShell))
+      .controller
+      .selectTab(AdminWorkspaceTab.adminFolio);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   Future<void> pumpDesktopApp(WidgetTester tester) async {
@@ -39,13 +50,13 @@ void main() {
         (tester) async {
       await pumpDesktopApp(tester);
       expect(find.byKey(const Key('desktop-sidebar')), findsOneWidget);
-      expect(find.text('HOST ADMIN'), findsOneWidget);
-      expect(find.text('HOST ADMIN · COMMAND CENTER'), findsOneWidget);
+      expect(find.text('KACHAVA LUX'), findsOneWidget);
+      expect(find.text('COMMAND CENTER'), findsOneWidget);
       expect(find.byKey(const Key('quick-filter-villa-102')), findsNothing);
-      expect(find.text('SANCTUARY COMMAND · ONLINE'), findsOneWidget);
+      expect(find.text('SANCTUARY COMMAND · ONLINE'), findsNothing);
       expect(find.text('Active Residencies'), findsOneWidget);
-      expect(find.text('Open Concierge Tickets'), findsOneWidget);
-      expect(find.text('Pending Bookings & Larder'), findsOneWidget);
+      expect(find.text('Open Resort Host Tickets'), findsOneWidget);
+      expect(find.text('Pending Bookings & Services'), findsOneWidget);
       expect(find.text('Urgent SLA Alerts'), findsOneWidget);
 
       for (final tab in [
@@ -53,12 +64,14 @@ void main() {
         'admin-experiences',
         'admin-larder',
         'admin-concierge',
-        'admin-folio'
       ]) {
         await tester.tap(find.byKey(Key('nav-tab-$tab')));
         await tester.pumpAndSettle();
         expect(find.byKey(Key('workspace-$tab')), findsOneWidget);
       }
+      expect(find.byKey(const Key('nav-tab-admin-folio')), findsNothing);
+      await openFolio(tester);
+      expect(find.byKey(const Key('workspace-admin-folio')), findsOneWidget);
     });
 
     testWidgets(
@@ -66,7 +79,7 @@ void main() {
         (tester) async {
       await pumpMobileApp(tester);
       expect(find.byKey(const Key('desktop-sidebar')), findsNothing);
-      expect(find.byKey(const Key('mobile-bottom-nav')), findsOneWidget);
+      expect(find.byKey(const Key('mobile-nav-menu-button')), findsOneWidget);
 
       final inspectFinder = find.byKey(const Key('inspect-alert-alt_001'));
       await tester.ensureVisible(inspectFinder);
@@ -147,17 +160,17 @@ void main() {
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('🟢 Villa 101 — Palm Sanctuary · FREE'),
+      expect(find.textContaining('Villa 101 — Palm Sanctuary · FREE'),
           findsOneWidget);
-      expect(
-          find.textContaining('🔴 Villa 102 · OCCUPIED (Alex & Sarah Miller)'),
+      expect(find.textContaining('Villa 102 · OCCUPIED (Alex & Sarah Miller)'),
           findsOneWidget);
 
       await tester.tap(find.byKey(const Key('create-new-stay-btn')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('new-stay-villa-dropdown')));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('🔴 Villa 102 — Ceiba Suite').last);
+      await tester
+          .tap(find.textContaining('Villa 102 — Ceiba Suite — OCCUPIED').last);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('occupied-villa-warning')), findsOneWidget);
       expect(
@@ -169,8 +182,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('new-stay-villa-dropdown')));
       await tester.pumpAndSettle();
-      await tester
-          .tap(find.textContaining('🟢 Villa 106 — Copal Pavilion').last);
+      await tester.tap(
+          find.textContaining('Villa 106 — Copal Pavilion — AVAILABLE').last);
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('new-stay-guest-input')),
           'Marcus & Elena Sterling');
@@ -204,8 +217,8 @@ void main() {
       await tester.tap(find.byKey(const Key('admin-locale-toggle-btn')));
       await tester.pumpAndSettle();
       expect(find.text('✓ ES'), findsOneWidget);
-      expect(find.text('INVENTARIO DE VILLAS (8 VILLAS)'), findsOneWidget);
-      expect(find.text('HOST ADMIN · PANEL DE CONTROL'), findsOneWidget);
+      expect(find.text('Villas (8)'), findsOneWidget);
+      expect(find.text('Reservas'), findsWidgets);
 
       await tester.tap(find.byKey(const Key('test-alert-sound-btn')));
       await tester.pumpAndSettle();
@@ -223,7 +236,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Galeon 470 Sky'), findsWidgets);
-      await tester.tap(find.byKey(const Key('inspect-booking-bkg_102_dining')));
+      final inspectBooking =
+          find.byKey(const Key('inspect-booking-bkg_102_dining'));
+      await tester.ensureVisible(inspectBooking);
+      await tester.pumpAndSettle();
+      await tester.tap(inspectBooking);
       await tester.pumpAndSettle();
       expect(
           find.byKey(const Key('slide-over-inspector-drawer')), findsOneWidget);
@@ -283,14 +300,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('marked Stocked in Villa'), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('nav-tab-admin-folio')));
-      await tester.pumpAndSettle();
-      expect(
-          find.textContaining(
-              'Guest Stay Rating & Feedback ("How Is Your Stay Going?")'),
-          findsOneWidget);
-      expect(find.textContaining('Acquired Services & Stay Activity Summary'),
-          findsOneWidget);
+      await openFolio(tester);
+      expect(find.text('Guest feedback'), findsOneWidget);
+      expect(find.text('Services by stay'), findsOneWidget);
 
       final attendBtn = find.byKey(const Key('attend-pulse-pulse_102_01'));
       await tester.ensureVisible(attendBtn);
@@ -319,16 +331,19 @@ void main() {
         'admin-experiences',
         'admin-larder',
         'admin-concierge',
-        'admin-folio',
         'admin-overview'
       ]) {
-        final navChip = find.byKey(Key('nav-tab-$tabId'));
-        await tester.ensureVisible(navChip);
+        await tester.tap(find.byKey(const Key('mobile-nav-menu-button')));
         await tester.pumpAndSettle();
-        await tester.tap(navChip);
+        final navItem = find.byKey(Key('nav-tab-$tabId'));
+        await tester.ensureVisible(navItem);
+        await tester.pumpAndSettle();
+        await tester.tap(navItem);
         await tester.pumpAndSettle();
         expect(find.byKey(Key('workspace-$tabId')), findsOneWidget);
       }
+      await openFolio(tester);
+      expect(find.byKey(const Key('workspace-admin-folio')), findsOneWidget);
     });
   });
 }
