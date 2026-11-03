@@ -80,8 +80,8 @@ class L10n {
   String seeAll(int n) => _t('See all $n', 'Ver todas ($n)');
   String get showLess => _t('Show less', 'Ver menos');
   String stepSemantics(int step, int done, int total, bool expanded) => _t(
-      'Step $step of 3, $done of $total done, ${expanded ? 'expanded' : 'collapsed'}',
-      'Paso $step de 3, $done de $total listas, ${expanded ? 'abierto' : 'cerrado'}');
+      'Step $step of 3, ${stepTitle(step)}, $done of $total done, ${expanded ? 'expanded' : 'collapsed'}',
+      'Paso $step de 3, ${stepTitle(step)}, $done de $total listas, ${expanded ? 'abierto' : 'cerrado'}');
   String get ownTransport => _t('Own transport', 'Transporte propio');
   String get arrangeOwn => _t('I arrange my own', 'Lo organizo yo');
 

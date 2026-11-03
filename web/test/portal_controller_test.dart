@@ -63,6 +63,20 @@ void main() {
     c.dispose();
   });
 
+  test('a write made while a poll is in flight is read back by a fresh refresh',
+      () async {
+    final api = FakeGuestApi()..stayGate = Completer<void>();
+    final c = _c(api);
+    final poll = c.refresh(); // reads the server before the write lands
+    final write = c.savePreferences('None', const []);
+    await pumpEventQueue();
+    api.stayGate!.complete();
+    await poll;
+    await write;
+    expect(api.stayFetches, 2);
+    c.dispose();
+  });
+
   test('language: stored choice wins over the browser', () {
     expect(
         _c(FakeGuestApi(), prefs: MemoryDevicePrefs(browserLanguage: 'es-MX'))

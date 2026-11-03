@@ -35,7 +35,8 @@ void main() {
     openedTrips = [];
   });
 
-  Future<void> pump(WidgetTester tester, {String? openId}) async {
+  Future<void> pump(WidgetTester tester,
+      {String? openId, FakeVillaRepository? villaRepo}) async {
     tester.view.physicalSize = const Size(1440, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -54,7 +55,7 @@ void main() {
         body: ReservationsScreen(
           reservations: reservations,
           guests: guests,
-          villas: FakeVillaRepository(generatedVillas(3)),
+          villas: villaRepo ?? FakeVillaRepository(generatedVillas(3)),
           queries: store,
           staff: const [testStaff],
           isEs: false,
@@ -166,6 +167,12 @@ void main() {
     expect(find.text(r'$1,234.50 USD'), findsOneWidget);
     expect(find.text('5/5 · Lovely'), findsOneWidget);
     expect(find.text('No PMS integration'), findsOneWidget);
+  });
+
+  testWidgets('the villa picker loads every page of villas', (tester) async {
+    final repo = FakeVillaRepository(generatedVillas(130));
+    await pump(tester, villaRepo: repo);
+    expect(repo.queries.map((q) => q.page), [1, 2]);
   });
 
   testWidgets('+ New reservation: required fields, then POST', (tester) async {

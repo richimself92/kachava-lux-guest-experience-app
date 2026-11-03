@@ -9,6 +9,7 @@ import {
   GuestWorld,
   Json,
   prepareGuestWorld,
+  tab,
 } from './guest-world';
 
 /**
@@ -45,7 +46,7 @@ async function browserCall(page: Page, guestId: string, method: string, path: st
 }
 
 async function openTab(page: Page, label: RegExp, expected: string): Promise<string> {
-  await button(page, label).click();
+  await tab(page, label).click();
   return waitForFlutterSemantics(page, expected);
 }
 
@@ -91,6 +92,8 @@ test.describe('Guest portal self-service', () => {
     expect(view.larderOrders.map((o: Json) => o.serviceId).sort()).toEqual([world.barId, world.stockingId].sort());
     for (const line of view.larderOrders) expect(line.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 
+    await page.reload(); // the portal refreshes on its 30 s poll; an external write shows after a reload
+    await waitForFlutterSemantics(page, world.villaName);
     const requests = await openTab(page, /Requests/, 'My requests');
     expect(requests).toContain(`${world.tag} Villa stocking`);
     expect(requests).toContain(`${world.tag} Villa bar`);

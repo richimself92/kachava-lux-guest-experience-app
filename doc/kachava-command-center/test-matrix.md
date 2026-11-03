@@ -1,31 +1,38 @@
-# Test Matrix: Command Center integration QA (phases 3-5)
+# Test Matrix: Command Center final verification (Phase 10)
 
 ## 1. Execution Summary
-- Runner Command: `cd e2e && npx playwright test --config <headless> <spec>` (backend :3011, admin :3002, emulators 8085/9199) + `explore.mjs` (1440/375).
-- Results: villas-settings 2/2; services 3/3; transportation 1/1; admin `dart analyze` clean; backend 40 suites / 537 tests passed; admin `flutter test` 371 passed.
-- Exit Code: 0 for all three specs (final runs), `npm run typecheck` 0, `npm test` 0, `dart analyze` 0, `flutter test` 0.
-- Date: 2026-11-03. Production code unchanged: every failure was an outdated spec.
+- Runner Command: `cd e2e && E2E_API_BASE_URL=http://localhost:3011/api/v1 E2E_ADMIN_EMAIL=admin@kachava.local npx playwright test --config <headless>` (backend :3011, admin :3002, portal :3000, emulators 8085/9199, fresh release builds).
+- Results: Playwright 25 passed / 0 failed (8.7 min); admin `flutter test` 298; web `flutter test` 129; backend `npm test` 701 (53 suites); all `dart analyze` and `npm run typecheck` clean.
+- Exit Code: 0 for Playwright (final full run), admin/web analyze+test, backend typecheck+test.
+- Date: 2026-11-03. Legacy `admin-dashboard.e2e.spec.ts` (old Command Center screens) deleted; `guest-explore.e2e.spec.ts` added.
 
 ## 2. Test Case Matrix
 | ID | Ref | Level | Objective | Steps | Expected Result | Automated Test | Status |
 |---|---|---|---|---|---|---|---|
-| TC-01 | P3 Settings/Villas | E2E | Configure settings; create, edit, deactivate villas; search, filter, page | 1. Open Settings, save. 2. Create/edit/deactivate villas. 3. Add 30 via API, search, page, reload | 25 per page, filters work, data persists, no 4xx, no console errors | `e2e/tests/admin-villas-settings.e2e.spec.ts::E2E-P3-01` | PASS |
-| TC-02 | P3 mobile | E2E | Villas list, full-screen detail and Settings at 375 | 1. Open Menu, Villas. 2. Search, open row. 3. Open Settings | Full-screen sheet, no overflow, no 4xx | `admin-villas-settings.e2e.spec.ts::E2E-P3-02` | PASS |
-| TC-03 | P4 Services | E2E | One service per kind with cover upload to the Storage emulator, items, activation | 1. New service per kind. 2. Activate without cover. 3. Upload cover, confirm rights, activate. 4. Add item | 422 "Cover required" first, then Active; signed cover URL; item active; upload 200, no CORS error | `admin-services.e2e.spec.ts::E2E-S01` | PASS |
-| TC-04 | P4 Services | E2E | Search, filters, pagination, reload persistence, section view | 1. Add 20 via API. 2. Search tag, page 2. 3. Section/Use/Status filters. 4. Reload, open Experiences | 1-25 of 28, 26-28, filter counts exact, data persists | `admin-services.e2e.spec.ts::E2E-S02` | PASS |
-| TC-05 | P4 mobile | E2E | Catalog at 375 | 1. Menu. 2. Services | Renders, no horizontal overflow | `admin-services.e2e.spec.ts::E2E-S03` | PASS |
-| TC-06 | P5 Transport | E2E | Provider, staff trip, full status flow, filters, reload | 1. Create provider. 2. New departure trip. 3. Send, Confirm, En route, Complete. 4. Cancel second trip | Pickup = flight - 3 h, history has 5 states, persists | `admin-transportation.e2e.spec.ts::E2E-P5-01` | PASS |
-| TC-07 | Exploratory | E2E | All 10 menu items at 1440 and 375: console, network, overflow, raw enums, demo data | 1. Load admin. 2. Open each item (Menu first at 375). 3. Capture screenshot, console, responses, semantics | 0 console errors, 0 responses >= 400, 0 overflow, 0 raw enums, no demo data | `scratchpad/explore.mjs` (not committed) | PASS |
-| TC-08 | Upload/CORS | Integration | Browser image upload to Storage emulator | 1. Upload cover in TC-03. 2. Watch network | `POST :9199/upload/...` 200; no CORS change needed | `admin-services.e2e.spec.ts::E2E-S01` | PASS |
+| TC-01 | P3 | E2E | Settings and Villas CRUD, search, filter, pages | 1. Save Settings. 2. Create/edit/deactivate villas. 3. Bulk 30, search, page, reload | 25 per page, data persists, no 4xx | `e2e/tests/admin-villas-settings.e2e.spec.ts::E2E-P3-01` | PASS |
+| TC-02 | P3 mobile | E2E | Villas, detail sheet, Settings at 375 | 1. Menu, Villas. 2. Search the run. 3. Open row, Settings | Full-screen sheet, no overflow | `admin-villas-settings.e2e.spec.ts::E2E-P3-02` | PASS |
+| TC-03 | P4 | E2E | One service per kind, cover upload, items, activation | 1. New service per kind. 2. Activate without cover. 3. Upload, rights, activate. 4. Add item | 422 first, then Active, signed cover, item active | `admin-services.e2e.spec.ts::E2E-S01` | PASS |
+| TC-04 | P4 | E2E | Services search, filters, paging, reload | 1. Add 20 via API. 2. Search tag, next page. 3. Filter Section/Use. 4. Reload | 1-25 of 28, 26-28, exact filter counts | `admin-services.e2e.spec.ts::E2E-S02` | PASS |
+| TC-05 | P4 mobile | E2E | Catalog at 375 | 1. Menu. 2. Services | Renders, no overflow | `admin-services.e2e.spec.ts::E2E-S03` | PASS |
+| TC-06 | P5 | E2E | Provider, staff trip, status flow, cancel, filters | 1. Create provider. 2. Departure trip. 3. Send, Confirm, En route, Complete. 4. Cancel local trip | Pickup = flight - 3 h, 5-state history | `admin-transportation.e2e.spec.ts::E2E-P5-01` | PASS |
+| TC-07 | P6-8 | E2E | Reservation, dashboard, messages, tasks, notifications | 1. New reservation, copy link, Folio, check in. 2. Dashboard row. 3. Guest writes, reply. 4. Task assign/start/complete. 5. Notification Open | KPIs move, row visible, unread 0, task COMPLETED | `admin-operations.e2e.spec.ts::E2E-P8-01` | PASS |
+| TC-08 | P6-8 mobile | E2E | Menu lists every plan item at 375 | 1. Open Menu. 2. Read items | All items, no overflow | `admin-operations.e2e.spec.ts::E2E-P8-02` | PASS |
+| TC-09 | P9 | E2E | Numbered journey, skip, order, My requests, Host (375) | 1. Home 1.1/1.2, Not now. 2. Order 2 waters. 3. Requests. 4. Host message | Plain status "Received", server holds data | `guest-portal-journey.e2e.spec.ts::numbered journey` | PASS |
+| TC-10 | P9 | E2E | Desktop grid, ES toggle, expired link | 1. 1440, ES. 2. Servicios. 3. Unknown link | Spanish labels, "Ask your Resort Host" | `guest-portal-journey.e2e.spec.ts::desktop / expired` | PASS |
+| TC-11 | Guest API | E2E | Guest-safe view, orders per service, cancel/change, trip cancel, chat photo | 1. Skip via PUT. 2. Two orders. 3. Change/cancel booking. 4. Cancel trip. 5. Upload photo | No internal keys, 422 once confirmed, photo signed | `guest-portal.e2e.spec.ts::E2E-G01..G05` | PASS |
+| TC-12 | Phase A | E2E | Guest link reliability, 503, 401, remembered link | 1. Open link, soak polls. 2. Unknown/malformed. 3. 503, 401 | Server data only, Reconnecting, expired screen | `phase-a-guest-link.e2e.spec.ts::E2E-PA01..PA06` | PASS |
+| TC-13 | Exploratory guest | E2E | Home, Services, order/booking/transfer forms, Requests, Host+photo at 1440 and 375 | 1. Open each screen. 2. Open each form. 3. Send photo | 0 console errors, 0 4xx/5xx, no overflow, no raw enum, no demo data | `guest-explore.e2e.spec.ts::every screen and form is clean` | PASS |
+| TC-14 | Exploratory admin | E2E | 12 menu items x 1440/375 | 1. Open each item. 2. Read console, responses, semantics | 24 screens clean | `scratchpad/explore-final.mjs` (not committed) | PASS |
 
-## 3. Defects (all outdated specs, none in product code)
-- Transportation: `POST /villas` now requires operational/housekeeping/maintenance status; `POST /stays` returns `data.stay.stayId`; Providers/Trips are `tab` roles; stay suggestions are `button`, not `option`.
-- Services: checkbox is the identifier node itself (`[flt-semantics-identifier][role=checkbox]`); first "New service" tap can be lost (retry until editor opens); the open search box is a textbox; section tab bar "Requests" is not the scrolling editor bar; at 375 the drawer item must be tapped with a stable locator.
+## 3. Defects
+- Product (fixed, unit-tested): (1) Reservations villa picker loaded only the first 100 villas: now walks all pages (`reservations_screen_test.dart`). (2) Guest portal: a write made while a poll was in flight was not re-read until the next poll: `refresh(afterWrite:)` runs again (`portal_controller_test.dart`). (3) Journey step header read out only "Step 1 of 3": title now included (`home_journey_test.dart`).
+- Specs (fixed): missing villa statuses, `tab` role for portal nav, stale panel clicked, completed filter not scoped to the run, 8-row dashboard and long villa menu (run names sort first), empty staff roster (spec creates one in the emulator), first key lost in Flutter inputs, click during panel re-flow, dangling cover objects (now uploaded to Storage).
 
-## 4. Observations (not failures)
-- Dining and Experiences "Requests" tab shows "Request queue coming soon" (planned later phase).
-- Rows with a stale cover show a pale tile: the 404 comes from old objects missing in the emulator Storage (`e2e-transport-cover.jpg`), not from the app.
-- Local DB holds RUN-tagged test records (`e2e*`, `P3*`, `P5*`) and one probe stay (`ZZ probe`) from QA runs; emulator data only.
+## 4. Remaining
+- Tasks: Assign shows "No staff available" until a roster exists (no Team screen yet).
+- Dining and Experiences "Requests" tab still "coming soon" (queue not built).
+- Typing in the portal Services search during the first catalog load can be discarded.
+- Not tested: real phone, App Check (phase 11).
 
 ## 5. Evidence
-`doc/kachava-command-center/evidence/integration-<screen>-<1440|375>.png` for dashboard, reservations, villas, services, experiences, dining, transportation, wellness, tasks, settings.
+`doc/kachava-command-center/evidence/final-admin-<screen>-<1440|375>.png`, `final-guest-<home|services|form-order|form-booking|wizard-transfer|requests|host>-<1440|375>.png`.

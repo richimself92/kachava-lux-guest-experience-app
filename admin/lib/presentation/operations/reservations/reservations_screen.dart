@@ -85,11 +85,19 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     super.dispose();
   }
 
-  /// Best effort: without villas the filter and the picker are empty.
+  /// Best effort: without villas the filter and the picker are empty. Walks
+  /// every page so no villa is missing from the picker.
   Future<void> _loadVillas() async {
     try {
-      final page = await widget.villas.list(ReservationsScreen.villasQuery);
-      if (mounted) setState(() => _villas = page.items);
+      final all = <AdminVilla>[];
+      var query = ReservationsScreen.villasQuery;
+      while (true) {
+        final page = await widget.villas.list(query);
+        all.addAll(page.items);
+        if (page.items.isEmpty || all.length >= page.total) break;
+        query = query.withPage(query.page + 1);
+      }
+      if (mounted) setState(() => _villas = all);
     } catch (error) {
       debugPrint('Villas unavailable: $error');
     }

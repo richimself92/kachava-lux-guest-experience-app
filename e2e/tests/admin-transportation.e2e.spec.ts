@@ -2,6 +2,7 @@ import { APIRequestContext, expect, Locator, Page, test } from '@playwright/test
 import * as fs from 'fs';
 import * as path from 'path';
 import { attachErrorMonitor, readSemanticsSnapshot, waitForFlutterSemantics } from './e2e-helpers';
+import { uploadCoverObject } from './guest-world';
 
 /**
  * Phase 5 (plan v2): HOSPITALITY › Transportation against the real backend
@@ -69,6 +70,7 @@ async function ensureTransportService(api: Api): Promise<{ id: string; name: str
     || s.transport.airportCodes.includes('CUN'));
   if (existing) return { id: existing.id, name: existing.name.en };
   const name = `${RUN} Airport transfer`;
+  await uploadCoverObject('catalog/services/e2e-transport-cover.jpg');
   const service = await api.post('/services', {
     kind: 'TRANSPORT',
     section: 'TRANSPORTATION',
@@ -257,7 +259,7 @@ test.describe('Phase 5 — Transportation (admin http://localhost:3002)', () => 
     await clearAllFilters(page);
     await typeInto(page, page.getByRole('textbox', { name: 'Search' }), GUEST);
     await expectText(page, 'Unconfirmed');
-    await page.getByRole('button', { name: /Local/ }).first().click();
+    await page.getByRole('button', { name: new RegExp(`${GUEST}.*Local`) }).first().click();
     await button(page, 'Actions').click();
     await page.getByRole('menuitem', { name: 'Cancel trip' }).click();
     await typeInto(page, field(page, 'Reason'), 'Guest changed plans');
@@ -270,6 +272,7 @@ test.describe('Phase 5 — Transportation (admin http://localhost:3002)', () => 
     await button(page, 'Close').click();
 
     // Filters: status, type and dates reach the server.
+    await typeInto(page, page.getByRole('textbox', { name: 'Search' }), GUEST);
     await filterBy(page, 'Status', 'Completed');
     await expectText(page, '1–1 of 1');
     await clearAllFilters(page);

@@ -70,9 +70,20 @@ async function centerOf(page: Page, selector: string, label?: string): Promise<B
 }
 
 async function clickWhenReady(page: Page, selector: string, label?: string, timeoutMs = 15000): Promise<void> {
+  // Click only once the node stopped moving: closing a side panel re-flows the list, and a click
+  // at the position of the previous frame lands on nothing.
+  let previous: Box | null = null;
   let box: Box | null = null;
   await expect
-    .poll(async () => (box = await centerOf(page, selector, label)) !== null, { timeout: timeoutMs })
+    .poll(
+      async () => {
+        box = await centerOf(page, selector, label);
+        const stable = box !== null && previous !== null && box.x === previous.x && box.y === previous.y;
+        previous = box;
+        return stable;
+      },
+      { timeout: timeoutMs, intervals: [50, 100, 100, 250] },
+    )
     .toBe(true);
   await page.mouse.click(box!.x, box!.y);
 }
@@ -137,9 +148,16 @@ const clickMenuItem = (page: Page, label: string) =>
 
 /** Replaces the text of the field whose semantics identifier is [id]. */
 async function fillField(page: Page, id: string, value: string): Promise<void> {
-  await clickWhenReady(page, byId(id));
-  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
-  await page.keyboard.type(value, { delay: 10 });
+  const selectAll = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+  // Flutter attaches the real <input> after the tap and can swallow the first key: type, then
+  // verify the field holds exactly [value] and type again until it does.
+  await expect(async () => {
+    await clickWhenReady(page, byId(id));
+    await page.keyboard.press(selectAll);
+    await page.keyboard.type(value, { delay: 10 });
+    const held = await page.evaluate(() => (document.activeElement as HTMLInputElement | null)?.value ?? '');
+    expect(held).toBe(value);
+  }).toPass({ timeout: 30000 });
 }
 
 async function selectDropdown(page: Page, id: string, option: string): Promise<void> {
@@ -290,8 +308,8 @@ async function addItemViaUi(page: Page, spec: KindSpec, index: number): Promise<
   await clickButton(page, 'Cancel'); // back to the items table (top-most Cancel)
 }
 
-async function expectRange(page: Page, range: string): Promise<void> {
-  await waitForFlutterSemantics(page, range);
+async function expectRange(page: Page, range: string, timeoutMs = 25000): Promise<void> {
+  await waitForFlutterSemantics(page, range, timeoutMs);
 }
 
 test.describe.serial('Admin Services catalog (Phase 4)', () => {
@@ -351,8 +369,10 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
     await openServices(page);
     await searchTag(page);
     await expectRange(page, '1–25 of 28');
-    await clickButton(page, 'Next page');
-    await expectRange(page, '26–28 of 28');
+    await expect(async () => {
+      await clickButton(page, 'Next page'); // disabled until the first page settled: tap again if it did nothing
+      await expectRange(page, '26–28 of 28', 5000);
+    }).toPass({ timeout: 40000 });
 
     // Filters: Section = Dining (3 kinds), then Use = Booking (special menu only), then clear.
     await clickButton(page, 'Section');

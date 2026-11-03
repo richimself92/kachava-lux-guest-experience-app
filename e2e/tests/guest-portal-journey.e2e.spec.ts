@@ -2,6 +2,7 @@ import { APIRequestContext, expect, Locator, Page, test } from '@playwright/test
 import * as fs from 'fs';
 import * as path from 'path';
 import { attachErrorMonitor, readSemanticsSnapshot, waitForFlutterSemantics } from './e2e-helpers';
+import { uploadCoverObject } from './guest-world';
 
 /**
  * Phase 9 (plan v2): guest portal guided journey against the real backend (Firestore + Storage
@@ -20,7 +21,7 @@ const ZONE = 'America/Cancun';
 const GUEST = `${RUN} Ana Ruiz`;
 const COVER = (name: string) => ({
   storagePath: `catalog/services/e2e-${name}.jpg`,
-  alt: { en: `${name} photo`, es: `Foto ${name}` },
+  alt: { en: 'Cover photo', es: 'Foto de portada' },
   usageRightsConfirmed: true,
 });
 
@@ -53,6 +54,7 @@ async function adminApi(request: APIRequestContext) {
 type Api = Awaited<ReturnType<typeof adminApi>>;
 
 async function createService(api: Api, body: Json, items: Json[]): Promise<string> {
+  await uploadCoverObject(COVER(body.kind).storagePath);
   const created = await api.post('/services', { ...body, cover: COVER(body.kind), status: 'DISABLED' });
   const id = created.data.id ?? created.data.serviceId;
   for (const item of items) await api.post(`/services/${id}/items`, { ...item, status: 'ACTIVE' });
@@ -90,7 +92,7 @@ async function prepare(api: Api): Promise<string> {
     availability: { offeredWhen: 'BOTH', minLeadHours: 24 },
     transport: { airportCodes: ['CUN'], priceBasis: 'PER_VEHICLE' },
   }, [{ name: { en: 'Van', es: 'Camioneta' }, priceUSD: 90, capacity: { passengers: 6, luggage: 6 } }]);
-  const villa = await api.post('/villas', { name: `${RUN} Casa Ceiba`, category: 'Ocean view', capacity: 4 });
+  const villa = await api.post('/villas', { name: `${RUN} Casa Ceiba`, category: 'Ocean view', capacity: 4, operationalStatus: 'AVAILABLE', housekeepingStatus: 'CLEAN', maintenanceStatus: 'OK' });
   const created = await api.post('/stays', {
     guestName: GUEST, villaId: villa.data.id, guestsCount: 2, checkIn: resortDay(3), checkOut: resortDay(8),
   });
@@ -101,11 +103,17 @@ async function prepare(api: Api): Promise<string> {
 const button = (page: Page, name: string | RegExp): Locator =>
   page.getByRole('button', { name, exact: typeof name === 'string' }).last();
 
+const tab = (page: Page, name: RegExp): Locator => page.getByRole('tab', { name }).last();
+
 async function typeInto(page: Page, label: string, value: string): Promise<void> {
   const field = page.locator(`input[aria-label*="${label}"], textarea[aria-label*="${label}"]`).last();
   await expect(field).toBeVisible();
-  await field.click();
-  await field.fill(value);
+  // Flutter re-creates the <input> on focus and can drop the first event: verify the value held.
+  await expect(async () => {
+    await field.click();
+    await field.fill(value);
+    await expect(field).toHaveValue(value, { timeout: 1000 });
+  }).toPass({ timeout: 15000 });
 }
 
 test.describe('Phase 9 — guest portal guided journey', () => {
@@ -149,15 +157,18 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     // Services: search the run's stocking service, order 2 waters.
     await page.goto(`${GUEST_URL}/?guestId=${guestId}`);
     await waitForFlutterSemantics(page, 'Before arrival');
-    await button(page, /Services/).click();
-    await typeInto(page, 'Search', `${RUN} Villa`);
-    await waitForFlutterSemantics(page, '1 services');
+    await tab(page, /Services/).click();
+    // The filter applying is the outcome that matters: type again if the first input was dropped.
+    await expect(async () => {
+      await typeInto(page, 'Search', `${RUN} Villa`);
+      await waitForFlutterSemantics(page, '1 services', 4000);
+    }).toPass({ timeout: 30000 });
     await button(page, `${RUN} Villa stocking`).click();
     await waitForFlutterSemantics(page, 'Order');
     await shot(page, 'detail-375');
     await button(page, 'Order').click();
-    await button(page, '+ Water').click();
-    await button(page, '+ Water').click();
+    await button(page, /^\+ Water/).click(); // a focused tooltip button repeats its label
+    await button(page, /^\+ Water/).click(); // a focused tooltip button repeats its label
     await waitForFlutterSemantics(page, '2 items · $8 USD');
     await button(page, 'Review').click();
     const orderSaved = page.waitForResponse((res) => res.url().includes(`/stays/${guestId}/orders/`) && res.request().method() === 'PUT');
@@ -166,7 +177,7 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     await waitForFlutterSemantics(page, 'Order sent');
 
     // My requests: plain status word, never a raw enum.
-    await button(page, /Requests/).click();
+    await tab(page, /Requests/).click();
     await waitForFlutterSemantics(page, 'My requests');
     snapshot = await readSemanticsSnapshot(page);
     expect(snapshot).toContain(`${RUN} Villa stocking`);
@@ -175,7 +186,7 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     await shot(page, 'requests-375');
 
     // Resort Host chat: success toast only after the server confirms.
-    await button(page, /Host/).click();
+    await tab(page, /Host/).click();
     await waitForFlutterSemantics(page, 'Resort Host');
     await typeInto(page, 'Message', `${RUN} extra towels please`);
     await button(page, 'Send').click();
@@ -200,7 +211,7 @@ test.describe('Phase 9 — guest portal guided journey', () => {
     await waitForFlutterSemantics(page, 'Before arrival');
     await button(page, 'ES').click();
     await waitForFlutterSemantics(page, 'Antes de llegar');
-    await button(page, /Servicios/).click();
+    await tab(page, /Servicios/).click();
     await waitForFlutterSemantics(page, 'servicios');
     await shot(page, 'services-1440-es');
     await button(page, 'EN').click();

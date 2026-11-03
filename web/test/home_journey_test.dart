@@ -26,7 +26,9 @@ void main() {
     // Future steps are buttons that read "Opens Nov 3", never dead text.
     expect(find.text('Opens Nov 3'), findsOneWidget);
     expect(find.text('Opens Nov 7'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp(r'Step 1 of 3, 0 of 4 done, expanded')),
+    expect(
+        find.bySemanticsLabel(
+            RegExp(r'Step 1 of 3, Before arrival, 0 of 4 done, expanded')),
         findsOneWidget);
     expect(find.text('Next: 1.1 Flight & transfer'), findsOneWidget);
     await unmount(tester);

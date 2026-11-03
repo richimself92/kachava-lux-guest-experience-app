@@ -65,7 +65,8 @@ class PortalController extends ChangeNotifier {
   bool _reconnecting = false;
   bool get isReconnecting => _reconnecting;
 
-  bool _refreshing = false;
+  Future<void>? _running;
+  bool _again = false;
   bool _disposed = false;
   Timer? _timer;
 
@@ -97,43 +98,57 @@ class PortalController extends ChangeNotifier {
     _timer ??= Timer.periodic(pollInterval, (_) => refresh());
   }
 
-  /// Reloads stay, catalog and trips; never overlaps another refresh.
-  Future<void> refresh() async {
-    if (_refreshing || _disposed || _guestUuid.isEmpty) return;
-    if (_phase != PortalPhase.loading && _phase != PortalPhase.ready) return;
-    _refreshing = true;
-    try {
-      final results = await Future.wait([
-        api.fetchStay(_guestUuid),
-        api.fetchCatalog(),
-        api.fetchTrips(_guestUuid),
-      ]);
-      if (_disposed) return;
-      final stayResult = results[0] as ApiResult<GuestStay>;
-      if (stayResult case ApiFailed(kind: FailureKind.linkRejected)) {
-        _expire();
-        return;
-      }
-      if (stayResult case ApiOk(:final value)) {
-        _stay = value;
-        _phase = PortalPhase.ready;
-        _reconnecting = false;
-      } else {
-        _reconnecting = true;
-      }
-      switch (results[1] as ApiResult<List<CatalogService>>) {
-        case ApiOk(:final value):
-          _catalog = value;
-          catalogFailed = false;
-        case ApiFailed():
-          catalogFailed = _catalog.isEmpty;
-          _reconnecting = true;
-      }
-      if (results[2] case ApiOk<List<GuestTrip>>(:final value)) _trips = value;
-      notifyListeners();
-    } finally {
-      _refreshing = false;
+  /// Reloads stay, catalog and trips; never overlaps another refresh. A poll
+  /// that finds one running is dropped; a refresh after a write ([afterWrite])
+  /// instead waits and runs once more, because the running one may have read
+  /// the server before the write and would hide it until the next poll.
+  Future<void> refresh({bool afterWrite = false}) {
+    if (_disposed || _guestUuid.isEmpty) return Future.value();
+    final running = _running;
+    if (running != null) {
+      if (afterWrite) _again = true;
+      return afterWrite ? running : Future.value();
     }
+    return _running = _runRefreshes().whenComplete(() => _running = null);
+  }
+
+  Future<void> _runRefreshes() async {
+    do {
+      _again = false;
+      await _refreshOnce();
+    } while (_again && !_disposed);
+  }
+
+  Future<void> _refreshOnce() async {
+    if (_phase != PortalPhase.loading && _phase != PortalPhase.ready) return;
+    final results = await Future.wait([
+      api.fetchStay(_guestUuid),
+      api.fetchCatalog(),
+      api.fetchTrips(_guestUuid),
+    ]);
+    if (_disposed) return;
+    final stayResult = results[0] as ApiResult<GuestStay>;
+    if (stayResult case ApiFailed(kind: FailureKind.linkRejected)) {
+      _expire();
+      return;
+    }
+    if (stayResult case ApiOk(:final value)) {
+      _stay = value;
+      _phase = PortalPhase.ready;
+      _reconnecting = false;
+    } else {
+      _reconnecting = true;
+    }
+    switch (results[1] as ApiResult<List<CatalogService>>) {
+      case ApiOk(:final value):
+        _catalog = value;
+        catalogFailed = false;
+      case ApiFailed():
+        catalogFailed = _catalog.isEmpty;
+        _reconnecting = true;
+    }
+    if (results[2] case ApiOk<List<GuestTrip>>(:final value)) _trips = value;
+    notifyListeners();
   }
 
   void _expire() {
@@ -151,7 +166,7 @@ class PortalController extends ChangeNotifier {
     if (result case ApiFailed(kind: FailureKind.linkRejected)) {
       _expire();
     } else if (result is ApiOk<T>) {
-      await refresh();
+      await refresh(afterWrite: true);
     }
     return result;
   }

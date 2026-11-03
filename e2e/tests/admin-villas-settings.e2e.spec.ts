@@ -369,12 +369,12 @@ test.describe('Phase 3 — Settings and Villas (admin http://localhost:3002)', (
     await button(page, 'Villas').click();
     await expectText(page, 'Villas');
     await button(page, 'Search').click();
-    await typeInto(page, searchBox(page), 'Casa');
-    await expectText(page, 'Casa');
+    await typeInto(page, searchBox(page), `${RUN} Casa`); // this run's villas, whatever else the DB holds
+    await expectText(page, `${RUN} Casa Luna`);
     await assertNoHorizontalOverflow(page);
     await shot(page, 'villas-375');
 
-    await page.getByRole('button', { name: /Casa Luna/ }).first().click();
+    await page.getByRole('button', { name: new RegExp(`${RUN} Casa Luna`) }).first().click();
     await expect(field(page, 'Capacity')).toBeVisible();
     // Full-screen sheet: wait until it finished sliding up over the list.
     await expect

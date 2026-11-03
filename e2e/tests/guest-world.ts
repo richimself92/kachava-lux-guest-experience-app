@@ -55,13 +55,27 @@ export function guestApi(request: APIRequestContext, guestId: string) {
 function cover(tag: string) {
   return {
     storagePath: `catalog/services/e2e-${tag}.jpg`,
-    alt: { en: `${tag} photo`, es: `Foto ${tag}` },
+    alt: { en: 'Cover photo', es: 'Foto de portada' },
     usageRightsConfirmed: true,
   };
 }
 
+const STORAGE_EMULATOR = process.env.E2E_STORAGE_URL ?? 'http://127.0.0.1:9199';
+const STORAGE_BUCKET = process.env.E2E_STORAGE_BUCKET ?? 'demo-kachava.appspot.com';
+/** A 1x1 JPEG. */
+const TINY_JPEG = Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=', 'base64');
+
+/** The catalog cover must exist in Storage, otherwise the admin and the portal request a 404 image. */
+export async function uploadCoverObject(storagePath: string): Promise<void> {
+  const res = await fetch(`${STORAGE_EMULATOR}/upload/storage/v1/b/${STORAGE_BUCKET}/o?uploadType=media&name=${encodeURIComponent(storagePath)}`, {
+    method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: TINY_JPEG,
+  });
+  expect(res.ok, `cover upload ${storagePath}: ${res.status}`).toBe(true);
+}
+
 /** Creates the service DISABLED, adds its ACTIVE items, then activates it. */
 export async function createActiveService(api: AdminApi, body: Json, items: Json[] = []): Promise<{ id: string; itemIds: string[] }> {
+  await uploadCoverObject(cover(body.kind).storagePath);
   const created = await api.post('/services', { ...body, cover: cover(body.kind), status: 'DISABLED' });
   const id = created.data.id ?? created.data.serviceId;
   const itemIds: string[] = [];
@@ -135,7 +149,7 @@ export async function prepareGuestWorld(request: APIRequestContext, prefix: stri
   const catalog = await createCatalog(api, tag);
   const villaName = `${tag} Casa Ceiba`;
   const guestName = `${tag} Ana Ruiz`;
-  const villa = await api.post('/villas', { name: villaName, category: 'Ocean view', capacity: 4 });
+  const villa = await api.post('/villas', { name: villaName, category: 'Ocean view', capacity: 4, operationalStatus: 'AVAILABLE', housekeepingStatus: 'CLEAN', maintenanceStatus: 'OK' });
   const checkIn = resortDay(3);
   const checkOut = resortDay(8);
   const created = await api.post('/stays', { guestName, villaId: villa.data.id, guestsCount: 2, checkIn, checkOut });
@@ -154,11 +168,18 @@ export async function prepareGuestWorld(request: APIRequestContext, prefix: stri
 export const button = (page: Page, name: string | RegExp): Locator =>
   page.getByRole('button', { name, exact: typeof name === 'string' }).last();
 
+/** Bottom navigation tab (Flutter exposes the portal tabs with the `tab` role). */
+export const tab = (page: Page, name: RegExp): Locator => page.getByRole('tab', { name }).last();
+
 export async function typeInto(page: Page, label: string, value: string): Promise<void> {
   const field = page.locator(`input[aria-label*="${label}"], textarea[aria-label*="${label}"]`).last();
   await expect(field).toBeVisible();
-  await field.click();
-  await field.fill(value);
+  // Flutter re-creates the <input> on focus and can drop the first event: verify the value held.
+  await expect(async () => {
+    await field.click();
+    await field.fill(value);
+    await expect(field).toHaveValue(value, { timeout: 1000 });
+  }).toPass({ timeout: 15000 });
 }
 
 /** Demo/prototype content that must never appear in the portal (no seeds, no fake data). */

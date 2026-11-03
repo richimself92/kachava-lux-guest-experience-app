@@ -46,7 +46,7 @@ test.describe('Phase A: guest magic link reliability', () => {
     expect(stay).toMatchObject({ checkInDate: world.checkIn, checkOutDate: world.checkOut });
     expect(home).toContain(stay.stayDatesLabel);
     expect(home).toContain('Before arrival');
-    expect(home).toContain(`${world.tag} Villa stocking`);
+    expect(home).toContain('1.3 In villa'); // the catalog's in-villa services group, never a hardcoded list
     expect(home).not.toMatch(DEMO_MARKERS);
     expect(home).not.toContain('Ask your Resort Host');
 

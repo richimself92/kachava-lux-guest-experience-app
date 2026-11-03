@@ -14,7 +14,8 @@ const ADMIN_URL = process.env.E2E_ADMIN_URL ?? 'http://localhost:3002';
 const API = process.env.E2E_API_BASE_URL ?? 'http://localhost:3011/api/v1';
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'admin@kachava.local';
 const EVIDENCE = path.resolve(__dirname, '../../doc/kachava-command-center/evidence');
-const RUN = `P8${Date.now().toString(36).slice(-5).toUpperCase()}`;
+// Leading "0": names sort first, so the dashboard (8 rows by guest) and the long villa menu show this run's data.
+const RUN = `0P8${Date.now().toString(36).slice(-5).toUpperCase()}`;
 const ZONE = 'America/Cancun';
 const GUEST = `${RUN} Ana Ruiz`;
 const VILLA = `${RUN} Casa Ceiba`;
@@ -74,6 +75,32 @@ async function ensureSettings(api: Api): Promise<void> {
   });
 }
 
+/**
+ * The roster is empty until staff are created (no Team screen yet, nothing seeded), so the task
+ * owner picker has no options. This run creates one staff member in the Firestore emulator.
+ */
+async function ensureStaff(request: APIRequestContext, api: Api): Promise<Json[]> {
+  const existing = (await api.get('/staff?pageSize=100')).data as Json[];
+  if (existing.length > 0) return existing;
+  const staffId = `staff_${RUN.toLowerCase()}`;
+  const str = (stringValue: string) => ({ stringValue });
+  const res = await request.patch(
+    `http://127.0.0.1:8085/v1/projects/demo-kachava/databases/(default)/documents/staff_members/${staffId}`,
+    {
+      headers: { Authorization: 'Bearer owner' },
+      data: {
+        fields: {
+          staffId: str(staffId), firebaseUid: str(''), fullName: str(`${RUN} Housekeeper`), shortName: str('Housekeeper'),
+          role: str('HOUSEKEEPING'), department: str('HOUSEKEEPING'), rbacRole: str('DEPARTMENT_COORDINATOR'),
+          email: str(`${staffId}@staff.test`), phone: str(''), avatarUrl: str(''), isActive: { booleanValue: true },
+        },
+      },
+    },
+  );
+  expect(res.ok(), await res.text()).toBe(true);
+  return (await api.get('/staff?pageSize=100')).data as Json[];
+}
+
 const button = (page: Page, name: string | RegExp): Locator =>
   page.getByRole('button', { name, exact: typeof name === 'string' });
 
@@ -117,7 +144,9 @@ test.describe('Phases 6-8 — operations (admin http://localhost:3002)', () => {
 
     // Arrange (API): Settings and one villa.
     await ensureSettings(api);
-    const villa = (await api.post('/villas', { name: VILLA, category: 'Ocean view', capacity: 4 })).data;
+    const staff = await ensureStaff(request, api); // before the app loads: it reads the roster once
+    expect(staff.length, 'a staff member to own the task').toBeGreaterThan(0);
+    const villa = (await api.post('/villas', { name: VILLA, category: 'Ocean view', capacity: 4, operationalStatus: 'AVAILABLE', housekeepingStatus: 'CLEAN', maintenanceStatus: 'OK' })).data;
     const before = (await api.get('/dashboard')).data;
 
     // Reservations: "+ New reservation" in the UI, arriving today.
@@ -185,8 +214,6 @@ test.describe('Phases 6-8 — operations (admin http://localhost:3002)', () => {
     await shot(page, 'messages-1440');
 
     // Tasks: create, Assign (owner), Start, Complete (note).
-    const staff = (await api.get('/staff?pageSize=100')).data as Json[];
-    expect(staff.length, 'at least the admin identity').toBeGreaterThan(0);
     await openMenu(page, 'Tasks');
     await button(page, 'New task').first().click();
     await typeInto(page, field(page, 'Title'), TASK);
