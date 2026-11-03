@@ -1,17 +1,18 @@
 import {
-  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { isAdminResetAllowed } from '../../common/config/runtime-flags';
 import * as crypto from 'crypto';
-import { SecurityTokenService } from '../../common/services/security-token.service';
 import {
-  AlertCategory,
-  AlertSeverity,
-  Department,
+  buildAdminServiceStaff,
+  resolveAdminServiceEmail,
+} from '../../common/config/admin-identity';
+import { paginateInMemory, PaginatedResult, toListQuery } from '../../common/listing/list-query';
+import { SecurityTokenService } from '../../common/services/security-token.service';
+import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
+import {
   FlightTransfer,
   OperationalAlert,
   StaffMember,
@@ -21,31 +22,37 @@ import {
 } from '../../domain/models/domain.models';
 import {
   ALERT_REPOSITORY_PORT,
-  AlertFilterCriteria,
   AlertRepositoryPort,
-  BookingFilterCriteria,
-  ConciergeFilterCriteria,
-  LarderFilterCriteria,
   STAFF_REPOSITORY_PORT,
   StaffRepositoryPort,
   STAY_REPOSITORY_PORT,
-  StayFilterCriteria,
   StayRepositoryPort,
+  VILLA_REPOSITORY_PORT,
+  VillaRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { AdminFulfillmentService } from './admin-fulfillment.service';
-import { buildNewStay } from './new-stay.builder';
+import { nightsBetween, buildNewStay } from './new-stay.builder';
 import {
   AdminLoginDto,
-  ApproveCheckoutDto,
-  AssignBookingDto,
+  AlertListQueryDto,
   AssignTransferDto,
-  CreateExperienceCatalogDto,
-  CreateLarderCatalogDto,
   CreateReservationDto,
-  UpdateAdminConciergeDto,
-  UpdateLarderStatusDto,
+  StaffListQueryDto,
+  StayListQueryDto,
   UpdateStayWifiDto,
 } from './dto/admin.dto';
+
+const STAY_LIST_SPEC = {
+  sortable: ['checkInDate'],
+  defaultSort: { field: 'checkInDate', direction: 'asc' as const },
+};
+const ALERT_LIST_SPEC = {
+  sortable: ['createdAt', 'severity'],
+  defaultSort: { field: 'createdAt', direction: 'desc' as const },
+};
+const STAFF_LIST_SPEC = {
+  sortable: ['fullName', 'department'],
+  defaultSort: { field: 'fullName', direction: 'asc' as const },
+};
 
 @Injectable()
 export class AdminService {
@@ -53,22 +60,37 @@ export class AdminService {
     @Inject(STAY_REPOSITORY_PORT) private readonly stayRepo: StayRepositoryPort,
     @Inject(ALERT_REPOSITORY_PORT) private readonly alertRepo: AlertRepositoryPort,
     @Inject(STAFF_REPOSITORY_PORT) private readonly staffRepo: StaffRepositoryPort,
+    @Inject(VILLA_REPOSITORY_PORT) private readonly villaRepo: VillaRepositoryPort,
     private readonly securityTokenService: SecurityTokenService,
-    private readonly fulfillmentService: AdminFulfillmentService,
   ) {}
 
   /**
-   * Email-only staff login, pending owner decision (Firebase Auth vs staff passcodes):
-   * any rostered email receives a staff token; `passcode`/`password` are accepted but NOT checked.
+   * Silent admin login (plan rule 5): only the technical identity configured in
+   * `ADMIN_SERVICE_EMAIL` receives a HOST_ADMIN session. No staff document is required and
+   * any other email (or a missing configuration) is rejected.
    */
-  async loginStaff(dto: AdminLoginDto): Promise<{ token: string; staff: StaffMember }> {
-    const staff = await this.staffRepo.findByEmail(dto.email);
-    if (!staff) throw new UnauthorizedException('Invalid sanctuary staff credentials.');
+  loginStaff(dto: AdminLoginDto): { token: string; staff: StaffMember } {
+    const configured = resolveAdminServiceEmail();
+    if (!configured || dto.email.trim().toLowerCase() !== configured) {
+      throw new UnauthorizedException('Invalid staff credentials.');
+    }
+    const staff = buildAdminServiceStaff(configured);
     return { token: this.securityTokenService.issueStaffToken(staff), staff };
   }
 
-  listAlerts(filter: AlertFilterCriteria) {
-    return this.alertRepo.listAlerts(filter);
+  async listAlerts(dto: AlertListQueryDto): Promise<PaginatedResult<OperationalAlert>> {
+    const query = toListQuery(dto, ALERT_LIST_SPEC);
+    const listing = await this.alertRepo.listAlerts({
+      isAcknowledged: dto.isAcknowledged,
+      category: dto.category,
+      severity: dto.severity,
+      assignedDepartment: dto.assignedDepartment,
+    });
+    const page = paginateInMemory(listing.alerts, query, {
+      searchText: (a) => `${a.title} ${a.summary} ${a.villaName} ${a.guestNames}`,
+      sortValue: (a, field) => (field === 'severity' ? a.severity : a.createdAt),
+    });
+    return new PaginatedResult(page.data, page.meta, { unreadCount: listing.unreadCount });
   }
 
   async acknowledgeAlert(alertId: string, staff: StaffMember): Promise<OperationalAlert> {
@@ -77,19 +99,34 @@ export class AdminService {
     return updated;
   }
 
-  listStays(filter: StayFilterCriteria) {
-    return this.stayRepo.listStays(filter);
+  listStays(dto: StayListQueryDto): Promise<PaginatedResult<StayAggregate>> {
+    const query = toListQuery(dto, STAY_LIST_SPEC);
+    return this.stayRepo.pageStays({
+      status: dto.status,
+      villaId: dto.villaId,
+      from: dto.from,
+      to: dto.to,
+      q: query.q,
+      page: query.page,
+      pageSize: query.pageSize,
+      direction: query.sort.direction,
+    });
   }
 
   async createReservation(
     dto: CreateReservationDto,
   ): Promise<{ stay: StayAggregate; magicLinkUrl: string }> {
+    const villa = await this.villaRepo.findById(dto.villaId);
+    if (!villa) throw new EntityNotFoundError('Villa', dto.villaId);
+    if (!villa.isActive) throw new BusinessRuleError(`Villa ${villa.name} is inactive`);
+    if (nightsBetween(dto.checkIn, dto.checkOut) < 1) throw new BusinessRuleError('checkOut must be after checkIn');
+    if (dto.guestsCount && dto.guestsCount > villa.capacity) {
+      throw new BusinessRuleError(`Villa ${villa.name} hosts at most ${villa.capacity} guests`);
+    }
     const newUuid = crypto.randomUUID();
-    const baseDomain = (process.env.GUEST_PORTAL_URL || 'http://localhost:3000').replace(/\/$/, '');
-    const magicLinkUrl = `${baseDomain}/?guestId=${newUuid}`;
-    const stayId = `stay_${crypto.randomUUID()}`;
-    const newStay = buildNewStay(dto, {
-      stayId,
+    const magicLinkUrl = `${guestPortalBaseUrl()}/?guestId=${newUuid}`;
+    const newStay = buildNewStay(dto, villa, {
+      stayId: `stay_${crypto.randomUUID()}`,
       guestTokenUuid: newUuid,
       magicLinkUrl,
       now: new Date().toISOString(),
@@ -99,52 +136,36 @@ export class AdminService {
   }
 
   async updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord> {
-    const existing = await this.stayRepo.findByStayId(stayId);
-    if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
-    const updated = await this.stayRepo.updateStayStatus(stayId, status);
-    return updated;
+    await this.requireStay(stayId);
+    return this.stayRepo.updateStayStatus(stayId, status);
   }
 
   async updateStayWifi(stayId: string, dto: UpdateStayWifiDto): Promise<StayRecord> {
-    const existing = await this.stayRepo.findByStayId(stayId);
-    if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
-    const updated = await this.stayRepo.updateStayWifi(stayId, {
+    const existing = await this.requireStay(stayId);
+    return this.stayRepo.updateStayWifi(stayId, {
       wifiSsid: dto.wifiSsid?.trim() || existing.villaAccess.wifiSsid,
       wifiPasscode: dto.wifiPasscode?.trim() || existing.villaAccess.wifiPasscode,
     });
-    return updated;
-  }
-
-  async resetAllData(): Promise<{ reset: boolean }> {
-    if (!isAdminResetAllowed()) {
-      throw new ForbiddenException('Data reset is disabled in this environment.');
-    }
-    await this.stayRepo.resetAllStays();
-    await this.alertRepo.resetAllAlerts();
-    return { reset: true };
   }
 
   async regenerateStayToken(
     stayId: string,
   ): Promise<{ stayId: string; guestTokenUuid: string; magicLinkUrl: string }> {
-    const existing = await this.stayRepo.findByStayId(stayId);
-    if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
+    await this.requireStay(stayId);
     const newUuid = crypto.randomUUID();
     const updated: StayRecord = await this.stayRepo.updateStayToken(stayId, newUuid);
-    const baseDomain = process.env.GUEST_PORTAL_URL || 'http://localhost:3000';
     return {
       stayId: updated.stayId,
       guestTokenUuid: updated.guestTokenUuid,
-      magicLinkUrl: `${baseDomain}/?guestId=${newUuid}`,
+      magicLinkUrl: `${guestPortalBaseUrl()}/?guestId=${newUuid}`,
     };
   }
 
   async updateStayTransfer(stayId: string, dto: AssignTransferDto): Promise<FlightTransfer> {
-    const existing = await this.stayRepo.findByStayId(stayId);
-    if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
+    const existing = await this.requireStay(stayId);
     const driverName =
       dto.assignedStaffName ?? dto.assignedDriver ?? existing.flightTransfer.assignedDriver;
-    const updated = await this.stayRepo.updateTransfer(stayId, {
+    return this.stayRepo.updateTransfer(stayId, {
       assignedStaffId: dto.assignedStaffId ?? existing.flightTransfer.assignedStaffId,
       assignedStaffName: driverName,
       assignedDriver: driverName,
@@ -154,38 +175,25 @@ export class AdminService {
       adminDispatchNotes: dto.adminDispatchNotes ?? existing.flightTransfer.adminDispatchNotes,
       notifiedAt: new Date().toISOString(),
     });
-    return updated;
   }
 
-  listCatalogExperiences() { return this.fulfillmentService.listCatalogExperiences(); }
-  createCatalogExperience(dto: CreateExperienceCatalogDto) { return this.fulfillmentService.createCatalogExperience(dto); }
-  deleteCatalogExperience(id: string) { return this.fulfillmentService.deleteCatalogExperience(id); }
-  listCatalogLarder() { return this.fulfillmentService.listCatalogLarder(); }
-  createCatalogLarder(dto: CreateLarderCatalogDto) { return this.addLarderCatalogItem(dto); }
-  addLarderCatalogItem(dto: CreateLarderCatalogDto) {
-    return this.fulfillmentService.createCatalogLarder({
-      ...dto,
-      category: dto.category?.trim() || 'Minibar',
+  async listStaff(dto: StaffListQueryDto): Promise<PaginatedResult<StaffMember>> {
+    const query = toListQuery(dto, STAFF_LIST_SPEC);
+    const staff = await this.staffRepo.listStaff(dto.department);
+    return paginateInMemory(staff, query, {
+      searchText: (s) => `${s.fullName} ${s.email} ${s.role}`,
+      sortValue: (s, field) => (field === 'department' ? s.department : s.fullName),
     });
   }
-  deleteCatalogLarder(id: string) { return this.fulfillmentService.deleteCatalogLarder(id); }
-  listBookings(filter: BookingFilterCriteria) { return this.fulfillmentService.listBookings(filter); }
-  assignBooking(bookingId: string, dto: AssignBookingDto) { return this.fulfillmentService.assignBooking(bookingId, dto); }
-  listLarderOrders(filter: LarderFilterCriteria) { return this.fulfillmentService.listLarderOrders(filter); }
-  updateLarderOrderStatus(orderId: string, dto: UpdateLarderStatusDto) { return this.fulfillmentService.updateLarderOrderStatus(orderId, dto); }
-  listConciergeRequests(filter: ConciergeFilterCriteria) { return this.fulfillmentService.listConciergeRequests(filter); }
-  updateConciergeRequest(requestId: string, dto: UpdateAdminConciergeDto, staff: StaffMember) { return this.fulfillmentService.updateConciergeRequest(requestId, dto, staff); }
-  generateConciergePhotoGetUrl(requestId: string) { return this.fulfillmentService.generateConciergePhotoGetUrl(requestId); }
-  listMidStayFeedback() { return this.fulfillmentService.listMidStayFeedback(); }
-  approveCheckout(stayId: string, dto: ApproveCheckoutDto, staff: StaffMember) { return this.fulfillmentService.approveCheckout(stayId, dto, staff); }
-  listStaff(department?: string) { return this.staffRepo.listStaff(department); }
 
-  parseAlertQuery(query: Record<string, string | undefined>): AlertFilterCriteria {
-    return {
-      isAcknowledged: query.isAcknowledged !== undefined ? query.isAcknowledged === 'true' : undefined,
-      category: query.category as AlertCategory | undefined,
-      severity: query.severity as AlertSeverity | undefined,
-      assignedDepartment: query.assignedDepartment as Department | undefined,
-    };
+  private async requireStay(stayId: string): Promise<StayAggregate> {
+    const existing = await this.stayRepo.findByStayId(stayId);
+    if (!existing) throw new NotFoundException(`Stay ${stayId} not found.`);
+    return existing;
   }
+}
+
+/** Base URL of the guest portal used in magic links (deployment configuration). */
+function guestPortalBaseUrl(): string {
+  return (process.env.GUEST_PORTAL_URL || 'http://localhost:3000').replace(/\/$/, '');
 }

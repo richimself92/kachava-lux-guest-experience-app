@@ -1,32 +1,47 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import {
-  Department,
+  buildServiceSnapshot,
+  resolveOrderLines,
+  ResolvedLine,
+} from '../../domain/catalog/catalog-rules';
+import { CatalogItem, CatalogService, ServiceSnapshot } from '../../domain/catalog/catalog.models';
+import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
+import {
   ExperienceBooking,
   FolioSummary,
   LarderOrderItem,
   StayAggregate,
 } from '../../domain/models/domain.models';
 import {
-  CATALOG_REPOSITORY_PORT,
-  CatalogRepositoryPort,
+  SERVICE_ITEM_REPOSITORY_PORT,
+  SERVICE_REPOSITORY_PORT,
+  ServiceItemRepositoryPort,
+  ServiceRepositoryPort,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
 import { CreateBookingDto, UpdateLarderOrderDto } from './dto/guest.dto';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
 
+interface OrderableService {
+  service: CatalogService;
+  items: CatalogItem[];
+}
+
+/**
+ * Guest orders and bookings. Every name and price comes from the admin-managed catalog and is
+ * copied into the stay as a snapshot; unknown services are 404, unavailable ones 422.
+ */
 @Injectable()
 export class GuestBookingService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT)
     private readonly stayRepo: StayRepositoryPort,
-    @Inject(CATALOG_REPOSITORY_PORT)
-    private readonly catalogRepo: CatalogRepositoryPort,
+    @Inject(SERVICE_REPOSITORY_PORT)
+    private readonly services: ServiceRepositoryPort,
+    @Inject(SERVICE_ITEM_REPOSITORY_PORT)
+    private readonly items: ServiceItemRepositoryPort,
     private readonly alerts: GuestAlertFolioHelper,
   ) {}
 
@@ -34,182 +49,142 @@ export class GuestBookingService {
     stay: StayAggregate,
     dto: UpdateLarderOrderDto,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
-    const orders = await this.buildLarderOrderItems(stay, dto);
-    const larderTotal = orders.reduce((acc, o) => acc + o.lineTotalUSD, 0);
-    return this.stayRepo.replaceLarderOrders(stay.stayId, orders, () =>
+    const { service, items } = await this.loadService(dto.serviceId);
+    if (service.usageType !== 'ORDER') {
+      throw new BusinessRuleError(`Service ${service.serviceId} does not take orders`);
+    }
+    const requested = dto.items.filter((line) => line.quantity > 0);
+    const lines = resolveOrderLines(service, items, requested);
+    const snapshot = buildServiceSnapshot(service, lines, 1, new Date().toISOString());
+    const orders = this.toLarderLines(stay, service, lines, snapshot);
+    const charge = { title: service.name.en, chargeToFolio: service.pricing.chargeToFolio };
+    return this.stayRepo.replaceLarderOrders(stay.stayId, orders, charge, () =>
       this.alerts.buildAlert(stay, {
         category: 'LARDER',
         severity: 'NORMAL',
-        title: `${stay.villaName} Larder Stocking Order ($${larderTotal} USD)`,
-        summary: `${orders.length} artisanal larder items requested for pre-arrival provisioning.`,
-        sourceDocumentPath: `stays/${stay.stayId}/larder_orders`,
-        assignedDepartment: 'CULINARY',
+        title: `${stay.villaName}: ${service.name.en}`,
+        summary: `${orders.length} items requested.`,
+        sourceDocumentPath: `stays/${stay.stayId}`,
+        assignedDepartment: service.operation.responsibleDepartment,
       }),
     );
   }
 
-  async createBooking(
-    stay: StayAggregate,
-    dto: CreateBookingDto,
-  ): Promise<ExperienceBooking> {
-    const normalizedCat = (dto.category || dto.bookingType || 'explore').toLowerCase();
-    const partySize = dto.partySize ?? 2;
-    if (normalizedCat.includes('yacht') && partySize > 12) {
-      throw new BadRequestException(
-        'Galeon 470 Sky Private Yacht Charter strictly enforces a maximum capacity of 12 guests.',
-      );
+  async createBooking(stay: StayAggregate, dto: CreateBookingDto): Promise<ExperienceBooking> {
+    const { service, items } = await this.loadService(dto.serviceId);
+    if (service.usageType === 'ORDER') {
+      throw new BusinessRuleError(`Service ${service.serviceId} takes orders, not bookings`);
     }
-    const resolved = await this.resolveBookingPricing(normalizedCat, dto, partySize);
-    const booking = this.constructBookingEntity(stay, dto, partySize, resolved);
+    const partySize = dto.partySize ?? Math.max(stay.guestsCount, 1);
+    this.assertBookable(service, dto.scheduledDate, partySize);
+    const lines: ResolvedLine[] = dto.itemId
+      ? resolveOrderLines(service, items, [{ itemId: dto.itemId, quantity: 1 }])
+      : (resolveOrderLines(service, items, []), [{ item: null, quantity: 1 }]);
+    const now = new Date().toISOString();
+    const snapshot = buildServiceSnapshot(service, lines, partySize, now);
+    const booking = this.toBooking(stay, service, dto, partySize, snapshot, now);
     return this.stayRepo.createBooking(stay.stayId, booking, () =>
       this.alerts.buildAlert(stay, {
         category: 'BOOKING',
         severity: 'NORMAL',
-        title: `${stay.villaName} New Booking: ${booking.title}`,
-        summary: `Scheduled for ${booking.scheduledDate} (${booking.scheduledTimeSlot}) for ${partySize} guests.`,
-        sourceDocumentPath: `stays/${stay.stayId}/experience_bookings/${booking.bookingId}`,
+        title: `${stay.villaName}: ${booking.title}`,
+        summary: `${booking.scheduledDate} ${booking.scheduledTimeSlot} · ${partySize} guests`.trim(),
+        sourceDocumentPath: `stays/${stay.stayId}`,
         assignedDepartment: booking.assignedDepartment,
       }),
     );
   }
 
-  private async buildLarderOrderItems(
-    stay: StayAggregate,
-    dto: UpdateLarderOrderDto,
-  ): Promise<LarderOrderItem[]> {
-    const catalog = await this.catalogRepo.getLarderCatalog();
-    const now = new Date().toISOString();
-    return dto.items
-      .filter((line) => line.quantity > 0)
-      .flatMap((line) => {
-        const item = catalog.find((c) => c.id === line.itemId);
-        if (!item) return [];
-        return [
-          {
-            orderItemId: `larder_${stay.stayId}_${item.id}`,
-            stayId: stay.stayId,
-            villaId: stay.villaId,
-            villaName: stay.villaName,
-            guestNames: stay.guestProfile.name,
-            catalogItemId: item.id,
-            name: item.name,
-            category: item.category,
-            unitPriceUSD: item.price,
-            quantity: line.quantity,
-            lineTotalUSD: item.price * line.quantity,
-            storageType: item.storageType,
-            provisioningStatus: 'Pending',
-            assignedStaffId: 'staff_eduardo',
-            assignedStaffName: 'Eduardo Rivera',
-            assignedDepartment: 'CULINARY' as const,
-            assignedAt: now,
-            updatedAt: now,
-          },
-        ];
-      });
+  private async loadService(serviceId: string): Promise<OrderableService> {
+    const service = await this.services.findById(serviceId);
+    if (!service) throw new EntityNotFoundError('Service', serviceId);
+    const items = await this.items.list({ serviceId });
+    return { service, items };
   }
 
-  private constructBookingEntity(
+  private assertBookable(service: CatalogService, date: string, partySize: number): void {
+    const { minGuests, maxGuests, blockedDates } = service.availability;
+    if (minGuests !== null && partySize < minGuests) {
+      throw new BusinessRuleError(`At least ${minGuests} guests are required`);
+    }
+    if (maxGuests !== null && partySize > maxGuests) {
+      throw new BusinessRuleError(`At most ${maxGuests} guests are allowed`);
+    }
+    if (blockedDates.includes(date)) throw new BusinessRuleError(`${date} is not available`);
+  }
+
+  private toLarderLines(
     stay: StayAggregate,
+    service: CatalogService,
+    lines: ResolvedLine[],
+    snapshot: ServiceSnapshot,
+  ): LarderOrderItem[] {
+    const now = snapshot.capturedAt;
+    return lines.map(({ item }, index) => {
+      const line = snapshot.lines[index];
+      return {
+        orderItemId: `larder_${stay.stayId}_${line.itemId}`,
+        stayId: stay.stayId,
+        villaId: stay.villaId,
+        villaName: stay.villaName,
+        guestNames: stay.guestProfile.name,
+        serviceId: service.serviceId,
+        catalogItemId: line.itemId ?? '',
+        name: line.name.en,
+        itemName: line.name,
+        category: item?.category ?? '',
+        unitPriceUSD: line.unitPriceUSD ?? 0,
+        quantity: line.quantity,
+        lineTotalUSD: line.lineTotalUSD ?? 0,
+        storageType: item?.storage ?? '',
+        provisioningStatus: 'Pending',
+        assignedStaffId: service.operation.responsibleStaffId,
+        assignedStaffName: null,
+        assignedDepartment: service.operation.responsibleDepartment,
+        assignedAt: null,
+        updatedAt: now,
+      };
+    });
+  }
+
+  private toBooking(
+    stay: StayAggregate,
+    service: CatalogService,
     dto: CreateBookingDto,
     partySize: number,
-    resolved: {
-      bookingType: ExperienceBooking['bookingType'];
-      adminCategory: string;
-      title: string;
-      originalValuationUSD: number;
-      priceChargedUSD: number;
-      department: Department;
-      assignedStaffId: string;
-      assignedStaffName: string;
-    },
+    snapshot: ServiceSnapshot,
+    now: string,
   ): ExperienceBooking {
-    const now = new Date().toISOString();
+    const total = snapshot.totalUSD ?? 0;
     return {
       bookingId: `bk_${crypto.randomUUID()}`,
       stayId: stay.stayId,
       villaId: stay.villaId,
       villaName: stay.villaName,
       guestNames: stay.guestProfile.name,
-      bookingType: resolved.bookingType,
-      category: resolved.adminCategory,
-      catalogRefId: dto.catalogRefId,
-      title: dto.title || resolved.title,
+      serviceId: service.serviceId,
+      itemId: snapshot.lines[0]?.itemId ?? null,
+      section: service.section,
+      usageType: service.usageType,
+      category: service.category,
+      snapshot,
+      title: snapshot.lines[0]?.itemId ? `${service.name.en} · ${snapshot.lines[0].name.en}` : service.name.en,
       scheduledDate: dto.scheduledDate,
-      scheduledTimeSlot: dto.scheduledTimeSlot,
+      scheduledTimeSlot: dto.scheduledTimeSlot ?? '',
       partySize,
-      isIncludedWithStay: resolved.priceChargedUSD === 0,
-      originalValuationUSD: resolved.originalValuationUSD,
-      priceChargedUSD: resolved.priceChargedUSD,
-      metadata: dto.metadata || {},
+      isIncludedWithStay: service.pricing.mode === 'INCLUDED',
+      originalValuationUSD: total,
+      priceChargedUSD: total,
+      metadata: dto.metadata ?? {},
       status: 'REQUESTED',
       cancellationReason: '',
-      assignedStaffId: resolved.assignedStaffId,
-      assignedStaffName: resolved.assignedStaffName,
-      assignedDepartment: resolved.department,
-      assignedAt: now,
-      notifiedAt: now,
-      adminNotes: 'Automatically routed from Guest Experience Portal.',
+      assignedStaffId: service.operation.responsibleStaffId,
+      assignedStaffName: null,
+      assignedDepartment: service.operation.responsibleDepartment,
+      assignedAt: null,
+      notifiedAt: null,
+      adminNotes: '',
       createdAt: now,
-    };
-  }
-
-  private async resolveBookingPricing(
-    normalizedCat: string,
-    dto: CreateBookingDto,
-    partySize: number,
-  ) {
-    if (normalizedCat.includes('yacht')) {
-      const yacht = await this.catalogRepo.getYachtCatalog();
-      const pkg = yacht.packages.find((p) => p.id === dto.catalogRefId) || yacht.packages[0];
-      return {
-        bookingType: 'YACHT_CHARTER' as const,
-        adminCategory: 'YACHT',
-        title: `Kachava Caribe · ${pkg.title}`,
-        originalValuationUSD: pkg.valuationUSD,
-        priceChargedUSD: pkg.upgradePriceUSD,
-        department: 'MARINE' as Department,
-        assignedStaffId: 'staff_velasco',
-        assignedStaffName: 'Capt. Eduardo Velasco',
-      };
-    }
-    if (normalizedCat.includes('dining')) {
-      const extraGuests = Math.max(0, partySize - 2);
-      return {
-        bookingType: 'PRIVATE_DINING' as const,
-        adminCategory: 'DINING',
-        title: "Chef Mateo's Fire & Copal Table",
-        originalValuationUSD: 650 + extraGuests * 180,
-        priceChargedUSD: extraGuests * 180,
-        department: 'CULINARY' as Department,
-        assignedStaffId: 'staff_mateo',
-        assignedStaffName: 'Executive Chef Mateo',
-      };
-    }
-    if (normalizedCat.includes('included') || normalizedCat.includes('privilege')) {
-      return {
-        bookingType: 'INCLUDED_PRIVILEGE' as const,
-        adminCategory: 'PRIVILEGE',
-        title: dto.title || 'Included Sanctuary Privilege',
-        originalValuationUSD: 350,
-        priceChargedUSD: 0,
-        department: 'WELLNESS' as Department,
-        assignedStaffId: 'staff_sofia',
-        assignedStaffName: 'Sofia Valdés',
-      };
-    }
-    const exps = await this.catalogRepo.getExperiencesCatalog();
-    const exp = exps.find((e) => e.id === dto.catalogRefId);
-    const unitPrice = exp ? exp.basePriceUSD : 380;
-    return {
-      bookingType: 'EXCURSION' as const,
-      adminCategory: 'EXCURSION',
-      title: exp?.title || dto.title || 'Curated Sanctuary Excursion',
-      originalValuationUSD: unitPrice * partySize,
-      priceChargedUSD: exp?.isIncluded ? 0 : unitPrice * partySize,
-      department: 'CONCIERGE' as Department,
-      assignedStaffId: 'staff_eduardo',
-      assignedStaffName: 'Eduardo Rivera',
     };
   }
 }

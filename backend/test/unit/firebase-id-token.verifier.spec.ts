@@ -11,20 +11,20 @@ jest.mock('firebase-admin', () => ({
 import { FirebaseIdTokenVerifier } from '../../src/common/services/firebase-id-token.verifier';
 
 describe('FirebaseIdTokenVerifier', () => {
-  const originalFlag = process.env.USE_GCP_FIRESTORE;
+  const originalFlag = process.env.USE_FIRESTORE;
   let verifier: FirebaseIdTokenVerifier;
 
   beforeEach(() => {
     mockVerifyIdToken.mockReset();
     mockApps.length = 0;
     mockApps.push({});
-    process.env.USE_GCP_FIRESTORE = 'true';
+    process.env.USE_FIRESTORE = 'true';
     verifier = new FirebaseIdTokenVerifier();
   });
 
   afterEach(() => {
-    if (originalFlag === undefined) delete process.env.USE_GCP_FIRESTORE;
-    else process.env.USE_GCP_FIRESTORE = originalFlag;
+    if (originalFlag === undefined) delete process.env.USE_FIRESTORE;
+    else process.env.USE_FIRESTORE = originalFlag;
   });
 
   it('test_verify_validIdTokenWithVerifiedEmail_returnsUidAndEmail', async () => {
@@ -56,7 +56,7 @@ describe('FirebaseIdTokenVerifier', () => {
   });
 
   it('test_verify_firebaseDisabled_returnsNullWithoutCallingFirebase', async () => {
-    delete process.env.USE_GCP_FIRESTORE;
+    delete process.env.USE_FIRESTORE;
 
     await expect(verifier.verify('id-token')).resolves.toBeNull();
     expect(mockVerifyIdToken).not.toHaveBeenCalled();
@@ -64,10 +64,10 @@ describe('FirebaseIdTokenVerifier', () => {
 });
 
 describe('FirebaseIdTokenVerifier production flag', () => {
-  const saved = { firestore: process.env.USE_FIRESTORE, gcp: process.env.USE_GCP_FIRESTORE };
+  const saved = { firestore: process.env.USE_FIRESTORE, gcp: process.env.USE_FIRESTORE };
 
   afterEach(() => {
-    for (const [key, value] of [['USE_FIRESTORE', saved.firestore], ['USE_GCP_FIRESTORE', saved.gcp]] as const) {
+    for (const [key, value] of [['USE_FIRESTORE', saved.firestore], ['USE_FIRESTORE', saved.gcp]] as const) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
@@ -76,7 +76,7 @@ describe('FirebaseIdTokenVerifier production flag', () => {
   it('test_verify_useFirestoreTrueOnly_verifiesWithFirebase', async () => {
     mockApps.length = 0;
     mockApps.push({});
-    delete process.env.USE_GCP_FIRESTORE;
+    delete process.env.USE_FIRESTORE;
     process.env.USE_FIRESTORE = 'true';
     mockVerifyIdToken.mockReset();
     mockVerifyIdToken.mockResolvedValue({ uid: 'uid_prod', email: 'staff@kachavalux.com', email_verified: true });

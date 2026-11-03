@@ -4,16 +4,12 @@ import { isFirestoreFlagEnabled } from './runtime-flags';
 type RuntimeEnv = Readonly<Record<string, string | undefined>>;
 
 export const MIN_SECRET_LENGTH = 32;
-export const REQUIRED_SECRET_NAMES = [
-  'STAFF_JWT_SECRET',
-  'STEPUP_HMAC_SECRET',
-  'STORAGE_SIGNING_SECRET',
-] as const;
+export const REQUIRED_SECRET_NAMES = ['STAFF_JWT_SECRET', 'STEPUP_HMAC_SECRET'] as const;
 export type SecretName = (typeof REQUIRED_SECRET_NAMES)[number];
 
 const ephemeralSecrets = new Map<SecretName, string>();
 
-/** Production (or any run against Firebase/GCP) must be configured with strong, explicit secrets. */
+/** Production and every Firestore-backed run (the local emulator included) need strong, explicit secrets. */
 function isStrictSecretMode(env: RuntimeEnv): boolean {
   return env.NODE_ENV === 'production' || isFirestoreFlagEnabled(env);
 }
@@ -28,7 +24,7 @@ function requireStrongSecret(name: SecretName, value: string | undefined): strin
   return value;
 }
 
-/** Local/test runs without a configured secret get a random value that lives only in this process. */
+/** Unit tests without a configured secret get a random value that lives only in this process. */
 function ephemeralSecret(name: SecretName): string {
   const existing = ephemeralSecrets.get(name);
   if (existing) return existing;

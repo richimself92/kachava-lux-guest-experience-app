@@ -7,6 +7,7 @@ import {
   StayAggregate,
   VillaAccess,
 } from '../../domain/models/domain.models';
+import { Villa } from '../../domain/models/resort-config.models';
 import { CreateReservationDto } from './dto/admin.dto';
 
 export interface NewStayIdentity {
@@ -18,28 +19,26 @@ export interface NewStayIdentity {
 
 /** Unified operations role label shown to guests until a specific host is assigned. */
 const UNIFIED_HOST_ROLE = 'HOST ADMIN';
-const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;
 const MS_PER_DAY = 86_400_000;
 
 /**
- * Builds a brand-new, empty stay aggregate exclusively from the reservation request.
- * Nothing is copied from demo templates: unknown values stay empty, zero or "not requested".
+ * Builds a brand-new, empty stay aggregate from the reservation request and its villa.
+ * Nothing is copied from templates: unknown values stay empty, zero or "not requested".
+ * Dates are ISO calendar dates (validated by the DTO; checkOut after checkIn by the service).
  */
-export function buildNewStay(dto: CreateReservationDto, identity: NewStayIdentity): StayAggregate {
-  const villaId = dto.villaId?.trim() || '';
+export function buildNewStay(dto: CreateReservationDto, villa: Villa, identity: NewStayIdentity): StayAggregate {
   const celebration = dto.occasion || dto.celebration || '';
   const guestsCount = dto.guestsCount ?? 0;
   return {
     stayId: identity.stayId, guestTokenUuid: identity.guestTokenUuid,
     magicLinkUrl: identity.magicLinkUrl, status: 'PRE_ARRIVAL',
-    villaId, villaName: dto.villaName?.trim() || villaId,
-    suiteName: extractSuiteName(dto.villaName, dto.suiteName), sqft: '',
-    stayDatesLabel: resolveStayDatesLabel(dto),
-    checkInDate: dto.checkIn || '', checkOutDate: dto.checkOut || '',
+    villaId: villa.villaId, villaName: villa.name, suiteName: villa.category, sqft: '',
+    stayDatesLabel: `${dto.checkIn} – ${dto.checkOut}`,
+    checkInDate: dto.checkIn, checkOutDate: dto.checkOut,
     checkInTimestamp: toIsoTimestamp(dto.checkIn), checkOutTimestamp: toIsoTimestamp(dto.checkOut),
-    nights: calculateNights(dto), guestsCount, selectedSignaturePrivilege: 'massage',
+    nights: nightsBetween(dto.checkIn, dto.checkOut), guestsCount, selectedSignaturePrivilege: 'massage',
     guestProfile: buildGuestProfile(dto, celebration), hostInfo: emptyHostInfo(),
-    villaAccess: buildVillaAccess(dto), flightTransfer: emptyTransfer(guestsCount),
+    villaAccess: buildVillaAccess(dto, villa), flightTransfer: emptyTransfer(guestsCount),
     personalization: emptyPersonalization(celebration, identity.now),
     folioSummary: emptyFolioSummary(),
     folioItems: [], larderOrders: [], experienceBookings: [], conciergeRequests: [], midstayFeedback: [],
@@ -63,10 +62,10 @@ function emptyHostInfo(): HostInfo {
   };
 }
 
-function buildVillaAccess(dto: CreateReservationDto): VillaAccess {
+function buildVillaAccess(dto: CreateReservationDto, villa: Villa): VillaAccess {
   return {
-    digitalKeyStatus: 'INACTIVE', wifiSsid: dto.wifiSsid?.trim() || '',
-    wifiPasscode: dto.wifiPasscode?.trim() || '', climateTempF: 0, plungePoolTempF: 0,
+    digitalKeyStatus: 'INACTIVE', wifiSsid: dto.wifiSsid?.trim() || villa.wifi.ssid,
+    wifiPasscode: dto.wifiPasscode?.trim() || villa.wifi.password, climateTempF: 0, plungePoolTempF: 0,
     humidityPercent: 0, emergencyContact: '',
   };
 }
@@ -100,32 +99,11 @@ function emptyFolioSummary(): FolioSummary {
   };
 }
 
-function toIsoTimestamp(rawDate?: string): string {
-  if (!rawDate || !ISO_DATE_PREFIX.test(rawDate.trim())) return '';
-  const parsed = new Date(rawDate.trim());
-  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
+function toIsoTimestamp(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00.000Z`).toISOString();
 }
 
-/** Month-day inputs without a year ("Oct 19") are interpreted in the 2026 season. */
-function calculateNights(dto: CreateReservationDto): number {
-  if (typeof dto.nights === 'number' && dto.nights > 0) return dto.nights;
-  if (!dto.checkIn || !dto.checkOut) return 0;
-  const withYear = (raw: string) => (/\b\d{4}\b/.test(raw) ? raw.trim() : `${raw.trim()}, 2026`);
-  const inDate = new Date(withYear(dto.checkIn));
-  const outDate = new Date(withYear(dto.checkOut));
-  const diffDays = Math.round((outDate.getTime() - inDate.getTime()) / MS_PER_DAY);
-  return Number.isFinite(diffDays) && diffDays > 0 ? diffDays : 0;
-}
-
-function resolveStayDatesLabel(dto: CreateReservationDto): string {
-  if (dto.checkIn && dto.checkOut) return `${dto.checkIn} – ${dto.checkOut}`;
-  return dto.stayDatesLabel || '';
-}
-
-function extractSuiteName(villaName?: string, suiteName?: string): string {
-  if (suiteName?.trim()) return suiteName.trim();
-  if (villaName && (villaName.includes('—') || villaName.includes('-'))) {
-    return villaName.split(/—|-/).slice(1).join('-').trim();
-  }
-  return '';
+export function nightsBetween(checkIn: string, checkOut: string): number {
+  const diff = Date.parse(`${checkOut}T00:00:00Z`) - Date.parse(`${checkIn}T00:00:00Z`);
+  return Number.isFinite(diff) ? Math.round(diff / MS_PER_DAY) : 0;
 }

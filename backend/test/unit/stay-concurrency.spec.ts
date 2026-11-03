@@ -1,39 +1,53 @@
 import { CreateBookingDto } from '../../src/modules/guest/dto/guest.dto';
+import { CatalogItem, CatalogService } from '../../src/domain/catalog/catalog.models';
+import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
-import { InMemorySeededCatalogRepository } from '../../src/infrastructure/repositories/in-memory-catalog.repository';
-import { createSeededStayAggregate } from '../../src/infrastructure/seed/sanctuary-seed.data';
 import { AdminFulfillmentService } from '../../src/modules/admin/admin-fulfillment.service';
 import { GuestAlertFolioHelper } from '../../src/modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from '../../src/modules/guest/guest-booking.service';
 import { StaffMember, StayAggregate } from '../../src/domain/models/domain.models';
+import { itemFixture, serviceFixture } from '../support/catalog-fixtures';
 import { FakeFirestore } from '../support/fake-firestore';
+import { populatedStayFixture } from '../support/stay-fixtures';
 
 const PARALLEL = 20;
-const STAFF = { staffId: 'staff_eduardo', fullName: 'HOST ADMIN' } as StaffMember;
+const STAFF = { staffId: 'staff-test', fullName: 'Test Staff' } as StaffMember;
+const STOCKING_SERVICE = serviceFixture({
+  serviceId: 'svc-stock', kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', experience: null,
+  stocking: { maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null },
+  pricing: { mode: 'PER_UNIT', amount: null, currency: 'USD', chargeToFolio: true, note: { en: '', es: '' } },
+});
 
 function paidBooking(index: number): CreateBookingDto {
   return {
-    category: 'explore',
-    catalogRefId: `unknown_${index}`,
+    serviceId: 'svc-1',
     scheduledDate: '2026-11-10',
     scheduledTimeSlot: '10:00',
     partySize: 1,
+    metadata: { ref: `ref_${index}` },
   };
 }
 
 async function seedStay(fake: FakeFirestore) {
-  const repo = new FirestoreStayRepository(fake.asFirestore());
-  const stay = createSeededStayAggregate();
+  const db = fake.asFirestore();
+  const repo = new FirestoreStayRepository(db);
+  const services = new FirestoreEntityRepository<CatalogService>(db, 'catalog_services', 'serviceId', 'Service');
+  const items = new FirestoreEntityRepository<CatalogItem>(db, 'catalog_items', 'itemId', 'Item');
+  const stay = populatedStayFixture();
   await repo.createStay(stay);
-  const catalog = new InMemorySeededCatalogRepository();
+  await services.create(serviceFixture());
+  await services.create(STOCKING_SERVICE);
+  await items.create(itemFixture({ serviceId: 'svc-stock' }));
   const helper = new GuestAlertFolioHelper();
   return {
     repo,
     stay,
-    booking: new GuestBookingService(repo, catalog, helper),
-    admin: new AdminFulfillmentService(repo, catalog, {} as never),
+    booking: new GuestBookingService(repo, services, items, helper),
+    admin: new AdminFulfillmentService(repo, {} as never),
   };
 }
+
+const hasRef = (ref: string) => (b: { metadata: Record<string, unknown> }) => b.metadata.ref === ref;
 
 function bookingFolioLines(stay: StayAggregate): number {
   return stay.folioItems.filter((f) => f.folioItemId.startsWith('folio_bk_')).length;
@@ -76,10 +90,8 @@ describe('Stay mutations under concurrency (fake Firestore with transaction conf
     const fake = new FakeFirestore();
     const { repo, stay, booking } = await seedStay(fake);
     const staleSnapshot = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    const larderItemId = (await new InMemorySeededCatalogRepository().getLarderCatalog())[0].id;
-
     await booking.createBooking(staleSnapshot, paidBooking(1));
-    await booking.updateLarderOrder(staleSnapshot, { items: [{ itemId: larderItemId, quantity: 3 }] });
+    await booking.updateLarderOrder(staleSnapshot, { serviceId: 'svc-stock', items: [{ itemId: 'item-1', quantity: 3 }] });
 
     const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
     expect(bookingFolioLines(stored)).toBe(1);
@@ -96,7 +108,7 @@ describe('Stay mutations under concurrency (fake Firestore with transaction conf
 
     jest.restoreAllMocks();
     const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    expect(stored.experienceBookings.some((b) => b.catalogRefId === 'unknown_7')).toBe(true);
+    expect(stored.experienceBookings.some(hasRef('ref_7'))).toBe(true);
     expect(bookingFolioLines(stored)).toBe(1);
   });
 });
@@ -112,7 +124,7 @@ describe('Stay mutation and its operational alert are one atomic write (ADV-09)'
     await booking.createBooking(stay, paidBooking(9));
 
     const stored = (await repo.findByStayId(stay.stayId)) as StayAggregate;
-    expect(stored.experienceBookings.filter((b) => b.catalogRefId === 'unknown_9')).toHaveLength(1);
+    expect(stored.experienceBookings.filter(hasRef('ref_9'))).toHaveLength(1);
     expect(bookingFolioLines(stored)).toBe(1);
     expect(fake.collections.get('operational_alerts')?.size).toBe(1);
   });

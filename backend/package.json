@@ -10,7 +10,6 @@
     "start": "node dist/main.js",
     "start:dev": "ts-node src/main.ts",
     "start:prod": "node dist/main.js",
-    "seed:firestore": "ts-node src/scripts/seed-firestore.ts",
     "test": "jest --runInBand",
     "test:unit": "jest --testPathPattern=test/unit --runInBand",
     "test:e2e": "jest --testPathPattern=test/e2e --runInBand",

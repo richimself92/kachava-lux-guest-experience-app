@@ -1,37 +1,27 @@
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { StepUpAttemptLimiter } from '../../src/common/services/step-up-attempt-limiter';
-import { configureApp } from '../../src/main';
+import { createTestApp, createVillaAndStay, TestApp } from '../support/test-app';
 
 describe('POST /api/v1/stays/:guestUuid/verify-step-up only accepts the stay own villa', () => {
-  let app: NestExpressApplication;
+  let t: TestApp;
   let villa108GuestUuid = '';
   let villa108StayId = '';
+  let villa108Id = '';
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication<NestExpressApplication>();
-    configureApp(app);
-    await app.init();
-    const login = await request(app.getHttpServer())
-      .post('/api/v1/admin/auth/login')
-      .send({ email: 'eduardo.rivera@kachavalux.com' });
-    const created = await request(app.getHttpServer())
-      .post('/api/v1/admin/stays')
-      .set('Authorization', `Bearer ${login.body.data.token}`)
-      .send({ guestName: 'Julian Vance', villaId: 'villa-108', villaName: 'Villa 108', nights: 3, guestsCount: 2 });
-    villa108GuestUuid = created.body.data.stay.guestTokenUuid;
-    villa108StayId = created.body.data.stay.stayId;
+    t = await createTestApp();
+    const created = await createVillaAndStay(t, { villaName: 'Villa 108', guestName: 'Julian Vance' });
+    villa108GuestUuid = created.guestTokenUuid;
+    villa108StayId = created.stayId;
+    villa108Id = created.villaId;
   });
 
-  afterAll(() => app.close());
+  afterAll(() => t.close());
   /** These cases test answer matching; the brute-force lockout has its own suite below. */
-  afterEach(() => app.get(StepUpAttemptLimiter).recordSuccess(villa108StayId));
+  afterEach(() => t.app.get(StepUpAttemptLimiter).recordSuccess(villa108StayId));
 
   const challenge = (paths: string, body: Record<string, string>) =>
-    request(app.getHttpServer()).post(`/api/v1/stays/${villa108GuestUuid}/${paths}`).send(body);
+    request(t.server()).post(`/api/v1/stays/${villa108GuestUuid}/${paths}`).send(body);
 
   it.each(['verify-step-up', 'verify-stepup'])(
     'test_%s_otherStayVilla102_isForbidden',
@@ -45,7 +35,7 @@ describe('POST /api/v1/stays/:guestUuid/verify-step-up only accepts the stay own
 
   it('test_verifyStepUp_ownVillaNumberOrVillaId_issuesStepUpToken', async () => {
     const byNumber = await challenge('verify-step-up', { villaNumber: '108' });
-    const byVillaId = await challenge('verify-step-up', { villaNumber: 'villa-108' });
+    const byVillaId = await challenge('verify-step-up', { villaNumber: villa108Id });
 
     expect([byNumber.status, byVillaId.status]).toEqual([201, 201]);
     expect(typeof byNumber.body.data.stepUpToken).toBe('string');
@@ -70,28 +60,20 @@ describe('POST /api/v1/stays/:guestUuid/verify-step-up only accepts the stay own
 });
 
 describe('POST /verify-step-up brute force is locked out per stay (ADV-04)', () => {
-  let app: NestExpressApplication;
+  let t: TestApp;
   let guestUuid = '';
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication<NestExpressApplication>();
-    configureApp(app);
-    await app.init();
-    const login = await request(app.getHttpServer()).post('/api/v1/admin/auth/login').send({ email: 'eduardo.rivera@kachavalux.com' });
-    const created = await request(app.getHttpServer())
-      .post('/api/v1/admin/stays')
-      .set('Authorization', `Bearer ${login.body.data.token}`)
-      .send({ guestName: 'Nora Quill', villaId: 'villa-107', villaName: 'Villa 107' });
-    guestUuid = created.body.data.stay.guestTokenUuid;
+    t = await createTestApp();
+    guestUuid = (await createVillaAndStay(t, { villaName: 'Villa 107', guestName: 'Nora Quill' })).guestTokenUuid;
   });
 
-  afterAll(() => app.close());
+  afterAll(() => t.close());
 
   it('test_verifyStepUp_enumeratingVillaNumbers_isLockedOutAfterFiveFailuresWith429', async () => {
     const statuses: number[] = [];
     for (let guess = 100; guess < 110; guess += 1) {
-      const res = await request(app.getHttpServer())
+      const res = await request(t.server())
         .post(`/api/v1/stays/${guestUuid}/verify-step-up`)
         .set('X-Forwarded-For', `192.0.2.${guess}`)
         .send({ villaNumber: String(guess) });

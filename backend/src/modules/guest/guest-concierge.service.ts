@@ -143,7 +143,7 @@ export class GuestConciergeService {
       housekeepingPreferences: dto.housekeepingPreferences || [],
       note: dto.note || '',
       status: 'DISPATCHED_TO_HOST',
-      handledByStaffId: 'staff_eduardo',
+      handledByStaffId: null,
       createdAt: new Date().toISOString(),
     };
   }
@@ -160,8 +160,8 @@ export class GuestConciergeService {
         severity: 'HIGH',
         title: `${stay.villaName} Express Checkout Initiated ($${settled.folioSummary.finalSettledTotalUSD} USD)`,
         summary: dto.lateCheckoutRequested
-          ? `Guest requested Late Checkout (${dto.requestedCheckoutTime || '2:00 PM'}) and settled folio.`
-          : `Guest completed Express Digital Checkout. Chauffeur Carlos M. alerted.`,
+          ? `Guest requested late checkout${dto.requestedCheckoutTime ? ` (${dto.requestedCheckoutTime})` : ''} and settled the folio.`
+          : 'Guest completed express checkout.',
         sourceDocumentPath: `stays/${stay.stayId}`,
         assignedDepartment: 'CONCIERGE',
       }),
@@ -184,11 +184,11 @@ export class GuestConciergeService {
       timeLabel: 'Requested just now',
       location: dto.location || `${stay.villaName} — ${stay.suiteName}`,
       status: 'Requested', currentStep: 1,
-      assignedStaffId: 'staff_eduardo',
-      assignedTo: 'HOST ADMIN',
+      assignedStaffId: null,
+      assignedTo: '',
       assignedDepartment: isIssue ? 'ENGINEERING' : 'CONCIERGE',
       assignedAt: now, notifiedAt: now,
-      details: text, notes: 'Received by Concierge Desk.',
+      details: text, notes: '',
       photoStoragePath: dto.photoStoragePath || null, isCompleted: false,
       messages: [{ sender: 'GUEST', senderName: stay.guestProfile.name, text, sentAt: now }],
       createdAt: now, updatedAt: now,

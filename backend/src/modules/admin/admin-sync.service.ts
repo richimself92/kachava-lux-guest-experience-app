@@ -3,8 +3,6 @@ import { AlertListing } from '../../domain/alert-projections';
 import {
   ConciergeRequest,
   ExperienceBooking,
-  ExperienceCatalogItem,
-  LarderCatalogItem,
   LarderOrderItem,
   MidStayFeedback,
   StayAggregate,
@@ -12,8 +10,6 @@ import {
 import {
   ALERT_REPOSITORY_PORT,
   AlertRepositoryPort,
-  CATALOG_REPOSITORY_PORT,
-  CatalogRepositoryPort,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
@@ -24,7 +20,10 @@ import {
   collectMidStayFeedback,
 } from '../../domain/stay-projections';
 
-/** Keys consumed by the admin dashboard; each mirrors the matching admin GET with default filters. */
+/** Upper bound of open stays (pre-arrival + in-house) one sync payload carries. */
+export const SYNC_STAY_LIMIT = 200;
+
+/** Keys consumed by the admin dashboard polling loop. */
 export interface AdminSyncSnapshot {
   stays: StayAggregate[];
   alerts: AlertListing;
@@ -32,28 +31,24 @@ export interface AdminSyncSnapshot {
   larderOrders: LarderOrderItem[];
   conciergeRequests: ConciergeRequest[];
   midstayFeedback: MidStayFeedback[];
-  experiences: ExperienceCatalogItem[];
-  larder: LarderCatalogItem[];
 }
 
 /**
- * Builds the admin polling payload from a single read of the stays collection; cross-stay
- * lists are derived with the same projections the per-resource endpoints use.
+ * Bounded admin polling payload: at most SYNC_STAY_LIMIT open stays (ordered by arrival) and the
+ * newest alerts; cross-stay lists are derived from those stays only. Catalog data is not part
+ * of the sync: it is read through `/admin/services`.
  */
 @Injectable()
 export class AdminSyncService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT) private readonly stayRepo: StayRepositoryPort,
     @Inject(ALERT_REPOSITORY_PORT) private readonly alertRepo: AlertRepositoryPort,
-    @Inject(CATALOG_REPOSITORY_PORT) private readonly catalogRepo: CatalogRepositoryPort,
   ) {}
 
   async snapshot(): Promise<AdminSyncSnapshot> {
-    const [stays, alerts, experiences, larder] = await Promise.all([
-      this.stayRepo.listStays(),
+    const [stays, alerts] = await Promise.all([
+      this.stayRepo.listOpenStays(SYNC_STAY_LIMIT),
       this.alertRepo.listAlerts(),
-      this.catalogRepo.getExperiencesCatalog(),
-      this.catalogRepo.getLarderCatalog(),
     ]);
     return {
       stays,
@@ -62,8 +57,6 @@ export class AdminSyncService {
       larderOrders: collectLarderOrders(stays),
       conciergeRequests: collectConciergeRequests(stays),
       midstayFeedback: collectMidStayFeedback(stays),
-      experiences,
-      larder,
     };
   }
 }

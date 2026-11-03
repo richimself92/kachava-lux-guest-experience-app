@@ -34,15 +34,15 @@ export function recalculateFolioSummary(current: FolioSummary, items: FolioItem[
   };
 }
 
-/** Adds the folio line of a paid booking (none for included bookings) and refreshes totals. */
+/** Adds the folio line of a paid booking charged to the folio, then refreshes totals. */
 export function chargeBooking(stay: StayAggregate, booking: ExperienceBooking): void {
-  if (booking.priceChargedUSD > 0) {
+  if (booking.snapshot.chargeToFolio && booking.priceChargedUSD > 0) {
     stay.folioItems.push({
       folioItemId: `folio_${booking.bookingId}`,
       displayOrder: stay.folioItems.length + 1,
       title: booking.title,
       subtitle: `${booking.scheduledDate} · ${booking.scheduledTimeSlot}`,
-      category: 'EXCURSION',
+      category: 'SERVICE',
       badgeLabel: null,
       isComplimentary: false,
       originalValuationUSD: booking.originalValuationUSD,
@@ -55,25 +55,44 @@ export function chargeBooking(stay: StayAggregate, booking: ExperienceBooking): 
   stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
 }
 
+/** How the stocking order is charged: the service name (snapshot) and its folio setting. */
+export interface LarderCharge {
+  title: string;
+  chargeToFolio: boolean;
+}
+
 /** Sets the single larder line to the order total (creating it when needed) and refreshes totals. */
-export function chargeLarderOrder(stay: StayAggregate, orders: LarderOrderItem[], now: string): void {
-  const total = orders.reduce((acc, o) => acc + o.lineTotalUSD, 0);
+export function chargeLarderOrder(
+  stay: StayAggregate,
+  orders: LarderOrderItem[],
+  now: string,
+  charge: LarderCharge,
+): void {
+  const total = charge.chargeToFolio ? orders.reduce((acc, o) => acc + o.lineTotalUSD, 0) : 0;
   const existing = stay.folioItems.find((fi) => fi.category === 'LARDER');
   if (existing) {
+    existing.title = charge.title;
+    existing.subtitle = `${orders.length} items`;
     existing.originalValuationUSD = total;
     existing.chargedAmountUSD = total;
   } else if (total > 0) {
-    stay.folioItems.push(larderFolioLine(stay.folioItems.length + 1, total, orders.length, now));
+    stay.folioItems.push(larderFolioLine(stay.folioItems.length + 1, total, orders.length, now, charge.title));
   }
   stay.folioSummary = recalculateFolioSummary(stay.folioSummary, stay.folioItems);
 }
 
-function larderFolioLine(displayOrder: number, total: number, count: number, now: string): FolioItem {
+function larderFolioLine(
+  displayOrder: number,
+  total: number,
+  count: number,
+  now: string,
+  title: string,
+): FolioItem {
   return {
     folioItemId: LARDER_FOLIO_ITEM_ID,
     displayOrder,
-    title: 'Stock My Villa Curated Larder',
-    subtitle: `Pre-Arrival Provisioning (${count} Artisanal Items)`,
+    title,
+    subtitle: `${count} items`,
     category: 'LARDER',
     badgeLabel: null,
     isComplimentary: false,

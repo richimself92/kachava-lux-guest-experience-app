@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import 'reflect-metadata';
 import { AppModule } from './app.module';
+import { assertAdminIdentityConfigured } from './common/config/admin-identity';
+import { assertFirestoreTarget } from './common/config/runtime-flags';
 import { assertProductionSecrets } from './common/config/runtime-secrets';
 import { GlobalHttpExceptionFilter } from './common/filters/global-http-exception.filter';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
@@ -47,6 +49,8 @@ export function configureApp(app: NestExpressApplication): void {
 
 export async function bootstrap(): Promise<void> {
   assertProductionSecrets();
+  assertAdminIdentityConfigured();
+  assertFirestoreTarget();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   configureApp(app);
   const port = Number(process.env.PORT || 8080);

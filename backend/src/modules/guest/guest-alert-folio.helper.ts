@@ -14,7 +14,7 @@ export interface GuestAlertParams {
   title: string;
   summary: string;
   sourceDocumentPath: string;
-  assignedDepartment: Department;
+  assignedDepartment: Department | null;
 }
 
 /**

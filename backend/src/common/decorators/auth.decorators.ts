@@ -25,3 +25,11 @@ export const CurrentStaff = createParamDecorator(
     return request.staff as StaffMember;
   },
 );
+
+/** Every staff role may read admin configuration; writes are HOST_ADMIN only. */
+export const ANY_STAFF_ROLE: RbacRole[] = ['HOST_ADMIN', 'CONCIERGE_STAFF', 'DEPARTMENT_COORDINATOR'];
+
+/** Audit actor recorded on writes (`createdBy` / `updatedBy`). */
+export function auditActorOf(staff: StaffMember): string {
+  return staff.email || staff.staffId;
+}

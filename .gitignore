@@ -77,3 +77,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.iml
+
+# Local Firebase emulator data (persisted between runs) and generated local secrets
+.local-data/

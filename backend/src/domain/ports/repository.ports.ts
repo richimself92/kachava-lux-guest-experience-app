@@ -5,11 +5,9 @@ import {
   ConciergeRequest,
   Department,
   ExperienceBooking,
-  ExperienceCatalogItem,
   FlightTransfer,
   FolioItem,
   FolioSummary,
-  LarderCatalogItem,
   LarderOrderItem,
   MidStayFeedback,
   OperationalAlert,
@@ -18,25 +16,76 @@ import {
   StayAggregate,
   StayLifecycleStatus,
   StayRecord,
-  YachtCatalog,
 } from '../models/domain.models';
-import { FolioSettlement, SettledFolio } from '../folio-ledger';
+import { FolioSettlement, LarderCharge, SettledFolio } from '../folio-ledger';
+import { PaginatedResult, SortDirection } from '../../common/listing/list-query';
+import { CatalogItem, CatalogService } from '../catalog/catalog.models';
+import { ResortSettings, TransportProvider, Villa } from '../models/resort-config.models';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
-export const CATALOG_REPOSITORY_PORT = Symbol('CATALOG_REPOSITORY_PORT');
+export const VILLA_REPOSITORY_PORT = Symbol('VILLA_REPOSITORY_PORT');
+export const TRANSPORT_PROVIDER_REPOSITORY_PORT = Symbol('TRANSPORT_PROVIDER_REPOSITORY_PORT');
+export const SERVICE_REPOSITORY_PORT = Symbol('SERVICE_REPOSITORY_PORT');
+export const SERVICE_ITEM_REPOSITORY_PORT = Symbol('SERVICE_ITEM_REPOSITORY_PORT');
+export const SETTINGS_REPOSITORY_PORT = Symbol('SETTINGS_REPOSITORY_PORT');
+export const CATALOG_IMAGE_STORAGE_PORT = Symbol('CATALOG_IMAGE_STORAGE_PORT');
 export const ALERT_REPOSITORY_PORT = Symbol('ALERT_REPOSITORY_PORT');
 export const STAFF_REPOSITORY_PORT = Symbol('STAFF_REPOSITORY_PORT');
 export const STORAGE_SIGNER_PORT = Symbol('STORAGE_SIGNER_PORT');
 
-export interface StayFilterCriteria {
+/** Stays page request: equality filters, arrival range (ISO dates) and guest-name search. */
+export interface StayPageQuery {
   status?: StayLifecycleStatus;
   villaId?: string;
-  search?: string;
+  from?: string;
+  to?: string;
+  q?: string;
+  page: number;
+  pageSize: number;
+  direction: SortDirection;
+}
+
+/** Equality filters pushed down to the store (`undefined` entries are ignored). */
+export type EntityFilter = Record<string, string | number | boolean | undefined>;
+
+/**
+ * Admin-managed configuration collections (villas, providers, services, items). They are small
+ * by nature, so `list` returns every match up to a hard scan limit and callers page in memory.
+ */
+export interface EntityRepositoryPort<T> {
+  list(filter?: EntityFilter): Promise<T[]>;
+  findById(id: string): Promise<T | null>;
+  create(entity: T): Promise<T>;
+  /** Read-modify-write in one transaction; throws EntityNotFoundError when absent. */
+  update(id: string, mutate: (current: T) => T): Promise<T>;
+  delete(id: string): Promise<void>;
+}
+
+export type VillaRepositoryPort = EntityRepositoryPort<Villa>;
+export type TransportProviderRepositoryPort = EntityRepositoryPort<TransportProvider>;
+export type ServiceRepositoryPort = EntityRepositoryPort<CatalogService>;
+export type ServiceItemRepositoryPort = EntityRepositoryPort<CatalogItem>;
+
+export interface SettingsRepositoryPort {
+  get(): Promise<ResortSettings>;
+  update(mutate: (current: ResortSettings) => ResortSettings): Promise<ResortSettings>;
+}
+
+export interface SignedUpload {
+  uploadUrl: string;
+  method: 'PUT' | 'POST';
+  headers: Record<string, string>;
+  expiresAt: string;
+}
+
+export interface CatalogImageStoragePort {
+  signUpload(params: { path: string; contentType: string; maxBytes: number }): Promise<SignedUpload>;
+  publicUrl(path: string): string;
 }
 
 export interface BookingFilterCriteria {
-  category?: string;
-  bookingType?: string;
+  section?: string;
+  usageType?: string;
   status?: string;
   assignedDepartment?: string;
   scheduledDate?: string;
@@ -73,7 +122,10 @@ export type StayAlertFactory<T> = (result: T) => OperationalAlert | null;
 export interface StayRepositoryPort {
   findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null>;
   findByStayId(stayId: string): Promise<StayAggregate | null>;
-  listStays(filter?: StayFilterCriteria): Promise<StayAggregate[]>;
+  pageStays(query: StayPageQuery): Promise<PaginatedResult<StayAggregate>>;
+  /** Stays the admin dashboard follows live (pre-arrival and in-house), at most `limit`. */
+  listOpenStays(limit: number): Promise<StayAggregate[]>;
+  hasStaysForVilla(villaId: string): Promise<boolean>;
   createStay(stay: StayAggregate): Promise<StayAggregate>;
   updateStayToken(stayId: string, newUuid: string): Promise<StayRecord>;
   updateStayStatus(stayId: string, status: StayLifecycleStatus): Promise<StayRecord>;
@@ -81,7 +133,6 @@ export interface StayRepositoryPort {
     stayId: string,
     wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
   ): Promise<StayRecord>;
-  resetAllStays(): Promise<void>;
   updateTransfer(
     stayId: string,
     transferPatch: Partial<FlightTransfer>,
@@ -101,6 +152,7 @@ export interface StayRepositoryPort {
   replaceLarderOrders(
     stayId: string,
     orders: LarderOrderItem[],
+    charge: LarderCharge,
     alertOf?: StayAlertFactory<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>;
   listLarderOrdersAcrossStays(
@@ -162,18 +214,6 @@ export interface StayRepositoryPort {
   ): Promise<SettledFolio>;
 }
 
-export interface CatalogRepositoryPort {
-  getLarderCatalog(): Promise<LarderCatalogItem[]>;
-  createLarderCatalogItem(item: Partial<LarderCatalogItem>): Promise<LarderCatalogItem>;
-  deleteLarderCatalogItem(id: string): Promise<{ deleted: boolean; id: string }>;
-  getExperiencesCatalog(): Promise<ExperienceCatalogItem[]>;
-  createExperienceCatalogItem(
-    item: Partial<ExperienceCatalogItem>,
-  ): Promise<ExperienceCatalogItem>;
-  deleteExperienceCatalogItem(id: string): Promise<{ deleted: boolean; id: string }>;
-  getYachtCatalog(): Promise<YachtCatalog>;
-}
-
 export interface AlertRepositoryPort {
   createAlert(alert: OperationalAlert): Promise<OperationalAlert>;
   listAlerts(
@@ -183,7 +223,6 @@ export interface AlertRepositoryPort {
     alertId: string,
     staffId: string,
   ): Promise<OperationalAlert | null>;
-  resetAllAlerts(): Promise<void>;
 }
 
 export interface StaffRepositoryPort {

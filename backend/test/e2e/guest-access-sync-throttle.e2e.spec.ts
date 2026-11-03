@@ -4,7 +4,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import {
   buildThrottlerOptions,
   resolveClientIpTracker,
@@ -12,49 +11,37 @@ import {
   THROTTLE_LIMIT_PER_IP,
   THROTTLE_LIMIT_PER_TRACKER,
 } from '../../src/common/throttling/throttle-tracker';
-import { STAY_REPOSITORY_PORT } from '../../src/domain/ports/repository.ports';
-import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
 import { configureApp } from '../../src/main';
-import { FakeFirestore } from '../support/fake-firestore';
+import { createTestApp, seedGuestFixtures, TestApp } from '../support/test-app';
 
 const UNKNOWN_UUID = '99999999-9999-4999-8999-999999999999';
-const DEMO_UUID = '550e8400-e29b-41d4-a716-446655440000';
-
-async function createApp(overrideStayRepo?: unknown): Promise<NestExpressApplication> {
-  let builder = Test.createTestingModule({ imports: [AppModule] });
-  if (overrideStayRepo) builder = builder.overrideProvider(STAY_REPOSITORY_PORT).useValue(overrideStayRepo);
-  const app = (await builder.compile()).createNestApplication<NestExpressApplication>();
-  configureApp(app);
-  await app.init();
-  return app;
-}
+const DEMO_UUID = '11111111-1111-4111-8111-111111111111';
 
 describe('Guest magic link: invalid token vs storage failure', () => {
-  let app: NestExpressApplication;
-  const fake = new FakeFirestore();
+  let t: TestApp;
 
   beforeAll(async () => {
-    app = await createApp(new FirestoreStayRepository(fake.asFirestore()));
+    t = await createTestApp();
   });
 
-  afterAll(() => app.close());
-  afterEach(() => fake.failReadsWith(null));
+  afterAll(() => t.close());
+  afterEach(() => t.fake.failReadsWith(null));
 
   it('test_getStay_unknownWellFormedToken_returns401', async () => {
-    const res = await request(app.getHttpServer()).get(`/api/v1/stays/${UNKNOWN_UUID}`);
+    const res = await request(t.server()).get(`/api/v1/stays/${UNKNOWN_UUID}`);
     expect(res.status).toBe(401);
   });
 
   it('test_getStay_malformedToken_returns401', async () => {
-    const res = await request(app.getHttpServer()).get('/api/v1/stays/not-a-uuid');
+    const res = await request(t.server()).get('/api/v1/stays/not-a-uuid');
     expect(res.status).toBe(401);
   });
 
   it('test_getStay_storageFailure_returns5xxNeverNotFound', async () => {
-    fake.failReadsWith(new Error('UNAVAILABLE: firestore down'));
+    t.fake.failReadsWith(new Error('UNAVAILABLE: firestore down'));
     const logSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
-    const res = await request(app.getHttpServer()).get(`/api/v1/stays/${UNKNOWN_UUID}`);
+    const res = await request(t.server()).get(`/api/v1/stays/${UNKNOWN_UUID}`);
 
     expect(res.status).toBeGreaterThanOrEqual(500);
     expect(res.body.success).toBe(false);
@@ -63,59 +50,46 @@ describe('Guest magic link: invalid token vs storage failure', () => {
   });
 });
 
-describe('GET /api/v1/admin/sync', () => {
-  let app: NestExpressApplication;
-  let token = '';
+describe('GET /api/v1/admin/sync (bounded)', () => {
+  let t: TestApp;
 
   beforeAll(async () => {
-    app = await createApp();
-    const login = await request(app.getHttpServer())
-      .post('/api/v1/admin/auth/login')
-      .send({ email: 'eduardo.rivera@kachavalux.com', passcode: 'KachavaAdmin2026!' });
-    token = login.body.data.token;
+    t = await createTestApp();
+    seedGuestFixtures(t.fake);
   });
 
-  afterAll(() => app.close());
+  afterAll(() => t.close());
 
   const getData = async (path: string) => {
-    const res = await request(app.getHttpServer()).get(`/api/v1/admin/${path}`).set('Authorization', `Bearer ${token}`);
+    const res = await request(t.server()).get(`/api/v1/admin/${path}`).set(await t.adminHeaders());
     expect(res.status).toBe(200);
     return res.body.data;
   };
 
-  it('test_adminSync_returnsOnePayloadIdenticalToIndividualAdminEndpoints', async () => {
+  it('test_adminSync_returnsOpenStaysAndTheirDerivedLists_withoutCatalog', async () => {
     const sync = await getData('sync');
 
     expect(Object.keys(sync).sort()).toEqual(
-      ['alerts', 'bookings', 'conciergeRequests', 'experiences', 'larder', 'larderOrders', 'midstayFeedback', 'stays'],
+      ['alerts', 'bookings', 'conciergeRequests', 'larderOrders', 'midstayFeedback', 'stays'],
     );
-    expect(sync.stays).toEqual(await getData('stays'));
-    expect(sync.alerts).toEqual(await getData('alerts'));
+    expect(sync.stays.map((s: { stayId: string }) => s.stayId)).toEqual(['stay-test-1']);
     expect(sync.bookings).toEqual(await getData('bookings'));
     expect(sync.larderOrders).toEqual(await getData('larder-orders'));
     expect(sync.conciergeRequests).toEqual(await getData('concierge-requests'));
     expect(sync.midstayFeedback).toEqual(await getData('midstay-feedback'));
-    expect(sync.experiences).toEqual(await getData('catalog/experiences'));
-    expect(sync.larder).toEqual(await getData('catalog/larder'));
-    expect(sync.stays.length).toBeGreaterThan(0);
-    expect(sync.bookings.length).toBeGreaterThan(0);
   });
 
   it('test_adminRoutes_withoutBearerToken_return401WithoutDefaultStaffIdentity', async () => {
-    const server = app.getHttpServer();
+    const server = t.server();
 
     const sync = await request(server).get('/api/v1/admin/sync');
-    const reset = await request(server).post('/api/v1/admin/reset');
     const stays = await request(server).get('/api/v1/admin/stays');
 
-    expect([sync.status, reset.status, stays.status]).toEqual([401, 401, 401]);
-    expect((await getData('stays')).length).toBeGreaterThan(0);
+    expect([sync.status, stays.status]).toEqual([401, 401]);
   });
 
   it('test_adminSync_guestUuidAsBearer_isRejectedByAdminAuthGuard', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/api/v1/admin/sync')
-      .set('Authorization', `Bearer ${DEMO_UUID}`);
+    const res = await request(t.server()).get('/api/v1/admin/sync').set('Authorization', `Bearer ${DEMO_UUID}`);
     expect(res.status).toBe(401);
   });
 });

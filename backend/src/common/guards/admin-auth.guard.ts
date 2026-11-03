@@ -5,6 +5,11 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import {
+  ADMIN_SERVICE_STAFF_ID,
+  buildAdminServiceStaff,
+  resolveAdminServiceEmail,
+} from '../config/admin-identity';
 import { StaffMember } from '../../domain/models/domain.models';
 import {
   STAFF_REPOSITORY_PORT,
@@ -15,7 +20,8 @@ import { SecurityTokenService } from '../services/security-token.service';
 
 /**
  * Authenticates `/api/v1/admin/*` callers. Accepts a staff token issued by
- * `POST /admin/auth/login` or a Firebase ID token of a rostered staff member.
+ * `POST /admin/auth/login` (the env-configured admin identity, or a rostered staff member)
+ * or a Firebase ID token of a rostered staff member.
  * Anything else (missing, unknown, forged, rejected) is a 401: there is no default identity.
  */
 @Injectable()
@@ -57,6 +63,10 @@ export class AdminAuthGuard implements CanActivate {
 
   private async resolveStaffIdentity(token: string): Promise<StaffMember | null> {
     const staffToken = this.securityTokenService.verifyStaffToken(token);
+    if (staffToken?.staffId === ADMIN_SERVICE_STAFF_ID) {
+      const configured = resolveAdminServiceEmail();
+      return configured && staffToken.email === configured ? buildAdminServiceStaff(configured) : null;
+    }
     if (staffToken) {
       return this.staffRepository.findByStaffId(staffToken.staffId);
     }

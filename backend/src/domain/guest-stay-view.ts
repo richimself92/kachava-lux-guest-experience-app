@@ -40,11 +40,11 @@ const PERSONALIZATION_KEYS = [
   'temperatureCurve', 'lightingRhythm', 'housekeepingCadence', 'commChannel',
 ] as const satisfies ReadonlyArray<keyof Personalization>;
 const LARDER_KEYS = [
-  'orderItemId', 'catalogItemId', 'name', 'category', 'unitPriceUSD', 'quantity', 'lineTotalUSD',
+  'orderItemId', 'serviceId', 'catalogItemId', 'name', 'itemName', 'category', 'unitPriceUSD', 'quantity', 'lineTotalUSD',
   'provisioningStatus',
 ] as const satisfies ReadonlyArray<keyof LarderOrderItem>;
 const BOOKING_KEYS = [
-  'bookingId', 'bookingType', 'category', 'catalogRefId', 'title', 'scheduledDate',
+  'bookingId', 'serviceId', 'itemId', 'section', 'usageType', 'category', 'snapshot', 'title', 'scheduledDate',
   'scheduledTimeSlot', 'partySize', 'isIncludedWithStay', 'originalValuationUSD',
   'priceChargedUSD', 'status', 'cancellationReason',
 ] as const satisfies ReadonlyArray<keyof ExperienceBooking>;

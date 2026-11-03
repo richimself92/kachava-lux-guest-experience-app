@@ -11,6 +11,10 @@ export const EMAIL_MAX = 254;
 export const STRING_LIST_MAX = 30;
 export const LARDER_LINES_MAX = 100;
 export const METADATA_MAX_BYTES = 2048;
+/** Calendar date without time, e.g. 2026-11-02 (compared lexicographically in Firestore). */
+export const ISO_DATE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+/** 24-hour clock time, e.g. 07:30. */
+export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** Villa ids become part of stay ids and storage paths: letters, digits, `_` and `-` only. */
 export const VILLA_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
 

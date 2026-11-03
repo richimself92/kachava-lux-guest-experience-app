@@ -1,4 +1,4 @@
-import { chargeBooking, chargeLarderOrder } from '../../domain/folio-ledger';
+import { chargeBooking, chargeLarderOrder, LarderCharge } from '../../domain/folio-ledger';
 import {
   ConciergeMessage,
   ConciergeRequest,
@@ -91,10 +91,11 @@ export function selectSignaturePrivilege(
 export function replaceLarderAndFolio(
   stay: StayAggregate,
   orders: LarderOrderItem[],
+  charge: LarderCharge,
 ): { orders: LarderOrderItem[]; folioSummary: FolioSummary } {
   stay.larderOrders = structuredClone(orders);
   touch(stay);
-  chargeLarderOrder(stay, stay.larderOrders, stay.updatedAt);
+  chargeLarderOrder(stay, stay.larderOrders, stay.updatedAt, charge);
   return { orders: structuredClone(stay.larderOrders), folioSummary: structuredClone(stay.folioSummary) };
 }
 

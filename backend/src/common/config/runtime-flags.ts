@@ -1,17 +1,27 @@
 type RuntimeEnv = Readonly<Record<string, string | undefined>>;
 
 /**
- * Single source of truth for "the backend runs against Firebase/GCP".
- * Production deploys set `USE_FIRESTORE=true`; `USE_GCP_FIRESTORE=true` is the legacy alias.
+ * The backend always persists to Firestore + Cloud Storage; there is no in-memory runtime mode.
+ * `USE_FIRESTORE=true` is required as an explicit acknowledgement in every environment.
  */
 export function isFirestoreFlagEnabled(env: RuntimeEnv = process.env): boolean {
-  return env.USE_FIRESTORE === 'true' || env.USE_GCP_FIRESTORE === 'true';
+  return env.USE_FIRESTORE === 'true';
 }
 
 /**
- * `POST /admin/reset` wipes every stay and alert. It exists for local/E2E zero-state testing only
- * and is disabled whenever the process runs in production or against Firestore.
+ * Fails startup unless the data target is safe: production uses the managed services; any other
+ * environment must point at the local emulators, so a developer machine with Google credentials
+ * can never read or write the live database or bucket.
  */
-export function isAdminResetAllowed(env: RuntimeEnv = process.env): boolean {
-  return env.NODE_ENV !== 'production' && !isFirestoreFlagEnabled(env);
+export function assertFirestoreTarget(env: RuntimeEnv = process.env): void {
+  if (!isFirestoreFlagEnabled(env)) {
+    throw new Error('USE_FIRESTORE=true is required: the backend always persists to Firestore.');
+  }
+  if (env.NODE_ENV === 'production') return;
+  if (!env.FIRESTORE_EMULATOR_HOST) {
+    throw new Error('Outside production set FIRESTORE_EMULATOR_HOST (the live database is never used locally).');
+  }
+  if (!env.FIREBASE_STORAGE_EMULATOR_HOST) {
+    throw new Error('Outside production set FIREBASE_STORAGE_EMULATOR_HOST (the live bucket is never used locally).');
+  }
 }

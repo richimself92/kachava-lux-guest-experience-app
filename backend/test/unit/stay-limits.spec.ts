@@ -8,14 +8,14 @@ import {
 import { StayDocumentTooLargeError, StayLimitExceededError } from '../../src/domain/stay-errors';
 import { StayAggregate } from '../../src/domain/models/domain.models';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
-import { createSeededStayAggregate } from '../../src/infrastructure/seed/sanctuary-seed.data';
 import { FakeFirestore } from '../support/fake-firestore';
+import { populatedStayFixture } from '../support/stay-fixtures';
 
 const LONG_MESSAGE = 'x'.repeat(2000);
 
 async function seeded(): Promise<{ repo: FirestoreStayRepository; stay: StayAggregate }> {
   const repo = new FirestoreStayRepository(new FakeFirestore().asFirestore());
-  const stay = createSeededStayAggregate();
+  const stay = populatedStayFixture();
   await repo.createStay(stay);
   return { repo, stay };
 }

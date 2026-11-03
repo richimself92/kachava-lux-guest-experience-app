@@ -1,8 +1,9 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { GuestTokenGuard } from '../../src/common/guards/guest-token.guard';
 import { resolveThrottleTracker } from '../../src/common/throttling/throttle-tracker';
-import { InMemorySeededStayRepository } from '../../src/infrastructure/repositories/in-memory-stay.repository';
-import { DEFAULT_DEMO_GUEST_UUID } from '../../src/infrastructure/seed/sanctuary-seed.data';
+import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
+import { FakeFirestore } from '../support/fake-firestore';
+import { stayFixture, TEST_GUEST_TOKEN as DEFAULT_DEMO_GUEST_UUID } from '../support/stay-fixtures';
 
 const OTHER_UUID = '6f1c1c55-1b1f-4c1e-9f4a-0a0b0c0d0e0f';
 
@@ -11,7 +12,10 @@ function contextFor(req: Record<string, unknown>): ExecutionContext {
 }
 
 describe('Guest token binding between guard and throttle tracker (ADV-03)', () => {
-  const guard = new GuestTokenGuard(new InMemorySeededStayRepository());
+  const repo = new FirestoreStayRepository(new FakeFirestore().asFirestore());
+  const guard = new GuestTokenGuard(repo);
+
+  beforeAll(() => repo.createStay(stayFixture()));
 
   it('test_guestTokenGuard_headerTokenDiffersFromRouteToken_throwsUnauthorized', async () => {
     const req = { method: 'GET', params: { guestUuid: OTHER_UUID }, headers: { 'x-guest-token': DEFAULT_DEMO_GUEST_UUID } };

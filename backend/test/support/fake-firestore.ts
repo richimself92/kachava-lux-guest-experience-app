@@ -3,10 +3,14 @@ import type { Firestore } from 'firebase-admin/firestore';
 type DocumentData = Record<string, unknown>;
 type CollectionStore = Map<string, DocumentData>;
 
+type FilterOp = '==' | '>=' | '<=' | '>' | '<' | 'array-contains' | 'in';
+const SUPPORTED_OPS: ReadonlySet<string> = new Set(['==', '>=', '<=', '>', '<', 'array-contains', 'in']);
+
 interface QueryState {
-  filters: Array<{ field: string; value: unknown }>;
+  filters: Array<{ field: string; op: FilterOp; value: unknown }>;
   order?: { field: string; direction: 'asc' | 'desc' };
   max?: number;
+  skip?: number;
 }
 
 /** Firestore rejects documents above 1 MiB (1,048,576 bytes). */
@@ -18,8 +22,8 @@ const GRPC_INVALID_ARGUMENT = 3;
 
 /**
  * In-memory Firestore double for unit tests. Supports the subset of the Admin SDK used by the
- * repositories (doc get/set/create/delete, equality queries, orderBy, limit, transactions,
- * recursiveDelete) and lets tests inject read/write failures. Never touches the network.
+ * repositories (doc get/set/create/delete, where with ==/range/in/array-contains, orderBy,
+ * offset, limit, count(), transactions, recursiveDelete) and lets tests inject read/write failures. Never touches the network.
  *
  * Transactions are optimistic: every document read through `tx.get` is version-checked at
  * commit; a conflicting commit is discarded and the transaction body re-runs (after a
@@ -155,9 +159,25 @@ class FakeCollectionRef {
   }
 
   where(field: string, op: string, value: unknown): FakeCollectionRef {
-    if (op !== '==') throw new Error(`FakeFirestore supports only '==' (got ${op})`);
-    const filters = [...this.state.filters, { field, value }];
+    if (!SUPPORTED_OPS.has(op)) throw new Error(`FakeFirestore does not support '${op}'`);
+    const filters = [...this.state.filters, { field, op: op as FilterOp, value }];
     return new FakeCollectionRef(this.db, this.id, { ...this.state, filters });
+  }
+
+  offset(skip: number): FakeCollectionRef {
+    return new FakeCollectionRef(this.db, this.id, { ...this.state, skip });
+  }
+
+  /** Aggregate count over the filters (ignores offset and limit, like the SDK's count()). */
+  count(): { get(): Promise<{ data(): { count: number } }> } {
+    return {
+      get: async () => {
+        this.db.assertReadable();
+        this.db.queryCount += 1;
+        const count = this.sorted(this.matchingEntries()).length;
+        return { data: () => ({ count }) };
+      },
+    };
   }
 
   orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): FakeCollectionRef {
@@ -174,23 +194,25 @@ class FakeCollectionRef {
     const docs = this.sorted(this.matchingEntries()).map(
       ([id, data]) => new FakeDocumentSnapshot(id, structuredClone(data)),
     );
-    const limited = this.state.max === undefined ? docs : docs.slice(0, this.state.max);
+    const skipped = docs.slice(this.state.skip ?? 0);
+    const limited = this.state.max === undefined ? skipped : skipped.slice(0, this.state.max);
     return { empty: limited.length === 0, docs: limited };
   }
 
   private matchingEntries(): Array<[string, DocumentData]> {
     return Array.from(this.db.store(this.id).entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .filter(([, data]) => this.state.filters.every((f) => data[f.field] === f.value));
+      .filter(([, data]) => this.state.filters.every((f) => matchesFilter(data[f.field], f.op, f.value)));
   }
 
   private sorted(entries: Array<[string, DocumentData]>): Array<[string, DocumentData]> {
     const order = this.state.order;
     if (!order) return entries;
     const sign = order.direction === 'desc' ? -1 : 1;
-    return [...entries].sort(
-      ([, a], [, b]) => sign * String(a[order.field]).localeCompare(String(b[order.field])),
-    );
+    // Like Firestore, documents missing the order-by field are excluded from the result.
+    return entries
+      .filter(([, data]) => data[order.field] !== undefined)
+      .sort(([, a], [, b]) => sign * compareFieldValues(a[order.field], b[order.field]));
   }
 }
 
@@ -255,6 +277,35 @@ class FakeDocumentSnapshot {
   data(): DocumentData | undefined {
     return this.payload ? structuredClone(this.payload) : undefined;
   }
+}
+
+function compareFieldValues(a: unknown, b: unknown): number {
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  const left = String(a);
+  const right = String(b);
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
+function matchesFilter(actual: unknown, op: FilterOp, expected: unknown): boolean {
+  switch (op) {
+    case '==':
+      return actual === expected;
+    case 'in':
+      return Array.isArray(expected) && expected.includes(actual);
+    case 'array-contains':
+      return Array.isArray(actual) && actual.includes(expected);
+    default:
+      if (actual === undefined || actual === null) return false;
+      return compareRange(compareFieldValues(actual, expected), op);
+  }
+}
+
+function compareRange(cmp: number, op: '>=' | '<=' | '>' | '<'): boolean {
+  if (op === '>=') return cmp >= 0;
+  if (op === '<=') return cmp <= 0;
+  if (op === '>') return cmp > 0;
+  return cmp < 0;
 }
 
 /** Mirrors the server, which rejects documents above 1 MiB with INVALID_ARGUMENT. */

@@ -1,22 +1,20 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ListQueryDto, paginateInMemory, PaginatedResult, toListQuery } from '../../common/listing/list-query';
 import {
   ConciergeMessage,
   ConciergeRequest,
   ExperienceBooking,
   LarderOrderItem,
+  MidStayFeedback,
   StaffMember,
   StayLifecycleStatus,
 } from '../../domain/models/domain.models';
 import {
-  BookingFilterCriteria,
-  CATALOG_REPOSITORY_PORT,
-  CatalogRepositoryPort,
-  ConciergeFilterCriteria,
-  LarderFilterCriteria,
   SignedUrlResult,
   STAY_REPOSITORY_PORT,
   StayRepositoryPort,
@@ -26,11 +24,29 @@ import {
 import {
   ApproveCheckoutDto,
   AssignBookingDto,
-  CreateExperienceCatalogDto,
-  CreateLarderCatalogDto,
+  BookingListQueryDto,
+  ConciergeListQueryDto,
+  LarderOrderListQueryDto,
   UpdateAdminConciergeDto,
   UpdateLarderStatusDto,
 } from './dto/admin.dto';
+
+const BOOKING_LIST_SPEC = {
+  sortable: ['scheduledDate', 'createdAt', 'status'],
+  defaultSort: { field: 'scheduledDate', direction: 'asc' as const },
+};
+const LARDER_LIST_SPEC = {
+  sortable: ['updatedAt', 'name', 'villaName'],
+  defaultSort: { field: 'updatedAt', direction: 'desc' as const },
+};
+const CONCIERGE_LIST_SPEC = {
+  sortable: ['createdAt', 'priority', 'status'],
+  defaultSort: { field: 'createdAt', direction: 'desc' as const },
+};
+const FEEDBACK_LIST_SPEC = {
+  sortable: ['createdAt', 'rating'],
+  defaultSort: { field: 'createdAt', direction: 'desc' as const },
+};
 
 const STEP_MAP: Record<ConciergeRequest['status'], 1 | 2 | 3 | 4> = {
   Requested: 1,
@@ -44,38 +60,23 @@ export class AdminFulfillmentService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT)
     private readonly stayRepo: StayRepositoryPort,
-    @Inject(CATALOG_REPOSITORY_PORT)
-    private readonly catalogRepo: CatalogRepositoryPort,
     @Inject(STORAGE_SIGNER_PORT)
     private readonly storageSigner: StorageSignerPort,
   ) {}
 
-  listCatalogExperiences() {
-    return this.catalogRepo.getExperiencesCatalog();
-  }
-
-  createCatalogExperience(dto: CreateExperienceCatalogDto) {
-    return this.catalogRepo.createExperienceCatalogItem(dto);
-  }
-
-  deleteCatalogExperience(id: string) {
-    return this.catalogRepo.deleteExperienceCatalogItem(id);
-  }
-
-  listCatalogLarder() {
-    return this.catalogRepo.getLarderCatalog();
-  }
-
-  createCatalogLarder(dto: CreateLarderCatalogDto) {
-    return this.catalogRepo.createLarderCatalogItem(dto);
-  }
-
-  deleteCatalogLarder(id: string) {
-    return this.catalogRepo.deleteLarderCatalogItem(id);
-  }
-
-  listBookings(filter: BookingFilterCriteria) {
-    return this.stayRepo.listBookingsAcrossStays(filter);
+  async listBookings(dto: BookingListQueryDto): Promise<PaginatedResult<ExperienceBooking>> {
+    const query = toListQuery(dto, BOOKING_LIST_SPEC);
+    const bookings = await this.stayRepo.listBookingsAcrossStays({
+      section: dto.section,
+      usageType: dto.usageType,
+      status: dto.status,
+      assignedDepartment: dto.assignedDepartment,
+      scheduledDate: dto.scheduledDate,
+    });
+    return paginateInMemory(bookings, query, {
+      searchText: (b) => `${b.title} ${b.guestNames} ${b.villaName}`,
+      sortValue: (b, field) => b[field as 'scheduledDate' | 'createdAt' | 'status'],
+    });
   }
 
   async assignBooking(
@@ -95,15 +96,25 @@ export class AdminFulfillmentService {
     return updated;
   }
 
-  listLarderOrders(filter: LarderFilterCriteria) {
-    return this.stayRepo.listLarderOrdersAcrossStays(filter);
+  async listLarderOrders(dto: LarderOrderListQueryDto): Promise<PaginatedResult<LarderOrderItem>> {
+    const query = toListQuery(dto, LARDER_LIST_SPEC);
+    const orders = await this.stayRepo.listLarderOrdersAcrossStays({
+      provisioningStatus: dto.provisioningStatus,
+      category: dto.category,
+      villaId: dto.villaId,
+    });
+    return paginateInMemory(orders, query, {
+      searchText: (o) => `${o.name} ${o.guestNames} ${o.villaName}`,
+      sortValue: (o, field) => o[field as 'updatedAt' | 'name' | 'villaName'],
+    });
   }
 
   async updateLarderOrderStatus(
     orderId: string,
     dto: UpdateLarderStatusDto,
   ): Promise<LarderOrderItem> {
-    const statusValue = dto.provisioningStatus || dto.status || 'Stocked in Villa';
+    const statusValue = dto.provisioningStatus || dto.status;
+    if (!statusValue) throw new BadRequestException('provisioningStatus is required.');
     const updated = await this.stayRepo.updateLarderOrderStatus(orderId, {
       assignedStaffId: dto.assignedStaffId,
       assignedStaffName: dto.assignedStaffName,
@@ -116,8 +127,19 @@ export class AdminFulfillmentService {
     return updated;
   }
 
-  listConciergeRequests(filter: ConciergeFilterCriteria) {
-    return this.stayRepo.listConciergeRequestsAcrossStays(filter);
+  async listConciergeRequests(dto: ConciergeListQueryDto): Promise<PaginatedResult<ConciergeRequest>> {
+    const query = toListQuery(dto, CONCIERGE_LIST_SPEC);
+    const requests = await this.stayRepo.listConciergeRequestsAcrossStays({
+      status: dto.status,
+      priority: dto.priority,
+      assignedDepartment: dto.assignedDepartment,
+      category: dto.category,
+      villaId: dto.villaId,
+    });
+    return paginateInMemory(requests, query, {
+      searchText: (r) => `${r.title} ${r.details} ${r.guestNames} ${r.villaName}`,
+      sortValue: (r, field) => r[field as 'createdAt' | 'priority' | 'status'],
+    });
   }
 
   async updateConciergeRequest(
@@ -167,14 +189,19 @@ export class AdminFulfillmentService {
     if (!req) {
       throw new NotFoundException(`Concierge request ${requestId} not found.`);
     }
-    const path =
-      req.photoStoragePath ||
-      `/private/stays/${req.stayId}/concierge/${requestId}/attachment.jpg`;
-    return this.storageSigner.generateSignedGetUrl(path);
+    if (!req.photoStoragePath) {
+      throw new NotFoundException(`Concierge request ${requestId} has no photo.`);
+    }
+    return this.storageSigner.generateSignedGetUrl(req.photoStoragePath);
   }
 
-  listMidStayFeedback() {
-    return this.stayRepo.listMidStayFeedbackAcrossStays();
+  async listMidStayFeedback(dto: ListQueryDto): Promise<PaginatedResult<MidStayFeedback>> {
+    const query = toListQuery(dto, FEEDBACK_LIST_SPEC);
+    const feedback = await this.stayRepo.listMidStayFeedbackAcrossStays();
+    return paginateInMemory(feedback, query, {
+      searchText: (f) => `${f.note} ${f.guestNames} ${f.villaName}`,
+      sortValue: (f, field) => (field === 'rating' ? f.rating ?? null : f.createdAt),
+    });
   }
 
   async approveCheckout(

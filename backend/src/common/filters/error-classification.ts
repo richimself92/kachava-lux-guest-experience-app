@@ -1,5 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import {
+  BusinessRuleError,
+  EntityConflictError,
+  EntityNotFoundError,
+  ListScanLimitError,
+} from '../../domain/domain-errors';
+import {
   StayDocumentTooLargeError,
   StayLimitExceededError,
   StayNotFoundError,
@@ -48,9 +54,28 @@ function isDocumentSizeRejection(exception: unknown): boolean {
   );
 }
 
+function classifyDomainError(exception: unknown): ClassifiedError | null {
+  if (exception instanceof EntityNotFoundError) {
+    return { status: HttpStatus.NOT_FOUND, error: 'NotFound', message: exception.message };
+  }
+  if (exception instanceof EntityConflictError) {
+    return { status: HttpStatus.CONFLICT, error: 'Conflict', message: exception.message };
+  }
+  if (exception instanceof BusinessRuleError || exception instanceof ListScanLimitError) {
+    return {
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+      error: 'UnprocessableEntity',
+      message: exception.message,
+    };
+  }
+  return null;
+}
+
 /** Maps any thrown value to the HTTP answer the client receives. */
 export function classifyError(exception: unknown): ClassifiedError {
   if (exception instanceof HttpException) return classifyHttpException(exception);
+  const domainError = classifyDomainError(exception);
+  if (domainError) return domainError;
   if (exception instanceof StayNotFoundError) {
     return { status: HttpStatus.NOT_FOUND, error: 'NotFound', message: 'Stay not found.' };
   }

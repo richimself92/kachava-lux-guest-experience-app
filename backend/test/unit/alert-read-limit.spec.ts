@@ -2,18 +2,17 @@ import { ALERT_READ_LIMIT } from '../../src/domain/alert-projections';
 import { OperationalAlert } from '../../src/domain/models/domain.models';
 import { AlertRepositoryPort } from '../../src/domain/ports/repository.ports';
 import { FirestoreAlertRepository } from '../../src/infrastructure/repositories/firestore-alert.repository';
-import { InMemorySeededAlertRepository } from '../../src/infrastructure/repositories/in-memory-alert.repository';
-import { InMemorySeededCatalogRepository } from '../../src/infrastructure/repositories/in-memory-catalog.repository';
-import { InMemorySeededStayRepository } from '../../src/infrastructure/repositories/in-memory-stay.repository';
-import { AdminSyncService } from '../../src/modules/admin/admin-sync.service';
+import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
+import { AdminSyncService, SYNC_STAY_LIMIT } from '../../src/modules/admin/admin-sync.service';
 import { FakeFirestore } from '../support/fake-firestore';
+import { stayFixture } from '../support/stay-fixtures';
 
 const TOTAL = 250;
 
 function alertAt(index: number): OperationalAlert {
   return {
     alertId: `alt_${String(index).padStart(4, '0')}`,
-    stayId: 'stay_a', villaId: 'villa-102', villaName: 'Villa 102', guestNames: 'Guest',
+    stayId: 'stay_a', villaId: 'villa-a', villaName: 'Test Villa', guestNames: 'Guest',
     category: 'CONCIERGE', severity: 'NORMAL', title: `Alert ${index}`, summary: '',
     sourceDocumentPath: 'stays/stay_a', assignedDepartment: 'CONCIERGE', isAcknowledged: false,
     acknowledgedByStaffId: null, acknowledgedAt: null,
@@ -25,12 +24,9 @@ async function fill(repo: AlertRepositoryPort): Promise<void> {
   for (let i = 0; i < TOTAL; i += 1) await repo.createAlert(alertAt(i));
 }
 
-describe('Alert reads are bounded to the newest ALERT_READ_LIMIT (ADV-07)', () => {
-  it.each([
-    ['firestore', () => new FirestoreAlertRepository(new FakeFirestore().asFirestore())],
-    ['in-memory', () => new InMemorySeededAlertRepository()],
-  ])('test_listAlerts_%s_returnsOnlyNewestAlerts', async (_name, build) => {
-    const repo = build();
+describe('Admin reads are bounded (ADV-07)', () => {
+  it('test_listAlerts_returnsOnlyNewestAlerts', async () => {
+    const repo = new FirestoreAlertRepository(new FakeFirestore().asFirestore());
     await fill(repo);
 
     const { alerts } = await repo.listAlerts();
@@ -40,13 +36,22 @@ describe('Alert reads are bounded to the newest ALERT_READ_LIMIT (ADV-07)', () =
     expect(alerts[0].alertId).toBe(`alt_0${TOTAL - 1}`);
   });
 
-  it('test_adminSyncSnapshot_alertsAreBounded', async () => {
-    const alerts = new InMemorySeededAlertRepository();
+  it('test_adminSyncSnapshot_alertsAndStaysAreBounded_closedStaysExcluded', async () => {
+    const fake = new FakeFirestore();
+    const alerts = new FirestoreAlertRepository(fake.asFirestore());
+    const stays = new FirestoreStayRepository(fake.asFirestore());
     await fill(alerts);
-    const sync = new AdminSyncService(new InMemorySeededStayRepository(alerts), alerts, new InMemorySeededCatalogRepository());
+    await stays.createStay(stayFixture({ stayId: 'open', status: 'PRE_ARRIVAL' }));
+    await stays.createStay(stayFixture({ stayId: 'closed', status: 'CHECKED_OUT', guestTokenUuid: '22222222-2222-4222-8222-222222222222' }));
+    const sync = new AdminSyncService(stays, alerts);
 
     const snapshot = await sync.snapshot();
 
+    expect(SYNC_STAY_LIMIT).toBe(200);
     expect(snapshot.alerts.alerts.length).toBeLessThanOrEqual(ALERT_READ_LIMIT);
+    expect(snapshot.stays.map((s) => s.stayId)).toEqual(['open']);
+    expect(Object.keys(snapshot).sort()).toEqual(
+      ['alerts', 'bookings', 'conciergeRequests', 'larderOrders', 'midstayFeedback', 'stays'],
+    );
   });
 });

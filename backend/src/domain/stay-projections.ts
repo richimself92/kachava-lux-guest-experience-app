@@ -9,7 +9,6 @@ import {
   BookingFilterCriteria,
   ConciergeFilterCriteria,
   LarderFilterCriteria,
-  StayFilterCriteria,
 } from './ports/repository.ports';
 
 /**
@@ -17,28 +16,10 @@ import {
  * snapshot derive their cross-stay listings from these functions, so the same input always
  * produces the same output regardless of the storage backend.
  */
-export function matchesStayFilter(stay: StayAggregate, filter?: StayFilterCriteria): boolean {
-  if (!filter) return true;
-  if (filter.status && stay.status !== filter.status) return false;
-  if (filter.villaId && stay.villaId !== filter.villaId) return false;
-  if (filter.search) {
-    const q = filter.search.toLowerCase();
-    const target = `${stay.guestProfile.name} ${stay.villaName} ${stay.suiteName}`.toLowerCase();
-    if (!target.includes(q)) return false;
-  }
-  return true;
-}
-
 export function matchesBookingFilter(b: ExperienceBooking, filter?: BookingFilterCriteria): boolean {
   if (!filter) return true;
-  if (
-    filter.category &&
-    !b.bookingType.includes(filter.category.toUpperCase()) &&
-    b.category !== filter.category.toUpperCase()
-  ) {
-    return false;
-  }
-  if (filter.bookingType && b.bookingType !== filter.bookingType) return false;
+  if (filter.section && b.section !== filter.section) return false;
+  if (filter.usageType && b.usageType !== filter.usageType) return false;
   if (filter.status && b.status !== filter.status) return false;
   if (filter.assignedDepartment && b.assignedDepartment !== filter.assignedDepartment) {
     return false;

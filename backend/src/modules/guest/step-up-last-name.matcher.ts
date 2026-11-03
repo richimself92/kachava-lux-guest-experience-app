@@ -18,7 +18,7 @@ function normalize(value: string): string {
     .trim();
 }
 
-/** Name tokens after the given name of the last person listed ("Alex & Sarah Miller" -> [miller]). */
+/** Name tokens after the given name of the last person listed ("Ana & Leo Ruiz" -> [ruiz]). */
 function familyNameTokens(fullName: string): string[] {
   const people = normalize(fullName).split(COUPLE_SEPARATOR);
   const tokens = (people[people.length - 1] ?? '').split(' ').filter(Boolean);

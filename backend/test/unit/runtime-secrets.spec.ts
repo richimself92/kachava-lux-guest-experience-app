@@ -6,17 +6,19 @@ import {
   MIN_SECRET_LENGTH,
   resolveSecret,
 } from '../../src/common/config/runtime-secrets';
+import { FIRESTORE_DB, OBJECT_URL_SIGNER } from '../../src/infrastructure/firebase/firebase-admin.module';
 import { bootstrap } from '../../src/main';
+import { FakeObjectUrlSigner } from '../support/fake-object-url-signer';
+import { FakeFirestore } from '../support/fake-firestore';
 
 const STRONG = 'x'.repeat(MIN_SECRET_LENGTH);
 const ALL_STRONG = {
   STAFF_JWT_SECRET: STRONG,
   STEPUP_HMAC_SECRET: STRONG,
-  STORAGE_SIGNING_SECRET: STRONG,
 };
 
 describe('resolveSecret / assertProductionSecrets', () => {
-  it.each([{ NODE_ENV: 'production' }, { USE_FIRESTORE: 'true' }, { USE_GCP_FIRESTORE: 'true' }])(
+  it.each([{ NODE_ENV: 'production' }, { USE_FIRESTORE: 'true' }])(
     'test_resolveSecret_strictEnv%j_missingSecret_throwsClearError',
     (env) => {
       expect(() => resolveSecret('STAFF_JWT_SECRET', env)).toThrow(/STAFF_JWT_SECRET.*32/);
@@ -44,13 +46,13 @@ describe('resolveSecret / assertProductionSecrets', () => {
   });
 
   it('test_resolveSecret_local_configuredSecret_isUsed', () => {
-    expect(resolveSecret('STORAGE_SIGNING_SECRET', { STORAGE_SIGNING_SECRET: 'dev' })).toBe('dev');
+    expect(resolveSecret('STEPUP_HMAC_SECRET', { STEPUP_HMAC_SECRET: 'dev' })).toBe('dev');
   });
 
-  it('test_assertProductionSecrets_productionMissingStorageSecret_throws', () => {
-    const env = { NODE_ENV: 'production', STAFF_JWT_SECRET: STRONG, STEPUP_HMAC_SECRET: STRONG };
+  it('test_assertProductionSecrets_productionMissingStepUpSecret_throws', () => {
+    const env = { NODE_ENV: 'production', STAFF_JWT_SECRET: STRONG };
 
-    expect(() => assertProductionSecrets(env)).toThrow(/STORAGE_SIGNING_SECRET/);
+    expect(() => assertProductionSecrets(env)).toThrow(/STEPUP_HMAC_SECRET/);
   });
 
   it('test_assertProductionSecrets_allStrongOrLocal_passes', () => {
@@ -66,7 +68,6 @@ describe('startup in production without secrets', () => {
     process.env.NODE_ENV = 'production';
     delete process.env.STAFF_JWT_SECRET;
     delete process.env.STEPUP_HMAC_SECRET;
-    delete process.env.STORAGE_SIGNING_SECRET;
   });
 
   afterEach(() => {
@@ -82,8 +83,13 @@ describe('startup in production without secrets', () => {
   });
 
   it('test_appModule_productionMissingSecrets_failsDependencyInjection', async () => {
-    await expect(Test.createTestingModule({ imports: [AppModule] }).compile()).rejects.toThrow(
-      /_SECRET/,
-    );
+    const compile = Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(FIRESTORE_DB)
+      .useValue(new FakeFirestore().asFirestore())
+      .overrideProvider(OBJECT_URL_SIGNER)
+      .useValue(new FakeObjectUrlSigner())
+      .compile();
+
+    await expect(compile).rejects.toThrow(/_SECRET/);
   });
 });

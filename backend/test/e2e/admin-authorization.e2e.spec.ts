@@ -1,74 +1,79 @@
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { configureApp } from '../../src/main';
+import { createTestApp, TEST_ADMIN_EMAIL, TestApp } from '../support/test-app';
 
-const HOST_ADMIN_EMAIL = 'eduardo.rivera@kachavalux.com';
-const COORDINATOR_EMAIL = 'mateo@kachavalux.com';
-const CONCIERGE_EMAIL = 'sofia.wellness@kachavalux.com';
+const API = '/api/v1/admin';
 
-describe('Admin destructive and catalog writes are HOST_ADMIN only (ADV-02)', () => {
-  let app: NestExpressApplication;
-  const tokens: Record<string, string> = {};
+describe('Admin identity comes from the environment (plan rule 5)', () => {
+  let t: TestApp;
 
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication<NestExpressApplication>();
-    configureApp(app);
-    await app.init();
-    for (const email of [HOST_ADMIN_EMAIL, COORDINATOR_EMAIL, CONCIERGE_EMAIL]) {
-      const login = await request(app.getHttpServer()).post('/api/v1/admin/auth/login').send({ email });
-      tokens[email] = login.body.data.token;
-    }
+  beforeEach(async () => {
+    t = await createTestApp();
   });
 
-  afterAll(() => app.close());
+  afterEach(() => t.close());
 
-  const as = (email: string) => ({ Authorization: `Bearer ${tokens[email]}` });
+  const login = (email: string) => request(t.server()).post(`${API}/auth/login`).send({ email });
 
-  it.each([COORDINATOR_EMAIL, CONCIERGE_EMAIL])(
-    'test_adminWrites_nonHostAdmin_%s_isForbidden',
-    async (email) => {
-      const server = app.getHttpServer();
+  it('test_login_configuredEmail_issuesHostAdminSessionWithoutStaffDocument', async () => {
+    const res = await login(TEST_ADMIN_EMAIL.toUpperCase());
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.staff).toMatchObject({ staffId: 'admin-service', rbacRole: 'HOST_ADMIN', email: TEST_ADMIN_EMAIL });
+    expect(t.fake.collections.get('staff_members')?.size ?? 0).toBe(0);
+    const settings = await request(t.server()).get(`${API}/settings`).set('Authorization', `Bearer ${res.body.data.token}`);
+    expect(settings.status).toBe(200);
+  });
+
+  it('test_login_anyOtherEmail_isRejected', async () => {
+    expect((await login('someone@else.test')).status).toBe(401);
+  });
+
+  it('test_login_withoutConfiguredEmail_failsClosed', async () => {
+    delete process.env.ADMIN_SERVICE_EMAIL;
+
+    expect((await login(TEST_ADMIN_EMAIL)).status).toBe(401);
+  });
+
+  it('test_login_invalidEmailShape_is400', async () => {
+    expect((await login('not-an-email')).status).toBe(400);
+  });
+});
+
+describe('Admin writes are HOST_ADMIN only (ADV-02)', () => {
+  let t: TestApp;
+
+  beforeAll(async () => {
+    t = await createTestApp();
+  });
+
+  afterAll(() => t.close());
+
+  it.each(['CONCIERGE_STAFF', 'DEPARTMENT_COORDINATOR'] as const)(
+    'test_configurationWrites_%s_isForbidden',
+    async (role) => {
+      const as = await t.staffHeaders(role);
+      const server = t.server();
       const statuses = [
-        (await request(server).post('/api/v1/admin/reset').set(as(email))).status,
-        (await request(server).post('/api/v1/admin/catalog/larder').set(as(email)).send({ name: 'X', price: 1 })).status,
-        (await request(server).post('/api/v1/admin/catalog/experiences').set(as(email)).send({ title: 'X' })).status,
-        (await request(server).delete('/api/v1/admin/catalog/larder/larder-1').set(as(email))).status,
-        (await request(server).delete('/api/v1/admin/catalog/experiences/exp-1').set(as(email))).status,
+        (await request(server).patch(`${API}/settings`).set(as).send({ checkInTime: '15:00' })).status,
+        (await request(server).post(`${API}/villas`).set(as).send({})).status,
+        (await request(server).post(`${API}/transport-providers`).set(as).send({ name: 'X' })).status,
+        (await request(server).post(`${API}/services`).set(as).send({})).status,
+        (await request(server).post(`${API}/uploads/sign`).set(as).send({})).status,
+        (await request(server).post(`${API}/stays`).set(as).send({})).status,
       ];
 
-      expect(statuses).toEqual([403, 403, 403, 403, 403]);
+      expect(statuses).toEqual([403, 403, 403, 403, 403, 403]);
     },
   );
 
-  it('test_catalogWrite_negativePrice_isRejectedWith400', async () => {
-    const server = app.getHttpServer();
+  it.each([
+    ['post', `${API}/reset`],
+    ['get', `${API}/catalog/larder`],
+    ['post', `${API}/catalog/experiences`],
+    ['delete', `${API}/catalog/larder/x`],
+  ] as const)('test_removedRoute_%s_%s_is404', async (method, path) => {
+    const res = await request(t.server())[method](path).set(await t.adminHeaders());
 
-    const larder = await request(server).post('/api/v1/admin/catalog/larder').set(as(HOST_ADMIN_EMAIL)).send({ name: 'Pwn', price: -500 });
-    const experience = await request(server).post('/api/v1/admin/catalog/experiences').set(as(HOST_ADMIN_EMAIL)).send({ title: 'Pwn', basePriceUSD: -1 });
-
-    expect([larder.status, experience.status]).toEqual([400, 400]);
-  });
-
-  it('test_catalogRead_anyStaff_isAllowed', async () => {
-    const res = await request(app.getHttpServer()).get('/api/v1/admin/catalog/larder').set(as(COORDINATOR_EMAIL));
-
-    expect(res.status).toBe(200);
-  });
-
-  it('test_reset_inProduction_isForbiddenEvenForHostAdmin', async () => {
-    const previous = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    try {
-      const res = await request(app.getHttpServer()).post('/api/v1/admin/reset').set(as(HOST_ADMIN_EMAIL));
-
-      expect(res.status).toBe(403);
-    } finally {
-      process.env.NODE_ENV = previous;
-    }
-    const stays = await request(app.getHttpServer()).get('/api/v1/admin/stays').set(as(HOST_ADMIN_EMAIL));
-    expect(stays.body.data.length).toBeGreaterThan(0);
+    expect(res.status).toBe(404);
   });
 });

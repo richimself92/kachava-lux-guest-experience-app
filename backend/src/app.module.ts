@@ -14,19 +14,41 @@ import { AdminFulfillmentService } from './modules/admin/admin-fulfillment.servi
 import { AdminSyncService } from './modules/admin/admin-sync.service';
 import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
-import { CatalogController } from './modules/guest/catalog.controller';
+import { CatalogAdminService } from './modules/catalog/catalog-admin.service';
+import { CatalogUploadsService } from './modules/catalog/catalog-uploads.service';
+import {
+  AdminServicesController,
+  AdminUploadsController,
+  GuestCatalogController,
+} from './modules/catalog/catalog.controllers';
+import { GuestCatalogService } from './modules/catalog/guest-catalog.service';
 import { GuestAlertFolioHelper } from './modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from './modules/guest/guest-booking.service';
 import { GuestConciergeService } from './modules/guest/guest-concierge.service';
 import { GuestStaysController } from './modules/guest/guest-stays.controller';
 import { GuestService } from './modules/guest/guest.service';
+import { SettingsController } from './modules/settings/settings.controller';
+import { SettingsService } from './modules/settings/settings.service';
+import { TransportProvidersController } from './modules/transport/transport-providers.controller';
+import { TransportProvidersService } from './modules/transport/transport-providers.service';
+import { VillasController } from './modules/villas/villas.controller';
+import { VillasService } from './modules/villas/villas.service';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot(buildThrottlerOptions()),
     FirebaseInfrastructureModule,
   ],
-  controllers: [GuestStaysController, CatalogController, AdminController],
+  controllers: [
+    GuestStaysController,
+    GuestCatalogController,
+    AdminController,
+    SettingsController,
+    VillasController,
+    TransportProvidersController,
+    AdminServicesController,
+    AdminUploadsController,
+  ],
   providers: [
     SecurityTokenService,
     StepUpAttemptLimiter,
@@ -38,6 +60,12 @@ import { GuestService } from './modules/guest/guest.service';
     AdminFulfillmentService,
     AdminService,
     AdminSyncService,
+    SettingsService,
+    VillasService,
+    TransportProvidersService,
+    CatalogAdminService,
+    CatalogUploadsService,
+    GuestCatalogService,
     GuestTokenGuard,
     StepUpVerifiedGuard,
     AdminAuthGuard,

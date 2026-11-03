@@ -9,18 +9,21 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import {
+  ISO_DATE_PATTERN,
   LARDER_LINES_MAX,
   LONG_TEXT_MAX,
   MaxJsonBytes,
   METADATA_MAX_BYTES,
   SHORT_TEXT_MAX,
   STRING_LIST_MAX,
+  TIME_OF_DAY_PATTERN,
   URL_MAX,
 } from '../../../common/validation/field-limits';
 
@@ -195,7 +198,13 @@ export class LarderCartLineDto {
   quantity!: number;
 }
 
+/** Replaces the stay's villa-stocking order with lines of one ORDER service. */
 export class UpdateLarderOrderDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(SHORT_TEXT_MAX)
+  serviceId!: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => LarderCartLineDto)
@@ -203,41 +212,30 @@ export class UpdateLarderOrderDto {
   items!: LarderCartLineDto[];
 }
 
+/** Books a catalog service (optionally one of its items); price comes from the catalog only. */
 export class CreateBookingDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  category?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  bookingType?: string;
-
   @IsString()
   @IsNotEmpty()
   @MaxLength(SHORT_TEXT_MAX)
-  catalogRefId!: string;
+  serviceId!: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(SHORT_TEXT_MAX)
-  title?: string;
-
-  @IsString()
   @IsNotEmpty()
   @MaxLength(SHORT_TEXT_MAX)
+  itemId?: string;
+
+  @Matches(ISO_DATE_PATTERN, { message: 'scheduledDate must be an ISO date (YYYY-MM-DD)' })
   scheduledDate!: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(SHORT_TEXT_MAX)
-  scheduledTimeSlot!: string;
+  @IsOptional()
+  @Matches(TIME_OF_DAY_PATTERN, { message: 'scheduledTimeSlot must be HH:mm' })
+  scheduledTimeSlot?: string;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(20)
+  @Max(50)
   partySize?: number;
 
   @IsOptional()

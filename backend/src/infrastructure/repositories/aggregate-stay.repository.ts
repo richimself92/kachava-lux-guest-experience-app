@@ -1,4 +1,4 @@
-import { FolioSettlement, SettledFolio, settleFolio } from '../../domain/folio-ledger';
+import { FolioSettlement, LarderCharge, SettledFolio, settleFolio } from '../../domain/folio-ledger';
 import {
   ConciergeMessage,
   ConciergeRequest,
@@ -13,12 +13,13 @@ import {
   StayLifecycleStatus,
   StayRecord,
 } from '../../domain/models/domain.models';
+import { PaginatedResult } from '../../common/listing/list-query';
 import {
   BookingFilterCriteria,
   ConciergeFilterCriteria,
   LarderFilterCriteria,
   StayAlertFactory,
-  StayFilterCriteria,
+  StayPageQuery,
   StayRepositoryPort,
 } from '../../domain/ports/repository.ports';
 import {
@@ -26,7 +27,6 @@ import {
   collectConciergeRequests,
   collectLarderOrders,
   collectMidStayFeedback,
-  matchesStayFilter,
 } from '../../domain/stay-projections';
 import { StayDocumentTooLargeError, StayNotFoundError } from '../../domain/stay-errors';
 import { MAX_STAY_DOCUMENT_BYTES } from '../../domain/stay-limits';
@@ -37,8 +37,8 @@ export { StayNotFoundError };
 export type StayMutator<T> = (draft: StayAggregate) => T;
 
 /**
- * Template Method base: every StayRepositoryPort operation is expressed through six storage
- * primitives, so the in-memory and Firestore adapters share identical business semantics.
+ * Template Method base: every StayRepositoryPort mutation is expressed through a few storage
+ * primitives, keeping the business semantics independent of the Firestore adapter.
  * Each stay aggregate is persisted as one document; a mutation rewrites only that document
  * (plus, atomically, the operational alert built by `alertOf`). Mutators run against the
  * stay as stored at commit time and must be re-runnable (transactions may retry them).
@@ -54,7 +54,9 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     mutator: StayMutator<T>,
     alertOf?: StayAlertFactory<T>,
   ): Promise<T>;
-  protected abstract deleteAllStays(): Promise<void>;
+  abstract pageStays(query: StayPageQuery): Promise<PaginatedResult<StayAggregate>>;
+  abstract listOpenStays(limit: number): Promise<StayAggregate[]>;
+  abstract hasStaysForVilla(villaId: string): Promise<boolean>;
 
   findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null> {
     return this.findStayByToken(guestTokenUuid.trim().toLowerCase());
@@ -62,10 +64,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
 
   findByStayId(stayId: string): Promise<StayAggregate | null> {
     return this.findStay(stayId);
-  }
-
-  async listStays(filter?: StayFilterCriteria): Promise<StayAggregate[]> {
-    return (await this.listAllStays()).filter((s) => matchesStayFilter(s, filter));
   }
 
   async createStay(stay: StayAggregate): Promise<StayAggregate> {
@@ -86,10 +84,6 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
     wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
   ): Promise<StayRecord> {
     return this.mutateStay(stayId, (s) => mutations.patchStayWifi(s, wifiPatch));
-  }
-
-  resetAllStays(): Promise<void> {
-    return this.deleteAllStays();
   }
 
   updateTransfer(
@@ -120,9 +114,10 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   replaceLarderOrders(
     stayId: string,
     orders: LarderOrderItem[],
+    charge: LarderCharge,
     alertOf?: StayAlertFactory<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }>,
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
-    return this.mutateStay(stayId, (s) => mutations.replaceLarderAndFolio(s, orders), alertOf);
+    return this.mutateStay(stayId, (s) => mutations.replaceLarderAndFolio(s, orders, charge), alertOf);
   }
 
   async listLarderOrdersAcrossStays(filter?: LarderFilterCriteria): Promise<LarderOrderItem[]> {
