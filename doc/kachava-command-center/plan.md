@@ -174,13 +174,21 @@ Ya hecho, con commit en `feature/kachava-command-center`:
   - Link `?guestId` que se guarda en el teléfono; ya hecho en la fase B.
   - Si el link expiró: "Tu enlace expiró, pide uno nuevo a tu Resort Host".
   - Instalación: en Android, botón "Instalar app"; en iPhone, guía "Compartir → Agregar a pantalla de inicio".
+- **Recorrido guiado y numerado** (decisión del dueño 2026-11-02; sustituye la idea anterior de quitar los números):
+  - **Pasos numerados** según el momento de la estancia: Paso 1 · Antes de tu llegada, Paso 2 · Durante tu estancia, Paso 3 · Tu salida. Dentro de cada paso, tareas numeradas (1.1, 1.2…) que se llenan solas con los servicios activos del catálogo, según su campo "cuándo se ofrece".
+  - **Avance visible:** "2 de 4 listos", cada tarea con ✓ hecho o pendiente.
+  - **El paso actual se abre y se destaca por fecha;** los demás quedan plegados.
+  - **Un botón principal "Siguiente":** lleva a la próxima tarea pendiente. Las tareas opcionales se pueden saltar con "Ahora no".
+  - **Formularios largos en asistente:** el vuelo, por ejemplo, va de pocos campos por pantalla, con barra de progreso.
+  - **La misma numeración en todo el recorrido:** en el Inicio y en el título de cada pantalla. Se conservan los títulos numerados.
+  - **Pasos interactivos:** nada de encabezados muertos (requisito de `doc/SPECIFICATION.md` §137).
 - 4 pestañas:
-  - **Inicio:** fechas, villa y tarjetas de "Lo próximo" según el momento de la estancia (registrar vuelo, preferencias, Wi-Fi, encuesta de mitad de estancia, salida).
+  - **Inicio:** el recorrido guiado de arriba, más villa, fechas y Wi-Fi.
   - **Servicios:** secciones armadas solo con el catálogo activo, con tarjetas de foto, nombre, línea corta, precio o "Incluido" y anticipación. Cada servicio se abre en una hoja con el formulario según su tipo: pedir, reservar, elegir o viaje.
   - **Mis solicitudes:** una sola lista con estados en lenguaje simple: Recibida → Confirmada → En preparación / En camino → Lista. Se puede cancelar o cambiar mientras esté en "Recibida".
   - **Resort Host:** chat y adjuntar una foto real.
 - Se elimina:
-  - el drawer "todas las pantallas" y los títulos numerados;
+  - el drawer "todas las pantallas" (duplica la navegación);
   - las pantallas yate, Included y Philosophy;
   - el teléfono hardcodeado;
   - el badge siempre encendido.
