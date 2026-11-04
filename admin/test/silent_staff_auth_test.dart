@@ -70,7 +70,7 @@ void main() {
       expect(backend.requests,
           ['$_login no-auth', '$_sync Bearer tok-1', '$_sync Bearer tok-1']);
       expect(backend.loginEmails, [AdminAppConfig.adminStaffEmail]);
-      expect(AdminAppConfig.adminStaffEmail, 'eduardo.rivera@kachavalux.com');
+      expect(AdminAppConfig.adminStaffEmail, 'admin@kachavalux.com');
       expect(client.session.staff?.staffId, 'stf_1');
     });
 

@@ -10,7 +10,7 @@ class AdminAppConfig {
   /// Rostered staff email the app silently signs in with (no login screen).
   static const String adminStaffEmail = String.fromEnvironment(
     'ADMIN_STAFF_EMAIL',
-    defaultValue: 'eduardo.rivera@kachavalux.com',
+    defaultValue: 'admin@kachavalux.com',
   );
 
   /// Firebase web config for the real-time signal listener (ADR-012).
