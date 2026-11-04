@@ -106,6 +106,18 @@ void main() {
           isEmpty);
     });
 
+    testWidgets('search keeps its accessible name "Search" while it has text',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpList(tester);
+      await tester.enterText(find.byKey(const Key('search-items')), 'row 1');
+      await tester.pumpAndSettle();
+      // The hint disappears once there is text; screen readers still need
+      // to know which field this is.
+      expect(find.bySemanticsLabel('Search'), findsOneWidget);
+      handle.dispose();
+    });
+
     testWidgets('error: "Couldn\'t load" + Retry', (tester) async {
       fetcher.failWith = StateError('offline');
       await pumpList(tester);

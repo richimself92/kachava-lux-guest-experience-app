@@ -225,18 +225,22 @@ class _HostTabState extends State<HostTab> {
             icon: const Icon(Icons.add_a_photo_outlined),
           ),
           Expanded(
-            child: TextField(
-              key: const Key('host-input'),
-              controller: _text,
-              enabled: !_busy,
-              minLines: 1,
-              maxLines: 4,
-              maxLength: 2000,
-              decoration: InputDecoration(
-                hintText: l10n.message,
-                labelText: l10n.message,
-                floatingLabelBehavior: FloatingLabelBehavior.never,
-                counterText: '',
+            // Keeps its name for screen readers once the hint/label is hidden.
+            child: Semantics(
+              label: l10n.message,
+              child: TextField(
+                key: const Key('host-input'),
+                controller: _text,
+                enabled: !_busy,
+                minLines: 1,
+                maxLines: 4,
+                maxLength: 2000,
+                decoration: InputDecoration(
+                  hintText: l10n.message,
+                  labelText: l10n.message,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                  counterText: '',
+                ),
               ),
             ),
           ),

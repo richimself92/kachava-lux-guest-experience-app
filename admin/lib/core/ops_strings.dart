@@ -54,6 +54,13 @@ class OpsStrings {
         _ => p,
       };
 
+  String get origin => _t('Origin', 'Origen');
+  String get guestRequest => _t('Guest request', 'Solicitud de huésped');
+  String get internal => _t('Internal', 'Interna');
+  String get openRequest => _t('Open request', 'Abrir solicitud');
+  String fromRequest(String villa, String type) =>
+      _t('From request · $villa · $type', 'De solicitud · $villa · $type');
+
   String sourceLabel(String type) => switch (type) {
         'PREFERENCE' => _t('Preference', 'Preferencia'),
         'ORDER' => _t('Order', 'Pedido'),
@@ -110,6 +117,7 @@ class OpsStrings {
   String get awaitingReply => _t('Awaiting reply', 'Sin responder');
   String get unreadOnly => _t('Unread', 'Sin leer');
   String get photo => _t('Photo', 'Foto');
+  String get openStay => _t('Open stay', 'Abrir estancia');
   String get reply => _t('Reply', 'Responder');
   String get send => _t('Send', 'Enviar');
   String get sendFailed => _t("Couldn't send", 'No se pudo enviar');

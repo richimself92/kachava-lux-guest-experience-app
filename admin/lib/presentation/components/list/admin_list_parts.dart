@@ -160,10 +160,14 @@ class AdminCompactList<T> extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.content,
   });
 
   final String entity;
   final List<T> items;
+
+  /// Replaces the title/subtitle column (e.g. an unread stripe).
+  final Widget Function(T item)? content;
   final String Function(T item) rowId;
   final String Function(T item) title;
   final String Function(T item)? subtitle;
@@ -195,19 +199,20 @@ class AdminCompactList<T> extends StatelessWidget {
                       Border(bottom: BorderSide(color: KachavaTokens.border))),
               child: Row(children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TruncatedText(title(item),
-                          style: text.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                      if (second.isNotEmpty)
-                        TruncatedText(second,
-                            style: text.bodyMedium
-                                ?.copyWith(color: KachavaTokens.textSecondary)),
-                    ],
-                  ),
+                  child: content?.call(item) ??
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TruncatedText(title(item),
+                              style: text.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700)),
+                          if (second.isNotEmpty)
+                            TruncatedText(second,
+                                style: text.bodyMedium?.copyWith(
+                                    color: KachavaTokens.textSecondary)),
+                        ],
+                      ),
                 ),
                 if (trail != null) ...[
                   const SizedBox(width: KachavaTokens.space2),

@@ -89,6 +89,8 @@ export class FirestoreTaskRepository implements TaskRepositoryPort {
     if (query.priority) filtered = filtered.where('priority', '==', query.priority);
     if (query.ownerStaffId) filtered = filtered.where('ownerStaffId', '==', query.ownerStaffId);
     if (query.villaId) filtered = filtered.where('villaId', '==', query.villaId);
+    if (query.sourceTypes?.length === 1) filtered = filtered.where('source.type', '==', query.sourceTypes[0]);
+    else if (query.sourceTypes) filtered = filtered.where('source.type', 'in', [...query.sourceTypes]);
     if (query.q) {
       const keyword = normalizeSearchText(query.q).slice(0, MAX_SEARCH_KEYWORD_LENGTH);
       filtered = filtered.where(TASK_SEARCH_FIELD, 'array-contains', keyword);

@@ -50,6 +50,20 @@ describe('FirestoreStayRepository bounded queries', () => {
     expect((await repo.listStaysCheckingInOn('2026-12-10')).map((s) => s.stayId)).toEqual(['s1']);
   });
 
+  it('test_listOpenStaysEndingAfter_returnsOpenStaysLeavingAfterTheDate', async () => {
+    const leaving = await repo.listOpenStaysEndingAfter('2026-12-14');
+
+    expect(leaving.map((s) => s.stayId)).toEqual(['s2']);
+  });
+
+  it('test_listOpenStaysEndingAfter_withVilla_filtersThatVilla', async () => {
+    await repo.createStay(stay('s4', { status: 'PRE_ARRIVAL', villaId: 'villa-z', checkInDate: '2026-12-15', checkOutDate: '2026-12-18' }));
+
+    const leaving = await repo.listOpenStaysEndingAfter('2026-11-01', 'villa-z');
+
+    expect(leaving.map((s) => s.stayId)).toEqual(['s4']);
+  });
+
   it('test_pageStays_byCheckOutDate_ordersAndRangesThatField', async () => {
     const page = await repo.pageStays({ page: 1, pageSize: 10, direction: 'desc', dateField: 'checkOutDate', from: '2026-12-01' });
 

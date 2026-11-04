@@ -83,6 +83,9 @@ class FakeReservationRepository implements ReservationRepository {
   final List<ListQuery> queries = [];
   final List<(String, Map<String, dynamic>)> patches = [];
   final List<Map<String, dynamic>> creates = [];
+
+  /// Thrown by [create] instead of saving (server refusal).
+  Object? createError;
   StayFolio folioView = const StayFolio(
       services: [], rating: null, ratingNote: '', charges: [], totalUSD: 0);
 
@@ -101,6 +104,8 @@ class FakeReservationRepository implements ReservationRepository {
 
   @override
   Future<String> create(NewReservation reservation) async {
+    final error = createError;
+    if (error != null) throw error;
     creates.add(reservation.toJson());
     final id = 'stay_${creates.length}';
     rows.add(testRow(id, guest: reservation.guestName));
@@ -259,7 +264,11 @@ class FakeConversationRepository implements ConversationRepository {
   }
 
   @override
-  Future<void> markRead(String stayId) async => readMarks.add(stayId);
+  Future<void> markRead(String stayId) async {
+    readMarks.add(stayId);
+    final i = rows.indexWhere((r) => r.stayId == stayId);
+    if (i >= 0) rows[i] = rows[i].asRead();
+  }
 }
 
 class FakeStaffDirectory implements StaffDirectoryRepository {

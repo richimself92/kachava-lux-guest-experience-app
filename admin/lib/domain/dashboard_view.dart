@@ -1,4 +1,51 @@
+import 'catalog_values.dart';
 import 'json_read.dart';
+
+/// The guest's next concrete event (`activity.rows[].next`).
+class ActivityNext {
+  const ActivityNext({
+    required this.kind,
+    this.at,
+    this.flightNumber,
+    this.transfer,
+    this.title,
+    this.date,
+    this.time,
+  });
+
+  static ActivityNext? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = Map<String, dynamic>.from(json);
+    final title = map['title'];
+    return ActivityNext(
+      kind: JsonRead.text(map, 'kind'),
+      at: DateTime.tryParse(JsonRead.text(map, 'at'))?.toUtc(),
+      flightNumber: JsonRead.textOrNull(map, 'flightNumber'),
+      transfer: JsonRead.textOrNull(map, 'transfer'),
+      title: title is Map ? LocalizedText.fromJson(title) : null,
+      date: JsonRead.textOrNull(map, 'date'),
+      time: JsonRead.textOrNull(map, 'time'),
+    );
+  }
+
+  static const String flight = 'FLIGHT';
+  static const String booking = 'BOOKING';
+
+  /// `FLIGHT` (arrival / departure day) or `BOOKING`.
+  final String kind;
+
+  /// Flight (else pickup) instant, UTC.
+  final DateTime? at;
+  final String? flightNumber;
+
+  /// `NONE`, `NO_DRIVER` or `DRIVER_CONFIRMED`.
+  final String? transfer;
+  final LocalizedText? title;
+
+  /// Booking resort day `YYYY-MM-DD` and `HH:mm`.
+  final String? date;
+  final String? time;
+}
 
 /// The six dashboard KPIs (`GET /admin/dashboard`, ADR-011). Values are the
 /// server's; a missing one is a [FormatException], never a made-up zero.
@@ -44,16 +91,37 @@ class ActivityRow {
     required this.villaName,
     required this.status,
     required this.overdue,
+    this.stayStatus = '',
+    this.pendingRequests = 0,
+    this.pendingMessages = 0,
+    this.next,
   });
 
-  factory ActivityRow.fromJson(Map<String, dynamic> json) => ActivityRow(
-        stayId: JsonRead.requireId(json, 'stayId'),
-        guestName: JsonRead.text(json, 'guestName'),
-        villaId: JsonRead.text(json, 'villaId'),
-        villaName: JsonRead.text(json, 'villaName'),
-        status: JsonRead.text(json, 'status'),
-        overdue: JsonRead.flag(json, 'overdue'),
-      );
+  factory ActivityRow.fromJson(Map<String, dynamic> json) {
+    final pending = JsonRead.object(json, 'pending');
+    return ActivityRow(
+      stayId: JsonRead.requireId(json, 'stayId'),
+      guestName: JsonRead.text(json, 'guestName'),
+      villaId: JsonRead.text(json, 'villaId'),
+      villaName: JsonRead.text(json, 'villaName'),
+      status: JsonRead.text(json, 'status'),
+      overdue: JsonRead.flag(json, 'overdue'),
+      stayStatus: JsonRead.text(json, 'stayStatus'),
+      pendingRequests: JsonRead.intOrNull(pending, 'requests') ?? 0,
+      pendingMessages: JsonRead.intOrNull(pending, 'messages') ?? 0,
+      next: ActivityNext.fromJson(json['next']),
+    );
+  }
+
+  /// `CHECK_IN` on arrival day, `CHECK_OUT` on departure day or overstay;
+  /// null otherwise (no inline action).
+  String? get stayAction => switch ((status, overdue, stayStatus)) {
+        ('ARRIVAL', _, 'PRE_ARRIVAL') => 'CHECK_IN',
+        ('DEPARTURE', _, 'ACTIVE_STAY') ||
+        (_, true, 'ACTIVE_STAY') =>
+          'CHECK_OUT',
+        _ => null,
+      };
 
   final String stayId;
   final String guestName;
@@ -61,6 +129,14 @@ class ActivityRow {
   final String villaName;
   final String status;
   final bool overdue;
+
+  /// The stay's own status (`PRE_ARRIVAL`, `ACTIVE_STAY`).
+  final String stayStatus;
+
+  /// Open guest requests and unread guest messages of the stay.
+  final int pendingRequests;
+  final int pendingMessages;
+  final ActivityNext? next;
 }
 
 /// The dashboard: resort day, KPIs and at most 8 activity rows ([total]

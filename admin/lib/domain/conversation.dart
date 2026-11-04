@@ -43,6 +43,19 @@ class ConversationRow {
 
   bool get hasUnread => unreadCount > 0;
 
+  /// The same row once staff opened it (no unread messages).
+  ConversationRow asRead() => ConversationRow(
+        stayId: stayId,
+        guestName: guestName,
+        villaName: villaName,
+        lastText: lastText,
+        lastAt: lastAt,
+        lastFromGuest: lastFromGuest,
+        lastHasPhoto: lastHasPhoto,
+        unreadCount: 0,
+        awaitingReply: awaitingReply,
+      );
+
   /// Unread conversations first; otherwise the server order is kept.
   static List<ConversationRow> unreadFirst(List<ConversationRow> rows) => [
         ...rows.where((r) => r.hasUnread),

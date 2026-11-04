@@ -103,7 +103,7 @@ Map<String, FormIssue> validateTripPage(
         final lead = Duration(hours: service.availability.minLeadHours ?? 0);
         if (!at.isAfter(nowWall)) {
           issues['time'] = FormIssue.pastTime;
-        } else if (d.type == TripType.local && at.isBefore(nowWall.add(lead))) {
+        } else if (at.isBefore(nowWall.add(lead))) {
           issues['time'] = FormIssue.tooSoon;
         }
       }
@@ -192,10 +192,10 @@ class BookingFieldSpec {
   final LocalizedText? question;
 }
 
-/// Fields the admin enabled for this service. The date is always asked
-/// because the backend books a day.
+/// Fields of this service's guest form (from its kind). The date is always
+/// asked because the backend books a day.
 List<BookingFieldSpec> bookingFields(CatalogService s) {
-  final f = s.guestForm;
+  final f = s.effectiveGuestForm;
   return [
     const BookingFieldSpec(BookingField.date),
     if (f.time || s.availability.timeSlots.isNotEmpty)

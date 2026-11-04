@@ -4,6 +4,7 @@ import '../../core/responsive_breakpoints.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../navigation/admin_nav_list.dart';
 import '../navigation/admin_nav_model.dart';
+import '../requests/request_inbox_scope.dart';
 
 /// Compact 72px icon rail for tablet viewports (600px–1023px).
 class TabletCompactRail extends StatelessWidget {
@@ -13,8 +14,15 @@ class TabletCompactRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final watcher = RequestInboxScope.maybeOf(context)?.watcher;
+    if (watcher == null) return _rail(context);
+    return ListenableBuilder(
+        listenable: watcher, builder: (context, _) => _rail(context));
+  }
+
+  Widget _rail(BuildContext context) {
     final groups = [
-      [AdminNavModel.dashboard],
+      AdminNavModel.topItems,
       for (final section in AdminNavModel.visibleSections()) section.items,
     ];
     return Container(
@@ -29,14 +37,14 @@ class TabletCompactRail extends StatelessWidget {
         children: [
           for (var g = 0; g < groups.length; g++) ...[
             if (g > 0) const Divider(height: 17, indent: 16, endIndent: 16),
-            for (final item in groups[g]) _railButton(item),
+            for (final item in groups[g]) _railButton(context, item),
           ],
         ],
       ),
     );
   }
 
-  Widget _railButton(AdminNavItem item) {
+  Widget _railButton(BuildContext context, AdminNavItem item) {
     final selected =
         AdminNavModel.itemForWorkspace(controller.activeTab)?.id == item.id;
     return Padding(
@@ -53,10 +61,15 @@ class TabletCompactRail extends StatelessWidget {
                 borderRadius: BorderRadius.circular(KachavaTokens.radiusLg)),
           ),
           onPressed: () => controller.selectTab(item.workspace!),
-          icon: Icon(item.icon,
-              color: selected
-                  ? KachavaTokens.primary
-                  : KachavaTokens.textSecondary),
+          icon: Badge(
+            isLabelVisible: (navBadgeFor(context, item) ?? 0) > 0,
+            backgroundColor: KachavaTokens.primary,
+            label: Text('${navBadgeFor(context, item) ?? 0}'),
+            child: Icon(item.icon,
+                color: selected
+                    ? KachavaTokens.primary
+                    : KachavaTokens.textSecondary),
+          ),
         ),
       ),
     );

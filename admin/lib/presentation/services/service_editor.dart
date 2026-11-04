@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../../application/service_catalog_deps.dart';
-import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../data/catalog_rule_violation.dart';
 import '../../domain/admin_service.dart';
 import '../../domain/staff_member.dart';
 import '../../domain/json_draft.dart';
-import '../../domain/service_kind_fields.dart';
+import '../../domain/service_form_layout.dart';
 import '../components/components.dart';
-import 'kind_detail_fields.dart';
-import 'service_editor_tabs.dart';
-import 'service_items_tab.dart';
+import 'service_form_fields.dart';
+import 'service_item_editor.dart';
+import 'service_items_section.dart';
 
-/// Create/edit one service in the detail panel: tabs General · Images ·
-/// Price & availability · Items · Guest form · Operation, plus the block of
-/// its kind. Saving keeps the panel open (items need a saved service);
-/// Activate/Deactivate confirm in one line and show 422 problems inline.
+/// Create/edit one service in the detail panel: ONE scrolling form per kind
+/// (only what that kind needs; the rest under "More options"), with its
+/// items inline. Usage and guest form derive from the kind on every save.
+/// Saving keeps the panel open (items need a saved service); an item opens
+/// its own form in the same panel. Activate/Deactivate confirm in one line
+/// and show 422 problems inline.
 class ServiceEditor extends StatefulWidget {
   const ServiceEditor({
     super.key,
@@ -53,6 +54,10 @@ class _ServiceEditorState extends State<ServiceEditor> {
   /// Bumped to rebuild every field from the draft.
   int _generation = 0;
 
+  /// The item form shown instead of the service form (`null` item = new).
+  ServiceItem? _item;
+  bool _itemOpen = false;
+
   ServiceCatalogStrings get _s => ServiceCatalogStrings(widget.isEs);
   bool get _isNew => (_saved?.id ?? '').isEmpty;
   ServiceKind get _kind => ServiceKind.parse(_draft.get('kind'));
@@ -67,12 +72,15 @@ class _ServiceEditorState extends State<ServiceEditor> {
       ..remove(old.detailField)
       ..set('kind', next.wire)
       ..set(next.detailField, <String, dynamic>{})
-      ..set('usageType', next.defaultUsage.wire);
+      ..set('usageType', next.defaultUsage.wire)
+      ..set('pricing',
+          AdminService.emptyDraft(next)['pricing'] as Map<String, dynamic>);
     if (widget.section == null) _draft.set('section', next.defaultSection.wire);
     setState(() => _generation++);
   }
 
-  Future<void> _save() => _write(AdminService.parse(_draft.json));
+  Future<void> _save() =>
+      _write(AdminService.parse(withKindDefaults(_draft.json)));
 
   Future<void> _write(AdminService service) async {
     final repo = widget.deps.services;
@@ -116,19 +124,20 @@ class _ServiceEditorState extends State<ServiceEditor> {
     return violation == null ? null : _s.problems(violation.problems);
   }
 
+  void _openItem(ServiceItem? item) => setState(() {
+        _item = item;
+        _itemOpen = true;
+      });
+
+  void _closeItem() => setState(() {
+        _item = null;
+        _itemOpen = false;
+        _generation++;
+      });
+
   @override
   Widget build(BuildContext context) {
-    final tabs = ServiceEditorTabs(
-      draft: _draft,
-      deps: widget.deps,
-      isEs: widget.isEs,
-      kinds: _kinds,
-      isNew: _isNew,
-      showSection: widget.section == null,
-      staff: widget.staff,
-      onKind: _changeKind,
-      onRebuild: () => setState(() {}),
-    );
+    if (_itemOpen) return _itemEditor();
     final name = _saved?.name.of(isEs: widget.isEs) ?? '';
     return AdminFormPanel(
       key: const Key('service-editor'),
@@ -152,41 +161,53 @@ class _ServiceEditorState extends State<ServiceEditor> {
           run: _toggleStatus,
         ),
       ],
-      tabs: _tabs(tabs),
+      children: [
+        KeyedSubtree(
+          key: ValueKey('gen-$_generation-${_kind.wire}'),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _fields().all()),
+        ),
+      ],
     );
   }
 
-  List<AdminFormTab> _tabs(ServiceEditorTabs tabs) {
-    final g = ValueKey('gen-$_generation-${_kind.wire}');
-    List<Widget> keyed(List<Widget> children) =>
-        [KeyedSubtree(key: g, child: Column(children: children))];
-    return [
-      AdminFormTab(label: _s.general, children: keyed(tabs.general())),
-      AdminFormTab(label: _s.images, children: keyed(tabs.images())),
-      AdminFormTab(
-          label: _s.priceAvailability, children: keyed(tabs.pricing())),
-      AdminFormTab(label: _s.items, child: _items()),
-      AdminFormTab(label: _s.guestForm, children: keyed(tabs.guestForm())),
-      AdminFormTab(label: _s.operation, children: keyed(tabs.operation())),
-      if (kindFields(_kind).isNotEmpty)
-        AdminFormTab(
-          label: ServiceCatalogLabels(widget.isEs).kind(_kind),
-          children: keyed(kindDetailFields(_draft, _kind, widget.isEs)),
-        ),
-    ];
-  }
+  ServiceFormFields _fields() => ServiceFormFields(
+        draft: _draft,
+        deps: widget.deps,
+        isEs: widget.isEs,
+        kinds: _kinds,
+        isNew: _isNew,
+        showSection: widget.section == null,
+        staff: widget.staff,
+        items: _items(),
+        onKind: _changeKind,
+        onRebuild: () => setState(() {}),
+      );
 
   Widget _items() => _isNew
-      ? Align(
-          alignment: Alignment.topLeft,
-          child: AdminStateLine(
+      ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          ServiceItemsHeader(title: _s.itemsTitle(_kind)),
+          AdminStateLine(
               key: const Key('items-save-first'), message: _s.saveFirst),
-        )
-      : ServiceItemsTab(
+        ])
+      : ServiceItemsSection(
           key: ValueKey('items-${_saved!.id}'),
           deps: widget.deps,
           serviceId: _saved!.id,
           kind: _kind,
           isEs: widget.isEs,
+          onOpen: _openItem,
         );
+
+  Widget _itemEditor() => ServiceItemEditor(
+        key: ValueKey(_item?.id ?? 'new-item'),
+        deps: widget.deps,
+        serviceId: _saved!.id,
+        kind: _kind,
+        item: _item,
+        isEs: widget.isEs,
+        onClose: _closeItem,
+        onSaved: () {},
+      );
 }

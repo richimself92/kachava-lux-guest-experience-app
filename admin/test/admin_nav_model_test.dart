@@ -22,6 +22,19 @@ void main() {
           isTrue);
     });
 
+    test('Requests and Messages sit right under Dashboard', () {
+      expect(AdminNavModel.topItems.map((i) => i.labelEn),
+          ['Dashboard', 'Requests', 'Messages']);
+      expect(AdminNavModel.topItems.map((i) => i.labelEs),
+          ['Panel', 'Solicitudes', 'Mensajes']);
+      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminRequests),
+          AdminNavModel.requests);
+      expect(AdminNavModel.itemForWorkspace(AdminWorkspaceTab.adminMessages),
+          AdminNavModel.messages);
+      expect(AdminWorkspaceTab.adminRequests.id, 'admin-requests');
+      expect(AdminWorkspaceTab.adminMessages.id, 'admin-messages');
+    });
+
     test('labels have no numeric prefix, no Folio and no TEAM', () {
       final labels = <String>[
         AdminNavModel.dashboard.labelEn,

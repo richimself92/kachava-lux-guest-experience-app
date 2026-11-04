@@ -16,6 +16,7 @@ class IsoDateField extends StatelessWidget {
     required this.isEs,
     this.isRequired = false,
     this.validator,
+    this.firstDay,
   });
 
   static final RegExp _format = RegExp(r'^\d{4}-\d{2}-\d{2}$');
@@ -30,6 +31,9 @@ class IsoDateField extends StatelessWidget {
 
   /// Extra check after the format (e.g. "after arrival").
   final FormFieldValidator<String>? validator;
+
+  /// Earliest day the calendar offers (`YYYY-MM-DD`); a year back when null.
+  final String? firstDay;
 
   static bool isValid(String text) {
     if (!_format.hasMatch(text)) return false;
@@ -48,11 +52,14 @@ class IsoDateField extends StatelessWidget {
 
   Future<void> _pick(BuildContext context) async {
     final now = DateTime.now();
+    final first = DateTime.tryParse('${firstDay ?? ''}T00:00:00') ??
+        now.subtract(const Duration(days: 365));
     final current = DateTime.tryParse('${controller.text.trim()}T00:00:00');
+    final initial = current ?? now;
     final date = await showDatePicker(
       context: context,
-      initialDate: current ?? now,
-      firstDate: now.subtract(const Duration(days: 365)),
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
       lastDate: now.add(const Duration(days: 730)),
     );
     if (date == null) return;

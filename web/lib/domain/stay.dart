@@ -114,6 +114,7 @@ class GuestBooking {
     this.scheduledTimeSlot = '',
     this.partySize = 0,
     this.status = 'REQUESTED',
+    this.cancellationReason = '',
     this.createdAt,
     this.updatedAt,
   });
@@ -137,6 +138,7 @@ class GuestBooking {
       scheduledTimeSlot: asString(json['scheduledTimeSlot']),
       partySize: asInt(json['partySize']) ?? 0,
       status: asString(json['status']),
+      cancellationReason: asString(json['cancellationReason']),
       createdAt: asDateTime(json['createdAt']),
       updatedAt: asDateTime(json['updatedAt']),
     );
@@ -153,6 +155,7 @@ class GuestBooking {
   final String scheduledTimeSlot;
   final int partySize;
   final String status;
+  final String cancellationReason;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 

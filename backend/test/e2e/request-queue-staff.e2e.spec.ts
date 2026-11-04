@@ -136,6 +136,86 @@ describe('Request queue and staff roster', () => {
       expect(t.fake.store(SERVICE_REQUESTS_COLLECTION).size).toBe(0);
     });
 
+    it('test_inbox_listsEverySectionWithTypeNotesAndQueueOrder', async () => {
+      const booked = await request(t.server()).post(`${stayPath}/bookings`).send({
+        serviceId: cenoteId, scheduledDate: '2026-12-02', scheduledTimeSlot: '10:00', partySize: 2,
+        metadata: { notes: 'Vegetarian lunch' },
+      });
+      await move(booked.body.data.bookingId, { action: 'CONFIRM' });
+      await request(t.server()).put(`${stayPath}/orders/${bar.serviceId}`).send({ items: [{ itemId: bar.itemId, quantity: 2 }] });
+
+      const inbox = await list('sort=queue:asc');
+      const orders = await list('usageType=ORDER');
+
+      expect(inbox.status).toBe(200);
+      expect(inbox.body.data.map((r: { usageType: string; status: string }) => `${r.usageType}:${r.status}`))
+        .toEqual(['ORDER:RECEIVED', 'BOOKING:CONFIRMED']);
+      expect(inbox.body.data[1]).toMatchObject({ section: 'EXPERIENCES', notes: 'Vegetarian lunch', rank: 1 });
+      expect(inbox.body.data[0]).toMatchObject({ section: 'DINING', rank: 0, notes: '' });
+      expect(orders.body.meta.total).toBe(1);
+      expect((await list('usageType=SPA')).status).toBe(400);
+    });
+
+    describe('linked tasks', () => {
+      const tasks = (path: string) => request(t.server()).get(`${ADMIN}/tasks${path}`).set(admin);
+      const ensureTask = (id: string) => request(t.server()).post(`${ADMIN}/requests/${id}/task`).set(admin).send({});
+      const moveTask = (id: string, body: Record<string, unknown>) =>
+        request(t.server()).post(`${ADMIN}/tasks/${id}/transition`).set(admin).send(body);
+
+      it('test_createTask_isPrefilledFromTheRequest_andIdempotent', async () => {
+        const id = (await book('2026-12-02')).body.data.bookingId;
+
+        const first = await ensureTask(id);
+        const again = await ensureTask(id);
+
+        expect(first.status).toBe(201);
+        expect(first.body.data).toMatchObject({
+          id: `task_booking_${id.replace(/[^A-Za-z0-9_-]/g, '_')}`,
+          source: { type: 'BOOKING', refId: id }, villaName: 'Villa Sol', guestName: 'Ana Ruiz',
+          category: 'EXPERIENCES', status: 'PENDING', dueAt: '2026-12-02T15:00:00.000Z',
+        });
+        expect(again.body.data.id).toBe(first.body.data.id);
+        expect((await list('section=EXPERIENCES')).body.data[0].taskId).toBe(first.body.data.id);
+      });
+
+      it('test_completingTheTask_marksTheRequestDone_evenFromReceived', async () => {
+        const id = (await book('2026-12-02')).body.data.bookingId;
+        const taskId = (await ensureTask(id)).body.data.id;
+
+        await moveTask(taskId, { to: 'ASSIGNED', ownerStaffId: 'staff-1', ownerName: 'Lucia' });
+        const done = await moveTask(taskId, { to: 'COMPLETED', note: 'Guide booked' });
+
+        expect(done.status).toBe(200);
+        const [entry] = (await list('section=EXPERIENCES')).body.data;
+        expect(entry.status).toBe('DONE');
+        const guest = (await request(t.server()).get(stayPath)).body.data;
+        expect(guest.experienceBookings[0].status).toBe('COMPLETED');
+      });
+
+      it('test_cancellingTheRequest_cancelsItsOpenTask_once', async () => {
+        const id = (await book('2026-12-02')).body.data.bookingId;
+        const taskId = (await ensureTask(id)).body.data.id;
+
+        await move(id, { action: 'CANCEL', reason: 'Weather' });
+
+        const task = (await tasks(`/${taskId}`)).body.data;
+        expect(task).toMatchObject({ status: 'CANCELLED', cancellationReason: 'Weather' });
+      });
+
+      it('test_tasksOriginFilter_guestRequestOrInternal', async () => {
+        const id = (await book('2026-12-02')).body.data.bookingId;
+        await ensureTask(id);
+        await request(t.server()).post(`${ADMIN}/tasks`).set(admin).send({ title: 'Fix lamp', category: 'MAINTENANCE' });
+
+        const guest = await tasks('?origin=GUEST');
+        const internal = await tasks('?origin=INTERNAL');
+
+        expect(guest.body.data.map((x: { title: string }) => x.title)).toEqual(['Confirm: Cenote swim']);
+        expect(internal.body.data.map((x: { title: string }) => x.title)).toEqual(['Fix lamp']);
+        expect((await tasks('?origin=OTHER')).status).toBe(400);
+      });
+    });
+
     it('test_badInput_isRejected', async () => {
       expect((await list('section=SPA')).status).toBe(400);
       expect((await list('status=LATE')).status).toBe(400);

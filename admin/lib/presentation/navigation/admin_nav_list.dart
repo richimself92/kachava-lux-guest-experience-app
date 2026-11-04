@@ -3,7 +3,19 @@ import 'package:flutter/material.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_enums.dart';
 import '../components/focus_ring.dart';
+import '../requests/request_inbox_scope.dart';
 import 'admin_nav_model.dart';
+
+/// Menu badge counts: new guest requests and conversations awaiting reply.
+int? navBadgeFor(BuildContext context, AdminNavItem item) {
+  final watcher = RequestInboxScope.maybeOf(context)?.watcher;
+  if (watcher == null) return null;
+  return switch (item.id) {
+    'requests' => watcher.requestCount,
+    'messages' => watcher.messageCount,
+    _ => null,
+  };
+}
 
 /// Sidebar content shared by the desktop sidebar and the mobile drawer:
 /// brand header, Dashboard row, section labels and chevron items, plus a
@@ -60,6 +72,14 @@ class _AdminNavListState extends State<AdminNavList> {
   @override
   Widget build(BuildContext context) {
     final selected = AdminNavModel.itemForWorkspace(widget.activeTab);
+    final watcher = RequestInboxScope.maybeOf(context)?.watcher;
+    return ListenableBuilder(
+      listenable: watcher ?? const AlwaysStoppedAnimation<int>(0),
+      builder: (context, _) => _content(selected),
+    );
+  }
+
+  Widget _content(AdminNavItem? selected) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -76,7 +96,8 @@ class _AdminNavListState extends State<AdminNavList> {
                   controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 64),
                   children: [
-                    _item(AdminNavModel.dashboard, selected),
+                    for (final item in AdminNavModel.topItems)
+                      _item(item, selected),
                     for (final section in AdminNavModel.visibleSections()) ...[
                       _SectionLabel(section.label(widget.isEs)),
                       for (final item in section.items) _item(item, selected),
@@ -113,6 +134,7 @@ class _AdminNavListState extends State<AdminNavList> {
         item: item,
         isEs: widget.isEs,
         selected: item.id == selected?.id,
+        badge: navBadgeFor(context, item),
         onTap: () => widget.onSelect(item.workspace!),
       );
 }
@@ -205,6 +227,7 @@ class AdminNavTile extends StatelessWidget {
     required this.isEs,
     required this.selected,
     required this.onTap,
+    this.badge,
   });
 
   final AdminNavItem item;
@@ -212,9 +235,12 @@ class AdminNavTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  /// Count bubble (hidden when null or 0).
+  final int? badge;
+
   @override
   Widget build(BuildContext context) {
-    final isDashboard = item.id == AdminNavModel.dashboard.id;
+    final isDashboard = AdminNavModel.topItems.any((i) => i.id == item.id);
     final radius = BorderRadius.circular(KachavaTokens.radiusLg);
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
@@ -263,6 +289,9 @@ class AdminNavTile extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if ((badge ?? 0) > 0)
+                      NavCountBadge(
+                          key: Key('nav-badge-${item.id}'), count: badge!),
                     if (!isDashboard)
                       const Icon(Icons.chevron_right,
                           size: 20, color: KachavaTokens.textSecondary),
@@ -272,6 +301,33 @@ class AdminNavTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small count bubble of a menu item (primary tone, pill radius).
+class NavCountBadge extends StatelessWidget {
+  const NavCountBadge({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: KachavaTokens.primary,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: KachavaTokens.onPrimary),
       ),
     );
   }

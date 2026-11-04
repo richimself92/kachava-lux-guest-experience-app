@@ -1,6 +1,13 @@
 /// Admin workspaces. Ids are stable (keys `nav-tab-<id>` / `workspace-<id>`).
 enum AdminWorkspaceTab {
   adminOverview(id: 'admin-overview', label: 'Dashboard', labelEs: 'Panel'),
+
+  /// Every guest request of every section (orders, bookings, trips).
+  adminRequests(
+      id: 'admin-requests', label: 'Requests', labelEs: 'Solicitudes'),
+
+  /// Guest conversations (chat).
+  adminMessages(id: 'admin-messages', label: 'Messages', labelEs: 'Mensajes'),
   adminStays(id: 'admin-stays', label: 'Reservations', labelEs: 'Reservas'),
   adminGuests(id: 'admin-guests', label: 'Guests', labelEs: 'Huéspedes'),
   adminVillas(id: 'admin-villas', label: 'Villas', labelEs: 'Villas'),

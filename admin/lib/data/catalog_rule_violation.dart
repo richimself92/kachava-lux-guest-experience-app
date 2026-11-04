@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'admin_api_client.dart';
 
 /// A catalog business rule the API refused with HTTP 422, e.g.
@@ -14,7 +12,7 @@ class CatalogRuleViolation {
   /// `null` unless [error] is a 422 from the admin API.
   static CatalogRuleViolation? tryParse(Object error) {
     if (error is! AdminApiException || error.statusCode != 422) return null;
-    final message = _serverMessage(error.message);
+    final message = error.serverMessage;
     if (message.isEmpty) return const CatalogRuleViolation([]);
     final colon = message.indexOf(': ');
     if (colon < 0) return CatalogRuleViolation([message]);
@@ -26,17 +24,5 @@ class CatalogRuleViolation {
         .toList();
     return CatalogRuleViolation(
         details.isEmpty ? [message.substring(0, colon)] : details);
-  }
-
-  /// The `message` of the JSON error envelope embedded in the exception.
-  static String _serverMessage(String raw) {
-    final start = raw.indexOf('{');
-    if (start < 0) return '';
-    try {
-      final body = jsonDecode(raw.substring(start));
-      return body is Map ? '${body['message'] ?? ''}'.trim() : '';
-    } on FormatException {
-      return '';
-    }
   }
 }

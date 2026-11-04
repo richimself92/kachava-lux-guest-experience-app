@@ -15,6 +15,21 @@ export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 export const REQUEST_STATUS_FILTERS = [...REQUEST_STATUSES, 'OPEN'] as const;
 export type RequestStatusFilter = (typeof REQUEST_STATUS_FILTERS)[number];
 export type RequestKind = 'BOOKING' | 'ORDER';
+/** What the guest asked for: an order, a booking or a preference choice. */
+export const REQUEST_USAGE_TYPES = ['ORDER', 'BOOKING', 'PREFERENCE'] as const;
+export type RequestUsageType = (typeof REQUEST_USAGE_TYPES)[number];
+/** Inbox order: 0 = new (needs action), 1 = in progress, 2 = closed. */
+export type RequestRank = 0 | 1 | 2;
+
+export function requestRank(status: RequestStatus): RequestRank {
+  if (status === 'RECEIVED') return 0;
+  return isOpenRequestStatus(status) ? 1 : 2;
+}
+
+function noteOf(metadata: Record<string, unknown> | undefined): string {
+  const notes = metadata?.notes;
+  return typeof notes === 'string' ? notes.trim() : '';
+}
 
 export interface ServiceRequestLine {
   name: LocalizedText;
@@ -25,6 +40,7 @@ export interface ServiceRequestEntry {
   /** The booking id, or `orderRefId(stayId, serviceId)` for an order. */
   requestId: string;
   kind: RequestKind;
+  usageType: RequestUsageType;
   stayId: string;
   villaId: string;
   villaName: string;
@@ -39,6 +55,10 @@ export interface ServiceRequestEntry {
   quantity: number;
   status: RequestStatus;
   open: boolean;
+  /** See [RequestRank]; the inbox sorts by rank, then by when it was asked. */
+  rank: RequestRank;
+  /** The guest's own words (booking notes); empty when none. */
+  notes: string;
   lines: ServiceRequestLine[];
   totalUSD: number | null;
   cancellationReason: string | null;
@@ -87,6 +107,7 @@ function bookingEntry(stay: StayAggregate, b: ExperienceBooking): ServiceRequest
   return {
     requestId: b.bookingId,
     kind: 'BOOKING',
+    usageType: b.usageType === 'PREFERENCE' ? 'PREFERENCE' : 'BOOKING',
     stayId: stay.stayId,
     villaId: stay.villaId,
     villaName: stay.villaName,
@@ -98,6 +119,8 @@ function bookingEntry(stay: StayAggregate, b: ExperienceBooking): ServiceRequest
     quantity: b.partySize,
     status,
     open: isOpenRequestStatus(status),
+    rank: requestRank(status),
+    notes: noteOf(b.metadata),
     lines: (b.snapshot?.lines ?? []).map((l) => ({ name: structuredClone(l.name), quantity: l.quantity })),
     totalUSD: b.snapshot?.totalUSD ?? b.priceChargedUSD,
     cancellationReason: status === 'CANCELLED' ? b.cancellationReason || null : null,
@@ -116,6 +139,7 @@ function orderEntry(stay: StayAggregate, lines: LarderOrderItem[], timeZone: str
   return {
     requestId: orderRefId(stay.stayId, first.serviceId),
     kind: 'ORDER',
+    usageType: 'ORDER',
     stayId: stay.stayId,
     villaId: stay.villaId,
     villaName: stay.villaName,
@@ -127,6 +151,8 @@ function orderEntry(stay: StayAggregate, lines: LarderOrderItem[], timeZone: str
     quantity: lines.reduce((sum, l) => sum + l.quantity, 0),
     status,
     open: isOpenRequestStatus(status),
+    rank: requestRank(status),
+    notes: '',
     lines: lines.map((l) => ({ name: structuredClone(l.itemName ?? { en: l.name, es: l.name }), quantity: l.quantity })),
     totalUSD: Math.round(lines.reduce((sum, l) => sum + l.lineTotalUSD, 0) * 100) / 100,
     cancellationReason: status === 'CANCELLED' ? first.cancellationReason || null : null,

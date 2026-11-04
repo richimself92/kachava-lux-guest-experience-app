@@ -102,8 +102,13 @@ void main() {
     expect(readEvents, greaterThan(0));
     expect(find.byKey(const Key('message-photo-req_1:0')), findsOneWidget);
 
+    final semantics = tester.ensureSemantics();
     await tester.enterText(
         find.byKey(const Key('conversation-reply')), 'Sending them now');
+    await tester.pump();
+    // The hint vanishes while typing; the field keeps its "Reply" name.
+    expect(find.bySemanticsLabel(RegExp('Reply')), findsWidgets);
+    semantics.dispose();
     await tester.tap(find.byKey(const Key('conversation-send')));
     await tester.pumpAndSettle();
     expect(conversations.replies, [('stay_a', 'Sending them now')]);

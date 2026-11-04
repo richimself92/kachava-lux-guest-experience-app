@@ -13,6 +13,7 @@ import 'recorded_operations_contract.dart';
 void main() {
   late FakeTaskRepository tasks;
   late FakeReservationRepository stays;
+  final openedRequests = <String>[];
 
   setUp(() {
     tasks = FakeTaskRepository()
@@ -26,6 +27,7 @@ void main() {
           'status': 'IN_PROGRESS',
           'ownerStaffId': 'stf_1',
           'ownerName': 'Lucia Host',
+          'source': {'type': 'ORDER', 'refId': 'ord_1', 'stayId': 'stay_a'},
         }),
       ]);
     stays = FakeReservationRepository();
@@ -48,6 +50,7 @@ void main() {
               resolver: FixedOffsetResolver(Duration(hours: -5))),
           isEs: false,
           openId: openId,
+          onOpenRequest: (t) => openedRequests.add(t.id),
         ),
       ),
     ));
@@ -144,5 +147,27 @@ void main() {
   testWidgets('openId opens the task detail', (tester) async {
     await pump(tester, openId: 'task_2');
     expect(find.byKey(const Key('task-detail')), findsOneWidget);
+  });
+
+  testWidgets('test_origin_fromRequestLink_orInternal_andOriginFilter',
+      (tester) async {
+    openedRequests.clear();
+    await pump(tester);
+
+    expect(
+        tester.widget<Text>(find.byKey(const Key('task-origin-task_2'))).data,
+        'From request · Casa Ceiba · Order');
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(Key('task-origin-${tasks.tasks.first.id}')))
+            .data,
+        'Internal');
+    await open(tester, 'task_2');
+    await tester.tap(find.byKey(const Key('task-open-request')));
+    expect(openedRequests, ['task_2']);
+    await tester.tap(find.byKey(const Key('filters-tasks')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('filter-sheet-origin')), findsOneWidget);
   });
 }

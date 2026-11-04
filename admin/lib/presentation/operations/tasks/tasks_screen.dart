@@ -28,6 +28,7 @@ class TasksScreen extends StatefulWidget {
     required this.resortTime,
     required this.isEs,
     this.openId,
+    this.onOpenRequest,
   });
 
   static const String storeKey = 'tasks';
@@ -43,6 +44,9 @@ class TasksScreen extends StatefulWidget {
 
   /// A task to open on arrival (notification "Open").
   final String? openId;
+
+  /// "From request": opens the guest's requests in the inbox.
+  final ValueChanged<AdminTask>? onOpenRequest;
 
   @override
   State<TasksScreen> createState() => _TasksScreenState();
@@ -111,6 +115,7 @@ class _TasksScreenState extends State<TasksScreen> {
       onClose: close,
       onChanged: _list.load,
       isEs: widget.isEs,
+      onOpenRequest: widget.onOpenRequest,
     );
   }
 
@@ -127,8 +132,31 @@ class _TasksScreenState extends State<TasksScreen> {
         ],
       );
 
+  /// The title with its origin underneath (the table holds 6 columns).
+  Widget _titleCell(AdminTask t) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TruncatedText(t.title),
+          DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 12), child: _originCell(t)),
+        ],
+      );
+
+  /// "From request · Villa · Order" or "Internal" (the detail links to the
+  /// request).
+  Widget _originCell(AdminTask t) => Text(
+        t.fromGuestRequest
+            ? _s.fromRequest(t.villaName ?? '—', _s.sourceLabel(t.sourceType))
+            : _s.internal,
+        key: Key('task-origin-${t.id}'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: KachavaTokens.textSecondary),
+      );
+
   List<AdminTableColumn<AdminTask>> _columns() => [
-        AdminTableColumn(label: _s.title, text: (t) => t.title, flex: 3),
+        AdminTableColumn(label: _s.title, cell: _titleCell, flex: 3),
         AdminTableColumn(
             label: _s.villaGuest,
             text: (t) => AdminI18n.orDash(t.villaGuest),
@@ -161,6 +189,10 @@ class _TasksScreenState extends State<TasksScreen> {
         AdminListFilter(key: 'owner', label: _s.owner, options: [
           for (final m in widget.staff)
             AdminFilterOption(m.staffId, m.fullName),
+        ]),
+        AdminListFilter(key: 'origin', label: _s.origin, options: [
+          AdminFilterOption('GUEST', _s.guestRequest),
+          AdminFilterOption('INTERNAL', _s.internal),
         ]),
         AdminListFilter(
             key: 'overdue',

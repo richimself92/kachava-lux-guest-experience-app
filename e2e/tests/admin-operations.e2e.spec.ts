@@ -98,7 +98,9 @@ async function ensureStaff(request: APIRequestContext, api: Api): Promise<Json[]
     },
   );
   expect(res.ok(), await res.text()).toBe(true);
-  return (await api.get('/staff?pageSize=100')).data as Json[];
+  // Only active staff can own tasks (other suites deactivate theirs): pick from those.
+  const roster = (await api.get('/staff?pageSize=100')).data as Json[];
+  return roster.filter((m) => m.isActive !== false);
 }
 
 const button = (page: Page, name: string | RegExp): Locator =>
@@ -155,9 +157,10 @@ test.describe('Phases 6-8 — operations (admin http://localhost:3002)', () => {
     await openMenu(page, 'Reservations');
     await button(page, 'New reservation').first().click();
     await typeInto(page, field(page, 'Guest'), GUEST);
-    await choose(page, /^Villa/, VILLA);
+    // Dates first: the villa list then shows only villas free on those nights.
     await typeInto(page, field(page, 'Arrival'), resortDay(0));
     await typeInto(page, field(page, 'Departure'), resortDay(3));
+    await choose(page, /^Villa/, VILLA);
     await button(page, 'Save').last().click();
     await expectText(page, 'Reservation created');
 
@@ -203,7 +206,12 @@ test.describe('Phases 6-8 — operations (admin http://localhost:3002)', () => {
     expect(inbox[0].unreadCount).toBeGreaterThan(0);
     await openMenu(page, 'Guests');
     await page.getByRole('tab', { name: 'Messages' }).click();
-    await search(page, RUN);
+    // Retype until the inbox is really filtered to this run: Flutter can drop a synthetic fill
+    // on the first input of a fresh page while the DOM <input> still shows the text.
+    await expect(async () => {
+      await search(page, RUN);
+      await waitForFlutterSemantics(page, '1–1 of 1', 3000);
+    }).toPass({ timeout: 30000 });
     await page.getByRole('button', { name: new RegExp(GUEST) }).first().click();
     await expectText(page, 'Can we get extra towels?');
     await typeInto(page, field(page, 'Reply'), `${RUN} On their way`);

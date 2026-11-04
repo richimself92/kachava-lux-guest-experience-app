@@ -59,13 +59,26 @@ class HttpReservationRepository implements ReservationRepository {
   /// `POST /admin/stays` answers `{ stay: {stayId, ...}, magicLinkUrl }`.
   @override
   Future<String> create(NewReservation reservation) async {
-    final record =
-        unwrapRecord(await _client.postJson(_path, reservation.toJson()));
+    final Map<String, dynamic> record;
+    try {
+      record =
+          unwrapRecord(await _client.postJson(_path, reservation.toJson()));
+    } on AdminApiException catch (error) {
+      throw _refusal(error) ?? error;
+    }
     final stay = record['stay'];
     final id = stay is Map ? '${stay['stayId'] ?? ''}' : '';
     if (id.isEmpty) throw const FormatException('Created stay without id.');
     return id;
   }
+
+  /// 409: the villa is taken; 422: a business rule with the server reason.
+  static Exception? _refusal(AdminApiException error) =>
+      switch (error.statusCode) {
+        409 => const VillaUnavailableException(),
+        422 => ReservationRejectedException(error.serverMessage),
+        _ => null,
+      };
 
   @override
   Future<StayFolio> folio(String id) async => StayFolio.fromJson(unwrapRecord(

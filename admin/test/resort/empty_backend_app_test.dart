@@ -42,7 +42,8 @@ class _EmptyBackend {
           'success': true,
           'data': {'unreadCount': 0, 'urgentUnreadCount': 0},
         },
-      ('GET', '/staff' || '/villas') => recordedPage(const []),
+      ('GET', '/staff' || '/villas' || '/conversations') =>
+        recordedPage(const []),
       ('GET', '/settings') => recordedEmptySettings,
       _ => null,
     };

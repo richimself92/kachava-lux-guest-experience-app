@@ -63,6 +63,7 @@ export abstract class AggregateStayRepository implements StayRepositoryPort {
   abstract pageConversations(query: ConversationPageQuery): Promise<PaginatedResult<StayAggregate>>;
   abstract listUnreadConversations(): Promise<StayAggregate[]>;
   abstract hasStaysForVilla(villaId: string): Promise<boolean>;
+  abstract listOpenStaysEndingAfter(date: string, villaId?: string): Promise<StayAggregate[]>;
 
   findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null> {
     return this.findStayByToken(guestTokenUuid.trim().toLowerCase());

@@ -92,7 +92,7 @@ void main() {
       (tester) async {
     final api = _api()..tripsJson = [tripJson('t1')];
     await pumpPortal(tester, api: api);
-    expect(find.text('AA 1482 · Nov 3'), findsOneWidget);
+    expect(find.text('Tue Nov 3 · 14:30 · AA 1482'), findsOneWidget);
     expect(find.text('1 of 4'), findsOneWidget);
     expect(find.text('Next: 1.2 Preferences'), findsOneWidget);
     await unmount(tester);

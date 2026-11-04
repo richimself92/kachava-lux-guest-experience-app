@@ -11,13 +11,12 @@ import 'draft_choice_fields.dart';
 import 'draft_list_fields.dart';
 import 'draft_text_fields.dart';
 
-/// Fields of the type-specific block of [kind] (`<detailField>.<key>`).
-List<Widget> kindDetailFields(JsonDraft draft, ServiceKind kind, bool isEs) {
-  final labels = ServiceCatalogLabels(isEs);
-  return [
-    for (final spec in kindFields(kind))
-      _field(draft, '${kind.detailField}.${spec.key}', spec, labels, isEs),
-  ];
+/// The input of `<kind.detailField>.<key>` (a [kindFields] entry).
+Widget kindDetailField(
+    JsonDraft draft, ServiceKind kind, String key, bool isEs) {
+  final spec = kindFields(kind).firstWhere((f) => f.key == key);
+  return _field(draft, '${kind.detailField}.$key', spec,
+      ServiceCatalogLabels(isEs), isEs);
 }
 
 Widget _field(JsonDraft draft, String path, KindFieldSpec spec,

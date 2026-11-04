@@ -1,10 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  activityDetails,
+  ActivityDetails,
+  ActivityRow,
   buildActivity,
   computeDashboardKpis,
   DashboardActivity,
   DashboardKpis,
 } from '../../domain/dashboard/dashboard-rules';
+import { StayAggregate } from '../../domain/models/domain.models';
 import { CLOCK_PORT, ClockPort } from '../../domain/ports/clock.port';
 import {
   SETTINGS_REPOSITORY_PORT,
@@ -27,16 +31,18 @@ import { isFinalTripStatus, TRIP_STATUSES } from '../../domain/trips/trip.models
 export const DASHBOARD_ACTIVITY_ROWS = 8;
 const OPEN_TRIP_STATUSES = TRIP_STATUSES.filter((status) => !isFinalTripStatus(status));
 
+export type DashboardActivityRow = ActivityRow & ActivityDetails;
+
 export interface DashboardView {
   /** Today at the resort (Settings time zone), YYYY-MM-DD. */
   resortDate: string;
   kpis: DashboardKpis;
-  activity: DashboardActivity;
+  activity: Omit<DashboardActivity, 'rows'> & { rows: DashboardActivityRow[] };
 }
 
 /**
- * Real-data dashboard: one bounded query of open stays, the active villas and two aggregate
- * counts (open trips, open tasks). A missing Settings time zone is SETTINGS_REQUIRED (422).
+ * Real-data dashboard: one bounded query of open stays, the active villas, two aggregate
+ * counts (open trips, open tasks) and the trips of the (at most 8) shown rows. A missing Settings time zone is SETTINGS_REQUIRED (422).
  */
 @Injectable()
 export class DashboardService {
@@ -58,10 +64,19 @@ export class DashboardService {
       this.trips.countByStatuses(OPEN_TRIP_STATUSES),
       this.tasks.countByStatuses(OPEN_TASK_STATUSES),
     ]);
+    const activity = buildActivity(stays, today, DASHBOARD_ACTIVITY_ROWS);
     return {
       resortDate: today,
       kpis: computeDashboardKpis({ villas, stays, today, openTrips, openTasks }),
-      activity: buildActivity(stays, today, DASHBOARD_ACTIVITY_ROWS),
+      activity: { ...activity, rows: await this.withDetails(activity.rows, stays, today) },
     };
+  }
+
+  /** Next event and pending counts of the shown rows (one bounded read of their trips). */
+  private async withDetails(rows: ActivityRow[], stays: StayAggregate[], today: string): Promise<DashboardActivityRow[]> {
+    if (rows.length === 0) return [];
+    const trips = await this.trips.listForStays(rows.map((row) => row.stayId));
+    const byId = new Map(stays.map((stay) => [stay.stayId, stay]));
+    return rows.map((row) => ({ ...row, ...activityDetails(row, byId.get(row.stayId) as StayAggregate, trips, today) }));
   }
 }

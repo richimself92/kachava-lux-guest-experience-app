@@ -2,15 +2,24 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CatalogService } from '../../domain/catalog/catalog.models';
 import { ExperienceBooking, StayRecord } from '../../domain/models/domain.models';
 import { CLOCK_PORT, ClockPort } from '../../domain/ports/clock.port';
+import { EntityNotFoundError } from '../../domain/domain-errors';
 import {
+  SERVICE_REQUEST_REPOSITORY_PORT,
+  ServiceRequestRepositoryPort,
   SETTINGS_REPOSITORY_PORT,
   SettingsRepositoryPort,
+  STAY_REPOSITORY_PORT,
+  StayRepositoryPort,
   TASK_REPOSITORY_PORT,
   TaskRepositoryPort,
 } from '../../domain/ports/repository.ports';
+import { RequestRef } from '../../domain/requests/request-transitions';
+import { ServiceRequestEntry } from '../../domain/requests/service-requests';
 import {
   bookingTaskFor,
   orderTaskFor,
+  requestTaskFor,
+  requestUsageType,
   resortWallTimeIso,
   TaskSchedule,
   tripTaskFor,
@@ -30,7 +39,39 @@ export class TaskAutomation {
     @Inject(TASK_REPOSITORY_PORT) private readonly tasks: TaskRepositoryPort,
     @Inject(SETTINGS_REPOSITORY_PORT) private readonly settings: SettingsRepositoryPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+    @Inject(SERVICE_REQUEST_REPOSITORY_PORT) private readonly requests: ServiceRequestRepositoryPort,
+    @Inject(STAY_REPOSITORY_PORT) private readonly stays: StayRepositoryPort,
   ) {}
+
+  /** "Create task" of an inbox request: its source task, created once (idempotent). */
+  async ensureForRequest(requestId: string, actor: string): Promise<Task> {
+    const entry = await this.requests.findById(requestId);
+    if (!entry) throw new EntityNotFoundError('Request', requestId);
+    const stay = await this.stays.findByStayId(entry.stayId);
+    if (!stay) throw new EntityNotFoundError('Stay', entry.stayId);
+    return this.ensure(requestTaskFor({ stay, entry, schedule: await this.schedule(), actor, at: this.now() }));
+  }
+
+  /** A request staff cancelled cancels its open task (no task or a closed one: no-op). */
+  cancelForRequest(entry: Pick<ServiceRequestEntry, 'kind' | 'usageType' | 'requestId'>, reason: string, actor: string) {
+    return this.cancelForSource(requestUsageType(entry), entry.requestId, reason, actor);
+  }
+
+  /**
+   * A completed task of a guest request moves that request to done (confirming it first when it
+   * is still new). Request moves never touch tasks, so this cannot loop; a closed request is left.
+   */
+  async completeRequestOf(task: Task): Promise<void> {
+    const { type, refId, stayId } = task.source;
+    if (!refId || !stayId || !['ORDER', 'BOOKING', 'PREFERENCE'].includes(type)) return;
+    const entry = await this.requests.findById(refId);
+    if (!entry || !entry.open) return;
+    const ref: RequestRef = entry.kind === 'ORDER' ? { kind: 'ORDER', id: entry.serviceId } : { kind: 'BOOKING', id: refId };
+    if (entry.status === 'RECEIVED') {
+      await this.stays.transitionServiceRequest(stayId, ref, { action: 'CONFIRM', at: this.now() });
+    }
+    await this.stays.transitionServiceRequest(stayId, ref, { action: 'COMPLETE', at: this.now() });
+  }
 
   async forBooking(stay: StayRecord, booking: ExperienceBooking, service: CatalogService, actor: string): Promise<Task | null> {
     const task = bookingTaskFor({ stay, booking, service, schedule: await this.schedule(), actor, at: this.now() });

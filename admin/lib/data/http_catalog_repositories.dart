@@ -1,6 +1,7 @@
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_settings.dart';
 import '../domain/admin_villa.dart';
+import '../domain/json_read.dart';
 import '../domain/list_query.dart';
 import '../domain/paged_result.dart';
 import '../domain/reservation.dart';
@@ -31,13 +32,23 @@ class HttpSettingsRepository implements AdminSettingsRepository {
 
 /// `/admin/villas`.
 class HttpVillaRepository implements VillaRepository {
-  HttpVillaRepository(AdminApiClient client)
-      : _villas = AdminHttpResource(client, '/villas', AdminVilla.fromJson);
+  HttpVillaRepository(this._client)
+      : _villas = AdminHttpResource(_client, '/villas', AdminVilla.fromJson);
 
+  final AdminApiClient _client;
   final AdminHttpResource<AdminVilla> _villas;
 
   @override
   Future<PagedResult<AdminVilla>> list(ListQuery query) => _villas.list(query);
+
+  @override
+  Future<List<AdminVilla>> available(String checkIn, String checkOut) async {
+    final qs = Uri(queryParameters: {'checkIn': checkIn, 'checkOut': checkOut});
+    final raw = await _client.getJson('/villas/available?${qs.query}');
+    return [
+      for (final v in JsonRead.objects(raw, 'data')) AdminVilla.fromJson(v)
+    ];
+  }
 
   @override
   Future<AdminVilla> create(AdminVilla villa) =>

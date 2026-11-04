@@ -73,12 +73,16 @@ class AdminService {
   }
 
   /// Editor draft of a new service: blank texts, no prices, disabled.
+  /// Experiences start priced per person.
   static Map<String, dynamic> emptyDraft(ServiceKind kind,
           {ServiceSection? section}) =>
       AdminService(
         kind: kind,
         section: section ?? kind.defaultSection,
         usageType: kind.defaultUsage,
+        pricing: kind == ServiceKind.experience
+            ? const ServicePricing(mode: PricingMode.perPerson)
+            : const ServicePricing(),
       ).toDraftJson();
 
   static const int maxGalleryImages = 8;

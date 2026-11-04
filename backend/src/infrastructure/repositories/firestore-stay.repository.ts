@@ -31,6 +31,7 @@ export const MAX_SEARCH_KEYWORD_LENGTH = 40;
 export const STAY_SCAN_LIMIT = 1000;
 const OPEN_STAY_STATUSES: StayLifecycleStatus[] = ['PRE_ARRIVAL', 'ACTIVE_STAY'];
 const ARRIVAL_FIELD = 'checkInDate';
+const DEPARTURE_FIELD = 'checkOutDate';
 const DERIVED_FIELDS = [GUEST_SEARCH_FIELD, LEGACY_CHILD_REFS_FIELD, CONVERSATION_FIELD];
 
 /**
@@ -134,6 +135,12 @@ export class FirestoreStayRepository extends AggregateStayRepository {
       .limit(limit)
       .get();
     return snapshot.docs.map((doc) => toStayAggregate(doc.id, doc.data()));
+  }
+
+  listOpenStaysEndingAfter(date: string, villaId?: string): Promise<StayAggregate[]> {
+    let open: Query = this.stays().where('status', 'in', OPEN_STAY_STATUSES);
+    if (villaId) open = open.where('villaId', '==', villaId);
+    return this.bounded(open.where(DEPARTURE_FIELD, '>', date));
   }
 
   async hasStaysForVilla(villaId: string): Promise<boolean> {

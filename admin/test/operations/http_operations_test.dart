@@ -154,6 +154,30 @@ void main() {
       });
     });
 
+    test('POST /stays 409 is VillaUnavailableException, 422 keeps the reason',
+        () async {
+      NewReservation reservation() => const NewReservation(
+          guestName: 'Ana',
+          villaId: 'v1',
+          checkIn: '2026-11-03',
+          checkOut: '2026-11-07');
+      HttpReservationRepository refusing(int status, String message) =>
+          HttpReservationRepository(signedInApiClient(_Server((_) =>
+              http.Response(
+                  jsonEncode({'statusCode': status, 'message': message}),
+                  status)).client));
+
+      await expectLater(
+          refusing(409, 'Villa Ceiba is already booked for these dates')
+              .create(reservation()),
+          throwsA(isA<VillaUnavailableException>()));
+      await expectLater(
+          refusing(422, 'Villa Ceiba hosts at most 2 guests')
+              .create(reservation()),
+          throwsA(isA<ReservationRejectedException>().having((e) => e.reason,
+              'reason', 'Villa Ceiba hosts at most 2 guests')));
+    });
+
     test('folio maps services, rating, charges and total', () async {
       final folio = await repo.folio('stay_a');
       expect(server.lastTarget, 'GET /stays/stay_a/folio');

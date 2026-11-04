@@ -123,11 +123,21 @@ export interface CreatedStay {
   guestTokenUuid: string;
 }
 
+/** Reservations need the resort day: configures `America/Cancun` when no time zone is set yet. */
+export async function ensureResortTimeZone(t: TestApp): Promise<void> {
+  const headers = await t.adminHeaders();
+  const settings = await request(t.server()).get('/api/v1/admin/settings').set(headers);
+  if (settings.body.data?.timeZone) return;
+  const res = await request(t.server()).patch('/api/v1/admin/settings').set(headers).send({ timeZone: 'America/Cancun' });
+  if (res.status !== 200) throw new Error(`ensureResortTimeZone failed: ${res.status} ${JSON.stringify(res.body)}`);
+}
+
 /** Creates a villa and a reservation through the admin API (as the env admin identity). */
 export async function createVillaAndStay(
   t: TestApp,
   options: { villaName: string; guestName: string; checkIn?: string; checkOut?: string },
 ): Promise<CreatedStay> {
+  await ensureResortTimeZone(t);
   const headers = await t.adminHeaders();
   const villa = await request(t.server()).post('/api/v1/admin/villas').set(headers).send({
     name: options.villaName, category: 'Test', capacity: 4,

@@ -14,6 +14,7 @@ import '../core/theme/kachava_tokens.dart';
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_enums.dart';
 import 'admin_workspace_switcher.dart';
+import 'requests/guest_arrival_banner.dart';
 import 'widgets/admin_navigation_bars.dart';
 import 'widgets/reconnecting_indicator.dart';
 import 'widgets/top_command_bar.dart';
@@ -69,6 +70,7 @@ class AdminCommandShell extends StatelessWidget {
                     ReconnectingIndicator(
                         status: syncStatus!, isEs: controller.isEs),
                   _UrgentBanner(controller: controller, bell: bell),
+                  GuestArrivalBanner(controller: controller, bell: bell),
                   Expanded(child: _body(viewport)),
                 ],
               ),

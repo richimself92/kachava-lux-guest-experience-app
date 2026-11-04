@@ -1,3 +1,4 @@
+import 'admin_task.dart';
 import 'catalog_values.dart';
 import 'json_read.dart';
 import 'list_query.dart';
@@ -57,7 +58,12 @@ class ServiceRequest {
     this.lines = const [],
     this.totalUSD,
     this.cancellationReason,
-  });
+    String? usageType,
+    this.section,
+    this.notes = '',
+    this.createdAt,
+    this.stayId = '',
+  }) : usageType = usageType ?? (isOrder ? 'ORDER' : 'BOOKING');
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) => ServiceRequest(
         id: JsonRead.requireId(json),
@@ -76,6 +82,32 @@ class ServiceRequest {
         ],
         totalUSD: JsonRead.doubleOrNull(json, 'totalUSD'),
         cancellationReason: JsonRead.textOrNull(json, 'cancellationReason'),
+        usageType: JsonRead.textOrNull(json, 'usageType'),
+        section: JsonRead.textOrNull(json, 'section'),
+        notes: JsonRead.text(json, 'notes'),
+        createdAt: DateTime.tryParse(JsonRead.text(json, 'createdAt'))?.toUtc(),
+        stayId: JsonRead.text(json, 'stayId'),
+      );
+
+  /// The same request in another [status] (a server-confirmed move).
+  ServiceRequest withStatus(String status, {String? cancellationReason}) =>
+      ServiceRequest(
+        id: id,
+        isOrder: isOrder,
+        guestName: guestName,
+        villaName: villaName,
+        serviceName: serviceName,
+        at: at,
+        quantity: quantity,
+        status: status,
+        lines: lines,
+        totalUSD: totalUSD,
+        cancellationReason: cancellationReason ?? this.cancellationReason,
+        usageType: usageType,
+        section: section,
+        notes: notes,
+        createdAt: createdAt,
+        stayId: stayId,
       );
 
   final String id;
@@ -93,6 +125,21 @@ class ServiceRequest {
   final List<ServiceRequestLine> lines;
   final double? totalUSD;
   final String? cancellationReason;
+
+  /// `ORDER`, `BOOKING` or `PREFERENCE` (older rows: from [isOrder]).
+  final String usageType;
+
+  /// Catalog section wire value (`IN_VILLA`, ...); null on older rows.
+  final String? section;
+
+  /// The guest's own words (booking notes); empty when none.
+  final String notes;
+
+  /// When the guest asked (UTC); null on older rows.
+  final DateTime? createdAt;
+
+  /// The guest's stay (conversation, reservation).
+  final String stayId;
 
   /// `YYYY-MM-DD` part of [at].
   String get day => at.length >= 10 ? at.substring(0, 10) : at;
@@ -120,14 +167,19 @@ class ServiceRequest {
       };
 }
 
-/// Section request queues (`/admin/requests`). Filters: `status` (one status
-/// or `OPEN`), the `range` day filter (`from`/`to`); search guest/service;
-/// sort `at`.
+/// Section request queues and the Requests inbox (`/admin/requests`).
+/// Filters: `status` (one status or `OPEN`), `usageType`, `section` (inbox),
+/// the `range` day filter (`from`/`to`); search guest/service; sort `at` or
+/// `queue` (new first, then in progress, then closed; oldest asked first).
 abstract interface class ServiceRequestRepository {
+  /// [section] null lists every section (the inbox).
   Future<PagedResult<ServiceRequest>> list(
-      ServiceSection section, ListQuery query);
+      ServiceSection? section, ListQuery query);
 
   /// Server-confirmed request after the move (422 when not allowed).
   Future<ServiceRequest> transition(String id, RequestAction action,
       {String? reason});
+
+  /// The request's operational task, created (prefilled) when missing.
+  Future<AdminTask> ensureTask(String id);
 }

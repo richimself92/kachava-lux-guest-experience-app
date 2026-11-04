@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kachava_guest_portal/domain/catalog.dart';
 import 'package:kachava_guest_portal/domain/forms.dart';
+import 'package:kachava_guest_portal/domain/json_read.dart';
 import 'package:kachava_guest_portal/domain/trip.dart';
 
 import 'support/fixtures.dart';
@@ -19,7 +21,57 @@ final _transfer = service(
   ],
 );
 
+List<BookingField> _fieldsOf(String kind, {Json guestForm = const {}}) =>
+    bookingFields(CatalogService.fromJson(serviceJson(
+            id: kind,
+            section: kind == 'SPECIAL_MENU' ? 'DINING' : 'X',
+            kind: kind,
+            guestForm: guestForm)))
+        .map((f) => f.field)
+        .toList();
+
 void main() {
+  group('guest form flags fall back to the kind rule', () {
+    test('no flags: experience asks diet, wellness asks health', () {
+      expect(_fieldsOf('EXPERIENCE'), [
+        BookingField.date,
+        BookingField.time,
+        BookingField.guests,
+        BookingField.dietary,
+        BookingField.notes,
+      ]);
+      expect(_fieldsOf('WELLNESS'), [
+        BookingField.date,
+        BookingField.time,
+        BookingField.guests,
+        BookingField.health,
+        BookingField.notes,
+      ]);
+      expect(_fieldsOf('SPECIAL_MENU'), contains(BookingField.dietary));
+    });
+
+    test('configured flags win over the kind rule', () {
+      expect(_fieldsOf('EXPERIENCE', guestForm: const {'notes': true}),
+          [BookingField.date, BookingField.notes]);
+    });
+
+    test('kind rule matches the admin derivation', () {
+      ServiceGuestForm of(String kind, String section, String usage) =>
+          CatalogService.fromJson(serviceJson(
+                  id: kind, section: section, kind: kind, usageType: usage))
+              .kindGuestForm;
+      final bar = of('BAR', 'DINING', 'ORDER');
+      expect([bar.date, bar.time, bar.guests, bar.notes, bar.dietary],
+          [false, false, false, true, true]);
+      expect(of('VILLA_STOCKING', 'IN_VILLA', 'ORDER').dietary, isTrue);
+      final trip = of('TRANSPORT', 'TRANSPORTATION', 'TRIP');
+      expect([trip.date, trip.notes, trip.dietary, trip.health],
+          [false, true, false, false]);
+      final pref = of('PREFERENCE', 'IN_VILLA', 'PREFERENCE');
+      expect([pref.date, pref.notes, pref.dietary], [false, true, false]);
+    });
+  });
+
   group('TRIP wizard validation', () {
     test('page 1 When needs a future date and time', () {
       final d = TripDraft(TripType.arrival);
@@ -37,6 +89,16 @@ void main() {
         ..day = DateTime.utc(2026, 11, 3)
         ..time = '14:30';
       expect(validateTripPage(d, 0, _transfer, _now), isEmpty);
+    });
+
+    test('airport trips respect the lead time on the first page too', () {
+      // Arriving today with a 24 h rule: say so up front, not after the
+      // guest filled the flight and the server refused it.
+      final d = TripDraft(TripType.arrival)
+        ..day = DateTime.utc(2026, 11, 1)
+        ..time = '20:00';
+      expect(
+          validateTripPage(d, 0, _transfer, _now)['time'], FormIssue.tooSoon);
     });
 
     test('local trips respect the lead time', () {

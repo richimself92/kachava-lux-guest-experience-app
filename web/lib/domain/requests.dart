@@ -1,17 +1,33 @@
 import 'catalog.dart';
+import 'resort_clock.dart';
 import 'stay.dart';
 import 'trip.dart';
 
 enum RequestKind { order, booking, preference, trip, host }
 
 /// Plain guest-facing statuses; raw enums never reach the screen.
-enum RequestStatus { received, confirmed, preparing, onTheWay, done, cancelled }
+enum RequestStatus {
+  received,
+
+  /// A trip the resort sent to its transport provider (still before the
+  /// confirmation dot).
+  arranging,
+  confirmed,
+  preparing,
+  onTheWay,
+  done,
+  cancelled
+}
+
+/// Server reason stored when the guest cancels (backend
+/// `GUEST_CANCELLATION_REASON`); shown as "Cancelled by you".
+const String guestCancellationReason = 'Cancelled by guest';
 
 extension RequestStatusTrack on RequestStatus {
   /// Position on the 4-dot track (Received, Confirmed, Preparing/On the way,
   /// Done); cancelled has no position.
   int get trackIndex => switch (this) {
-        RequestStatus.received => 0,
+        RequestStatus.received || RequestStatus.arranging => 0,
         RequestStatus.confirmed => 1,
         RequestStatus.preparing || RequestStatus.onTheWay => 2,
         RequestStatus.done => 3,
@@ -30,8 +46,9 @@ RequestStatus bookingStatusOf(String raw) => switch (raw) {
       _ => RequestStatus.received,
     };
 
-/// SENT_TO_PROVIDER is internal: for the guest it is still "Received".
+/// SENT_TO_PROVIDER reads "Arranging" (the provider itself stays hidden).
 RequestStatus tripStatusOf(String raw) => switch (raw) {
+      'SENT_TO_PROVIDER' => RequestStatus.arranging,
       'CONFIRMED' => RequestStatus.confirmed,
       'EN_ROUTE' => RequestStatus.onTheWay,
       'COMPLETED' => RequestStatus.done,
@@ -89,6 +106,7 @@ class GuestRequest {
     this.totalUSD,
     this.trip,
     this.booking,
+    this.reason = '',
   });
 
   final String id;
@@ -113,6 +131,9 @@ class GuestRequest {
   final GuestTrip? trip;
   final GuestBooking? booking;
 
+  /// Cancellation reason from the server ('' when none).
+  final String reason;
+
   /// The guest may cancel while the server status is still the initial one.
   bool get canCancel =>
       (booking?.isInitial ?? false) || (trip?.isInitial ?? false);
@@ -132,7 +153,7 @@ List<GuestRequest> composeRequests({
   final byId = {for (final s in catalog) s.id: s};
   final out = <GuestRequest>[
     ..._larderRequests(stay.larderOrders, byId),
-    for (final b in stay.bookings) _bookingRequest(b),
+    for (final b in stay.bookings) _bookingRequest(b, byId[b.serviceId]),
     for (final t in trips) _tripRequest(t),
     for (final h in stay.threads.where((t) => !t.isChat)) _hostRequest(h),
   ];
@@ -181,10 +202,7 @@ Iterable<GuestRequest> _larderRequests(
   }
 }
 
-GuestRequest _bookingRequest(GuestBooking b) {
-  final itemLine = b.itemId == null || b.snapshot.lines.isEmpty
-      ? null
-      : b.snapshot.lines.first.name;
+GuestRequest _bookingRequest(GuestBooking b, CatalogService? service) {
   return GuestRequest(
     id: 'booking:${b.id}',
     kind: b.usageType == UsageType.preference
@@ -195,7 +213,7 @@ GuestRequest _bookingRequest(GuestBooking b) {
     section: b.section,
     name: b.snapshot.serviceName.isEmpty
         ? LocalizedText(en: b.title, es: b.title)
-        : _join(b.snapshot.serviceName, itemLine),
+        : _join(b.snapshot.serviceName, _chosenItem(b, service)),
     day: _parseDay(b.scheduledDate),
     time: b.scheduledTimeSlot,
     people: b.usageType == UsageType.preference ? 0 : b.partySize,
@@ -203,7 +221,17 @@ GuestRequest _bookingRequest(GuestBooking b) {
     lines: b.snapshot.lines,
     totalUSD: b.snapshot.totalUSD,
     booking: b,
+    reason: b.cancellationReason,
   );
+}
+
+/// Option chosen (preference/item booking): the snapshot line, or the
+/// catalog item when an older booking has no snapshot line.
+LocalizedText? _chosenItem(GuestBooking b, CatalogService? service) {
+  final itemId = b.itemId;
+  if (itemId == null) return null;
+  if (b.snapshot.lines.isNotEmpty) return b.snapshot.lines.first.name;
+  return service?.items.where((i) => i.id == itemId).firstOrNull?.name;
 }
 
 LocalizedText _join(LocalizedText service, LocalizedText? item) {
@@ -214,7 +242,7 @@ LocalizedText _join(LocalizedText service, LocalizedText? item) {
 
 GuestRequest _tripRequest(GuestTrip t) {
   final at = t.pickupAt ?? t.flightAt;
-  final wall = at?.toUtc().add(const Duration(hours: -5));
+  final wall = at == null ? null : ResortClock.toWall(at);
   return GuestRequest(
     id: 'trip:${t.id}',
     kind: RequestKind.trip,
@@ -222,7 +250,7 @@ GuestRequest _tripRequest(GuestTrip t) {
     serviceId: t.serviceId,
     section: t.snapshot?.section ?? 'TRANSPORTATION',
     name: t.snapshot?.serviceName ?? LocalizedText.empty,
-    day: wall == null ? null : DateTime.utc(wall.year, wall.month, wall.day),
+    day: wall == null ? null : ResortClock.dayOf(wall),
     time: wall == null
         ? ''
         : '${wall.hour.toString().padLeft(2, '0')}:${wall.minute.toString().padLeft(2, '0')}',
@@ -231,6 +259,7 @@ GuestRequest _tripRequest(GuestTrip t) {
     lines: t.snapshot?.lines ?? const [],
     totalUSD: t.snapshot?.totalUSD,
     trip: t,
+    reason: t.cancellationReason,
   );
 }
 

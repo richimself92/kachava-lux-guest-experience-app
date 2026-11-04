@@ -4,9 +4,12 @@ import { OperationalAlert, StaffMember } from '../../src/domain/models/domain.mo
 import { Villa } from '../../src/domain/models/resort-config.models';
 import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
+import { FirestoreSettingsRepository } from '../../src/infrastructure/repositories/firestore-settings.repository';
 import { AdminService } from '../../src/modules/admin/admin.service';
+import { VillaAvailabilityService } from '../../src/modules/villas/villa-availability.service';
 import { FakeFirestore } from '../support/fake-firestore';
 import { villaFixture } from '../support/stay-fixtures';
+import { FixedClock } from '../support/trip-setup';
 
 const STAFF = { staffId: 'staff-1', email: 'admin@test.local' } as StaffMember;
 const RESERVATION = { guestName: 'Test Guest', villaId: 'villa-a', checkIn: '2026-12-01', checkOut: '2026-12-04' };
@@ -15,11 +18,11 @@ async function adminServiceOver(fake: FakeFirestore, villa: Villa | null = villa
   const db = fake.asFirestore();
   const villas = new FirestoreEntityRepository<Villa>(db, 'villas', 'villaId', 'Villa');
   if (villa) await villas.create(villa);
-  return new AdminService(
-    new FirestoreStayRepository(db),
-    villas,
-    new SecurityTokenService(),
-  );
+  const settings = new FirestoreSettingsRepository(db);
+  await settings.update((current) => ({ ...current, timeZone: 'America/Cancun' }));
+  const stays = new FirestoreStayRepository(db);
+  const availability = new VillaAvailabilityService(settings, villas, stays, new FixedClock());
+  return new AdminService(stays, villas, new SecurityTokenService(), availability);
 }
 
 describe('AdminService reservations & magic link URL', () => {
@@ -86,6 +89,7 @@ describe('AdminService reservations & magic link URL', () => {
     ['inactive villa', villaFixture({ isActive: false }), RESERVATION],
     ['checkOut before checkIn', villaFixture(), { ...RESERVATION, checkOut: '2026-11-30' }],
     ['too many guests', villaFixture({ capacity: 2 }), { ...RESERVATION, guestsCount: 3 }],
+    ['checkIn before the resort day', villaFixture(), { ...RESERVATION, checkIn: '2026-11-19' }],
   ])('test_createReservation_%s_isRejected', async (_label, villa, dto) => {
     const adminService = await adminServiceOver(new FakeFirestore(), villa);
 
@@ -103,7 +107,8 @@ describe('AdminService reservations & magic link URL', () => {
   it('test_createReservation_concurrent_getsUniqueRandomStayIds', async () => {
     const adminService = await adminServiceOver(new FakeFirestore());
 
-    const created = await Promise.all([adminService.createReservation(RESERVATION, STAFF), adminService.createReservation(RESERVATION, STAFF)]);
+    const later = { ...RESERVATION, checkIn: '2026-12-10', checkOut: '2026-12-12' };
+    const created = await Promise.all([adminService.createReservation(RESERVATION, STAFF), adminService.createReservation(later, STAFF)]);
 
     const [first, second] = created.map((c) => c.stay.stayId);
     expect(first).not.toBe(second);

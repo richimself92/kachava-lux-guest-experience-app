@@ -54,6 +54,25 @@ abstract final class AdminNavModel {
     icon: Icons.grid_view_outlined,
   );
 
+  static const AdminNavItem requests = AdminNavItem(
+    id: 'requests',
+    labelEn: 'Requests',
+    labelEs: 'Solicitudes',
+    workspace: AdminWorkspaceTab.adminRequests,
+    icon: Icons.inbox_outlined,
+  );
+
+  static const AdminNavItem messages = AdminNavItem(
+    id: 'messages',
+    labelEn: 'Messages',
+    labelEs: 'Mensajes',
+    workspace: AdminWorkspaceTab.adminMessages,
+    icon: Icons.chat_bubble_outline,
+  );
+
+  /// Items above the section labels: Dashboard, then the guest inboxes.
+  static const List<AdminNavItem> topItems = [dashboard, requests, messages];
+
   static const AdminNavItem reservations = AdminNavItem(
     id: 'reservations',
     labelEn: 'Reservations',
@@ -164,7 +183,9 @@ abstract final class AdminNavModel {
 
   /// The menu item highlighted for [tab] (Settings has none).
   static AdminNavItem? itemForWorkspace(AdminWorkspaceTab tab) {
-    if (tab == dashboard.workspace) return dashboard;
+    for (final item in topItems) {
+      if (item.workspace == tab) return item;
+    }
     for (final item in sections.expand((s) => s.items)) {
       if (item.workspace == tab) return item;
     }

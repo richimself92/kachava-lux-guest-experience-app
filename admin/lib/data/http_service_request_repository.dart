@@ -1,3 +1,4 @@
+import '../domain/admin_task.dart';
 import '../domain/list_query.dart';
 import '../domain/paged_result.dart';
 import '../domain/service_catalog_enums.dart';
@@ -6,7 +7,7 @@ import 'admin_api_client.dart';
 import 'admin_http_resource.dart';
 import 'http_trip_repository.dart';
 
-/// `GET /admin/requests?section=` and `POST /admin/requests/:id/transition`.
+/// `GET /admin/requests[?section=]` and `POST /admin/requests/:id/transition`.
 class HttpServiceRequestRepository implements ServiceRequestRepository {
   HttpServiceRequestRepository(this._client);
 
@@ -17,9 +18,9 @@ class HttpServiceRequestRepository implements ServiceRequestRepository {
   /// The day-range filter goes on the wire as `from`/`to` resort days.
   @override
   Future<PagedResult<ServiceRequest>> list(
-      ServiceSection section, ListQuery query) async {
-    final params = HttpTripRepository.wireParameters(query)
-      ..['section'] = section.wire;
+      ServiceSection? section, ListQuery query) async {
+    final params = HttpTripRepository.wireParameters(query);
+    if (section != null) params['section'] = section.wire;
     final qs = Uri(queryParameters: params).query;
     return PagedResult.fromEnvelope(
         await _client.getJson('$_path?$qs'), ServiceRequest.fromJson);
@@ -34,5 +35,12 @@ class HttpServiceRequestRepository implements ServiceRequestRepository {
       if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
     });
     return ServiceRequest.fromJson(unwrapRecord(raw));
+  }
+
+  @override
+  Future<AdminTask> ensureTask(String id) async {
+    final raw = await _client
+        .postJson('$_path/${Uri.encodeComponent(id)}/task', const {});
+    return AdminTask.fromJson(unwrapRecord(raw));
   }
 }

@@ -18,6 +18,13 @@ import { applyTaskPatch, TaskPatch, transitionTask, TaskTransitionCommand } from
 import { isTaskOverdue, OPEN_TASK_STATUSES, Task } from '../../domain/tasks/task.models';
 import { toInstantIso } from '../../domain/time/zoned-time';
 import { CreateTaskDto, TaskListQueryDto, TransitionTaskDto, UpdateTaskDto } from './task.dto';
+import { TaskAutomation } from './task-automation.service';
+
+/** `origin` filter: tasks of guest requests, or staff-made (internal) ones. */
+const ORIGIN_SOURCES = {
+  GUEST: ['ORDER', 'BOOKING', 'PREFERENCE', 'TRIP'],
+  INTERNAL: ['MANUAL'],
+} as const;
 
 /** Wire shape: the task plus `id` and `overdue` (derived on read, never stored). */
 export type TaskView = Task & { id: string; overdue: boolean };
@@ -42,6 +49,7 @@ export class TasksService {
     @Inject(VILLA_REPOSITORY_PORT) private readonly villas: VillaRepositoryPort,
     @Inject(SETTINGS_REPOSITORY_PORT) private readonly settings: SettingsRepositoryPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+    private readonly automation: TaskAutomation,
   ) {}
 
   async list(dto: TaskListQueryDto): Promise<PaginatedResult<TaskView>> {
@@ -52,6 +60,7 @@ export class TasksService {
       priority: dto.priority,
       ownerStaffId: dto.owner,
       villaId: dto.villaId,
+      sourceTypes: dto.origin ? ORIGIN_SOURCES[dto.origin] : undefined,
       overdueBefore: dto.overdue ? now.toISOString() : undefined,
       q: query.q,
       page: query.page,
@@ -108,6 +117,7 @@ export class TasksService {
     const command = definedFields(dto) as TaskTransitionCommand;
     const at = this.clock.now().toISOString();
     const updated = await this.tasks.update(taskId, (current) => transitionTask(current, command, actor, at));
+    if (updated.status === 'COMPLETED') await this.automation.completeRequestOf(updated);
     return this.view(updated, this.clock.now());
   }
 

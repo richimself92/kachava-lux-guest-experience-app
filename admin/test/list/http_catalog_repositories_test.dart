@@ -53,6 +53,21 @@ void main() {
       .withPage(2);
 
   group('HttpVillaRepository (recorded contract)', () {
+    test('available GETs /villas/available?checkIn&checkOut as a list',
+        () async {
+      final server = _Server((_) => {
+            'success': true,
+            'data': [recordedVilla],
+          });
+      final repo = HttpVillaRepository(signedInApiClient(server.client));
+      final villas = await repo.available('2026-12-10', '2026-12-14');
+      expect(server.last.method, 'GET');
+      expect(server.last.url.path, '/api/v1/admin/villas/available');
+      expect(server.last.url.queryParameters,
+          {'checkIn': '2026-12-10', 'checkOut': '2026-12-14'});
+      expect(villas.single.name, 'Casa Ceiba');
+    });
+
     test('lists with ?q&page&pageSize&sort&filters and parses the envelope',
         () async {
       final server = _Server((_) =>

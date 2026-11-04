@@ -83,15 +83,16 @@ class ServiceSectionWorkspace extends StatelessWidget {
           dividerColor: KachavaTokens.border,
           tabs: [
             Tab(
-                key: Key('section-tab-catalog-${section.wire.toLowerCase()}'),
-                text: s.catalog),
-            Tab(
                 key: Key('section-tab-requests-${section.wire.toLowerCase()}'),
                 text: s.requests),
+            Tab(
+                key: Key('section-tab-catalog-${section.wire.toLowerCase()}'),
+                text: s.catalog),
           ],
         ),
         Expanded(
           child: TabBarView(children: [
+            _requests(deps?.requests),
             if (deps == null)
               _NotConnected(s)
             else
@@ -103,7 +104,6 @@ class ServiceSectionWorkspace extends StatelessWidget {
                 staff: staff,
                 isEs: isEs,
               ),
-            _requests(deps?.requests),
           ]),
         ),
       ]),

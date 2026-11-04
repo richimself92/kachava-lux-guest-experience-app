@@ -68,6 +68,24 @@ class FakeVillaRepository implements VillaRepository {
     ).page(query);
   }
 
+  /// Villa ids booked per `checkIn/checkOut` range (left out of [available]).
+  final Map<String, Set<String>> bookedByRange = {};
+
+  /// `(checkIn, checkOut)` of every [available] call.
+  final List<(String, String)> availabilityQueries = [];
+
+  /// Active villas not booked for the range (the backend owns the real rule).
+  @override
+  Future<List<AdminVilla>> available(String checkIn, String checkOut) async {
+    availabilityQueries.add((checkIn, checkOut));
+    _maybeFail();
+    final booked = bookedByRange['$checkIn/$checkOut'] ?? const {};
+    return [
+      for (final v in villas)
+        if (v.isActive && !booked.contains(v.id)) v,
+    ];
+  }
+
   @override
   Future<AdminVilla> create(AdminVilla villa) async {
     _maybeFail();

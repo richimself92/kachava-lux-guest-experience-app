@@ -175,14 +175,18 @@ class _ConversationPanelState extends State<ConversationPanel>
 
   Widget _composer() => Row(children: [
         Expanded(
-          child: TextField(
-            key: const Key('conversation-reply'),
-            controller: _reply,
-            minLines: 1,
-            maxLines: 4,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _send(),
-            decoration: InputDecoration(isDense: true, hintText: _s.reply),
+          // Keeps the "Reply" name for screen readers once the hint is gone.
+          child: Semantics(
+            label: _s.reply,
+            child: TextField(
+              key: const Key('conversation-reply'),
+              controller: _reply,
+              minLines: 1,
+              maxLines: 4,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _send(),
+              decoration: InputDecoration(isDense: true, hintText: _s.reply),
+            ),
           ),
         ),
         const SizedBox(width: KachavaTokens.space2),

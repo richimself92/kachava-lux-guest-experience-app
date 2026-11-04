@@ -48,6 +48,16 @@ class NotificationBellController extends ChangeNotifier {
     });
   }
 
+  /// Rings for new guest activity (a request or a message) without the
+  /// urgent line; [silence] stops it.
+  void chime() {
+    if (_disposed) return;
+    _chime.triggerTenSecondChime(onAutoStop: () {
+      if (!_disposed) notifyListeners();
+    });
+    notifyListeners();
+  }
+
   /// Stops the chime and hides the urgent line.
   void silence() {
     _chime.stopChime();

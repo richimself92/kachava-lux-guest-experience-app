@@ -17,10 +17,9 @@ void main() {
       expect(bookingStatusOf('CANCELLED'), RequestStatus.cancelled);
     });
 
-    test('trips: provider hand-off is still Received; en route is On the way',
-        () {
+    test('trips: provider hand-off is Arranging; en route is On the way', () {
       expect(tripStatusOf('REQUESTED'), RequestStatus.received);
-      expect(tripStatusOf('SENT_TO_PROVIDER'), RequestStatus.received);
+      expect(tripStatusOf('SENT_TO_PROVIDER'), RequestStatus.arranging);
       expect(tripStatusOf('CONFIRMED'), RequestStatus.confirmed);
       expect(tripStatusOf('EN_ROUTE'), RequestStatus.onTheWay);
       expect(tripStatusOf('COMPLETED'), RequestStatus.done);
@@ -44,6 +43,7 @@ void main() {
 
     test('4-dot track positions', () {
       expect(RequestStatus.received.trackIndex, 0);
+      expect(RequestStatus.arranging.trackIndex, 0);
       expect(RequestStatus.confirmed.trackIndex, 1);
       expect(RequestStatus.preparing.trackIndex, 2);
       expect(RequestStatus.onTheWay.trackIndex, 2);

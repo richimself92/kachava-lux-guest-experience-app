@@ -1,10 +1,12 @@
 import {
+  activityDetails,
   buildActivity,
   computeDashboardKpis,
   deriveActivityStatus,
 } from '../../src/domain/dashboard/dashboard-rules';
 import { StayAggregate } from '../../src/domain/models/domain.models';
 import { populatedStayFixture, stayFixture, villaFixture } from '../support/stay-fixtures';
+import { tripFixture } from '../support/trip-fixtures';
 
 const TODAY = '2026-12-10';
 
@@ -113,5 +115,42 @@ describe('computeDashboardKpis', () => {
 
     // 1 open order (one stay+service), 1 open booking, 2 trips, 3 tasks.
     expect(kpis.openRequests).toBe(7);
+  });
+});
+
+describe('activityDetails', () => {
+  const arrivalRow = { status: 'ARRIVAL' as const, overdue: false };
+
+  it('test_arrivalDay_nextIsTheFlight_withTheTransferState', () => {
+    const s = populatedStayFixture({ status: 'PRE_ARRIVAL', checkInDate: TODAY });
+    const noDriver = tripFixture({ stayId: s.stayId, status: 'SENT_TO_PROVIDER' });
+    const confirmed = tripFixture({ stayId: s.stayId, status: 'CONFIRMED' });
+
+    expect(activityDetails(arrivalRow, s, [noDriver], TODAY).next).toEqual({
+      kind: 'FLIGHT', at: '2026-12-01T19:30:00.000Z', flightNumber: 'Test Air TA 100',
+      transfer: 'NO_DRIVER', title: null, date: null, time: null,
+    });
+    expect(activityDetails(arrivalRow, s, [confirmed], TODAY).next?.transfer).toBe('DRIVER_CONFIRMED');
+    expect(activityDetails(arrivalRow, s, [], TODAY).next).toMatchObject({ kind: 'FLIGHT', transfer: 'NONE', at: null });
+    expect(activityDetails(arrivalRow, s, [tripFixture({ type: 'DEPARTURE' })], TODAY).next?.transfer).toBe('NONE');
+  });
+
+  it('test_inHouse_nextIsTheNextOpenBooking_elseNull', () => {
+    const s = populatedStayFixture({});
+    s.experienceBookings[0] = { ...s.experienceBookings[0], scheduledDate: '2026-12-11', scheduledTimeSlot: '16:00' };
+    const details = activityDetails({ status: 'IN_HOUSE', overdue: false }, s, [], TODAY);
+
+    expect(details.next).toMatchObject({ kind: 'BOOKING', date: '2026-12-11', time: '16:00' });
+    expect(details.next?.title?.en).toBeTruthy();
+    const past = populatedStayFixture({});
+    expect(activityDetails({ status: 'IN_HOUSE', overdue: false }, past, [], TODAY).next).toBeNull();
+  });
+
+  it('test_pending_countsOpenRequestsTripsAndUnreadGuestMessages_andStayStatus', () => {
+    const s = populatedStayFixture({ status: 'PRE_ARRIVAL', checkInDate: TODAY });
+    const details = activityDetails(arrivalRow, s, [tripFixture(), tripFixture({ status: 'CANCELLED' })], TODAY);
+
+    expect(details.pending).toEqual({ requests: 3, messages: 1 }); // order + booking + open trip
+    expect(details.stayStatus).toBe('PRE_ARRIVAL');
   });
 });

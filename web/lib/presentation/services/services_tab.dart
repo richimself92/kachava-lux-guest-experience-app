@@ -178,15 +178,19 @@ class _ServicesTabState extends State<ServicesTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          key: const Key('services-search'),
-          controller: _search,
-          onChanged: _onSearch,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: l10n.search,
-            labelText: l10n.search,
-            floatingLabelBehavior: FloatingLabelBehavior.never,
+        // Keeps its name for screen readers once the hint/label is hidden.
+        Semantics(
+          label: l10n.search,
+          child: TextField(
+            key: const Key('services-search'),
+            controller: _search,
+            onChanged: _onSearch,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: l10n.search,
+              labelText: l10n.search,
+              floatingLabelBehavior: FloatingLabelBehavior.never,
+            ),
           ),
         ),
         const SizedBox(height: 8),

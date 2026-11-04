@@ -93,7 +93,13 @@ class StayStrings {
       _t('After arrival date', 'Posterior a la llegada');
   String get dateFormat => _t('Use YYYY-MM-DD', 'Usa AAAA-MM-DD');
   String get pickDate => _t('Pick date', 'Elegir fecha');
-  String get noVillas => _t('No active villas', 'Sin villas activas');
+  String get pickDatesFirst =>
+      _t('Pick arrival and departure first', 'Elige llegada y salida primero');
+  String get noVillasForDates => _t('No villas available for these dates',
+      'No hay villas disponibles para estas fechas');
+  String get notBeforeToday => _t('Not before today', 'No antes de hoy');
+  String get villaTaken => _t('Villa already booked for these dates',
+      'Villa ya reservada en esas fechas');
   String get noPreferences => _t('No preferences yet', 'Sin preferencias');
   String get allergies => _t('Allergies', 'Alergias');
   String get noTrips => _t('No trips', 'Sin traslados');

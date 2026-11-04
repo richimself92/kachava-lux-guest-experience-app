@@ -113,6 +113,11 @@ class StatusChip extends StatelessWidget {
           KachavaColors.onSurfaceVariant,
           KachavaColors.surfaceContainerHigh
         ),
+      RequestStatus.arranging => (
+          Icons.support_agent,
+          KachavaColors.primary,
+          KachavaColors.surfaceContainerHigh
+        ),
       RequestStatus.confirmed => (
           Icons.check_circle_outline,
           KachavaColors.confirmedGreen,
@@ -161,7 +166,7 @@ class StatusChip extends StatelessWidget {
   }
 }
 
-/// 4-dot progress track (Received → Confirmed → Preparing/On the way → Done).
+/// 4-dot progress track (Received → Confirmed → In progress/On the way → Done).
 class StatusTrack extends StatelessWidget {
   const StatusTrack({super.key, required this.status});
   final RequestStatus status;

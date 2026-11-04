@@ -1,6 +1,7 @@
 import { CreateBookingDto } from '../../src/modules/guest/dto/guest.dto';
 import { CatalogItem, CatalogService } from '../../src/domain/catalog/catalog.models';
 import { FirestoreEntityRepository } from '../../src/infrastructure/repositories/firestore-entity.repository';
+import { FirestoreServiceRequestRepository } from '../../src/infrastructure/repositories/firestore-service-request.repository';
 import { FirestoreStayRepository } from '../../src/infrastructure/repositories/firestore-stay.repository';
 import { GuestAlertFolioHelper } from '../../src/modules/guest/guest-alert-folio.helper';
 import { GuestBookingService } from '../../src/modules/guest/guest-booking.service';
@@ -46,6 +47,7 @@ async function seedStay(fake: FakeFirestore) {
     stay,
     booking: new GuestBookingService(repo, services, items, helper, new TaskAutomation(
       new FirestoreTaskRepository(db), new FirestoreSettingsRepository(db), new SystemClock(),
+      new FirestoreServiceRequestRepository(db), repo,
     )),
   };
 }

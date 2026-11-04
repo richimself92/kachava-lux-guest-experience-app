@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -13,7 +14,7 @@ import {
 } from 'class-validator';
 import { ListQueryDto } from '../../common/listing/list-query';
 import { QueryBoolean } from '../../common/listing/query-transforms';
-import { LONG_TEXT_MAX, SHORT_TEXT_MAX } from '../../common/validation/field-limits';
+import { ISO_DATE_PATTERN, LONG_TEXT_MAX, SHORT_TEXT_MAX } from '../../common/validation/field-limits';
 import {
   VILLA_HOUSEKEEPING_STATUSES,
   VILLA_MAINTENANCE_STATUSES,
@@ -135,4 +136,13 @@ export class VillaListQueryDto extends ListQueryDto {
   @IsString()
   @MaxLength(SHORT_TEXT_MAX)
   category?: string;
+}
+
+/** `GET /admin/villas/available`: the nights to book (ISO dates, checkOut exclusive). */
+export class AvailableVillasQueryDto {
+  @Matches(ISO_DATE_PATTERN, { message: 'checkIn must be an ISO date (YYYY-MM-DD)' })
+  checkIn!: string;
+
+  @Matches(ISO_DATE_PATTERN, { message: 'checkOut must be an ISO date (YYYY-MM-DD)' })
+  checkOut!: string;
 }

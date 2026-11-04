@@ -238,6 +238,8 @@ describe('Guest trips when Settings are incomplete', () => {
   it('test_localWallTimeWithoutTimeZone_is422SettingsRequired', async () => {
     await patchSettings(t, { airports: [{ code: 'CUN', name: 'Test Airport CUN', departureBufferHours: 3 }] });
     const stay = await createVillaAndStay(t, { villaName: 'Villa 3', guestName: 'Ana Test' });
+    // Reservations need the zone; clear it afterwards to exercise the trip rule.
+    await patchSettings(t, { timeZone: null });
     const serviceId = await createTransportService(t, { transport: { airportCodes: ['CUN'] } });
 
     const res = await request(t.server()).post(`/api/v1/stays/${stay.guestTokenUuid}/trips`).send(arrivalBody(serviceId));

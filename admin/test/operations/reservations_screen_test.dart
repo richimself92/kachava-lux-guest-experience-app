@@ -175,33 +175,67 @@ void main() {
     expect(repo.queries.map((q) => q.page), [1, 2]);
   });
 
-  testWidgets('+ New reservation: required fields, then POST', (tester) async {
-    await pump(tester);
+  Future<void> openCreate(WidgetTester tester) async {
     await tester.tap(find.byKey(const Key('primary-reservations')));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> enterDates(
+      WidgetTester tester, String checkIn, String checkOut) async {
+    await tester.enterText(
+        find.byKey(const Key('reservation-check-in')), checkIn);
+    await tester.enterText(
+        find.byKey(const Key('reservation-check-out')), checkOut);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pickVilla(WidgetTester tester, String name) async {
+    await tester.tap(find.byKey(const Key('reservation-villa')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(name).last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> save(WidgetTester tester) async {
+    await tester.ensureVisible(find.byKey(const Key('form-save')));
     await tester.tap(find.byKey(const Key('form-save')));
     await tester.pumpAndSettle();
+  }
+
+  DropdownButton<String> villaDropdown(WidgetTester tester) =>
+      tester.widget<DropdownButton<String>>(find.descendant(
+          of: find.byKey(const Key('reservation-villa')),
+          matching: find.byType(DropdownButton<String>)));
+
+  List<String> villaChoices(WidgetTester tester) => [
+        for (final item in villaDropdown(tester).items ?? const []) item.value!,
+      ];
+
+  testWidgets(
+      '+ New reservation: guest, dates, then villa; required, then POST',
+      (tester) async {
+    await pump(tester);
+    await openCreate(tester);
+    final order = [
+      'reservation-guest',
+      'reservation-check-in',
+      'reservation-check-out',
+      'reservation-villa',
+    ].map((k) => tester.getTopLeft(find.byKey(Key(k))).dy).toList();
+    expect(order, List.of(order)..sort());
+    await save(tester);
     expect(find.text('Required'), findsWidgets);
     expect(reservations.creates, isEmpty);
 
     await tester.enterText(
         find.byKey(const Key('reservation-guest')), 'Carla Gomez');
-    await tester.tap(find.byKey(const Key('reservation-villa')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Villa 01').last);
-    await tester.pumpAndSettle();
-    await tester.enterText(
-        find.byKey(const Key('reservation-check-in')), '2026-11-10');
-    await tester.enterText(
-        find.byKey(const Key('reservation-check-out')), '2026-11-09');
-    await tester.tap(find.byKey(const Key('form-save')));
-    await tester.pumpAndSettle();
+    await enterDates(tester, '2026-11-10', '2026-11-09');
+    await save(tester);
     expect(find.text('After arrival date'), findsOneWidget);
 
-    await tester.enterText(
-        find.byKey(const Key('reservation-check-out')), '2026-11-12');
-    await tester.tap(find.byKey(const Key('form-save')));
-    await tester.pumpAndSettle();
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+    await pickVilla(tester, 'Villa 01');
+    await save(tester);
     expect(reservations.creates.single, {
       'guestName': 'Carla Gomez',
       'villaId': 'v1',
@@ -209,6 +243,109 @@ void main() {
       'checkOut': '2026-11-12',
     });
     expect(find.text('Reservation created'), findsOneWidget);
+  });
+
+  testWidgets('villa picker is disabled with a hint until both dates are valid',
+      (tester) async {
+    final villas = FakeVillaRepository(generatedVillas(3));
+    await pump(tester, villaRepo: villas);
+    await openCreate(tester);
+
+    expect(villaChoices(tester), isEmpty);
+    expect(villaDropdown(tester).onChanged, isNull);
+    expect(find.byKey(const Key('reservation-villa-hint')), findsOneWidget);
+    await enterDates(tester, '2026-11-10', '');
+    expect(villaChoices(tester), isEmpty);
+    expect(villas.availabilityQueries, isEmpty);
+
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+    expect(find.byKey(const Key('reservation-villa-hint')), findsNothing);
+    expect(villaDropdown(tester).onChanged, isNotNull);
+    expect(villas.availabilityQueries, [('2026-11-10', '2026-11-12')]);
+  });
+
+  testWidgets('lists only the villas available for the dates', (tester) async {
+    final villas = FakeVillaRepository(generatedVillas(3))
+      ..bookedByRange['2026-11-10/2026-11-12'] = {'v2'};
+    await pump(tester, villaRepo: villas);
+    await openCreate(tester);
+
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+
+    expect(villaChoices(tester), ['v1', 'v3']);
+  });
+
+  testWidgets('no available villa shows a one-line empty state',
+      (tester) async {
+    final villas = FakeVillaRepository(generatedVillas(2))
+      ..bookedByRange['2026-11-10/2026-11-12'] = {'v1', 'v2'};
+    await pump(tester, villaRepo: villas);
+    await openCreate(tester);
+
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+
+    expect(find.text('No villas available for these dates'), findsOneWidget);
+    expect(villaChoices(tester), isEmpty);
+  });
+
+  testWidgets('arrival before the resort day is rejected, villas not loaded',
+      (tester) async {
+    final villas = FakeVillaRepository(generatedVillas(2));
+    await pump(tester, villaRepo: villas);
+    await openCreate(tester);
+
+    await enterDates(tester, '2026-11-02', '2026-11-05');
+    await save(tester);
+
+    expect(find.text('Not before today'), findsOneWidget);
+    expect(villas.availabilityQueries, isEmpty);
+    expect(reservations.creates, isEmpty);
+
+    await tester.tap(find.descendant(
+        of: find.byKey(const Key('reservation-check-in')),
+        matching: find.byIcon(Icons.calendar_today_outlined)));
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<DatePickerDialog>(find.byType(DatePickerDialog))
+            .firstDate,
+        DateTime(2026, 11, 3));
+  });
+
+  testWidgets('changing a date reloads and clears a villa no longer available',
+      (tester) async {
+    final villas = FakeVillaRepository(generatedVillas(3))
+      ..bookedByRange['2026-11-10/2026-11-14'] = {'v1'};
+    await pump(tester, villaRepo: villas);
+    await openCreate(tester);
+    await tester.enterText(
+        find.byKey(const Key('reservation-guest')), 'Carla Gomez');
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+    await pickVilla(tester, 'Villa 01');
+
+    await enterDates(tester, '2026-11-10', '2026-11-14');
+    await save(tester);
+
+    expect(villaChoices(tester), ['v2', 'v3']);
+    expect(find.text('Required'), findsOneWidget);
+    expect(reservations.creates, isEmpty);
+  });
+
+  testWidgets('a 409 from the server is shown inline, no success toast',
+      (tester) async {
+    reservations.createError = const VillaUnavailableException();
+    await pump(tester);
+    await openCreate(tester);
+    await tester.enterText(
+        find.byKey(const Key('reservation-guest')), 'Carla Gomez');
+    await enterDates(tester, '2026-11-10', '2026-11-12');
+    await pickVilla(tester, 'Villa 01');
+
+    await save(tester);
+
+    expect(find.byKey(const Key('form-save-error')), findsOneWidget);
+    expect(find.text('Villa already booked for these dates'), findsOneWidget);
+    expect(find.text('Reservation created'), findsNothing);
   });
 
   testWidgets('openId opens that stay on arrival', (tester) async {

@@ -29,15 +29,8 @@ class ServiceCatalogStrings {
   String get status => t('Status', 'Estado');
   String get photo => t('Photo', 'Foto');
 
-  // Tabs.
-  String get general => t('General', 'General');
-  String get images => t('Images', 'Imágenes');
-  String get priceAvailability =>
-      t('Price & availability', 'Precio y disponibilidad');
-  String get items => t('Items', 'Ítems');
-  String get guestForm => t('Guest form', 'Formulario');
-  String get operation => t('Operation', 'Operación');
-  String get more => t('More', 'Más opciones');
+  /// Title of the collapsed section with the rarely used fields.
+  String get more => t('More options', 'Más opciones');
 
   // General fields.
   String get type => t('Type', 'Tipo');
@@ -82,21 +75,13 @@ class ServiceCatalogStrings {
   String get blockedTip =>
       t('YYYY-MM-DD, separated by commas.', 'AAAA-MM-DD, separadas por comas.');
 
-  // Guest form and info.
-  String get asks => t('Asks for', 'Pregunta');
-  String get guestInfo => t('Guest info', 'Info al huésped');
-  String get includes => t('Includes', 'Incluye');
+  // Guest info.
+  String get includes => t("What's included", 'Qué incluye');
   String get excludes => t('Excludes', 'No incluye');
   String get whatToBring => t('What to bring', 'Qué llevar');
   String get location => t('Location', 'Lugar');
   String get restrictions => t('Restrictions', 'Restricciones');
   String get cancellation => t('Cancellation', 'Cancelación');
-  String get askDate => t('Date', 'Fecha');
-  String get askTime => t('Time', 'Hora');
-  String get askGuests => t('Guests', 'Personas');
-  String get askNotes => t('Notes', 'Notas');
-  String get askDietary => t('Diet & allergies', 'Dieta y alergias');
-  String get askHealth => t('Health', 'Salud');
 
   // Operation.
   String get provider => t('Provider', 'Proveedor');
@@ -110,6 +95,15 @@ class ServiceCatalogStrings {
       t('Staff only; guests never see it.', 'Solo staff; el huésped no lo ve.');
 
   // Items.
+  /// Title of the inline items list of [kind].
+  String itemsTitle(ServiceKind kind) => switch (kind) {
+        ServiceKind.bar ||
+        ServiceKind.villaStocking =>
+          t('Products', 'Productos'),
+        ServiceKind.breakfast || ServiceKind.specialMenu => t('Menus', 'Menús'),
+        ServiceKind.transport => t('Vehicles', 'Vehículos'),
+        _ => t('Options', 'Opciones'),
+      };
   String get newItem => t('New item', 'Nuevo ítem');
   String get noItems => t('No items yet', 'Aún no hay ítems');
   String get saveFirst =>

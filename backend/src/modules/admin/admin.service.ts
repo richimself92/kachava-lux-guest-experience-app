@@ -16,7 +16,8 @@ import {
   VILLA_REPOSITORY_PORT,
   VillaRepositoryPort,
 } from '../../domain/ports/repository.ports';
-import { nightsBetween, buildNewStay } from './new-stay.builder';
+import { VillaAvailabilityService } from '../villas/villa-availability.service';
+import { buildNewStay } from './new-stay.builder';
 import { AdminLoginDto, CreateReservationDto } from './dto/admin.dto';
 
 @Injectable()
@@ -25,6 +26,7 @@ export class AdminService {
     @Inject(STAY_REPOSITORY_PORT) private readonly stayRepo: StayRepositoryPort,
     @Inject(VILLA_REPOSITORY_PORT) private readonly villaRepo: VillaRepositoryPort,
     private readonly securityTokenService: SecurityTokenService,
+    private readonly availability: VillaAvailabilityService,
   ) {}
 
   /**
@@ -50,10 +52,10 @@ export class AdminService {
     const villa = await this.villaRepo.findById(dto.villaId);
     if (!villa) throw new EntityNotFoundError('Villa', dto.villaId);
     if (!villa.isActive) throw new BusinessRuleError(`Villa ${villa.name} is inactive`);
-    if (nightsBetween(dto.checkIn, dto.checkOut) < 1) throw new BusinessRuleError('checkOut must be after checkIn');
     if (dto.guestsCount && dto.guestsCount > villa.capacity) {
       throw new BusinessRuleError(`Villa ${villa.name} hosts at most ${villa.capacity} guests`);
     }
+    await this.availability.assertVillaFree(villa, dto);
     const newUuid = crypto.randomUUID();
     const magicLinkUrl = `${guestPortalBaseUrl()}/?guestId=${newUuid}`;
     const newStay = buildNewStay(dto, villa, {

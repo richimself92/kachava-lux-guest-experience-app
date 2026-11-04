@@ -239,6 +239,19 @@ class NewReservation {
       };
 }
 
+/// Another open stay holds the villa on some of the nights (HTTP 409).
+class VillaUnavailableException implements Exception {
+  const VillaUnavailableException();
+}
+
+/// The server refused the reservation with a business rule (HTTP 422),
+/// e.g. a past arrival or too many guests; [reason] is the server text.
+class ReservationRejectedException implements Exception {
+  const ReservationRejectedException(this.reason);
+
+  final String reason;
+}
+
 /// Reservations (`/admin/stays`). Filters `status`, `villaId` and a date
 /// range on the sort date; sortable by `checkIn` / `checkOut`.
 abstract interface class ReservationRepository implements StayListRepository {

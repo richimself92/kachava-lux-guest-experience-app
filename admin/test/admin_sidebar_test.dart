@@ -163,7 +163,12 @@ void main() {
       await tester.pumpAndSettle();
       final drawer = find.byKey(const Key('mobile-nav-drawer'));
       expect(drawer, findsOneWidget);
-      for (final label in ['Dashboard', 'Reservations', 'Villas', 'Tasks']) {
+      for (final label in [
+        'Dashboard',
+        'Requests',
+        'Messages',
+        'Reservations'
+      ]) {
         expect(find.descendant(of: drawer, matching: find.text(label)),
             findsOneWidget);
       }

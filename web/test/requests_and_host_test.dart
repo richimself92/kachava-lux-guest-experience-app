@@ -53,7 +53,7 @@ void main() {
       await _tab(tester, 'Requests');
       expect(find.text('My requests'), findsOneWidget);
       expect(find.text('1.4 Svc spa'), findsOneWidget);
-      expect(find.text('Nov 4 · 19:00 · 2 guests'), findsOneWidget);
+      expect(find.text('Wed Nov 4 · 19:00 · 2 guests'), findsOneWidget);
       expect(find.text('Confirmed'), findsOneWidget);
       expect(find.text('On the way'), findsOneWidget);
       expect(find.text('EN_ROUTE'), findsNothing);
@@ -162,8 +162,13 @@ void main() {
       final api = await pumpPortal(tester);
       await _tab(tester, 'Host');
       expect(find.text('No messages yet'), findsOneWidget);
+      final semantics = tester.ensureSemantics();
       await tester.enterText(
           find.byKey(const Key('host-input')), 'Extra towels please');
+      await tester.pump();
+      // Hint and label hide while typing; the field keeps its name.
+      expect(find.bySemanticsLabel(RegExp('^Message')), findsWidgets);
+      semantics.dispose();
       await tester.tap(find.byKey(const Key('host-send')));
       await tester.pumpAndSettle();
       expect(api.writes.single.$1, 'thread');

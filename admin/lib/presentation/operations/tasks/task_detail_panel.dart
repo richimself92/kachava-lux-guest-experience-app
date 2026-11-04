@@ -21,9 +21,13 @@ class TaskDetailPanel extends StatefulWidget {
     required this.onClose,
     required this.onChanged,
     required this.isEs,
+    this.onOpenRequest,
   });
 
   final AdminTask task;
+
+  /// "Open request" of a task made from a guest request.
+  final ValueChanged<AdminTask>? onOpenRequest;
   final TaskRepository repository;
   final List<StaffMember> staff;
   final ResortTime resortTime;
@@ -179,6 +183,16 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
               label: _s.due,
               value: widget.resortTime.label(t.dueAt, isEs: widget.isEs)),
           FactRow(label: _s.source, value: _s.sourceLabel(t.sourceType)),
+          if (t.fromGuestRequest && widget.onOpenRequest != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('task-open-request'),
+                onPressed: () => widget.onOpenRequest!(t),
+                icon: const Icon(Icons.inbox_outlined, size: 18),
+                label: Text(_s.openRequest),
+              ),
+            ),
           if (t.completion case final c?)
             FactRow(label: _s.completion, value: c.note),
           if (t.cancellationReason case final r?)

@@ -196,6 +196,18 @@ class AdminApiException implements Exception {
   final int statusCode;
   final String message;
 
+  /// The `message` of the JSON error envelope embedded in [message], or ''.
+  String get serverMessage {
+    final start = message.indexOf('{');
+    if (start < 0) return '';
+    try {
+      final body = jsonDecode(message.substring(start));
+      return body is Map ? '${body['message'] ?? ''}'.trim() : '';
+    } on FormatException {
+      return '';
+    }
+  }
+
   @override
   String toString() => 'AdminApiException($statusCode): $message';
 }

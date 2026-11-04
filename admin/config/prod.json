@@ -1,10 +1,11 @@
 {
   "APP_ENV": "production",
   "API_BASE_URL": "https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1",
-  "FIREBASE_API_KEY": "",
-  "FIREBASE_APP_ID": "",
-  "FIREBASE_PROJECT_ID": "",
-  "FIREBASE_MESSAGING_SENDER_ID": "",
-  "FIRESTORE_DATABASE_ID": "",
-  "FIRESTORE_EMULATOR_HOST": ""
+  "FIREBASE_API_KEY": "AIzaSyARzgCct0catXvU2Q406j5vf8OVPFX7Kgw",
+  "FIREBASE_APP_ID": "1:707293673527:web:b3ec2b75ac4ee61b8167b2",
+  "FIREBASE_PROJECT_ID": "kavacha-app",
+  "FIREBASE_MESSAGING_SENDER_ID": "707293673527",
+  "FIRESTORE_DATABASE_ID": "kavacha-db",
+  "FIRESTORE_EMULATOR_HOST": "",
+  "ADMIN_STAFF_EMAIL": "eduardo.rivera@kachavalux.com"
 }

@@ -8,7 +8,7 @@ const SUPPORTED_OPS: ReadonlySet<string> = new Set(['==', '>=', '<=', '>', '<', 
 
 interface QueryState {
   filters: Array<{ field: string; op: FilterOp; value: unknown }>;
-  order?: { field: string; direction: 'asc' | 'desc' };
+  orders?: Array<{ field: string; direction: 'asc' | 'desc' }>;
   max?: number;
   skip?: number;
 }
@@ -181,7 +181,8 @@ class FakeCollectionRef {
   }
 
   orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): FakeCollectionRef {
-    return new FakeCollectionRef(this.db, this.id, { ...this.state, order: { field, direction } });
+    const orders = [...(this.state.orders ?? []), { field, direction }];
+    return new FakeCollectionRef(this.db, this.id, { ...this.state, orders });
   }
 
   limit(max: number): FakeCollectionRef {
@@ -206,14 +207,21 @@ class FakeCollectionRef {
   }
 
   private sorted(entries: Array<[string, DocumentData]>): Array<[string, DocumentData]> {
-    const order = this.state.order;
-    if (!order) return entries;
-    const sign = order.direction === 'desc' ? -1 : 1;
-    // Like Firestore, documents missing the order-by field are excluded from the result.
+    const orders = this.state.orders ?? [];
+    if (orders.length === 0) return entries;
+    // Like Firestore, documents missing an order-by field are excluded from the result.
     return entries
-      .filter(([, data]) => fieldValue(data, order.field) !== undefined)
-      .sort(([, a], [, b]) => sign * compareFieldValues(fieldValue(a, order.field), fieldValue(b, order.field)));
+      .filter(([, data]) => orders.every((o) => fieldValue(data, o.field) !== undefined))
+      .sort(([, a], [, b]) => {
+        for (const o of orders) {
+          const sign = o.direction === 'desc' ? -1 : 1;
+          const diff = compareFieldValues(fieldValue(a, o.field), fieldValue(b, o.field));
+          if (diff !== 0) return sign * diff;
+        }
+        return 0;
+      });
   }
+
 }
 
 class FakeDocumentRef {

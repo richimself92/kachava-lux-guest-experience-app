@@ -4,6 +4,7 @@ import 'package:flutter/semantics.dart';
 import 'application/admin_live_sync.dart';
 import 'application/admin_realtime.dart';
 import 'application/admin_shell_controller.dart';
+import 'application/guest_activity_watcher.dart';
 import 'application/notification_bell_controller.dart';
 import 'application/resort_settings_controller.dart';
 import 'application/service_catalog_deps.dart';
@@ -26,6 +27,7 @@ import 'domain/staff_member.dart';
 import 'presentation/admin_command_shell.dart';
 import 'presentation/components/realtime_scope.dart';
 import 'presentation/operations/operations_scope.dart';
+import 'presentation/requests/request_inbox_scope.dart';
 import 'presentation/services/service_catalog_scope.dart';
 import 'presentation/workspaces/transportation/trip_scope.dart';
 
@@ -66,6 +68,11 @@ void main() {
         timeZones: createTimeZoneCatalog(),
         realtimePort: createRealtimeEventsPort(),
         realtimeChannel: api.realtimeChannel,
+        inbox: RequestInboxDeps(
+          requests: HttpServiceRequestRepository(api),
+          trips: HttpTripRepository(api),
+          providers: HttpTransportProviderRepository(api),
+        ),
       ),
     ),
   ));
@@ -89,6 +96,7 @@ class KachavaAdminApp extends StatefulWidget {
     this.zoneResolver,
     this.realtimePort,
     this.realtimeChannel,
+    this.inbox,
   });
 
   /// Settings and Villas (`/admin/settings`, `/admin/villas`).
@@ -109,6 +117,9 @@ class KachavaAdminApp extends StatefulWidget {
   final RealtimeEventsPort? realtimePort;
   final RealtimeChannel? realtimeChannel;
 
+  /// Requests inbox (requests + trips); `null` shows one error line there.
+  final RequestInboxDeps? inbox;
+
   @override
   State<KachavaAdminApp> createState() => _KachavaAdminAppState();
 }
@@ -120,12 +131,23 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
       repository: widget.operations?.notifications, chime: widget.chime);
   late final ResortSettingsController _resortSettings =
       ResortSettingsController(widget.resort.settings);
+
+  /// New guest requests/messages: badges, chime and toast.
+  late final GuestActivityWatcher _activity = GuestActivityWatcher(
+      inbox: widget.inbox?.source,
+      conversations: widget.operations?.conversations,
+      onArrival: _bell.chime);
   late final AdminLiveSync _poll =
-      AdminLiveSync(initialLoad: _bell.refresh, refresh: _bell.refresh);
+      AdminLiveSync(initialLoad: _sync, refresh: _sync);
   late final AdminRealtime _realtime = AdminRealtime(
       port: widget.realtimePort,
       channel: widget.realtimeChannel,
       liveSync: _poll);
+
+  /// One sync: the bell (throws on failure) and guest activity (never).
+  Future<void> _sync() async {
+    await Future.wait([_bell.refresh(), _activity.check()]);
+  }
 
   /// The browser tab became visible again: catch up on missed changes.
   late final AppLifecycleListener _lifecycle;
@@ -145,6 +167,7 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
     _lifecycle.dispose();
     _realtime.dispose();
     _poll.dispose();
+    _activity.dispose();
     _bell.dispose();
     _resortSettings.dispose();
     _shell.dispose();
@@ -173,6 +196,9 @@ class _KachavaAdminAppState extends State<KachavaAdminApp> {
           : OperationsScope(deps: operations, child: shell),
     );
     return AdminRealtimeScope(
-        invalidations: _realtime.invalidations, child: app);
+      invalidations: _realtime.invalidations,
+      child:
+          RequestInboxScope(deps: widget.inbox, watcher: _activity, child: app),
+    );
   }
 }

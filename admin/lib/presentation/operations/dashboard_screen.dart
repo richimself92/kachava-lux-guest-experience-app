@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/admin_list_strings.dart';
+import '../../core/dashboard_strings.dart';
 import '../../core/resort_time.dart';
 import '../../core/stay_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
@@ -9,6 +10,7 @@ import '../../domain/realtime_change.dart';
 import '../../domain/trip_repository.dart';
 import '../components/components.dart';
 import 'dashboard_parts.dart';
+import 'todays_activity_table.dart';
 
 /// Dashboard (plan v2): "Overview" + resort-day pill, six KPI tiles with
 /// their formula in ⓘ, and "Today's activity" (≤ 8 rows, "View all").
@@ -21,6 +23,10 @@ class DashboardScreen extends StatefulWidget {
     required this.onOpenStay,
     required this.onViewAll,
     required this.onOpenSettings,
+    this.resortTime,
+    this.onStayAction,
+    this.onOpenRequests,
+    this.onOpenMessages,
   });
 
   final DashboardRepository repository;
@@ -28,6 +34,12 @@ class DashboardScreen extends StatefulWidget {
   final ValueChanged<String> onOpenStay;
   final VoidCallback onViewAll;
   final VoidCallback onOpenSettings;
+  final ResortTime? resortTime;
+
+  /// Check-in / check-out of a row (confirmed); the dashboard reloads after.
+  final Future<void> Function(ActivityRow row, String action)? onStayAction;
+  final ValueChanged<ActivityRow>? onOpenRequests;
+  final ValueChanged<ActivityRow>? onOpenMessages;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -59,6 +71,19 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (mounted) setState(() => _error = error);
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _stayAction(ActivityRow row, String action) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final d = DashboardStrings(widget.isEs);
+    try {
+      await widget.onStayAction!(row, action);
+      showAdminToastOn(messenger, d.done);
+      final view = await widget.repository.fetch();
+      if (mounted) setState(() => _view = view);
+    } catch (_) {
+      showAdminToastOn(messenger, d.failed, isError: true, isEs: widget.isEs);
     }
   }
 
@@ -138,6 +163,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         isEs: widget.isEs,
         onOpenStay: widget.onOpenStay,
         onViewAll: widget.onViewAll,
+        resortTime: widget.resortTime,
+        onStayAction: widget.onStayAction == null ? null : _stayAction,
+        onOpenRequests: widget.onOpenRequests,
+        onOpenMessages: widget.onOpenMessages,
       ),
     ];
   }

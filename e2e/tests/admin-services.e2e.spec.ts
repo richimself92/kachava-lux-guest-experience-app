@@ -25,12 +25,13 @@ interface KindSpec {
   wire: string;
   label: string;
   section: string;
-  itemPrice: string;
+  /** `null`: the kind has no items list in the editor (experiences). */
+  itemPrice: string | null;
   capacity?: boolean;
 }
 
 const KINDS: KindSpec[] = [
-  { wire: 'EXPERIENCE', label: 'Experience', section: 'EXPERIENCES', itemPrice: '45' },
+  { wire: 'EXPERIENCE', label: 'Experience', section: 'EXPERIENCES', itemPrice: null },
   { wire: 'BAR', label: 'Lux bar', section: 'DINING', itemPrice: '14.5' },
   { wire: 'BREAKFAST', label: 'Breakfast', section: 'DINING', itemPrice: '18' },
   { wire: 'SPECIAL_MENU', label: 'Special menu', section: 'DINING', itemPrice: '120' },
@@ -125,6 +126,19 @@ const TAPPABLE = '[role="button"], [flt-tappable]';
 const ROW = '[flt-tappable], [role="button"]';
 const clickButton = (page: Page, label: string) => clickWhenReady(page, TAPPABLE, label);
 
+/** Wheel-scrolls the editor panel until a [selector] node labelled [label] is fully on screen:
+ * the editor is one long scrolling form, and Flutter only hit-tests what is painted. */
+async function scrollPanelTo(page: Page, selector: string, label: string): Promise<void> {
+  const viewport = page.viewportSize()!;
+  for (let i = 0; i < 30; i++) {
+    const box = await centerOf(page, selector, label);
+    if (box && box.y > 120 && box.y < viewport.height - 80) return;
+    await page.mouse.move(viewport.width - 280, viewport.height / 2);
+    await page.mouse.wheel(0, box && box.y <= 120 ? -300 : 300);
+    await page.waitForTimeout(150);
+  }
+}
+
 /** Polls until at least [min] visible buttons are labelled [label] (durable state, not a toast). */
 async function waitForButtons(page: Page, label: string, min: number): Promise<void> {
   await expect
@@ -163,28 +177,6 @@ async function fillField(page: Page, id: string, value: string): Promise<void> {
 async function selectDropdown(page: Page, id: string, option: string): Promise<void> {
   await clickWhenReady(page, byId(id));
   await clickMenuItem(page, option);
-}
-
-/** Tabs scroll horizontally in the 560px panel: wheel the tab bar until [label] is inside it. */
-async function clickTab(page: Page, label: string): Promise<void> {
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const state = await page.evaluate((text) => {
-      const tab = [...document.querySelectorAll('[role="tab"]')].find(
-        (el) => (el.getAttribute('aria-label') || (el as HTMLElement).innerText || '').trim() === text,
-      );
-      const bar = tab?.closest('[role="tablist"]');
-      if (!tab || !bar) return null;
-      const t = tab.getBoundingClientRect();
-      const b = bar.getBoundingClientRect();
-      return { inside: t.left >= b.left && t.right <= b.right, x: t.left + t.width / 2, y: t.top + t.height / 2, bx: b.left + b.width / 2, by: b.top + b.height / 2 };
-    }, label);
-    expect(state, `tab ${label}`).not.toBeNull();
-    if (state!.inside) return page.mouse.click(state!.x, state!.y);
-    await page.mouse.move(state!.bx, state!.by);
-    await page.mouse.wheel(state!.x > state!.bx ? 250 : -250, 0);
-    await page.waitForTimeout(300);
-  }
-  throw new Error(`Tab ${label} never scrolled into view`);
 }
 
 /** Menu items live in the left sidebar (x < 320); table cells may share their text. */
@@ -245,8 +237,14 @@ async function openServices(page: Page): Promise<void> {
 
 async function searchFor(page: Page, text: string): Promise<void> {
   // Once opened, the search box is a real textbox; before that it is the "Search" button.
+  // Tabs keep their neighbour's list in the tree: use the box that is on screen.
   const box = page.getByRole('textbox', { name: 'Search' });
-  if ((await box.count()) > 0) await box.first().click();
+  let onScreen = null;
+  for (let i = 0; i < (await box.count()); i++) {
+    const r = await box.nth(i).boundingBox();
+    if (r && r.x >= 0 && r.x + r.width <= page.viewportSize()!.width) onScreen = box.nth(i);
+  }
+  if (onScreen) await onScreen.click();
   else await clickContaining(page, 'input, textarea, [role="textbox"], flt-semantics', 'Search');
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
   await page.keyboard.type(text, { delay: 10 });
@@ -258,7 +256,7 @@ async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Pr
   const name = `${RUN} ${spec.label}`;
   // One tap: every "New" opens a fresh editor (admin_list_screen_open_test.dart).
   await clickButton(page, 'New service');
-  await waitForFlutterSemantics(page, 'Price & availability');
+  await waitForFlutterSemantics(page, 'More options'); // one scrolling form per kind, no tabs
   await selectDropdown(page, 'svc-kind', spec.label);
   await fillField(page, 'svc-name.en', name);
   await fillField(page, 'svc-name.es', `${name} ES`);
@@ -272,8 +270,7 @@ async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Pr
     await confirmDialog(page, 'Activate');
     await waitForFlutterSemantics(page, 'Cover required');
   }
-  await clickTab(page, 'Images');
-  await uploadWith(page, 'Upload');
+  await uploadWith(page, 'Upload'); // the cover sits at the top of the same form
   await waitForFlutterSemantics(page, 'Usage rights');
   await fillField(page, 'svc-cover-alt-en', `${spec.label} cover`);
   await fillField(page, 'svc-cover-alt-es', `Portada ${spec.label}`);
@@ -281,31 +278,32 @@ async function createServiceViaUi(page: Page, spec: KindSpec, index: number): Pr
   await clickButton(page, 'Activate');
   await confirmDialog(page, 'Activate');
   await waitForButtons(page, 'Deactivate', 1); // service footer flips once the server confirms
-  await addItemViaUi(page, spec, index);
+  if (spec.itemPrice !== null) await addItemViaUi(page, spec, index === 1);
   await clickButton(page, 'Close');
 }
 
-async function addItemViaUi(page: Page, spec: KindSpec, index: number): Promise<void> {
+async function addItemViaUi(page: Page, spec: KindSpec, withPhoto: boolean): Promise<void> {
   const item = `${RUN} ${spec.label} item`;
-  await clickTab(page, 'Items');
-  await clickButton(page, 'New item');
+  await scrollPanelTo(page, TAPPABLE, 'New item'); // the items list sits below the kind's fields
+  await clickButton(page, 'New item'); // the items list is inline; the item form replaces the panel
   await fillField(page, 'svc-name.en', item);
   await fillField(page, 'svc-name.es', `${item} ES`);
-  if (index === 0) {
+  if (withPhoto) {
     await uploadWith(page, 'Upload');
     await clickWhenReady(page, `${byId('svc-item-image-rights')}[role="checkbox"]`);
   }
-  await fillField(page, 'svc-priceUSD', spec.itemPrice);
+  await fillField(page, 'svc-priceUSD', spec.itemPrice!);
   if (spec.capacity) {
     await fillField(page, 'svc-capacity.passengers', '6');
     await fillField(page, 'svc-capacity.luggage', '4');
   }
-  await clickButton(page, 'Save'); // top-most Save = the nested item form
+  await clickButton(page, 'Save'); // the item form; it closes back to the service form
+  await scrollPanelTo(page, TAPPABLE, 'New item'); // back on the service form, scrolled to the top
   await clickContaining(page, ROW, item); // the row exists once the server confirmed
   await clickButton(page, 'Activate');
   await confirmDialog(page, 'Activate');
-  await waitForButtons(page, 'Deactivate', 2); // item footer + service footer
-  await clickButton(page, 'Cancel'); // back to the items table (top-most Cancel)
+  await waitForButtons(page, 'Deactivate', 1); // item footer (the service form is hidden meanwhile)
+  await clickButton(page, 'Cancel'); // back to the service form with its inline items
 }
 
 async function expectRange(page: Page, range: string, timeoutMs = 25000): Promise<void> {
@@ -338,6 +336,10 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
       const cover = await request.get(service.cover.url);
       expect(cover.status()).toBe(200);
       const items = await apiJson(request, token, 'GET', `/admin/services/${service.id}/items`);
+      if (spec.itemPrice === null) {
+        expect(items.body.data).toHaveLength(0);
+        continue;
+      }
       expect(items.body.data).toHaveLength(1);
       expect(items.body.data[0].status).toBe('ACTIVE');
       expect(items.body.data[0].priceUSD).toBe(Number(spec.itemPrice));
@@ -374,14 +376,18 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
       await expectRange(page, '26–28 of 28', 5000);
     }).toPass({ timeout: 40000 });
 
-    // Filters: Section = Dining (3 kinds), then Use = Booking (special menu only), then clear.
+    // Filters: Section = Dining (3 kinds), then Use = Booking (breakfast and special menu; the bar
+    // is ordered), then clear.
     await clickButton(page, 'Section');
     await clickMenuItem(page, 'Dining');
     await expectRange(page, '1–3 of 3');
     await clickButton(page, 'Use');
     await clickMenuItem(page, 'Booking');
-    await expectRange(page, '1–1 of 1');
-    expect(await readSemanticsSnapshot(page)).toContain(`${RUN} Special menu`);
+    await expectRange(page, '1–2 of 2');
+    const dining = await readSemanticsSnapshot(page);
+    expect(dining).toContain(`${RUN} Special menu`);
+    expect(dining).toContain(`${RUN} Breakfast`);
+    expect(dining).not.toContain(`${RUN} Lux bar`);
     await clickButton(page, 'Clear all'); // clears the search text too
     await searchTag(page);
     await expectRange(page, '1–25 of 28');
@@ -400,20 +406,19 @@ test.describe.serial('Admin Services catalog (Phase 4)', () => {
     await expectRange(page, '1–1 of 1');
     await clickContaining(page, ROW, `${RUN} Transport`);
     await waitForFlutterSemantics(page, 'Deactivate');
-    await clickTab(page, 'Items');
-    await waitForFlutterSemantics(page, `${RUN} Transport item`);
+    await waitForFlutterSemantics(page, `${RUN} Transport item`); // inline "Vehicles" list
     await waitForFlutterSemantics(page, '$95.00 USD');
     await clickButton(page, 'Close');
 
-    // Section views: Experiences lists only its section and has a Requests tab.
+    // Section views open on the live request queue (daily work); the catalog is the second tab.
     await clickNav(page, 'Experiences');
-    await waitForFlutterSemantics(page, 'Requests');
+    await waitForFlutterSemantics(page, 'Guest bookings and orders of this section.');
+    expect(await readSemanticsSnapshot(page)).not.toContain('coming soon');
+    await page.getByRole('tab', { name: 'Catalog' }).click(); // section-level tab bar, not the scrolling editor bar
+    await waitForFlutterSemantics(page, 'New service'); // the catalog list is showing, not the queue
     await searchTag(page);
     await waitForFlutterSemantics(page, `${RUN} Experience`);
     expect(await readSemanticsSnapshot(page)).not.toContain(`${RUN} Lux bar`);
-    await page.getByRole('tab', { name: 'Requests' }).click(); // section-level tab bar, not the scrolling editor bar
-    await waitForFlutterSemantics(page, 'Guest bookings and orders of this section.'); // the live request queue
-    expect(await readSemanticsSnapshot(page)).not.toContain('coming soon');
     await captureDualScreenshot(page, 'e2e-admin-experiences-section.png');
     expect(monitor.pageErrors).toEqual([]);
     expect(monitor.overflowErrors).toEqual([]);

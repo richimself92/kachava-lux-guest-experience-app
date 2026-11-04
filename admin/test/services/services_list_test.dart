@@ -100,7 +100,7 @@ void main() {
       await tester.tap(find.widgetWithText(OutlinedButton, 'New service'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('detail-panel')), findsOneWidget);
-      expect(find.text('General'), findsOneWidget);
+      expect(find.byKey(const Key('service-editor')), findsOneWidget);
     });
 
     testWidgets('load error: one line + Retry', (tester) async {
@@ -143,17 +143,18 @@ void main() {
               section: ServiceSection.experiences, queryStore: store),
           repo));
       await tester.pumpAndSettle();
+      // Requests is the default tab: it is the daily work; the catalog is
+      // edited rarely.
+      expect(find.text('Requests not connected'), findsOneWidget);
+      expect(find.textContaining('soon'), findsNothing);
+
+      await tester.tap(find.text('Catalog'));
+      await tester.pumpAndSettle();
       expect(repo.queries.last.filters['section'], 'EXPERIENCES');
       expect(find.text('Service 001'), findsOneWidget);
       expect(find.text('Service 002'), findsNothing);
       expect(find.text('Section'), findsNothing);
       expect(find.byKey(const Key('filter-services-section')), findsNothing);
-
-      await tester.tap(find.text('Requests'));
-      await tester.pumpAndSettle();
-      // Without a wired queue the tab says so in one line (never a stub).
-      expect(find.text('Requests not connected'), findsOneWidget);
-      expect(find.textContaining('soon'), findsNothing);
     });
 
     testWidgets('Dining: New service offers only dining kinds', (tester) async {
@@ -162,6 +163,8 @@ void main() {
           ServiceSectionWorkspace(
               section: ServiceSection.dining, queryStore: store),
           repo));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Catalog'));
       await tester.pumpAndSettle();
       expect(find.text('No services yet'), findsOneWidget);
       await tester.tap(find.byKey(const Key('primary-services')));

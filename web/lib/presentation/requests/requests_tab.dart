@@ -10,6 +10,8 @@ import '../../domain/requests.dart';
 import '../common/labels.dart';
 import '../common/widgets.dart';
 import '../forms/booking_form.dart';
+import 'request_card.dart';
+import 'request_details.dart';
 
 enum RequestsFilter { all, active, done }
 
@@ -105,60 +107,15 @@ class _RequestsTabState extends State<RequestsTab> {
   Widget _row(L10n l10n, GuestRequest r, String? number) {
     final name = requestName(l10n, r);
     final title = number == null ? name : '$number $name';
-    final when = requestWhen(l10n, r);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Semantics(
-        button: true,
-        label:
-            '$title, ${l10n.status(r.status)}${when.isEmpty ? '' : ', $when'}',
-        excludeSemantics: true,
-        child: InkWell(
-          key: Key('request-${r.id}'),
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _openSheet(l10n, r, title),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
-                      if (when.isNotEmpty)
-                        Text(when,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                color: KachavaColors.onSurfaceVariant)),
-                      const SizedBox(height: 6),
-                      StatusTrack(status: r.status),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(child: StatusChip(status: r.status, l10n: l10n)),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return RequestCard(
+      l10n: l10n,
+      request: r,
+      title: title,
+      onTap: () => _openSheet(l10n, r, title),
     );
   }
 
   void _openSheet(L10n l10n, GuestRequest r, String title) {
-    final steps = [
-      RequestStatus.received,
-      RequestStatus.confirmed,
-      r.kind == RequestKind.trip
-          ? RequestStatus.onTheWay
-          : RequestStatus.preparing,
-      RequestStatus.done,
-    ];
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -173,52 +130,7 @@ class _RequestsTabState extends State<RequestsTab> {
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
-            Text(title, style: Theme.of(ctx).textTheme.titleLarge),
-            if (requestWhen(l10n, r).isNotEmpty)
-              Text(requestWhen(l10n, r), style: const TextStyle(fontSize: 15)),
-            const SizedBox(height: 12),
-            if (r.status == RequestStatus.cancelled)
-              StatusChip(status: r.status, l10n: l10n)
-            else
-              for (final s in steps)
-                Row(children: [
-                  Icon(
-                    s.trackIndex <= r.status.trackIndex
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    size: 20,
-                    color: s.trackIndex <= r.status.trackIndex
-                        ? KachavaColors.confirmedGreen
-                        : KachavaColors.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(l10n.status(s),
-                      style: const TextStyle(fontSize: 15, height: 2)),
-                ]),
-            if (r.lines.isNotEmpty) ...[
-              const Divider(height: 24),
-              for (final line in r.lines)
-                Row(children: [
-                  Expanded(
-                    child: Text('${line.quantity} × ${l10n.text(line.name)}',
-                        style: const TextStyle(fontSize: 15)),
-                  ),
-                  if (line.lineTotalUSD != null)
-                    Text(l10n.money(line.lineTotalUSD!),
-                        style: const TextStyle(fontSize: 15)),
-                ]),
-            ],
-            if (r.totalUSD != null && r.totalUSD! > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(children: [
-                  Expanded(
-                      child: Text(l10n.total,
-                          style: const TextStyle(fontWeight: FontWeight.w700))),
-                  Text(l10n.money(r.totalUSD!),
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                ]),
-              ),
+            RequestDetails(l10n: l10n, request: r, title: title),
             const SizedBox(height: 16),
             _actions(ctx, l10n, r, title),
           ],

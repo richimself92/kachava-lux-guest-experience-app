@@ -39,7 +39,10 @@ class GuestTrip {
     this.passengers = 0,
     this.luggage = 0,
     this.driverName = '',
+    this.driverPhone = '',
     this.vehicle = '',
+    this.plate = '',
+    this.cancellationReason = '',
     this.createdAt,
   });
 
@@ -66,7 +69,10 @@ class GuestTrip {
       passengers: asInt(json['passengers']) ?? 0,
       luggage: asInt(json['luggage']) ?? 0,
       driverName: asString(driver['name']),
+      driverPhone: asString(driver['phone']),
       vehicle: asString(vehicle['description']),
+      plate: asString(vehicle['plate']),
+      cancellationReason: asString(json['cancellationReason']),
       createdAt: asDateTime(json['createdAt']),
     );
   }
@@ -87,8 +93,13 @@ class GuestTrip {
   final String destination;
   final int passengers;
   final int luggage;
+
+  /// Set by the resort when it confirms the trip (guest-safe, ADR-007).
   final String driverName;
+  final String driverPhone;
   final String vehicle;
+  final String plate;
+  final String cancellationReason;
   final DateTime? createdAt;
 
   /// The guest may cancel only before the resort sends it to the provider.

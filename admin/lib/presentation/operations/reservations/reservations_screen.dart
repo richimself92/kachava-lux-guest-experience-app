@@ -138,7 +138,8 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     if (row == null) {
       return ReservationCreatePanel(
         repository: widget.reservations,
-        villas: _villas.where((v) => v.isActive).toList(),
+        villas: widget.villas,
+        today: widget.today,
         onClose: close,
         onCreated: (_) => _list.load(),
         isEs: widget.isEs,

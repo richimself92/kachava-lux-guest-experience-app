@@ -78,13 +78,17 @@ export class FirestoreServiceRequestRepository implements ServiceRequestReposito
     if (query.section) filtered = filtered.where('section', '==', query.section);
     if (query.status === 'OPEN') filtered = filtered.where('open', '==', true);
     else if (query.status) filtered = filtered.where('status', '==', query.status);
+    if (query.usageType) filtered = filtered.where('usageType', '==', query.usageType);
     if (query.q) {
       const keyword = normalizeSearchText(query.q).slice(0, MAX_KEYWORD_LENGTH);
       filtered = filtered.where(REQUEST_SEARCH_FIELD, 'array-contains', keyword);
     }
     if (query.fromAt) filtered = filtered.where('at', '>=', query.fromAt);
     if (query.toAtExclusive) filtered = filtered.where('at', '<', query.toAtExclusive);
-    const ordered = filtered.orderBy('at', query.direction);
+    const ordered =
+      query.field === 'queue'
+        ? filtered.orderBy('rank', 'asc').orderBy('createdAt', query.direction)
+        : filtered.orderBy('at', query.direction);
     const [countSnapshot, pageSnapshot] = await Promise.all([
       ordered.count().get(),
       ordered.offset((query.page - 1) * query.pageSize).limit(query.pageSize).get(),

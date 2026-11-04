@@ -210,6 +210,9 @@ class ServiceGuestForm {
   final bool notes;
   final bool dietary;
   final bool health;
+
+  /// Old services may carry no flags at all.
+  bool get isSet => date || time || guests || notes || dietary || health;
 }
 
 class VehicleCapacity {
@@ -350,6 +353,26 @@ class CatalogService {
   final List<String> airportCodes;
   final LocalizedText meetingPoint;
   final List<LocalizedText> healthQuestions;
+
+  /// [guestForm], or [kindGuestForm] when the service has no flags set.
+  ServiceGuestForm get effectiveGuestForm =>
+      guestForm.isSet ? guestForm : kindGuestForm;
+
+  /// The guest form the admin derives from the kind (bookings ask date,
+  /// time and guests; food and experiences ask diet; wellness asks health).
+  ServiceGuestForm get kindGuestForm {
+    final booking = usageType == UsageType.booking;
+    return ServiceGuestForm(
+      date: booking,
+      time: booking,
+      guests: booking,
+      notes: true,
+      dietary: section == 'DINING' ||
+          kind == 'VILLA_STOCKING' ||
+          kind == 'EXPERIENCE',
+      health: kind == 'WELLNESS',
+    );
+  }
 
   /// Cover first, then the gallery (max 8).
   List<CatalogImage> get photos => [if (cover != null) cover!, ...gallery];

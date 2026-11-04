@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../application/admin_shell_controller.dart';
+import '../application/request_inbox_source.dart';
 import '../application/notification_bell_controller.dart';
 import '../application/resort_settings_controller.dart';
 import '../core/admin_list_strings.dart';
@@ -9,15 +10,20 @@ import '../core/time_zone_catalog.dart';
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_enums.dart';
 import '../domain/admin_notification.dart';
+import '../domain/inbox_item.dart';
 import '../domain/reservation.dart';
 import '../domain/service_catalog_enums.dart';
 import 'components/components.dart';
 import 'operations/dashboard_screen.dart';
 import 'operations/guests/guests_screen.dart';
+import 'operations/messages/messages_workspace.dart';
 import 'operations/notifications_screen.dart';
 import 'operations/operations_scope.dart';
 import 'operations/reservations/reservations_screen.dart';
 import 'operations/tasks/tasks_screen.dart';
+import 'requests/inbox_task_section.dart';
+import 'requests/request_inbox_scope.dart';
+import 'requests/requests_inbox_screen.dart';
 import 'services/services_workspace.dart';
 import 'workspaces/settings_workspace.dart';
 import 'workspaces/transportation/transportation_screen.dart';
@@ -114,6 +120,27 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
               controller.openRecord(AdminWorkspaceTab.adminStays, id),
           onViewAll: () => _go(AdminWorkspaceTab.adminStays),
           onOpenSettings: () => _go(AdminWorkspaceTab.adminSettings),
+          resortTime: _resortTime,
+          onStayAction: (row, action) => ops.reservations
+              .update(row.stayId, ReservationPatch(action: action)),
+          onOpenRequests: (row) => _openRequestsOf(row.guestName),
+          onOpenMessages: (row) => controller.openRecord(
+              AdminWorkspaceTab.adminMessages, row.stayId),
+        );
+      case AdminWorkspaceTab.adminRequests:
+        return _requests(context, ops, request);
+      case AdminWorkspaceTab.adminMessages:
+        if (ops == null) return _missing(tab);
+        return MessagesWorkspace(
+          key: const Key('workspace-admin-messages'),
+          repository: ops.conversations,
+          queries: controller.listQueries,
+          resortTime: _resortTime,
+          isEs: _isEs,
+          openStayId: request?.id,
+          onRead: () => _messagesRead(context),
+          onOpenStay: (id) =>
+              controller.openRecord(AdminWorkspaceTab.adminStays, id),
         );
       case AdminWorkspaceTab.adminStays:
         if (ops == null) return _missing(tab);
@@ -140,6 +167,7 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
           resortTime: _resortTime,
           isEs: _isEs,
           openId: request?.id,
+          onOpenRequest: (task) => _openRequestsOf(task.guestName ?? ''),
         );
       case AdminWorkspaceTab.adminNotifications:
         if (ops == null) return _missing(tab);
@@ -154,6 +182,54 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
       default:
         return _catalog(tab, request);
     }
+  }
+
+  /// The Requests inbox searching one guest's open requests.
+  void _openRequestsOf(String guestName) {
+    controller.listQueries.write(RequestsInboxScreen.storeKey,
+        RequestInboxSource.initialQuery.withSearch(guestName));
+    _go(AdminWorkspaceTab.adminRequests);
+  }
+
+  void _messagesRead(BuildContext context) {
+    _refreshBell();
+    RequestInboxScope.maybeOf(context)?.watcher.check();
+  }
+
+  Widget _requests(
+      BuildContext context, OperationsDeps? ops, AdminOpenRequest? request) {
+    final scope = RequestInboxScope.maybeOf(context);
+    final deps = scope?.deps;
+    if (scope == null || deps == null) {
+      return _missing(AdminWorkspaceTab.adminRequests);
+    }
+    final openId = request?.id;
+    return RequestsInboxScreen(
+      key: const Key('workspace-admin-requests'),
+      deps: deps,
+      watcher: scope.watcher,
+      isEs: _isEs,
+      queries: controller.listQueries,
+      resortTime: _resortTime,
+      initialItem: openId == null ? null : scope.watcher.itemFor(openId),
+      taskSection: ops == null
+          ? null
+          : (item) => InboxTaskSection(
+                key: ValueKey('task-${item.rowId}-${item.status}'),
+                item: item,
+                tasks: ops.tasks,
+                staff: controller.staffDirectory,
+                isEs: _isEs,
+                resortTime: _resortTime,
+                onOpenTask: (id) =>
+                    controller.openRecord(AdminWorkspaceTab.adminTasks, id),
+                onCreateTask: item is TripInboxItem
+                    ? null
+                    : (item) => deps.requests.ensureTask(item.id),
+              ),
+      onMessageGuest: (item) =>
+          controller.openRecord(AdminWorkspaceTab.adminMessages, item.stayId),
+    );
   }
 
   Widget _reservations(BuildContext context, OperationsDeps ops,

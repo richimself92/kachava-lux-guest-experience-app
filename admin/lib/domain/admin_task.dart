@@ -63,6 +63,7 @@ class AdminTask {
     required this.status,
     required this.overdue,
     this.sourceType = 'MANUAL',
+    this.sourceRefId,
     this.stayId,
     this.villaName,
     this.guestName,
@@ -83,6 +84,7 @@ class AdminTask {
       status: JsonRead.text(json, 'status'),
       overdue: JsonRead.flag(json, 'overdue'),
       sourceType: JsonRead.textOrNull(source, 'type') ?? 'MANUAL',
+      sourceRefId: JsonRead.textOrNull(source, 'refId'),
       stayId: JsonRead.textOrNull(source, 'stayId'),
       villaName: JsonRead.textOrNull(json, 'villaName'),
       guestName: JsonRead.textOrNull(json, 'guestName'),
@@ -101,6 +103,12 @@ class AdminTask {
   final String status;
   final bool overdue;
   final String sourceType;
+
+  /// The request / booking / order / trip the task comes from.
+  final String? sourceRefId;
+
+  /// Made from a guest request (not by staff).
+  bool get fromGuestRequest => sourceType != 'MANUAL';
   final String? stayId;
   final String? villaName;
   final String? guestName;
@@ -176,7 +184,7 @@ class NewTask {
 }
 
 /// Tasks (`/admin/tasks`). Filters `status`, `priority`, `owner`,
-/// `villaId`, `overdue=true`; `q` searches; sortable by `dueAt`.
+/// `villaId`, `origin` (`GUEST` | `INTERNAL`), `overdue=true`; `q` searches; sortable by `dueAt`.
 abstract interface class TaskRepository {
   Future<PagedResult<AdminTask>> list(ListQuery query);
   Future<AdminTask> get(String id);

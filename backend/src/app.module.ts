@@ -49,6 +49,7 @@ import { TaskAutomation } from './modules/tasks/task-automation.service';
 import { TasksController } from './modules/tasks/tasks.controller';
 import { TasksService } from './modules/tasks/tasks.service';
 import { VillasService } from './modules/villas/villas.service';
+import { VillaAvailabilityService } from './modules/villas/villa-availability.service';
 import { RequestsController } from './modules/requests/requests.controller';
 import { RequestsService } from './modules/requests/requests.service';
 import { StaffController } from './modules/staff/staff.controller';
@@ -95,6 +96,7 @@ import { StaffService } from './modules/staff/staff.service';
     AdminService,
     SettingsService,
     VillasService,
+    VillaAvailabilityService,
     TransportProvidersService,
     CatalogAdminService,
     CatalogUploadsService,

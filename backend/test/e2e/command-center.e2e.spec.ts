@@ -10,6 +10,7 @@ const SETTINGS = { timeZone: 'America/Cancun', checkInTime: '15:00', transportAl
 /** Dashboard, Reservations, Guests, Tasks, Notifications and the Messages inbox on an empty store. */
 describe('Command center operations (phases 6-8)', () => {
   let t: TestApp;
+  let clock: FixedClock;
   let admin: Record<string, string>;
 
   const get = (path: string) => request(t.server()).get(`${ADMIN}${path}`).set(admin);
@@ -18,7 +19,8 @@ describe('Command center operations (phases 6-8)', () => {
   const checkIn = (stay: CreatedStay) => patch(`/stays/${stay.stayId}`, { action: 'CHECK_IN' });
 
   beforeEach(async () => {
-    t = await createTestApp(undefined, { clock: new FixedClock(NOW) });
+    clock = new FixedClock(NOW);
+    t = await createTestApp(undefined, { clock });
     admin = await t.adminHeaders();
   });
 
@@ -34,10 +36,13 @@ describe('Command center operations (phases 6-8)', () => {
 
     it('test_dashboard_kpisAndTodaysActivity_fromRealStays', async () => {
       await patchSettings(t, SETTINGS);
-      await createVillaAndStay(t, { villaName: 'Villa A', guestName: 'Ana Arrival', checkIn: '2026-11-20', checkOut: '2026-11-23' });
+      // Past arrivals were booked before they began: book them at an earlier resort day.
+      clock.current = new Date('2026-11-01T12:00:00.000Z');
       const inHouse = await createVillaAndStay(t, { villaName: 'Villa B', guestName: 'Bea House', checkIn: '2026-11-18', checkOut: '2026-11-25' });
       const departing = await createVillaAndStay(t, { villaName: 'Villa C', guestName: 'Carl Leaving', checkIn: '2026-11-17', checkOut: '2026-11-20' });
       const overstay = await createVillaAndStay(t, { villaName: 'Villa D', guestName: 'Dan Over', checkIn: '2026-11-10', checkOut: '2026-11-19' });
+      clock.current = NOW;
+      await createVillaAndStay(t, { villaName: 'Villa A', guestName: 'Ana Arrival', checkIn: '2026-11-20', checkOut: '2026-11-23' });
       await createVillaAndStay(t, { villaName: 'Villa E', guestName: 'Eve Future', checkIn: '2026-12-01', checkOut: '2026-12-04' });
       for (const stay of [inHouse, departing, overstay]) expect((await checkIn(stay)).status).toBe(200);
 
@@ -57,6 +62,13 @@ describe('Command center operations (phases 6-8)', () => {
           ['Bea House', 'IN_HOUSE', false],
         ]);
       expect(res.body.data.activity.rows[0]).toEqual(expect.objectContaining({ stayId: overstay.stayId, villaName: 'Villa D' }));
+      const arrival = res.body.data.activity.rows[2];
+      expect(arrival).toMatchObject({
+        stayStatus: 'PRE_ARRIVAL',
+        pending: { requests: 0, messages: 0 },
+        next: { kind: 'FLIGHT', transfer: 'NONE' },
+      });
+      expect(res.body.data.activity.rows[3]).toMatchObject({ stayStatus: 'ACTIVE_STAY', next: null });
     });
   });
 

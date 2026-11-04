@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/stay_strings.dart';
-import '../../../domain/admin_villa.dart';
+import '../../../domain/admin_catalog_repositories.dart';
 import '../../../domain/reservation.dart';
 import '../../components/components.dart';
 import '../ops_fields.dart';
+import 'available_villa_field.dart';
 
-/// "+ New reservation": guest, villa, arrival and departure; guest count,
-/// contact, language and occasion are folded under "Guest data".
+/// "+ New reservation": guest, arrival, departure, then a villa free on
+/// those nights; guest count, contact, language and occasion are folded
+/// under "Guest data". Server refusals (409 taken, 422 rule) show inline.
 class ReservationCreatePanel extends StatefulWidget {
   const ReservationCreatePanel({
     super.key,
@@ -17,12 +19,16 @@ class ReservationCreatePanel extends StatefulWidget {
     required this.onClose,
     required this.onCreated,
     required this.isEs,
+    this.today,
   });
 
   final ReservationRepository repository;
 
-  /// Active villas to pick from.
-  final List<AdminVilla> villas;
+  /// Source of the villas available for the chosen nights.
+  final VillaRepository villas;
+
+  /// Resort day `YYYY-MM-DD`: the earliest arrival (`null`: no bound).
+  final String? today;
   final VoidCallback onClose;
 
   /// Runs with the new stay id once the server confirmed it.
@@ -45,6 +51,13 @@ class _ReservationCreatePanelState extends State<ReservationCreatePanel> {
   String _occasion = '';
 
   StayStrings get _s => StayStrings(widget.isEs);
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIn.addListener(_datesChanged);
+    _checkOut.addListener(_datesChanged);
+  }
 
   @override
   void dispose() {
@@ -70,6 +83,34 @@ class _ReservationCreatePanelState extends State<ReservationCreatePanel> {
     showAdminToastOn(messenger, _s.created);
   }
 
+  void _datesChanged() => setState(() {});
+
+  /// The nights to book once both dates are valid and bookable.
+  StayRange? get _range {
+    final checkIn = _checkIn.text.trim();
+    final checkOut = _checkOut.text.trim();
+    if (!IsoDateField.isValid(checkIn) || !IsoDateField.isValid(checkOut)) {
+      return null;
+    }
+    if (_notBeforeToday(checkIn) != null || checkOut.compareTo(checkIn) <= 0) {
+      return null;
+    }
+    return (checkIn: checkIn, checkOut: checkOut);
+  }
+
+  String? _notBeforeToday(String? value) {
+    final today = widget.today;
+    if (today == null) return null;
+    return (value ?? '').compareTo(today) < 0 ? _s.notBeforeToday : null;
+  }
+
+  String? _failure(Object error) => switch (error) {
+        VillaUnavailableException() => _s.villaTaken,
+        ReservationRejectedException(:final reason) when reason.isNotEmpty =>
+          reason,
+        _ => null,
+      };
+
   String? _afterArrival(String? value) {
     final from = _checkIn.text.trim();
     if (!IsoDateField.isValid(from)) return null;
@@ -86,6 +127,7 @@ class _ReservationCreatePanelState extends State<ReservationCreatePanel> {
         pickLabel: _s.pickDate,
         isRequired: true,
         validator: extra,
+        firstDay: widget.today,
         isEs: widget.isEs,
       );
 
@@ -114,23 +156,20 @@ class _ReservationCreatePanelState extends State<ReservationCreatePanel> {
       title: _s.newReservation,
       onSave: _save,
       onClose: widget.onClose,
+      failureMessage: _failure,
       isEs: widget.isEs,
       children: [
         _text(_s.guest, 'reservation-guest', (v) => _guest = v, required: true),
-        if (widget.villas.isEmpty)
-          AdminStateLine(
-              key: const Key('reservation-no-villas'), message: _s.noVillas),
-        AdminDropdownFormField<String>(
-          label: _s.villa,
-          isRequired: true,
-          fieldKey: const Key('reservation-villa'),
-          choices: [for (final v in widget.villas) AdminChoice(v.id, v.name)],
+        _date(
+            _s.checkInDate, _checkIn, 'reservation-check-in', _notBeforeToday),
+        _date(
+            _s.checkOutDate, _checkOut, 'reservation-check-out', _afterArrival),
+        AvailableVillaField(
+          repository: widget.villas,
+          range: _range,
           onChanged: (v) => _villaId = v,
           isEs: widget.isEs,
         ),
-        _date(_s.checkInDate, _checkIn, 'reservation-check-in'),
-        _date(
-            _s.checkOutDate, _checkOut, 'reservation-check-out', _afterArrival),
         AdminAdvancedSection(
           key: const Key('reservation-guest-data'),
           title: _s.guestData,

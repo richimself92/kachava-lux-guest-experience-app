@@ -1,6 +1,9 @@
 import { StayAggregate, StayRecord } from '../models/domain.models';
 import { Villa } from '../models/resort-config.models';
-import { isOpenStay, openBookingCount, openOrderCount } from '../stays/open-requests';
+import { LocalizedText } from '../catalog/catalog.models';
+import { conversationSummary } from '../conversations/conversation-rules';
+import { isOpenBooking, isOpenStay, openBookingCount, openOrderCount } from '../stays/open-requests';
+import { isFinalTripStatus, Trip } from '../trips/trip.models';
 
 /**
  * Dashboard rules (plan v2, "Dashboard"). Pure functions over the resort day `today`
@@ -112,5 +115,73 @@ export function computeDashboardKpis(input: DashboardKpiInput): DashboardKpis {
     arrivals: openStays.filter((s) => s.checkInDate === input.today).length,
     departures: openStays.filter((s) => s.checkOutDate === input.today).length,
     openRequests: guestRequests + input.openTrips + input.openTasks,
+  };
+}
+
+/** The guest's next concrete event: the flight (arrival/departure day) or the next booking. */
+export interface ActivityNext {
+  kind: 'FLIGHT' | 'BOOKING';
+  /** Flight time (else pickup), UTC ISO; null without a trip. */
+  at: string | null;
+  flightNumber: string | null;
+  /** NONE = no transfer booked; NO_DRIVER = not confirmed yet; DRIVER_CONFIRMED = driver assigned. */
+  transfer: 'NONE' | 'NO_DRIVER' | 'DRIVER_CONFIRMED' | null;
+  title: LocalizedText | null;
+  /** Booking resort day (YYYY-MM-DD) and time (HH:mm). */
+  date: string | null;
+  time: string | null;
+}
+
+export interface ActivityDetails {
+  stayStatus: StayRecord['status'];
+  /** Open guest requests (orders, bookings, trips) and unread guest messages. */
+  pending: { requests: number; messages: number };
+  next: ActivityNext | null;
+}
+
+const DRIVER_STATUSES: readonly Trip['status'][] = ['CONFIRMED', 'EN_ROUTE', 'COMPLETED'];
+const EMPTY_NEXT: ActivityNext = {
+  kind: 'FLIGHT', at: null, flightNumber: null, transfer: 'NONE', title: null, date: null, time: null,
+};
+
+function flightNext(trip: Trip | undefined): ActivityNext {
+  if (!trip) return EMPTY_NEXT;
+  const flight = trip.flight;
+  return {
+    ...EMPTY_NEXT,
+    at: flight?.scheduledAt ?? trip.pickupAt,
+    flightNumber: flight ? `${flight.airline} ${flight.number}`.trim() : null,
+    transfer: DRIVER_STATUSES.includes(trip.status) ? 'DRIVER_CONFIRMED' : 'NO_DRIVER',
+  };
+}
+
+function bookingNext(stay: StayAggregate, today: string): ActivityNext | null {
+  const upcoming = (stay.experienceBookings ?? [])
+    .filter((b) => isOpenBooking(b) && b.scheduledDate >= today)
+    .sort((a, b) => `${a.scheduledDate}T${a.scheduledTimeSlot}`.localeCompare(`${b.scheduledDate}T${b.scheduledTimeSlot}`));
+  const next = upcoming[0];
+  if (!next) return null;
+  return {
+    ...EMPTY_NEXT,
+    kind: 'BOOKING',
+    transfer: null,
+    title: structuredClone(next.snapshot?.serviceName ?? { en: next.title, es: next.title }),
+    date: next.scheduledDate,
+    time: next.scheduledTimeSlot || null,
+  };
+}
+
+/** Next event, pending counts and the stay status of one activity row (`trips` of that stay). */
+export function activityDetails(row: ActivityState, stay: StayAggregate, trips: Trip[], today: string): ActivityDetails {
+  const open = trips.filter((t) => t.stayId === stay.stayId && !isFinalTripStatus(t.status));
+  const live = trips.filter((t) => t.stayId === stay.stayId && t.status !== 'CANCELLED');
+  const flightDay = !row.overdue && row.status !== 'IN_HOUSE';
+  return {
+    stayStatus: stay.status,
+    pending: {
+      requests: openOrderCount(stay) + openBookingCount(stay) + open.length,
+      messages: conversationSummary(stay)?.unreadCount ?? 0,
+    },
+    next: flightDay ? flightNext(live.find((t) => t.type === row.status)) : bookingNext(stay, today),
   };
 }

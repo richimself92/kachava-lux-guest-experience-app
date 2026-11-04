@@ -1,5 +1,6 @@
 import { CatalogService } from '../catalog/catalog.models';
 import { ExperienceBooking, StayRecord } from '../models/domain.models';
+import { ServiceRequestEntry } from '../requests/service-requests';
 import { orderRefId } from '../stays/open-requests';
 import { zonedLocalToUtc } from '../time/zoned-time';
 import { Trip } from '../trips/trip.models';
@@ -133,4 +134,36 @@ export function tripTaskFor(trip: Trip, actor: string, at: string): Task {
     stay: { villaId: trip.villaId, villaName: trip.villaName, guestName: trip.guestName },
     category: 'TRANSPORTATION', priority: 'HIGH', dueAt: trip.pickupAt, ownerStaffId: null,
   }, actor, at);
+}
+
+export interface RequestTaskRequest {
+  stay: StayRecord;
+  entry: ServiceRequestEntry;
+  schedule: TaskSchedule;
+  actor: string;
+  at: string;
+}
+
+const REQUEST_TASK_VERB = { ORDER: 'Deliver', BOOKING: 'Confirm', PREFERENCE: 'Prepare' } as const;
+
+/**
+ * The task of a guest request created on demand from the inbox ("Create task"): same
+ * deterministic id as the automatic one; a booking is due at its slot, anything else at check-in.
+ */
+export function requestTaskFor(request: RequestTaskRequest): Task {
+  const { stay, entry, schedule } = request;
+  const type = requestUsageType(entry);
+  const [date, time] = entry.at.split('T');
+  return newSourceTask({
+    title: `${REQUEST_TASK_VERB[type]}: ${entry.serviceName.en}`,
+    source: { type, refId: entry.requestId, stayId: stay.stayId },
+    stay: stayParty(stay), category: entry.section ?? 'GENERAL', priority: 'NORMAL',
+    dueAt: type === 'BOOKING' ? resortWallTimeIso(date, time, schedule.timeZone) : checkInDeadline(stay, schedule),
+    ownerStaffId: null,
+  }, request.actor, request.at);
+}
+
+/** The usage type of a queue entry (older entries carry only the kind). */
+export function requestUsageType(entry: Pick<ServiceRequestEntry, 'kind' | 'usageType'>): 'ORDER' | 'BOOKING' | 'PREFERENCE' {
+  return entry.usageType ?? (entry.kind === 'ORDER' ? 'ORDER' : 'BOOKING');
 }

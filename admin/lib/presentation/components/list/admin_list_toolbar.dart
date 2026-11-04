@@ -129,31 +129,36 @@ class _AdminListToolbarState<T> extends State<AdminListToolbar<T>> {
   }
 
   Widget _searchField({bool autofocus = false}) {
+    // The hint vanishes once there is text: keep "Search" as the field's
+    // accessible name for screen readers (and tests) at all times.
     return SizedBox(
       height: 40,
-      child: TextField(
-        key: Key('search-${widget.entity}'),
-        controller: _search,
-        focusNode: widget.searchFocus,
-        autofocus: autofocus,
-        onChanged: _c.search,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: _s.search,
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-          prefixIcon: const Icon(Icons.search, size: 20),
-          suffixIcon: _search.text.isEmpty
-              ? null
-              : IconButton(
-                  key: Key('search-${widget.entity}-clear'),
-                  tooltip: _s.clearSearch,
-                  icon: const Icon(Icons.close, size: 18),
-                  onPressed: () {
-                    _search.clear();
-                    _c.search('');
-                  },
-                ),
+      child: Semantics(
+        label: _s.search,
+        child: TextField(
+          key: Key('search-${widget.entity}'),
+          controller: _search,
+          focusNode: widget.searchFocus,
+          autofocus: autofocus,
+          onChanged: _c.search,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: _s.search,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            prefixIcon: const Icon(Icons.search, size: 20),
+            suffixIcon: _search.text.isEmpty
+                ? null
+                : IconButton(
+                    key: Key('search-${widget.entity}-clear'),
+                    tooltip: _s.clearSearch,
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () {
+                      _search.clear();
+                      _c.search('');
+                    },
+                  ),
+          ),
         ),
       ),
     );

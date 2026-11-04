@@ -10,13 +10,16 @@ import {
 } from '../../domain/ports/repository.ports';
 import { RequestRef } from '../../domain/requests/request-transitions';
 import { ServiceRequestEntry } from '../../domain/requests/service-requests';
+import { requestUsageType } from '../../domain/tasks/task-sources';
+import { sourceTaskId, Task } from '../../domain/tasks/task.models';
+import { TaskAutomation } from '../tasks/task-automation.service';
 import { RequestListQueryDto, TransitionRequestDto } from './request.dto';
 
-/** Wire shape: the queue entry plus `id`. */
-export type RequestView = ServiceRequestEntry & { id: string };
+/** Wire shape: the queue entry plus `id` and the id of its (possible) task. */
+export type RequestView = ServiceRequestEntry & { id: string; taskId: string };
 
 const REQUEST_LIST_SPEC = {
-  sortable: ['at'],
+  sortable: ['at', 'queue'],
   defaultSort: { field: 'at', direction: 'asc' as const },
 };
 
@@ -26,16 +29,17 @@ function nextDay(isoDate: string): string {
 }
 
 function toView(entry: ServiceRequestEntry): RequestView {
-  return { id: entry.requestId, ...entry };
+  return { id: entry.requestId, ...entry, taskId: sourceTaskId(requestUsageType(entry), entry.requestId) };
 }
 
-/** Section request queues: guest bookings and orders, paged in Firestore, moved by staff. */
+/** Section request queues and the Requests inbox: guest bookings, orders and preferences, paged in Firestore, moved by staff. */
 @Injectable()
 export class RequestsService {
   constructor(
     @Inject(SERVICE_REQUEST_REPOSITORY_PORT) private readonly requests: ServiceRequestRepositoryPort,
     @Inject(STAY_REPOSITORY_PORT) private readonly stays: StayRepositoryPort,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+    private readonly automation: TaskAutomation,
   ) {}
 
   async list(dto: RequestListQueryDto): Promise<PaginatedResult<RequestView>> {
@@ -44,6 +48,8 @@ export class RequestsService {
     const page = await this.requests.page({
       section: dto.section,
       status: dto.status,
+      usageType: dto.usageType,
+      field: query.sort.field === 'queue' ? 'queue' : 'at',
       fromAt: dto.from,
       toAtExclusive: dto.to ? nextDay(dto.to) : undefined,
       q: query.q,
@@ -58,7 +64,12 @@ export class RequestsService {
     return toView(await this.require(requestId));
   }
 
-  async transition(requestId: string, dto: TransitionRequestDto): Promise<RequestView> {
+  /** The request's task, created from the request when it has none. */
+  ensureTask(requestId: string, actor: string): Promise<Task> {
+    return this.automation.ensureForRequest(requestId, actor);
+  }
+
+  async transition(requestId: string, dto: TransitionRequestDto, actor = 'staff'): Promise<RequestView> {
     const entry = await this.require(requestId);
     const ref: RequestRef =
       entry.kind === 'BOOKING' ? { kind: 'BOOKING', id: entry.requestId } : { kind: 'ORDER', id: entry.serviceId };
@@ -67,6 +78,7 @@ export class RequestsService {
       reason: dto.reason,
       at: this.clock.now().toISOString(),
     });
+    if (dto.action === 'CANCEL') await this.automation.cancelForRequest(entry, dto.reason ?? '', actor);
     return this.get(requestId);
   }
 

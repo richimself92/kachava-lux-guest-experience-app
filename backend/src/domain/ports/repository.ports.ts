@@ -20,7 +20,7 @@ import { ResortSettings, TransportProvider, Villa } from '../models/resort-confi
 import { Trip, TripStatus } from '../trips/trip.models';
 import { Task, TaskPriority, TaskStatus } from '../tasks/task.models';
 import { ServiceSection } from '../catalog/catalog.models';
-import { RequestStatusFilter, ServiceRequestEntry } from '../requests/service-requests';
+import { RequestStatusFilter, RequestUsageType, ServiceRequestEntry } from '../requests/service-requests';
 import { RequestMove, RequestRef } from '../requests/request-transitions';
 
 export const STAY_REPOSITORY_PORT = Symbol('STAY_REPOSITORY_PORT');
@@ -93,6 +93,9 @@ export type StaffRosterRepositoryPort = EntityRepositoryPort<StaffMember>;
 export interface ServiceRequestPageQuery {
   section?: ServiceSection;
   status?: RequestStatusFilter;
+  usageType?: RequestUsageType;
+  /** `at` (default) or `queue`: rank first (new, in progress, closed), then when it was asked. */
+  field?: 'at' | 'queue';
   fromAt?: string;
   toAtExclusive?: string;
   /** Normalised guest or service name prefix. */
@@ -146,6 +149,11 @@ export interface StayRepositoryPort {
   listUnreadConversations(): Promise<StayAggregate[]>;
   /** Stays whose check-in date is `date` (bounded read). */
   listStaysCheckingInOn(date: string): Promise<StayAggregate[]>;
+  /**
+   * Open stays (pre-arrival, in-house) whose checkOutDate is after `date`, optionally of one villa
+   * (indexed query on status + [villaId +] checkOutDate; bounded read).
+   */
+  listOpenStaysEndingAfter(date: string, villaId?: string): Promise<StayAggregate[]>;
   hasStaysForVilla(villaId: string): Promise<boolean>;
   /** Creates the stay and, in the same transaction, its alert. */
   createStay(stay: StayAggregate, alert?: OperationalAlert | null): Promise<StayAggregate>;
@@ -292,6 +300,8 @@ export interface TaskPageQuery {
   priority?: TaskPriority;
   ownerStaffId?: string;
   villaId?: string;
+  /** Only tasks whose `source.type` is one of these. */
+  sourceTypes?: readonly string[];
   /** Only open tasks whose `dueAt` is before this instant (UTC ISO). */
   overdueBefore?: string;
   /** Normalised search text (title, guest or villa word prefix). */

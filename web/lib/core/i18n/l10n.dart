@@ -207,7 +207,8 @@ class L10n {
         FormIssue.required => _t('Required', 'Obligatorio'),
         FormIssue.invalidTime => _t('Use HH:MM', 'Usa HH:MM'),
         FormIssue.pastTime => _t('Must be in the future', 'Debe ser futura'),
-        FormIssue.tooSoon => _t('Too soon to book', 'Muy pronto'),
+        FormIssue.tooSoon => _t('Too soon — ask your Resort Host',
+            'Muy pronto: pídelo a tu Resort Host'),
         FormIssue.dayUnavailable =>
           _t('Day not available', 'Día no disponible'),
         FormIssue.notServed =>
@@ -255,10 +256,20 @@ class L10n {
   String get requestCancelled => _t('Request cancelled', 'Solicitud cancelada');
   String get requestChanged => _t('Request changed', 'Solicitud cambiada');
 
+  String ordered(String when) => _t('Ordered $when', 'Pedido $when');
+  String flight(String number) => _t('Flight $number', 'Vuelo $number');
+  String driverLine(String name) => _t('Driver $name', 'Chofer $name');
+  String get driver => _t('Driver', 'Chofer');
+  String callDriver(String name) => _t('Call $name', 'Llamar a $name');
+  String get cancelledByYou => _t('Cancelled by you', 'Cancelada por ti');
+  String get route => _t('Route', 'Ruta');
+  String bagsCount(int n) => _t('$n bags', '$n maletas');
+
   String status(RequestStatus s) => switch (s) {
         RequestStatus.received => _t('Received', 'Recibida'),
+        RequestStatus.arranging => _t('Arranging', 'Gestionando'),
         RequestStatus.confirmed => _t('Confirmed', 'Confirmada'),
-        RequestStatus.preparing => _t('Preparing', 'En preparación'),
+        RequestStatus.preparing => _t('In progress', 'En curso'),
         RequestStatus.onTheWay => _t('On the way', 'En camino'),
         RequestStatus.done => _t('Done', 'Lista'),
         RequestStatus.cancelled => _t('Cancelled', 'Cancelada'),
@@ -306,6 +317,13 @@ class L10n {
   String date(DateTime day) => es
       ? '${day.day} ${_monthsEs[day.month - 1]}'
       : '${_monthsEn[day.month - 1]} ${day.day}';
+
+  static const _weekdaysEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _weekdaysEs = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+
+  /// "Thu Nov 6" / "jue 6 nov" for a resort calendar day.
+  String dayDate(DateTime day) =>
+      '${(es ? _weekdaysEs : _weekdaysEn)[day.weekday - 1]} ${date(day)}';
 
   /// "7 PM" / "19:00" style is kept as 24h HH:mm in both languages.
   String clock(DateTime wall) =>

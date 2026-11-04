@@ -37,6 +37,7 @@ class AdminListScreen<T> extends StatefulWidget {
     this.info,
     this.compactSubtitle,
     this.compactTrailing,
+    this.compactContent,
     this.filters = const [],
     this.primaryActionLabel,
     this.onPrimaryAction,
@@ -59,6 +60,9 @@ class AdminListScreen<T> extends StatefulWidget {
   final String Function(T item) compactTitle;
   final String Function(T item)? compactSubtitle;
   final Widget? Function(T item)? compactTrailing;
+
+  /// Custom compact row body (replaces title + subtitle).
+  final Widget Function(T item)? compactContent;
   final List<AdminListFilter> filters;
 
   /// One short line, e.g. "No villas yet".
@@ -376,6 +380,7 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>>
         title: widget.compactTitle,
         subtitle: widget.compactSubtitle,
         trailing: widget.compactTrailing,
+        content: widget.compactContent,
         onTap: _rowTap,
       );
 

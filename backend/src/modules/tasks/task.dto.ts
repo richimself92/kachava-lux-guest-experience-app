@@ -31,6 +31,10 @@ export class TaskListQueryDto extends ListQueryDto {
   @IsOptional() @IsString() @MaxLength(ID_MAX)
   villaId?: string;
 
+  /** GUEST = tasks of guest requests (orders, bookings, preferences, trips); INTERNAL = staff-made. */
+  @IsOptional() @IsIn(['GUEST', 'INTERNAL'])
+  origin?: 'GUEST' | 'INTERNAL';
+
   /** Only `true` is a filter (open and past due now). */
   @IsOptional() @QueryBoolean() @IsIn([true], { message: 'overdue only accepts true' })
   overdue?: boolean;

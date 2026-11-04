@@ -19,6 +19,10 @@ abstract interface class AdminSettingsRepository {
 /// `capacity`, `operationalStatus`.
 abstract interface class VillaRepository {
   Future<PagedResult<AdminVilla>> list(ListQuery query);
+
+  /// In-service villas with no open stay on the nights `checkIn`..`checkOut`
+  /// (ISO dates, departure day free): `GET /admin/villas/available`.
+  Future<List<AdminVilla>> available(String checkIn, String checkOut);
   Future<AdminVilla> create(AdminVilla villa);
   Future<AdminVilla> update(AdminVilla villa);
 

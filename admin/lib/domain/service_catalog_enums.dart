@@ -67,7 +67,7 @@ enum ItemField {
 enum ServiceKind {
   bar('BAR', 'bar', ServiceSection.dining, UsageType.order,
       {ItemField.category, ItemField.tags}),
-  breakfast('BREAKFAST', 'dining', ServiceSection.dining, UsageType.order,
+  breakfast('BREAKFAST', 'dining', ServiceSection.dining, UsageType.booking,
       {ItemField.category, ItemField.dietaryTags, ItemField.allergens}),
   specialMenu(
       'SPECIAL_MENU', 'dining', ServiceSection.dining, UsageType.booking, {
