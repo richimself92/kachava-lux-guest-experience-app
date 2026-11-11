@@ -1,15 +1,38 @@
 import 'package:flutter/material.dart';
-import '../../application/admin_dashboard_controller.dart';
+import '../../application/admin_shell_controller.dart';
+import '../../application/notification_bell_controller.dart';
 import '../../core/admin_i18n.dart';
+import '../../core/ops_strings.dart';
 import '../../core/admin_theme.dart';
 import '../../core/responsive_breakpoints.dart';
 import '../../domain/admin_enums.dart';
+import '../components/focus_ring.dart';
+import 'admin_refresh_button.dart';
 
-/// Sticky 64px Top Command Bar with Global Search, Quick Filter Chips, Test 10s Sound, EN|ES Toggle & Alert Bell.
+/// White 64px top bar: page title, EN|ES toggle, Refresh, alert bell and
+/// the Settings gear. No global search or filters: each list has its own toolbar.
+/// Mobile adds the drawer menu button.
 class TopCommandBar extends StatelessWidget {
-  const TopCommandBar({super.key, required this.controller});
+  static const TextTheme _text = KachavaAdminTheme.textTheme;
 
-  final AdminDashboardController controller;
+  const TopCommandBar({
+    super.key,
+    required this.controller,
+    required this.bell,
+    this.showMenuButton = false,
+    this.onRefresh,
+  });
+
+  final AdminShellController controller;
+
+  /// Unread notification counters (refreshed by real-time signals).
+  final NotificationBellController bell;
+
+  /// Shows the menu button that opens the mobile navigation drawer.
+  final bool showMenuButton;
+
+  /// Refreshes the bell and every open screen (shows the Refresh button).
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -17,26 +40,34 @@ class TopCommandBar extends StatelessWidget {
       height: AdminBreakpoints.topBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        color: KachavaAdminColors.surfacePaper,
-        border: Border(
-            bottom: BorderSide(color: KachavaAdminColors.borderLimestone)),
+        color: KachavaTokens.background,
+        border: Border(bottom: BorderSide(color: KachavaTokens.border)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 760;
-          final searchWidth = isCompact ? 44.0 : 185.0;
-          final gap = isCompact ? 2.0 : 6.0;
+          final gap = isCompact ? 2.0 : 8.0;
           return Row(
             children: [
-              _buildSearchField(searchWidth),
-              SizedBox(width: gap),
-              Expanded(child: _buildQuickFiltersStrip()),
-              SizedBox(width: gap),
-              _buildTestSoundButton(isCompact),
+              if (showMenuButton)
+                IconButton(
+                  key: const Key('mobile-nav-menu-button'),
+                  tooltip: AdminI18n.tr(controller.isEs, 'Menu', 'Menú'),
+                  icon: const Icon(Icons.menu, color: KachavaTokens.text),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              Expanded(child: _buildTitle()),
               SizedBox(width: gap),
               _buildLocaleToggleButton(isCompact),
               SizedBox(width: gap),
-              _buildNotificationBell(isCompact),
+              if (onRefresh != null)
+                AdminRefreshButton(
+                    onRefresh: onRefresh!, isEs: controller.isEs),
+              ListenableBuilder(
+                listenable: bell,
+                builder: (context, _) => _buildNotificationBell(isCompact),
+              ),
+              _buildSettingsButton(),
             ],
           );
         },
@@ -44,162 +75,80 @@ class TopCommandBar extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchField(double width) {
-    return SizedBox(
-      width: width,
-      height: 36,
-      child: TextField(
-        key: const Key('global-search-input'),
-        onChanged: controller.setSearchQuery,
-        decoration: InputDecoration(
-          hintText: AdminI18n.searchHint(controller.isEs),
-          hintStyle: const TextStyle(fontSize: 12),
-          prefixIcon: const Icon(Icons.search, size: 15),
-          filled: true,
-          fillColor: KachavaAdminColors.surfaceContainer,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(999),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        style: const TextStyle(fontSize: 12),
+  Widget _buildSettingsButton() {
+    final selected = controller.activeTab == AdminWorkspaceTab.adminSettings;
+    return IconButton(
+      key: const Key('top-bar-settings'),
+      tooltip:
+          AdminI18n.tabLabel(AdminWorkspaceTab.adminSettings, controller.isEs),
+      isSelected: selected,
+      style: IconButton.styleFrom(
+        fixedSize: const Size(48, 48),
+        backgroundColor: selected ? KachavaTokens.surface : null,
       ),
+      icon: const Icon(Icons.settings_outlined, color: KachavaTokens.text),
+      onPressed: () => controller.selectTab(AdminWorkspaceTab.adminSettings),
     );
   }
 
-  Widget _buildQuickFiltersStrip() {
-    final isEs = controller.isEs;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildFilterChip(
-            key: const Key('quick-filter-all-villas'),
-            label: AdminI18n.allVillas(isEs),
-            selected: controller.villaFilter == 'All Villas' &&
-                !controller.urgentOnly &&
-                controller.lifecycleFilter == null,
-            onTap: () => controller.setQuickFilter(
-                villa: 'All Villas', urgentOnly: false, clearLifecycle: true),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-urgent-only'),
-            label: AdminI18n.urgentOnly(isEs),
-            selected: controller.urgentOnly,
-            onTap: () =>
-                controller.toggleUrgentOnlyFilter(!controller.urgentOnly),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-active-stay'),
-            label: AdminI18n.activeStay(isEs),
-            selected:
-                controller.lifecycleFilter == StayLifecycleStatus.activeStay,
-            onTap: () => controller.setQuickFilter(
-                lifecycle: StayLifecycleStatus.activeStay),
-          ),
-          _buildFilterChip(
-            key: const Key('quick-filter-pre-arrival'),
-            label: AdminI18n.preArrival(isEs),
-            selected:
-                controller.lifecycleFilter == StayLifecycleStatus.preArrival,
-            onTap: () => controller.setQuickFilter(
-                lifecycle: StayLifecycleStatus.preArrival),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required Key key,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: InkWell(
-        key: key,
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? KachavaAdminColors.zapotePrimary
-                : KachavaAdminColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: selected
-                  ? KachavaAdminColors.zapotePrimary
-                  : KachavaAdminColors.borderLimestone,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : KachavaAdminColors.obsidian,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionPill({
-    required Key key,
-    required String label,
-    required bool isCompact,
-    required VoidCallback onTap,
-    Color bgColor = KachavaAdminColors.surfaceContainer,
-    Color borderColor = KachavaAdminColors.borderLimestone,
-    Color fgColor = KachavaAdminColors.obsidian,
-  }) {
-    return InkWell(
-      key: key,
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding:
-            EdgeInsets.symmetric(horizontal: isCompact ? 5 : 9, vertical: 6),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor),
-        ),
+  Widget _buildTitle() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
         child: Text(
-          label,
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: fgColor),
+          AdminI18n.tabLabel(controller.activeTab, controller.isEs),
+          key: const Key('top-bar-page-title'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+              fontSize: 20,
+              height: 28 / 20,
+              fontWeight: FontWeight.w500,
+              color: KachavaTokens.text),
         ),
       ),
     );
   }
 
-  Widget _buildTestSoundButton(bool isCompact) {
-    final isEs = controller.isEs, ringing = controller.isChimeRinging;
-    final label = isCompact
-        ? (ringing ? '🔇' : '🔔')
-        : (ringing
-            ? (isEs ? '🔇 Silenciar' : '🔇 Mute 10s')
-            : (isEs ? '🔔 Probar 10s' : '🔔 Test 10s'));
-    return _buildActionPill(
-      key: const Key('test-alert-sound-btn'),
-      label: label,
-      isCompact: isCompact,
-      bgColor: ringing
-          ? KachavaAdminColors.copalGold
-          : KachavaAdminColors.surfaceContainer,
-      borderColor: ringing
-          ? KachavaAdminColors.obsidian
-          : KachavaAdminColors.borderLimestone,
-      fgColor: ringing
-          ? KachavaAdminColors.obsidian
-          : KachavaAdminColors.zapotePrimary,
-      onTap: controller.triggerTestAlertSound,
+  /// Neutral gray pill (or [background]).
+  ///
+  /// The visible pill stays compact, but its tap target is at least 48dp
+  /// (DESIGN.md) and keyboard focus draws the shared [FocusRing].
+  Widget _pill({
+    required Key key,
+    required Widget child,
+    required VoidCallback onTap,
+    Color? background,
+    EdgeInsets padding =
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  }) {
+    final radius = BorderRadius.circular(KachavaTokens.radiusPill);
+    return FocusRing(
+      borderRadius: KachavaTokens.radiusPill,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: key,
+          borderRadius: radius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Ink(
+                padding: padding,
+                decoration: BoxDecoration(
+                  color: background ?? KachavaTokens.surface,
+                  borderRadius: radius,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -208,24 +157,16 @@ class TopCommandBar extends StatelessWidget {
     return Semantics(
       button: true,
       label: isEs ? 'ES | EN' : 'EN | ES',
-      child: InkWell(
+      child: _pill(
         key: const Key('admin-locale-toggle-btn'),
+        padding: const EdgeInsets.all(2),
         onTap: controller.toggleLocale,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: KachavaAdminColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: KachavaAdminColors.borderLimestone),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildLocaleSegment(!isEs ? '✓ EN' : 'EN', !isEs, isCompact),
-              _buildLocaleSegment(isEs ? '✓ ES' : 'ES', isEs, isCompact),
-            ],
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLocaleSegment(!isEs ? '✓ EN' : 'EN', !isEs, isCompact),
+            _buildLocaleSegment(isEs ? '✓ ES' : 'ES', isEs, isCompact),
+          ],
         ),
       ),
     );
@@ -233,52 +174,52 @@ class TopCommandBar extends StatelessWidget {
 
   Widget _buildLocaleSegment(String label, bool active, bool isCompact) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isCompact ? 5 : 7, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 5 : 8, vertical: 4),
       decoration: BoxDecoration(
-        color: active ? KachavaAdminColors.zapotePrimary : Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
+        color: active ? KachavaTokens.background : Colors.transparent,
+        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: isCompact ? 10 : 11,
-          fontWeight: FontWeight.w700,
-          color: active ? Colors.white : KachavaAdminColors.mutedBronze,
+        style: _text.labelMedium?.copyWith(
+          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          color: active ? KachavaTokens.text : KachavaTokens.textSecondary,
         ),
       ),
     );
   }
 
   Widget _buildNotificationBell(bool isCompact) {
-    final unread = controller.unreadAlertsCount;
+    final unread = bell.unread;
+    final tone = bell.counts.urgentUnread > 0
+        ? StatusTone.error
+        : unread > 0
+            ? StatusTone.warning
+            : StatusTone.neutral;
+    final label = '${OpsStrings(controller.isEs).bellLabelPrefix}: $unread';
     return Semantics(
       button: true,
-      label: 'Unread operational alerts: $unread',
-      child: InkWell(
-        key: const Key('top-bar-alert-bell'),
-        onTap: () => controller.selectTab(AdminWorkspaceTab.adminOverview),
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
+      label: label,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: _pill(
+          key: const Key('top-bar-alert-bell'),
+          background: tone.background,
           padding:
-              EdgeInsets.symmetric(horizontal: isCompact ? 6 : 9, vertical: 6),
-          decoration: BoxDecoration(
-            color: KachavaAdminColors.criticalAllergySla.background,
-            borderRadius: BorderRadius.circular(999),
-            border:
-                Border.all(color: KachavaAdminColors.criticalAllergySla.border),
-          ),
+              EdgeInsets.symmetric(horizontal: isCompact ? 6 : 10, vertical: 6),
+          onTap: () =>
+              controller.selectTab(AdminWorkspaceTab.adminNotifications),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.notifications_active,
-                  size: 14, color: Color(0xFF93000A)),
-              const SizedBox(width: 3),
+              Icon(Icons.notifications_none, size: 16, color: tone.foreground),
+              const SizedBox(width: 4),
               Text(
                 '$unread',
                 key: const Key('unread-alerts-badge'),
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF93000A)),
+                style: _text.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700, color: tone.foreground),
               ),
             ],
           ),

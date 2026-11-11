@@ -1,19 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
-import * as admin from 'firebase-admin';
+import { BadRequestException } from '@nestjs/common';
 import {
+  SignedPhotoUpload,
   SignedUrlResult,
   StorageSignerPort,
 } from '../../domain/ports/repository.ports';
-import { DEFAULT_STORAGE_BUCKET } from '../firebase/firebase-admin.module';
+import { ObjectUrlSigner } from './object-url-signer';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+export const MAX_CONCIERGE_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
 
-@Injectable()
+/** Issues signed URLs for private concierge photos (`private/stays/{stayId}/concierge/...`). */
 export class FirebaseStorageSignerAdapter implements StorageSignerPort {
-  private readonly bucketName =
-    process.env.FIREBASE_STORAGE_BUCKET || DEFAULT_STORAGE_BUCKET;
+  constructor(private readonly signer: ObjectUrlSigner) {}
 
   async generateSignedPutUrl(params: {
     stayId: string;
@@ -21,74 +20,30 @@ export class FirebaseStorageSignerAdapter implements StorageSignerPort {
     fileName: string;
     contentType: string;
     fileSizeBytes: number;
-  }): Promise<SignedUrlResult> {
+  }): Promise<SignedPhotoUpload> {
     this.validateUploadConstraints(params.contentType, params.fileSizeBytes);
     const sanitizedName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storagePath = `/private/stays/${params.stayId}/concierge/${params.requestId}/${sanitizedName}`;
-    const expiresAtDate = new Date(Date.now() + 15 * 60 * 1000);
-
-    if (this.isCloudStorageActive()) {
-      try {
-        const bucket = admin.storage().bucket(this.bucketName);
-        const file = bucket.file(storagePath.replace(/^\//, ''));
-        const [uploadUrl] = await file.getSignedUrl({
-          version: 'v4',
-          action: 'write',
-          expires: expiresAtDate,
-          contentType: params.contentType,
-        });
-        return {
-          uploadUrl,
-          storagePath,
-          expiresAt: expiresAtDate.toISOString(),
-          contentType: params.contentType,
-        };
-      } catch {
-        // Fallback to deterministic local V4 signature if local ADC lacks serviceAccount iam.serviceAccounts.signBlob
-      }
-    }
-
-    const signature = this.computeDeterministicSignature('PUT', storagePath, expiresAtDate);
-    const uploadUrl = `https://storage.googleapis.com/${this.bucketName}${storagePath}?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Expires=900&X-Goog-Signature=${signature}`;
+    const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_MS);
+    const upload = await this.signer.signWrite(storagePath, params.contentType, expiresAt, MAX_CONCIERGE_UPLOAD_BYTES);
     return {
-      uploadUrl,
+      uploadUrl: upload.url,
+      method: upload.method,
+      headers: upload.headers,
       storagePath,
-      expiresAt: expiresAtDate.toISOString(),
-      contentType: params.contentType,
+      expiresAt: expiresAt.toISOString(),
+      maxBytes: MAX_CONCIERGE_UPLOAD_BYTES,
     };
   }
 
   async generateSignedGetUrl(storagePath: string): Promise<SignedUrlResult> {
-    const normalizedPath = storagePath.startsWith('/')
-      ? storagePath
-      : `/${storagePath}`;
-    const expiresAtDate = new Date(Date.now() + 15 * 60 * 1000);
-
-    if (this.isCloudStorageActive()) {
-      try {
-        const bucket = admin.storage().bucket(this.bucketName);
-        const file = bucket.file(normalizedPath.replace(/^\//, ''));
-        const [downloadUrl] = await file.getSignedUrl({
-          version: 'v4',
-          action: 'read',
-          expires: expiresAtDate,
-        });
-        return {
-          downloadUrl,
-          storagePath: normalizedPath,
-          expiresAt: expiresAtDate.toISOString(),
-        };
-      } catch {
-        // Fallback to deterministic local V4 signature if local ADC lacks signBlob permission
-      }
-    }
-
-    const signature = this.computeDeterministicSignature('GET', normalizedPath, expiresAtDate);
-    const downloadUrl = `https://storage.googleapis.com/${this.bucketName}${normalizedPath}?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Expires=900&X-Goog-Signature=${signature}`;
+    const normalizedPath = storagePath.startsWith('/') ? storagePath : `/${storagePath}`;
+    const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_MS);
+    const downloadUrl = await this.signer.signRead(normalizedPath, expiresAt);
     return {
       downloadUrl,
       storagePath: normalizedPath,
-      expiresAt: expiresAtDate.toISOString(),
+      expiresAt: expiresAt.toISOString(),
     };
   }
 
@@ -98,31 +53,10 @@ export class FirebaseStorageSignerAdapter implements StorageSignerPort {
         `Invalid MIME type "${contentType}". Allowed types: image/jpeg, image/png, image/webp.`,
       );
     }
-    if (!Number.isFinite(fileSizeBytes) || fileSizeBytes <= 0 || fileSizeBytes > MAX_UPLOAD_BYTES) {
+    if (!Number.isFinite(fileSizeBytes) || fileSizeBytes <= 0 || fileSizeBytes > MAX_CONCIERGE_UPLOAD_BYTES) {
       throw new BadRequestException(
         `Invalid file size (${fileSizeBytes} bytes). File must be between 1 byte and 10MB.`,
       );
     }
-  }
-
-  private isCloudStorageActive(): boolean {
-    return Boolean(
-      process.env.NODE_ENV !== 'test' &&
-        (process.env.USE_FIRESTORE === 'true' ||
-          process.env.USE_GCP_FIRESTORE === 'true') &&
-        admin.apps.length > 0,
-    );
-  }
-
-  private computeDeterministicSignature(
-    method: 'PUT' | 'GET',
-    path: string,
-    expiresAt: Date,
-  ): string {
-    const secret = process.env.STORAGE_SIGNING_SECRET || 'kachava-v4-dev-signer';
-    return crypto
-      .createHmac('sha256', secret)
-      .update(`${method}:${path}:${expiresAt.getTime()}`)
-      .digest('hex');
   }
 }

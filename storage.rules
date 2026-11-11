@@ -7,6 +7,13 @@ service firebase.storage {
       allow write: if false; // Uploaded via Admin SDK / CI deployment pipeline only
     }
 
+    // Admin-managed catalog photography (services and items): public read so the guest portal
+    // can show it; uploads only through V4 signed URLs issued by POST /api/v1/admin/uploads/sign.
+    match /catalog/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Private guest concierge attachments: zero direct client SDK access;
     // Guest uploads use V4 Signed PUT URLs (GuestTokenGuard) and Admin inspections use V4 Signed GET URLs (AdminAuthGuard)
     match /private/stays/{stayId}/concierge/{requestId}/{fileName} {

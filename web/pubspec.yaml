@@ -1,5 +1,5 @@
 name: kachava_guest_portal
-description: Kachava Lux Digital Sanctuary Guest Experience Portal (Villa 102 — Ceiba Suite).
+description: Kachava Lux guest portal (Flutter Web PWA).
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -7,9 +7,14 @@ environment:
   sdk: '>=3.4.0 <4.0.0'
 
 dependencies:
+  cloud_firestore: ^7.1.0
+  firebase_core: ^5.1.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   http: ^1.2.2
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

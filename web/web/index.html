@@ -4,24 +4,117 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#F7F3EA">
-  <meta name="description" content="Kachava Lux — Villa 102 (Ceiba Suite) Digital Sanctuary Guest Portal">
+  <meta name="description" content="Kachava Lux — Digital Sanctuary Guest Portal">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Kachava Lux">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Kachava Lux · Sanctuary Guest Portal</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="alternate icon" href="favicon.svg">
-  <link rel="apple-touch-icon" href="favicon.svg">
-  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/kachava-icon-192-v2.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/kachava-apple-touch-180-v2.png">
+  <link id="kachava-manifest" rel="manifest" href="manifest.json">
+  <script>
+    // Guest link persistence: the installed app must reopen as the same guest.
+    // Keep the manifest fields below in sync with manifest.json.
+    (function() {
+      var KEY = 'kachava_guest_id';
+      var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      function valid(id) { return typeof id === 'string' && UUID.test(id.trim()); }
+      try {
+        var origin = window.location.origin;
+        var fromUrl = new URLSearchParams(window.location.search).get('guestId');
+        var stored = null;
+        try { stored = localStorage.getItem(KEY); } catch (e) {}
+        var guestId = valid(fromUrl) ? fromUrl.trim().toLowerCase()
+          : (!fromUrl && valid(stored) ? stored.trim().toLowerCase() : null);
+        if (!guestId) return;
+        if (!fromUrl) {
+          history.replaceState(history.state, '', '/?guestId=' + encodeURIComponent(guestId));
+        }
+        var icon = function(name, sizes, purpose) {
+          return { src: origin + '/icons/' + name, sizes: sizes, type: 'image/png', purpose: purpose };
+        };
+        var manifest = {
+          id: origin + '/',
+          name: 'Kachava Lux · Guest Portal',
+          short_name: 'Kachava Lux',
+          description: 'Kachava Lux — Digital Sanctuary Guest Portal',
+          start_url: origin + '/?guestId=' + encodeURIComponent(guestId),
+          scope: origin + '/',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          background_color: '#F7F3EA',
+          theme_color: '#F7F3EA',
+          prefer_related_applications: false,
+          icons: [
+            icon('kachava-icon-192-v2.png', '192x192', 'any'),
+            icon('kachava-icon-512-v2.png', '512x512', 'any'),
+            icon('kachava-maskable-512-v2.png', '512x512', 'maskable')
+          ]
+        };
+        var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+        var link = document.getElementById('kachava-manifest');
+        var dynamic = document.createElement('link');
+        dynamic.id = 'kachava-manifest';
+        dynamic.rel = 'manifest';
+        dynamic.href = URL.createObjectURL(blob);
+        link.parentNode.replaceChild(dynamic, link);
+      } catch (e) {}
+    })();
+
+    // Install prompt bridge read by the Dart InstallPromptPort.
+    (function() {
+      window.kachavaInstall = {
+        deferred: null,
+        isStandalone: function() {
+          return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+            window.navigator.standalone === true;
+        },
+        isIos: function() {
+          var ua = window.navigator.userAgent || '';
+          return /iPhone|iPad|iPod/.test(ua) ||
+            (ua.indexOf('Macintosh') >= 0 && window.navigator.maxTouchPoints > 1);
+        },
+        canPrompt: function() { return window.kachavaInstall.deferred !== null; },
+        prompt: function() {
+          var ev = window.kachavaInstall.deferred;
+          window.kachavaInstall.deferred = null;
+          if (!ev) return Promise.resolve('unavailable');
+          ev.prompt();
+          return ev.userChoice.then(function(c) { return c.outcome; }, function() { return 'dismissed'; });
+        }
+      };
+      window.addEventListener('beforeinstallprompt', function(ev) {
+        ev.preventDefault();
+        window.kachavaInstall.deferred = ev;
+        window.dispatchEvent(new Event('kachava-install-changed'));
+      });
+      window.addEventListener('appinstalled', function() {
+        window.kachavaInstall.deferred = null;
+        window.dispatchEvent(new Event('kachava-install-changed'));
+      });
+    })();
+  </script>
 </head>
 <body style="background-color: #F7F3EA; margin: 0;">
   <script>
     (function() {
-      var VERSION = '20261019c';
+      var VERSION = '20261102a';
+      var APP_SW = '/sw.js';
       try {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(regs) {
-            for (var i = 0; i < regs.length; i++) { regs[i].unregister(); }
-          });
+            for (var i = 0; i < regs.length; i++) {
+              var w = regs[i].active || regs[i].waiting || regs[i].installing;
+              var url = w ? new URL(w.scriptURL).pathname : '';
+              if (url !== APP_SW) { regs[i].unregister(); }
+            }
+          }).then(function() {
+            return navigator.serviceWorker.register(APP_SW, { scope: '/' });
+          }).catch(function() {});
         }
         if ('caches' in window && localStorage.getItem('kachava_sw_ver') !== VERSION) {
           caches.keys().then(function(names) {
@@ -34,6 +127,6 @@
       } catch (e) {}
     })();
   </script>
-  <script src="flutter_bootstrap.js?v=20261019c" async></script>
+  <script src="flutter_bootstrap.js?v=20261102a" async></script>
 </body>
 </html>

@@ -1,24 +1,55 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../application/admin_dashboard_controller.dart';
+
+import '../application/admin_live_sync.dart';
+import '../application/admin_shell_controller.dart';
+import '../application/notification_bell_controller.dart';
+import '../application/resort_settings_controller.dart';
 import '../core/admin_i18n.dart';
-import '../core/admin_theme.dart';
+import '../core/ops_strings.dart';
 import '../core/responsive_breakpoints.dart';
+import '../core/resort_time.dart';
+import '../core/time_zone_catalog.dart';
+import '../core/theme/kachava_tokens.dart';
+import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_enums.dart';
+import 'admin_workspace_switcher.dart';
+import 'requests/guest_arrival_banner.dart';
 import 'widgets/admin_navigation_bars.dart';
-import 'widgets/slide_over_inspector_drawer.dart';
+import 'widgets/reconnecting_indicator.dart';
 import 'widgets/top_command_bar.dart';
-import 'workspaces/concierge_workspace.dart';
-import 'workspaces/experiences_workspace.dart';
-import 'workspaces/folio_workspace.dart';
-import 'workspaces/larder_workspace.dart';
-import 'workspaces/overview_workspace.dart';
-import 'workspaces/stays_workspace.dart';
 
-/// 3-Breakpoint Responsive Browser & Mobile-Adaptive Command Shell.
+/// Responsive shell: sidebar (desktop), icon rail (tablet), drawer (mobile),
+/// the top bar (title, EN/ES, bell, Settings) and the active workspace.
 class AdminCommandShell extends StatelessWidget {
-  const AdminCommandShell({super.key, required this.controller});
+  const AdminCommandShell({
+    super.key,
+    required this.controller,
+    required this.bell,
+    required this.resortSettings,
+    required this.villas,
+    required this.timeZones,
+    this.syncStatus,
+    this.zoneResolver,
+    this.onRefresh,
+  });
 
-  final AdminDashboardController controller;
+  final AdminShellController controller;
+  final NotificationBellController bell;
+
+  /// Shared resort settings (Settings screen + "Set up in Settings" links).
+  final ResortSettingsController resortSettings;
+  final VillaRepository villas;
+  final TimeZoneCatalog timeZones;
+
+  /// Bell sync health; unhealthy states show one small status line.
+  final ValueListenable<AdminSyncStatus>? syncStatus;
+
+  /// Resort wall time of the Settings zone (browser `Intl` by default).
+  final ZoneOffsetResolver? zoneResolver;
+
+  /// Top-bar Refresh: the bell and every open screen.
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +61,17 @@ class AdminCommandShell extends StatelessWidget {
           builder: (context, constraints) {
             final viewport = AdminBreakpoints.resolve(constraints.maxWidth);
             return Scaffold(
-              backgroundColor: KachavaAdminColors.canvasLow,
-              bottomNavigationBar: viewport == AdminViewportSize.mobile
-                  ? MobileCommandBottomNav(controller: controller)
+              drawer: viewport == AdminViewportSize.mobile
+                  ? AdminMobileNavDrawer(controller: controller)
                   : null,
               body: Column(
                 children: [
-                  if (controller.lastToastMessage != null)
-                    _buildToastBanner(controller.lastToastMessage!),
-                  Expanded(
-                    child: _buildViewportBody(viewport),
-                  ),
+                  if (syncStatus != null)
+                    ReconnectingIndicator(
+                        status: syncStatus!, isEs: controller.isEs),
+                  _UrgentBanner(controller: controller, bell: bell),
+                  GuestArrivalBanner(controller: controller, bell: bell),
+                  Expanded(child: _body(viewport)),
                 ],
               ),
             );
@@ -50,8 +81,7 @@ class AdminCommandShell extends StatelessWidget {
     );
   }
 
-  Widget _buildViewportBody(AdminViewportSize viewport) {
-    final selection = controller.inspectorSelection;
+  Widget _body(AdminViewportSize viewport) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -62,134 +92,80 @@ class AdminCommandShell extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              TopCommandBar(controller: controller),
+              TopCommandBar(
+                controller: controller,
+                bell: bell,
+                showMenuButton: viewport == AdminViewportSize.mobile,
+                onRefresh: onRefresh,
+              ),
               Expanded(
-                child: Stack(
-                  children: [
-                    _buildActiveWorkspace(),
-                    if (selection != null &&
-                        viewport != AdminViewportSize.desktop)
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxHeight: 380,
-                            maxWidth: 600,
-                          ),
-                          child: Material(
-                            elevation: 12,
-                            child: SingleChildScrollView(
-                              child: SlideOverInspectorDrawer(
-                                controller: controller,
-                                selection: selection,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                child: AdminWorkspaceSwitcher(
+                  controller: controller,
+                  bell: bell,
+                  resortSettings: resortSettings,
+                  villas: villas,
+                  timeZones: timeZones,
+                  zoneResolver: zoneResolver ?? createZoneOffsetResolver(),
                 ),
               ),
             ],
           ),
         ),
-        if (selection != null && viewport == AdminViewportSize.desktop)
-          SingleChildScrollView(
-            child: SlideOverInspectorDrawer(
-              controller: controller,
-              selection: selection,
-            ),
-          ),
       ],
     );
   }
+}
 
-  Widget _buildActiveWorkspace() {
-    switch (controller.activeTab) {
-      case AdminWorkspaceTab.adminOverview:
-        return OverviewWorkspace(controller: controller);
-      case AdminWorkspaceTab.adminStays:
-        return StaysWorkspace(controller: controller);
-      case AdminWorkspaceTab.adminExperiences:
-        return ExperiencesWorkspace(controller: controller);
-      case AdminWorkspaceTab.adminLarder:
-        return LarderWorkspace(controller: controller);
-      case AdminWorkspaceTab.adminConcierge:
-        return ConciergeWorkspace(controller: controller);
-      case AdminWorkspaceTab.adminFolio:
-        return FolioWorkspace(controller: controller);
-    }
-  }
+/// One dark line while a new URGENT notification rings: Open / Mute.
+class _UrgentBanner extends StatelessWidget {
+  const _UrgentBanner({required this.controller, required this.bell});
 
-  Widget _buildToastBanner(String message) {
-    final isEs = controller.isEs;
-    final ringing = controller.isChimeRinging;
-    final headerText = isEs
-        ? (ringing
-            ? 'ALERTA ENTRANTE · NUEVA ACTUALIZACIÓN (SONANDO 10S)'
-            : 'NOTIFICACIÓN DE OPERACIONES · HOST ADMIN')
-        : (ringing
-            ? 'INCOMING GUEST UPDATE · LIVE ALERT (10S CHIME ACTIVE)'
-            : 'OPERATIONS NOTIFICATION · HOST ADMIN');
-    return Container(
-      key: const Key('admin-toast-banner'),
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: KachavaAdminColors.obsidian,
-        border: Border.all(color: KachavaAdminColors.copalGold, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.notifications_active,
-            size: 18,
-            color: KachavaAdminColors.copalGold,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  headerText,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                    color: KachavaAdminColors.copalGold,
-                  ),
-                ),
-                SelectableText(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            key: const Key('dismiss-alert-chime-btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KachavaAdminColors.copalGold,
-              foregroundColor: KachavaAdminColors.obsidian,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            ),
-            onPressed: controller.dismissToastAndStopChime,
-            icon: const Icon(Icons.volume_off, size: 14),
-            label: Text(
-              isEs ? 'Silenciar / Cerrar' : 'Mute / Dismiss',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  final AdminShellController controller;
+  final NotificationBellController bell;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+        listenable: bell,
+        builder: (context, _) {
+          if (!bell.hasUrgentAlert) return const SizedBox.shrink();
+          final s = OpsStrings(controller.isEs);
+          const onDark = TextStyle(
+              fontSize: 14, height: 20 / 14, color: KachavaTokens.onPrimary);
+          final button =
+              TextButton.styleFrom(foregroundColor: KachavaTokens.onPrimary);
+          return Container(
+            key: const Key('admin-toast-banner'),
+            width: double.infinity,
+            color: KachavaTokens.text,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(children: [
+              const Icon(Icons.notifications_active_outlined,
+                  size: 18, color: KachavaTokens.onPrimary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(s.urgentArrived,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: onDark),
+              ),
+              TextButton(
+                key: const Key('urgent-banner-open'),
+                style: button,
+                onPressed: () {
+                  bell.silence();
+                  controller.selectTab(AdminWorkspaceTab.adminNotifications);
+                },
+                child: Text(s.open),
+              ),
+              TextButton.icon(
+                key: const Key('dismiss-alert-chime-btn'),
+                style: button,
+                onPressed: bell.silence,
+                icon: const Icon(Icons.volume_off_outlined, size: 18),
+                label: Text(s.mute),
+              ),
+            ]),
+          );
+        },
+      );
 }

@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "kavacha-app"
+    "default": "kavacha-app",
+    "lux": "kachava-lux-guest-experience"
   },
   "targets": {
     "kavacha-app": {
@@ -10,6 +11,16 @@
         ],
         "admin-dashboard": [
           "kavacha-app-admin-dashboard"
+        ]
+      }
+    },
+    "kachava-lux-guest-experience": {
+      "hosting": {
+        "guest-portal": [
+          "kachava-lux-guest-experience"
+        ],
+        "admin-dashboard": [
+          "kachava-lux-admin"
         ]
       }
     }

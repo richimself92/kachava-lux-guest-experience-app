@@ -8,6 +8,20 @@ ADMIN_SITE="kavacha-app-admin-dashboard"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# Empty Firebase keys silently disable real time; an empty staff email breaks admin sign-in.
+node -e '
+  const fs = require("fs");
+  const required = ["API_BASE_URL", "FIREBASE_API_KEY", "FIREBASE_APP_ID", "FIREBASE_PROJECT_ID",
+    "FIREBASE_MESSAGING_SENDER_ID", "FIRESTORE_DATABASE_ID"];
+  const check = (file, keys) => {
+    const config = JSON.parse(fs.readFileSync(file, "utf8"));
+    const missing = keys.filter((key) => !config[key]);
+    if (missing.length) throw new Error(`${file} is missing: ${missing.join(", ")}`);
+  };
+  check(process.argv[1] + "/web/config/prod.json", required);
+  check(process.argv[1] + "/admin/config/prod.json", [...required, "ADMIN_STAFF_EMAIL"]);
+' "${REPO_ROOT}"
+
 echo "==> [1/4] Ensuring Firebase Hosting sites exist in project ${PROJECT_ID}..."
 npx -y firebase-tools hosting:sites:create "${GUEST_SITE}" --project "${PROJECT_ID}" --non-interactive >/dev/null 2>&1 || true
 npx -y firebase-tools hosting:sites:create "${ADMIN_SITE}" --project "${PROJECT_ID}" --non-interactive >/dev/null 2>&1 || true

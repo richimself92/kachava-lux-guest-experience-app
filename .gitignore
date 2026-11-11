@@ -62,7 +62,7 @@ GoogleService-Info.plist
 .claude/
 .gemini/
 context/
-PLAN.md
+/PLAN.md
 logs/
 tmp/
 scratch/
@@ -77,3 +77,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.iml
+
+# Local Firebase emulator data (persisted between runs) and generated local secrets
+.local-data/
