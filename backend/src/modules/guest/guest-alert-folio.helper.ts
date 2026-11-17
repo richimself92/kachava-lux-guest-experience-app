@@ -1,61 +1,32 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import {
   AlertCategory,
   AlertSeverity,
   Department,
-  FolioItem,
-  FolioSummary,
+  OperationalAlert,
   StayAggregate,
 } from '../../domain/models/domain.models';
-import {
-  ALERT_REPOSITORY_PORT,
-  AlertRepositoryPort,
-} from '../../domain/ports/repository.ports';
 
+export interface GuestAlertParams {
+  category: AlertCategory;
+  severity: AlertSeverity;
+  title: string;
+  summary: string;
+  sourceDocumentPath: string;
+  assignedDepartment: Department | null;
+}
+
+/**
+ * Builds the operational alert that accompanies a guest mutation. It does not persist anything:
+ * the stay repository commits the alert in the same transaction as the stay change (ADV-09).
+ * Folio arithmetic lives in `domain/folio-ledger.ts`.
+ */
 @Injectable()
 export class GuestAlertFolioHelper {
-  constructor(
-    @Inject(ALERT_REPOSITORY_PORT)
-    private readonly alertRepo: AlertRepositoryPort,
-  ) {}
-
-  recalculateFolioSummary(
-    current: FolioSummary,
-    items: FolioItem[],
-  ): FolioSummary {
-    const complimentarySavingsUSD = items
-      .filter((i) => i.isComplimentary)
-      .reduce((sum, i) => sum + (i.originalValuationUSD || 0), 0);
-    const incidentalsSubtotalUSD = items
-      .filter((i) => !i.isComplimentary && i.category !== 'ECOLOGICAL_LEVY')
-      .reduce((sum, i) => sum + i.chargedAmountUSD, 0);
-    const ecologicalLevyUSD = items
-      .filter((i) => i.category === 'ECOLOGICAL_LEVY')
-      .reduce((sum, i) => sum + i.chargedAmountUSD, 0);
-
+  buildAlert(stay: StayAggregate, params: GuestAlertParams): OperationalAlert {
     return {
-      ...current,
-      complimentarySavingsUSD,
-      incidentalsSubtotalUSD,
-      ecologicalLevyUSD,
-      finalSettledTotalUSD: incidentalsSubtotalUSD + ecologicalLevyUSD,
-    };
-  }
-
-  async emitAlert(
-    stay: StayAggregate,
-    params: {
-      category: AlertCategory;
-      severity: AlertSeverity;
-      title: string;
-      summary: string;
-      sourceDocumentPath: string;
-      assignedDepartment: Department;
-    },
-  ): Promise<void> {
-    await this.alertRepo.createAlert({
-      alertId: `alt_${crypto.randomBytes(4).toString('hex')}`,
+      alertId: `alt_${crypto.randomUUID()}`,
       stayId: stay.stayId,
       villaId: stay.villaId,
       villaName: stay.villaName,
@@ -70,6 +41,6 @@ export class GuestAlertFolioHelper {
       acknowledgedByStaffId: null,
       acknowledgedAt: null,
       createdAt: new Date().toISOString(),
-    });
+    };
   }
 }

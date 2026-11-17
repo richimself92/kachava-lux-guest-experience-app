@@ -5,19 +5,19 @@ export type StayLifecycleStatus =
   | 'EXPIRED'
   | 'CANCELLED';
 
-export type RbacRole =
-  | 'HOST_ADMIN'
-  | 'CONCIERGE_STAFF'
-  | 'DEPARTMENT_COORDINATOR';
+export const RBAC_ROLES = ['HOST_ADMIN', 'CONCIERGE_STAFF', 'DEPARTMENT_COORDINATOR'] as const;
+export type RbacRole = (typeof RBAC_ROLES)[number];
 
-export type Department =
-  | 'CONCIERGE'
-  | 'CULINARY'
-  | 'MARINE'
-  | 'TRANSPORT'
-  | 'HOUSEKEEPING'
-  | 'ENGINEERING'
-  | 'WELLNESS';
+export const DEPARTMENTS = [
+  'CONCIERGE',
+  'CULINARY',
+  'MARINE',
+  'TRANSPORT',
+  'HOUSEKEEPING',
+  'ENGINEERING',
+  'WELLNESS',
+] as const;
+export type Department = (typeof DEPARTMENTS)[number];
 
 export type AlertCategory =
   | 'CONCIERGE'
@@ -26,7 +26,8 @@ export type AlertCategory =
   | 'TRANSFER'
   | 'MIDSTAY'
   | 'CHECKOUT'
-  | 'DIETARY';
+  | 'DIETARY'
+  | 'RESERVATION';
 
 export type AlertSeverity = 'NORMAL' | 'HIGH' | 'URGENT';
 
@@ -43,6 +44,16 @@ export interface GuestProfile {
   phone: string;
   email: string;
   avatarUrl: string;
+  /** Guest language (e.g. `en`, `es`) set by staff; null/absent when unknown. */
+  language?: string | null;
+}
+
+export interface StayStatusChange {
+  from: StayLifecycleStatus;
+  to: StayLifecycleStatus;
+  at: string;
+  by: string;
+  reason: string | null;
 }
 
 export interface HostInfo {
@@ -150,6 +161,19 @@ export interface StayRecord {
   flightTransfer: FlightTransfer;
   personalization: Personalization;
   folioSummary: FolioSummary;
+  /** Staff-only notes (never in the guest view). */
+  internalNotes?: string;
+  /** Staff check-in / check-out / cancel moves (absent on older stays). */
+  statusHistory?: StayStatusChange[];
+  cancellationReason?: string | null;
+  /** ADR-012 signal doc id (`s_<uuid>`), rotated with the guest token; absent on older stays. */
+  realtimeChannelId?: string;
+  /** When staff last read the guest conversation (Messages inbox); absent = never. */
+  conversationReadAt?: string | null;
+  /** Guest journey tasks skipped with "Not now" (`<step>:<taskId>`); absent on older stays. */
+  skippedTaskIds?: string[];
+  /** Guest journey tasks the guest marked done without a request (e.g. "I arrange my own"). */
+  completedTaskIds?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -16,3 +16,8 @@
 /Kachava Lux - Brand Assets/
 *.log
 .env*
+/.local-data/
+/.claude/
+/context/
+/.firebase/
+skills-lock.json

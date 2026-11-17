@@ -1,376 +1,231 @@
-import { Injectable } from '@nestjs/common';
+import type {
+  CollectionReference,
+  DocumentData,
+  Firestore,
+  Query,
+} from 'firebase-admin/firestore';
+import { normalizeSearchText, PaginatedResult } from '../../common/listing/list-query';
+import { EntityConflictError, ListScanLimitError } from '../../domain/domain-errors';
+import { OperationalAlert, StayAggregate, StayLifecycleStatus } from '../../domain/models/domain.models';
+import { ConversationPageQuery, StayAlertFactory, StayPageQuery } from '../../domain/ports/repository.ports';
+import { conversationSummary } from '../../domain/conversations/conversation-rules';
+import { ALERTS_COLLECTION } from './firestore-alert.repository';
 import {
-  ConciergeMessage,
-  ConciergeRequest,
-  ExperienceBooking,
-  FlightTransfer,
-  FolioItem,
-  FolioSummary,
-  LarderOrderItem,
-  MidStayFeedback,
-  Personalization,
-  StayAggregate,
-  StayLifecycleStatus,
-  StayRecord,
-} from '../../domain/models/domain.models';
-import {
-  BookingFilterCriteria,
-  ConciergeFilterCriteria,
-  LarderFilterCriteria,
-  StayFilterCriteria,
-} from '../../domain/ports/repository.ports';
-import { getNamedFirestoreDb } from '../firebase/firebase-admin.module';
-import { InMemorySeededStayRepository } from './in-memory-stay.repository';
+  AggregateStayRepository,
+  StayMutator,
+  StayNotFoundError,
+} from './aggregate-stay.repository';
+import { toFirestoreDocument } from './firestore-document.mapper';
+import { ServiceRequestIndexWriter, TimeZoneSource } from './firestore-service-request.repository';
 
-const STAY_SUBCOLLECTIONS = [
-  'larder_orders',
-  'experience_bookings',
-  'concierge_requests',
-  'midstay_feedback',
-  'midstay_checkins',
-  'folio_items',
-];
+export const STAYS_COLLECTION = 'stays';
+/** Derived, storage-only field used for `array-contains` guest-name search. */
+export const GUEST_SEARCH_FIELD = 'guestSearchKeywords';
+/** Legacy derived field (child-id lookup index) still present on older documents; stripped on read. */
+const LEGACY_CHILD_REFS_FIELD = 'childRefIds';
+/** Derived, storage-only conversation summary (Messages inbox); absent when the stay has no messages. */
+export const CONVERSATION_FIELD = 'conversation';
+const LAST_MESSAGE_FIELD = `${CONVERSATION_FIELD}.lastMessageAt`;
+export const MAX_SEARCH_KEYWORD_LENGTH = 40;
+/** Upper bound of stay documents one bounded cross-stay read may return. */
+export const STAY_SCAN_LIMIT = 1000;
+const OPEN_STAY_STATUSES: StayLifecycleStatus[] = ['PRE_ARRIVAL', 'ACTIVE_STAY'];
+const ARRIVAL_FIELD = 'checkInDate';
+const DEPARTURE_FIELD = 'checkOutDate';
+const DERIVED_FIELDS = [GUEST_SEARCH_FIELD, LEGACY_CHILD_REFS_FIELD, CONVERSATION_FIELD];
 
 /**
- * Hybrid GCP Firestore Repository Adapter targeting `projects/kavacha-app/databases/kavacha-db`.
- * Uses `getFirestore(app, 'kavacha-db')` when `USE_FIRESTORE=true` (local dev & Cloud Run)
- * while preserving fast, deterministic in-memory execution during `NODE_ENV=test`.
+ * Firestore adapter where `stays/{stayId}` is the single source of truth. There is no
+ * process-level cache: every call reads the store, every write is awaited inside a transaction
+ * that rewrites only the affected stay document, and storage errors propagate to the caller.
  */
-@Injectable()
-export class FirestoreStayRepositoryAdapter extends InMemorySeededStayRepository {
-  private hydrated = false;
-  private hydrationPromise: Promise<void> | null = null;
+export class FirestoreStayRepository extends AggregateStayRepository {
+  private readonly requestIndex: ServiceRequestIndexWriter;
 
-  async ensureHydrated(): Promise<void> {
-    if (this.hydrated) return;
-    const db = getNamedFirestoreDb();
-    if (!db) {
-      this.hydrated = true;
-      return;
-    }
-    if (!this.hydrationPromise) {
-      this.hydrationPromise = (async () => {
-        try {
-          const snap = await db.collection('stays').get();
-          this.stays.clear();
-          for (const doc of snap.docs) {
-            const data = doc.data() as StayAggregate;
-            if (data && data.stayId) {
-              this.stays.set(data.stayId, data);
-            }
-          }
-        } catch {
-          // Fall back to existing state if Firestore read fails
-        } finally {
-          this.hydrated = true;
-        }
-      })();
-    }
-    await this.hydrationPromise;
-  }
-
-  private syncToFirestoreAsync(work: () => Promise<void>): void {
-    const db = getNamedFirestoreDb();
-    if (!db) return;
-    void work().catch(() => {
-      // Non-blocking background write-through sync
-    });
-  }
-
-  private persistFullStay(stayId: string, extraWork?: (stayRef: FirebaseFirestore.DocumentReference) => Promise<void>): void {
-    this.syncToFirestoreAsync(async () => {
-      const db = getNamedFirestoreDb();
-      if (!db) return;
-      const fullStay = this.stays.get(this.resolveCanonicalStayId(stayId));
-      if (fullStay) {
-        const stayRef = db.collection('stays').doc(fullStay.stayId);
-        await stayRef.set(fullStay, { merge: true });
-        if (extraWork) await extraWork(stayRef);
-      }
-    });
-  }
-
-  private persistAllStays(): void {
-    this.syncToFirestoreAsync(async () => {
-      const db = getNamedFirestoreDb();
-      if (!db) return;
-      for (const stay of this.stays.values()) {
-        await db.collection('stays').doc(stay.stayId).set(stay, { merge: true });
-      }
-    });
-  }
-
-  override async findByGuestTokenUuid(guestTokenUuid: string): Promise<StayAggregate | null> {
-    await this.ensureHydrated();
-    return super.findByGuestTokenUuid(guestTokenUuid);
-  }
-
-  override async findByStayId(stayId: string): Promise<StayAggregate | null> {
-    await this.ensureHydrated();
-    return super.findByStayId(stayId);
-  }
-
-  override async listStays(filter?: StayFilterCriteria): Promise<StayAggregate[]> {
-    await this.ensureHydrated();
-    return super.listStays(filter);
-  }
-
-  override async createStay(stay: StayAggregate): Promise<StayAggregate> {
-    await this.ensureHydrated();
-    const created = await super.createStay(stay);
-    this.persistFullStay(created.stayId);
-    return created;
-  }
-
-  override async updateStayToken(stayId: string, newUuid: string): Promise<StayRecord> {
-    await this.ensureHydrated();
-    const updated = await super.updateStayToken(stayId, newUuid);
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async updateStayStatus(
-    stayId: string,
-    status: StayLifecycleStatus,
-  ): Promise<StayRecord> {
-    await this.ensureHydrated();
-    const updated = await super.updateStayStatus(stayId, status);
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async updateStayWifi(
-    stayId: string,
-    wifiPatch: { wifiSsid?: string; wifiPasscode?: string },
-  ): Promise<StayRecord> {
-    await this.ensureHydrated();
-    const updated = await super.updateStayWifi(stayId, wifiPatch);
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async resetAllStays(): Promise<void> {
-    await this.ensureHydrated();
-    await super.resetAllStays();
-    this.syncToFirestoreAsync(async () => {
-      const db = getNamedFirestoreDb();
-      if (!db) return;
-      const staysSnap = await db.collection('stays').get();
-      for (const stayDoc of staysSnap.docs) {
-        for (const sub of STAY_SUBCOLLECTIONS) {
-          const subSnap = await stayDoc.ref.collection(sub).get();
-          await Promise.all(subSnap.docs.map((d) => d.ref.delete()));
-        }
-        await stayDoc.ref.delete();
-      }
-    });
-  }
-
-  override async updateTransfer(
-    stayId: string,
-    transferPatch: Partial<FlightTransfer>,
-  ): Promise<FlightTransfer> {
-    await this.ensureHydrated();
-    const updated = await super.updateTransfer(stayId, transferPatch);
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async updatePersonalization(
-    stayId: string,
-    personalizationPatch: Partial<Personalization>,
-    allergiesLabel?: string,
-  ): Promise<Personalization> {
-    await this.ensureHydrated();
-    const updated = await super.updatePersonalization(
-      stayId,
-      personalizationPatch,
-      allergiesLabel,
-    );
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async updateSignaturePrivilege(
-    stayId: string,
-    privilege: 'massage' | 'golf',
-  ): Promise<StayRecord> {
-    await this.ensureHydrated();
-    const updated = await super.updateSignaturePrivilege(stayId, privilege);
-    this.persistFullStay(stayId);
-    return updated;
-  }
-
-  override async replaceLarderOrders(
-    stayId: string,
-    orders: LarderOrderItem[],
-    folioItems: FolioItem[],
-    folioSummary: FolioSummary,
-  ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
-    await this.ensureHydrated();
-    const result = await super.replaceLarderOrders(stayId, orders, folioItems, folioSummary);
-    this.persistFullStay(stayId);
-    return result;
-  }
-
-  override async listLarderOrdersAcrossStays(
-    filter?: LarderFilterCriteria,
-  ): Promise<LarderOrderItem[]> {
-    await this.ensureHydrated();
-    return super.listLarderOrdersAcrossStays(filter);
-  }
-
-  async listAllLarderOrders(filter?: LarderFilterCriteria): Promise<LarderOrderItem[]> {
-    return this.listLarderOrdersAcrossStays(filter);
-  }
-
-  override async updateLarderOrderStatus(
-    orderItemId: string,
-    patch: Partial<LarderOrderItem>,
-  ): Promise<LarderOrderItem | null> {
-    await this.ensureHydrated();
-    const updated = await super.updateLarderOrderStatus(orderItemId, patch);
-    if (updated) this.persistAllStays();
-    return updated;
-  }
-
-  override async createBooking(
-    stayId: string,
-    booking: ExperienceBooking,
-    folioItems: FolioItem[],
-    folioSummary: FolioSummary,
-  ): Promise<ExperienceBooking> {
-    await this.ensureHydrated();
-    const created = await super.createBooking(stayId, booking, folioItems, folioSummary);
-    this.persistFullStay(stayId, async (stayRef) => {
-      await stayRef.collection('experience_bookings').doc(created.bookingId).set(created);
-    });
-    return created;
-  }
-
-  override async listBookingsForStay(stayId: string): Promise<ExperienceBooking[]> {
-    await this.ensureHydrated();
-    return super.listBookingsForStay(stayId);
-  }
-
-  override async listBookingsAcrossStays(
-    filter?: BookingFilterCriteria,
-  ): Promise<ExperienceBooking[]> {
-    await this.ensureHydrated();
-    return super.listBookingsAcrossStays(filter);
-  }
-
-  async listAllBookings(filter?: BookingFilterCriteria): Promise<ExperienceBooking[]> {
-    return this.listBookingsAcrossStays(filter);
-  }
-
-  override async updateBookingAssignment(
-    bookingId: string,
-    patch: Partial<ExperienceBooking>,
-  ): Promise<ExperienceBooking | null> {
-    await this.ensureHydrated();
-    const updated = await super.updateBookingAssignment(bookingId, patch);
-    if (updated) this.persistAllStays();
-    return updated;
-  }
-
-  override async listConciergeRequestsForStay(stayId: string): Promise<ConciergeRequest[]> {
-    await this.ensureHydrated();
-    return super.listConciergeRequestsForStay(stayId);
-  }
-
-  override async listConciergeRequestsAcrossStays(
-    filter?: ConciergeFilterCriteria,
-  ): Promise<ConciergeRequest[]> {
-    await this.ensureHydrated();
-    return super.listConciergeRequestsAcrossStays(filter);
-  }
-
-  async listAllConciergeRequests(
-    filter?: ConciergeFilterCriteria,
-  ): Promise<ConciergeRequest[]> {
-    return this.listConciergeRequestsAcrossStays(filter);
-  }
-
-  override async findConciergeRequestById(requestId: string): Promise<ConciergeRequest | null> {
-    await this.ensureHydrated();
-    return super.findConciergeRequestById(requestId);
-  }
-
-  override async createConciergeRequest(
-    stayId: string,
-    request: ConciergeRequest,
-  ): Promise<ConciergeRequest> {
-    await this.ensureHydrated();
-    const created = await super.createConciergeRequest(stayId, request);
-    this.persistFullStay(stayId, async (stayRef) => {
-      await stayRef.collection('concierge_requests').doc(created.requestId).set(created);
-    });
-    return created;
-  }
-
-  override async appendConciergeMessage(
-    stayId: string,
-    requestId: string,
-    message: ConciergeMessage,
-  ): Promise<ConciergeRequest | null> {
-    await this.ensureHydrated();
-    const updated = await super.appendConciergeMessage(stayId, requestId, message);
-    if (updated) this.persistAllStays();
-    return updated;
-  }
-
-  override async updateConciergeRequestAdmin(
-    requestId: string,
-    patch: Partial<ConciergeRequest>,
-    newMessage?: ConciergeMessage,
-  ): Promise<ConciergeRequest | null> {
-    await this.ensureHydrated();
-    const updated = await super.updateConciergeRequestAdmin(requestId, patch, newMessage);
-    if (updated) this.persistAllStays();
-    return updated;
-  }
-
-  override async createMidStayFeedback(
-    stayId: string,
-    feedback: MidStayFeedback,
-  ): Promise<MidStayFeedback> {
-    await this.ensureHydrated();
-    const created = await super.createMidStayFeedback(stayId, feedback);
-    this.persistFullStay(stayId, async (stayRef) => {
-      await stayRef.collection('midstay_feedback').doc(created.feedbackId).set(created);
-    });
-    return created;
-  }
-
-  override async listMidStayFeedbackAcrossStays(): Promise<MidStayFeedback[]> {
-    await this.ensureHydrated();
-    return super.listMidStayFeedbackAcrossStays();
-  }
-
-  override async getFolioForStay(
-    stayId: string,
-  ): Promise<{ folioSummary: FolioSummary; folioItems: FolioItem[] }> {
-    await this.ensureHydrated();
-    return super.getFolioForStay(stayId);
-  }
-
-  override async updateFolioAndStatus(
-    stayId: string,
-    folioSummary: FolioSummary,
-    folioItems: FolioItem[],
-    newStatus?: StayLifecycleStatus,
-    lateCheckoutRequested?: boolean,
+  /** `timeZoneOf` gives the resort zone the request queue uses for order times. */
+  constructor(
+    private readonly db: Firestore,
+    private readonly scanLimit = STAY_SCAN_LIMIT,
+    timeZoneOf: TimeZoneSource = async () => null,
   ) {
-    await this.ensureHydrated();
-    const updated = await super.updateFolioAndStatus(
-      stayId,
-      folioSummary,
-      folioItems,
-      newStatus,
-      lateCheckoutRequested,
-    );
-    this.persistFullStay(stayId);
-    return updated;
+    super();
+    this.requestIndex = new ServiceRequestIndexWriter(db, timeZoneOf);
   }
+
+  protected async findStayByToken(normalizedToken: string): Promise<StayAggregate | null> {
+    const snapshot = await this.stays()
+      .where('guestTokenUuid', '==', normalizedToken)
+      .limit(1)
+      .get();
+    if (snapshot.empty) return null;
+    const [doc] = snapshot.docs;
+    return toStayAggregate(doc.id, doc.data());
+  }
+
+  protected async findStay(stayId: string): Promise<StayAggregate | null> {
+    const snapshot = await this.stays().doc(stayId).get();
+    return snapshot.exists ? toStayAggregate(snapshot.id, snapshot.data()) : null;
+  }
+
+  protected listOpenStaysBounded(): Promise<StayAggregate[]> {
+    return this.listStaysByStatuses(OPEN_STAY_STATUSES);
+  }
+
+  listStaysByStatuses(statuses: readonly StayLifecycleStatus[]): Promise<StayAggregate[]> {
+    return this.bounded(this.stays().where('status', 'in', [...statuses]));
+  }
+
+  /** Stays without messages lack the order-by field, so Firestore leaves them out. */
+  async pageConversations(query: ConversationPageQuery): Promise<PaginatedResult<StayAggregate>> {
+    let filtered: Query = this.stays();
+    if (query.unread !== undefined) filtered = filtered.where(`${CONVERSATION_FIELD}.hasUnread`, '==', query.unread);
+    if (query.awaitingReply !== undefined) {
+      filtered = filtered.where(`${CONVERSATION_FIELD}.awaitingReply`, '==', query.awaitingReply);
+    }
+    if (query.q) {
+      const keyword = normalizeSearchText(query.q).slice(0, MAX_SEARCH_KEYWORD_LENGTH);
+      filtered = filtered.where(GUEST_SEARCH_FIELD, 'array-contains', keyword);
+    }
+    const ordered = filtered.orderBy(LAST_MESSAGE_FIELD, query.direction);
+    const [countSnapshot, pageSnapshot] = await Promise.all([
+      ordered.count().get(),
+      ordered.offset((query.page - 1) * query.pageSize).limit(query.pageSize).get(),
+    ]);
+    return new PaginatedResult(
+      pageSnapshot.docs.map((doc) => toStayAggregate(doc.id, doc.data())),
+      { page: query.page, pageSize: query.pageSize, total: countSnapshot.data().count },
+    );
+  }
+
+  listUnreadConversations(): Promise<StayAggregate[]> {
+    return this.bounded(this.stays().where(`${CONVERSATION_FIELD}.hasUnread`, '==', true));
+  }
+
+  listStaysCheckingInOn(date: string): Promise<StayAggregate[]> {
+    return this.bounded(this.stays().where(ARRIVAL_FIELD, '==', date));
+  }
+
+  /** Filters, search and date order run in Firestore; `count()` gives the total. */
+  async pageStays(query: StayPageQuery): Promise<PaginatedResult<StayAggregate>> {
+    const dateField = query.dateField ?? ARRIVAL_FIELD;
+    let filtered: Query = this.stays();
+    if (query.status) filtered = filtered.where('status', '==', query.status);
+    if (query.villaId) filtered = filtered.where('villaId', '==', query.villaId);
+    if (query.q) {
+      const keyword = normalizeSearchText(query.q).slice(0, MAX_SEARCH_KEYWORD_LENGTH);
+      filtered = filtered.where(GUEST_SEARCH_FIELD, 'array-contains', keyword);
+    }
+    if (query.from) filtered = filtered.where(dateField, '>=', query.from);
+    if (query.to) filtered = filtered.where(dateField, '<=', query.to);
+    const ordered = filtered.orderBy(dateField, query.direction);
+    const [countSnapshot, pageSnapshot] = await Promise.all([
+      ordered.count().get(),
+      ordered.offset((query.page - 1) * query.pageSize).limit(query.pageSize).get(),
+    ]);
+    return new PaginatedResult(
+      pageSnapshot.docs.map((doc) => toStayAggregate(doc.id, doc.data())),
+      { page: query.page, pageSize: query.pageSize, total: countSnapshot.data().count },
+    );
+  }
+
+  async listOpenStays(limit: number): Promise<StayAggregate[]> {
+    const snapshot = await this.stays()
+      .where('status', 'in', OPEN_STAY_STATUSES)
+      .orderBy(ARRIVAL_FIELD, 'asc')
+      .limit(limit)
+      .get();
+    return snapshot.docs.map((doc) => toStayAggregate(doc.id, doc.data()));
+  }
+
+  listOpenStaysEndingAfter(date: string, villaId?: string): Promise<StayAggregate[]> {
+    let open: Query = this.stays().where('status', 'in', OPEN_STAY_STATUSES);
+    if (villaId) open = open.where('villaId', '==', villaId);
+    return this.bounded(open.where(DEPARTURE_FIELD, '>', date));
+  }
+
+  async hasStaysForVilla(villaId: string): Promise<boolean> {
+    const snapshot = await this.stays().where('villaId', '==', villaId).limit(1).get();
+    return !snapshot.empty;
+  }
+
+  /** The stay and its alert commit together; an existing id is a conflict. */
+  protected insertStay(stay: StayAggregate, alert: OperationalAlert | null = null): Promise<void> {
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.stays().doc(stay.stayId);
+      if ((await tx.get(ref)).exists) throw new EntityConflictError(`Stay ${stay.stayId} already exists.`);
+      const writeRequests = await this.requestIndex.prepare(null, stay);
+      tx.set(ref, toStayDocument(stay));
+      writeRequests(tx);
+      if (alert) tx.set(this.db.collection(ALERTS_COLLECTION).doc(alert.alertId), toFirestoreDocument(alert));
+    });
+  }
+
+  private async bounded(query: Query): Promise<StayAggregate[]> {
+    const snapshot = await query.limit(this.scanLimit + 1).get();
+    if (snapshot.docs.length > this.scanLimit) throw new ListScanLimitError(STAYS_COLLECTION, this.scanLimit);
+    return snapshot.docs.map((doc) => toStayAggregate(doc.id, doc.data()));
+  }
+
+  /** Stay write and its alert commit together or not at all; contention retries re-run `mutator`. */
+  protected transactStay<T>(
+    stayId: string,
+    mutator: StayMutator<T>,
+    alertOf?: StayAlertFactory<T>,
+  ): Promise<T> {
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.stays().doc(stayId);
+      const snapshot = await tx.get(ref);
+      if (!snapshot.exists) throw new StayNotFoundError(stayId);
+      const draft = toStayAggregate(snapshot.id, snapshot.data());
+      const before = structuredClone(draft);
+      const result = mutator(draft);
+      const writeRequests = await this.requestIndex.prepare(before, draft);
+      tx.set(ref, toStayDocument(draft));
+      writeRequests(tx);
+      const alert = alertOf?.(result);
+      if (alert) {
+        tx.set(this.db.collection(ALERTS_COLLECTION).doc(alert.alertId), toFirestoreDocument(alert));
+      }
+      return result;
+    });
+  }
+
+  private stays(): CollectionReference {
+    return this.db.collection(STAYS_COLLECTION);
+  }
+}
+
+/** Prefixes of the full normalised guest name and of each of its words. */
+export function guestSearchKeywords(guestName: string): string[] {
+  const normalized = normalizeSearchText(guestName).slice(0, MAX_SEARCH_KEYWORD_LENGTH);
+  const keywords = new Set<string>();
+  for (const phrase of [normalized, ...normalized.split(' ')]) {
+    for (let end = 1; end <= phrase.length; end += 1) keywords.add(phrase.slice(0, end).trim());
+  }
+  keywords.delete('');
+  return Array.from(keywords);
+}
+
+function toStayDocument(stay: StayAggregate): Record<string, unknown> {
+  const conversation = conversationSummary(stay);
+  return {
+    ...toFirestoreDocument(stay),
+    [GUEST_SEARCH_FIELD]: guestSearchKeywords(stay.guestProfile?.name ?? ''),
+    ...(conversation ? { [CONVERSATION_FIELD]: { ...conversation } } : {}),
+  };
+}
+
+/** Older documents may lack embedded lists; absent lists mean "no items stored". */
+function toStayAggregate(stayId: string, data: DocumentData | undefined): StayAggregate {
+  const stored = { ...(data ?? {}) } as Partial<StayAggregate> & Record<string, unknown>;
+  for (const field of DERIVED_FIELDS) delete stored[field];
+  return {
+    ...stored,
+    stayId,
+    larderOrders: stored.larderOrders ?? [],
+    experienceBookings: stored.experienceBookings ?? [],
+    conciergeRequests: stored.conciergeRequests ?? [],
+    midstayFeedback: stored.midstayFeedback ?? [],
+    folioItems: stored.folioItems ?? [],
+  } as StayAggregate;
 }

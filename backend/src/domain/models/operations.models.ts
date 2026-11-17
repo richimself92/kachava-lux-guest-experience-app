@@ -1,4 +1,10 @@
 import {
+  LocalizedText,
+  ServiceSection,
+  ServiceSnapshot,
+  UsageType,
+} from '../catalog/catalog.models';
+import {
   AlertCategory,
   AlertSeverity,
   Department,
@@ -6,14 +12,17 @@ import {
   StayRecord,
 } from './stay.models';
 
+/** One line of a villa-stocking order; name and price are a snapshot taken when ordering. */
 export interface LarderOrderItem {
   orderItemId: string;
   stayId: string;
   villaId: string;
   villaName: string;
   guestNames: string;
+  serviceId: string;
   catalogItemId: string;
   name: string;
+  itemName: LocalizedText;
   category: string;
   unitPriceUSD: number;
   quantity: number;
@@ -22,8 +31,15 @@ export interface LarderOrderItem {
   provisioningStatus: string;
   assignedStaffId: string | null;
   assignedStaffName: string | null;
-  assignedDepartment: Department;
+  assignedDepartment: Department | null;
   assignedAt: string | null;
+  /** When the guest first ordered from this service (absent on older lines). */
+  createdAt?: string;
+  /** Catalog section and name of the ordered service (snapshot; absent on older lines). */
+  section?: ServiceSection;
+  serviceName?: LocalizedText;
+  /** Why staff cancelled the order (request queue). */
+  cancellationReason?: string;
   updatedAt: string;
 }
 
@@ -33,13 +49,13 @@ export interface ExperienceBooking {
   villaId: string;
   villaName: string;
   guestNames: string;
-  bookingType:
-    | 'EXCURSION'
-    | 'YACHT_CHARTER'
-    | 'PRIVATE_DINING'
-    | 'INCLUDED_PRIVILEGE';
-  category?: string;
-  catalogRefId: string;
+  /** Catalog references plus the snapshot (name, price, items) captured when booking. */
+  serviceId: string;
+  itemId: string | null;
+  section: ServiceSection;
+  usageType: UsageType;
+  category: string | null;
+  snapshot: ServiceSnapshot;
   title: string;
   scheduledDate: string;
   scheduledTimeSlot: string;
@@ -58,11 +74,13 @@ export interface ExperienceBooking {
   cancellationReason?: string;
   assignedStaffId: string | null;
   assignedStaffName: string | null;
-  assignedDepartment: Department;
+  assignedDepartment: Department | null;
   assignedAt: string | null;
   notifiedAt: string | null;
   adminNotes: string;
   createdAt: string;
+  /** Last guest or staff change (absent on older bookings). */
+  updatedAt?: string;
 }
 
 export interface ConciergeMessage {
@@ -71,6 +89,8 @@ export interface ConciergeMessage {
   senderName: string;
   text: string;
   sentAt: string;
+  /** Private photo sent with this message (`private/stays/{stayId}/concierge/...`). */
+  photoStoragePath?: string | null;
 }
 
 export interface ConciergeRequest {
@@ -127,6 +147,7 @@ export interface FolioItem {
     | 'STAY_PRIVILEGE'
     | 'VILLA_ENTITLEMENT'
     | 'EXCURSION'
+    | 'SERVICE'
     | 'LARDER'
     | 'SPA_APOTHECARY'
     | 'ECOLOGICAL_LEVY';
@@ -147,6 +168,33 @@ export interface StayAggregate extends StayRecord {
   folioItems: FolioItem[];
 }
 
+/** Records an alert/notification can open ("Open record"). */
+export type AlertTargetType =
+  | 'STAY'
+  | 'TRIP'
+  | 'TASK'
+  | 'BOOKING'
+  | 'ORDER'
+  | 'REQUEST'
+  | 'FEEDBACK'
+  | 'CONVERSATION';
+
+/** The record an alert opens; when absent it is derived from `sourceDocumentPath`. */
+export interface AlertTargetRef {
+  type: AlertTargetType;
+  id: string;
+}
+
+/** Operational events the Notifications screen distinguishes (plan v2, "Notifications"). */
+export type NotificationEvent =
+  | 'NEW_RESERVATION'
+  | 'ARRIVAL_DAY'
+  | 'GUEST_REQUEST'
+  | 'ITINERARY_CHANGE'
+  | 'TASK_OVERDUE'
+  | 'GUEST_MESSAGE'
+  | 'TRIP_UNCONFIRMED';
+
 export interface OperationalAlert {
   alertId: string;
   stayId: string;
@@ -158,11 +206,14 @@ export interface OperationalAlert {
   title: string;
   summary: string;
   sourceDocumentPath: string;
-  assignedDepartment: Department;
+  assignedDepartment: Department | null;
   isAcknowledged: boolean;
   acknowledgedByStaffId: string | null;
   acknowledgedAt: string | null;
   createdAt: string;
+  targetRef?: AlertTargetRef;
+  /** Set by the writer; older alerts derive it from `category`. */
+  event?: NotificationEvent;
 }
 
 export interface StaffMember {
@@ -177,75 +228,4 @@ export interface StaffMember {
   phone: string;
   avatarUrl: string;
   isActive: boolean;
-}
-
-export interface LarderCatalogItem {
-  id: string;
-  name: string;
-  origin: string;
-  description: string;
-  price: number;
-  category: string;
-  quantity: number;
-  image: string;
-  tag: string;
-  dietary?: string;
-  storageType: string;
-  isActive: boolean;
-}
-
-export interface ExperienceCatalogItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  duration: string;
-  location: string;
-  vehicleOrDetail: string;
-  priceText: string;
-  basePriceUSD: number;
-  isIncluded: boolean;
-  inclusionLabel?: string;
-  image: string;
-  category: string;
-  description: string;
-  amenities: string[];
-  actionLabel: string;
-  actionScreen?: string;
-}
-
-export interface YachtCatalog {
-  vesselId: string;
-  vesselSpecs: Record<string, string>;
-  captainInfo: Record<string, string>;
-  packages: Array<{
-    id: string;
-    title: string;
-    tagline: string;
-    durationHours: number;
-    durationLabel: string;
-    valuationUSD: number;
-    upgradePriceUSD: number;
-    isIncludedWithStay: boolean;
-    priceLabel: string;
-    description: string;
-    highlights: string[];
-    suggestedPaths: string;
-    idealFor: string;
-  }>;
-  destinations: Array<{
-    id: string;
-    title: string;
-    region: string;
-    badge: string;
-    image: string;
-    subtitle: string;
-    description: string;
-    highlights: string[];
-    duration: string;
-  }>;
-  gallery: Array<{
-    src: string;
-    caption: string;
-    tag: string;
-  }>;
 }

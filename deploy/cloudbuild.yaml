@@ -36,7 +36,8 @@ steps:
       - '--max-instances=2'
       - '--concurrency=80'
       - '--cpu-throttling'
-      - '--set-env-vars=NODE_ENV=production,USE_FIRESTORE=true,FIREBASE_PROJECT_ID=$PROJECT_ID,FIRESTORE_DATABASE_ID=${_FIRESTORE_DB},FIREBASE_STORAGE_BUCKET=${_STORAGE_BUCKET},GUEST_PORTAL_URL=${_GUEST_PORTAL_URL},ADMIN_PORTAL_URL=${_ADMIN_PORTAL_URL}'
+      - '--update-env-vars=^|^NODE_ENV=production|USE_FIRESTORE=true|FIREBASE_PROJECT_ID=$PROJECT_ID|FIRESTORE_DATABASE_ID=${_FIRESTORE_DB}|FIREBASE_STORAGE_BUCKET=${_STORAGE_BUCKET}|GUEST_PORTAL_URL=${_GUEST_PORTAL_URL}|ADMIN_PORTAL_URL=${_ADMIN_PORTAL_URL}|ADMIN_SERVICE_EMAIL=${_ADMIN_SERVICE_EMAIL}|CORS_ALLOWED_ORIGINS=${_GUEST_PORTAL_URL},${_ADMIN_PORTAL_URL}'
+      - '--update-secrets=STAFF_JWT_SECRET=${_JWT_SECRET_NAME}:latest,REALTIME_ADMIN_CHANNEL=${_REALTIME_SECRET_NAME}:latest'
 
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$BUILD_ID'
@@ -50,6 +51,9 @@ substitutions:
   _STORAGE_BUCKET: 'kavacha-store'
   _GUEST_PORTAL_URL: 'https://kavacha-app-guest-portal.web.app'
   _ADMIN_PORTAL_URL: 'https://kavacha-app-admin-dashboard.web.app'
+  _ADMIN_SERVICE_EMAIL: ''
+  _JWT_SECRET_NAME: 'kachava-staff-jwt-secret'
+  _REALTIME_SECRET_NAME: 'kachava-realtime-admin-channel'
 
 options:
   logging: CLOUD_LOGGING_ONLY

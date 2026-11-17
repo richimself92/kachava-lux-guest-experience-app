@@ -1,12 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
-import { GuestTokenGuard } from '../../common/guards/guest-token.guard';
-import { SecurityTokenService } from '../../common/services/security-token.service';
-import {
-  FlightTransfer,
+  OperationalAlert,
   Personalization,
   StayAggregate,
 } from '../../domain/models/domain.models';
@@ -19,12 +13,10 @@ import {
   CreateConciergeMessageDto,
   CreateConciergeRequestDto,
   CreateMidStayCheckInDto,
-  ExpressCheckoutDto,
   GenerateUploadUrlDto,
-  UpdateLarderOrderDto,
+  UpdateJourneyDto,
+  UpdateServiceOrderDto,
   UpdatePersonalizationDto,
-  UpdateTransferDto,
-  VerifyStepUpDto,
 } from './dto/guest.dto';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
 import { GuestBookingService } from './guest-booking.service';
@@ -35,66 +27,10 @@ export class GuestService {
   constructor(
     @Inject(STAY_REPOSITORY_PORT)
     private readonly stayRepo: StayRepositoryPort,
-    private readonly securityTokenService: SecurityTokenService,
     private readonly alertFolioHelper: GuestAlertFolioHelper,
     private readonly bookingService: GuestBookingService,
     private readonly conciergeService: GuestConciergeService,
   ) {}
-
-  verifyStepUp(
-    stay: StayAggregate,
-    dto: VerifyStepUpDto,
-  ): { verified: boolean; stepUpToken: string; stayId: string } {
-    const cleanVilla = dto.villaNumber?.replace(/[^0-9]/g, '');
-    const stayVillaDigits =
-      stay.villaName.replace(/[^0-9]/g, '') || stay.villaId.replace(/[^0-9]/g, '');
-    const cleanLastName = dto.lastName?.trim().toLowerCase();
-    const matchesVilla =
-      cleanVilla === '102' ||
-      (Boolean(cleanVilla) && cleanVilla === stayVillaDigits) ||
-      dto.villaNumber === stay.villaId;
-    const matchesLastName =
-      cleanLastName === stay.guestProfile.lastNameNormalized ||
-      stay.guestProfile.name.toLowerCase().includes(cleanLastName || '__none__');
-
-    if (!matchesVilla && !matchesLastName) {
-      throw new ForbiddenException(
-        'Step-up challenge failed: Villa Number or Primary Guest Last Name did not match.',
-      );
-    }
-
-    const stepUpToken = this.securityTokenService.issueStepUpToken(
-      stay.stayId,
-      stay.guestTokenUuid,
-    );
-    return { verified: true, stepUpToken, stayId: stay.stayId };
-  }
-
-  async updateTransfer(
-    stay: StayAggregate,
-    dto: UpdateTransferDto,
-  ): Promise<FlightTransfer> {
-    const nextStatus =
-      stay.flightTransfer.status === 'Not Requested' || !dto.status
-        ? 'Pending'
-        : dto.status;
-    const updated = await this.stayRepo.updateTransfer(stay.stayId, {
-      ...dto,
-      status: nextStatus,
-      estimatedLanding:
-        dto.estimatedLanding || dto.arrivalTime || stay.flightTransfer.estimatedLanding,
-    });
-    GuestTokenGuard.invalidateCache();
-    await this.alertFolioHelper.emitAlert(stay, {
-      category: 'TRANSFER',
-      severity: 'NORMAL',
-      title: `${stay.villaName} Aviation Transfer Updated (${updated.flightNumber})`,
-      summary: `Flight ${updated.flightNumber} landing at ${updated.estimatedLanding}.`,
-      sourceDocumentPath: `stays/${stay.stayId}`,
-      assignedDepartment: 'TRANSPORT',
-    });
-    return updated;
-  }
 
   async updatePersonalization(
     stay: StayAggregate,
@@ -107,7 +43,7 @@ export class GuestService {
           ? [dto.allergies]
           : [];
     const allergiesLabel = (allergiesList.join(', ') || dto.allergies || '').trim();
-    const updated = await this.stayRepo.updatePersonalization(
+    return this.stayRepo.updatePersonalization(
       stay.stayId,
       {
         ...dto,
@@ -122,21 +58,19 @@ export class GuestService {
         allergies: allergiesLabel,
       },
       allergiesLabel || undefined,
+      (updated) => this.personalizationAlert(stay, updated, allergiesLabel),
     );
-    GuestTokenGuard.invalidateCache();
-    await this.emitPersonalizationAlert(stay, updated, allergiesLabel);
-    return updated;
   }
 
-  private async emitPersonalizationAlert(
+  private personalizationAlert(
     stay: StayAggregate,
     updated: Personalization,
     allergiesLabel: string,
-  ): Promise<void> {
+  ): OperationalAlert {
     const hasAllergies =
       allergiesLabel.length > 0 && allergiesLabel.toLowerCase() !== 'none';
     const baseSummary = `Pillow: ${updated.pillowType || '—'} · Scent: ${updated.scentProfile || '—'} · Diet: ${updated.dietary || '—'} · Cleaning: ${updated.housekeepingCadence || '—'}`;
-    await this.alertFolioHelper.emitAlert(stay, {
+    return this.alertFolioHelper.buildAlert(stay, {
       category: 'DIETARY',
       severity: hasAllergies ? 'URGENT' : 'NORMAL',
       title: hasAllergies
@@ -150,8 +84,15 @@ export class GuestService {
     });
   }
 
-  updateLarderOrder(stay: StayAggregate, dto: UpdateLarderOrderDto) {
-    return this.bookingService.updateLarderOrder(stay, dto);
+  updateJourney(stay: StayAggregate, dto: UpdateJourneyDto) {
+    return this.stayRepo.setJourneyMarks(stay.stayId, {
+      ...(dto.skippedTaskIds ? { skippedTaskIds: dto.skippedTaskIds } : {}),
+      ...(dto.completedTaskIds ? { completedTaskIds: dto.completedTaskIds } : {}),
+    });
+  }
+
+  updateServiceOrder(stay: StayAggregate, serviceId: string, dto: UpdateServiceOrderDto) {
+    return this.bookingService.updateServiceOrder(stay, serviceId, dto.items);
   }
 
   createBooking(stay: StayAggregate, dto: CreateBookingDto) {
@@ -178,7 +119,4 @@ export class GuestService {
     return this.conciergeService.submitMidStayCheckIn(stay, dto);
   }
 
-  processExpressCheckout(stay: StayAggregate, dto: ExpressCheckoutDto) {
-    return this.conciergeService.processExpressCheckout(stay, dto);
-  }
 }
