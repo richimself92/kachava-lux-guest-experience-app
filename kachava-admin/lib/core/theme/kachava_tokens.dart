@@ -4,7 +4,7 @@ import 'dart:ui' show Color;
 import 'package:flutter/animation.dart' show Cubic;
 
 /// Kachava Lux admin design tokens (MUJI restyle, root `DESIGN.md` v2.0 and
-/// `MUJI Design Implementation Guide.md`). This is the only file with color
+/// `doc/MUJI Design Implementation Guide.md`). This is the only file with color
 /// values; widgets read these tokens or `Theme.of(context)`.
 abstract final class KachavaTokens {
   // Neutrals (warm, tinted toward the brand).

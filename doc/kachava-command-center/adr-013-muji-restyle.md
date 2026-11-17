@@ -1,7 +1,7 @@
 # ADR-013: MUJI visual layer for admin and guest portal
 
 - Status: Accepted (owner, 2026-11-16)
-- Source: `MUJI Design Implementation Guide.md` (client, 2026-11-13), written for React + Tailwind.
+- Source: `doc/MUJI Design Implementation Guide.md` (client, 2026-11-13), written for React + Tailwind.
 
 ## Context
 Kachava asked to restyle both Flutter apps after the MUJI / Kenya Hara guide. It conflicted with
