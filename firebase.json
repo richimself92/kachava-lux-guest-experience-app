@@ -2,7 +2,7 @@
   "hosting": [
     {
       "target": "guest-portal",
-      "public": "web/build/web",
+      "public": "kachava-web/build/web",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -50,7 +50,7 @@
     },
     {
       "target": "admin-dashboard",
-      "public": "admin/build/web",
+      "public": "kachava-admin/build/web",
       "ignore": [
         "firebase.json",
         "**/.*",

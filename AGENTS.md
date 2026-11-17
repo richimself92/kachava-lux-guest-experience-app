@@ -2,22 +2,22 @@
 
 ## 1. Project overview and stack
 Monorepo for a boutique villa resort (Kachava Lux, 8 villas):
-- `backend/` — NestJS 10 REST API (`/api/v1`) on Cloud Run; Firestore named DB `kavacha-db` is the single
+- `kachava-backend/` — NestJS 10 REST API (`/api/v1`) on Cloud Run; Firestore named DB `kavacha-db` is the single
   source of truth (ADR-008); Cloud Storage `kavacha-store` for signed uploads.
-- `web/` — Flutter Web guest portal (magic link `?guestId=<uuid>`, installable PWA).
-- `admin/` — Flutter Web staff "Command Center" (HOST_ADMIN / CONCIERGE_STAFF roles).
-- `e2e/` — Playwright suites against the local stack.
+- `kachava-web/` — Flutter Web guest portal (magic link `?guestId=<uuid>`, installable PWA).
+- `kachava-admin/` — Flutter Web staff "Command Center" (HOST_ADMIN / CONCIERGE_STAFF roles).
+- `kachava-e2e/` — Playwright suites against the local stack.
 - `doc/` — specs, ADRs (`doc/adr/`), client inputs (`doc/improvements/`: spec + mockups, read-only), feature docs (`doc/kachava-command-center/`).
 
 ## 2. Executable commands
 ```bash
-cd backend && npm run typecheck && npm test        # Jest unit + Supertest e2e (in-memory adapters)
-cd admin   && dart analyze && flutter test
-cd web     && dart analyze && flutter test
+cd kachava-backend && npm run typecheck && npm test        # Jest unit + Supertest e2e (in-memory adapters)
+cd kachava-admin   && dart analyze && flutter test
+cd kachava-web     && dart analyze && flutter test
 ./run-local.sh                                     # backend :3001, guest :3000, admin :3002 (in-memory by default)
-cd e2e && npx playwright test                      # requires run-local.sh running
+cd kachava-e2e && npx playwright test                      # requires run-local.sh running
 ```
-Flutter builds use `--dart-define-from-file=config/<env>.json` in `web/` and `admin/`.
+Flutter builds use `--dart-define-from-file=config/<env>.json` in `kachava-web/` and `kachava-admin/`.
 
 ## 3. Safety rules
 - Never deploy from an agent (`firebase deploy`, `gcloud run deploy`, `deploy/*.sh`, Cloud Build) without the
@@ -31,7 +31,7 @@ Flutter builds use `--dart-define-from-file=config/<env>.json` in `web/` and `ad
 ## 4. Architecture and coding conventions
 - Strict TDD (red -> green -> refactor). Functions < 30 lines, classes < 300 lines, nesting <= 3.
 - DIP via ports: repositories, clocks (`ResortClockPort`, America/Cancun), storage, audio, browser storage.
-  Web-only APIs use the conditional-import pattern of `admin/lib/core/alert_chime_port.dart`.
+  Web-only APIs use the conditional-import pattern of `kachava-admin/lib/core/alert_chime_port.dart`.
 - English-only code, comments, commits. User strings EN/ES via `AdminI18n` / `GuestI18n`.
 - No fake fallback data: API failures show errors; success only after the server confirms.
   Only HTTP 401/404 means an invalid guest link; 5xx/429/timeouts keep last data and show "Reconnecting".

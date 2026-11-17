@@ -145,11 +145,11 @@ start_emulators() {
 
 start_backend() {
   echo "[2/4] Backend on :${BACKEND_PORT} (Firestore emulator, admin identity ${ADMIN_SERVICE_EMAIL})"
-  [[ -d "${ROOT_DIR}/backend/node_modules" ]] || (cd "${ROOT_DIR}/backend" && npm install)
-  (cd "${ROOT_DIR}/backend" && npm run build >/dev/null)
+  [[ -d "${ROOT_DIR}/kachava-backend/node_modules" ]] || (cd "${ROOT_DIR}/kachava-backend" && npm install)
+  (cd "${ROOT_DIR}/kachava-backend" && npm run build >/dev/null)
   # The emulator only exports/imports the "(default)" database, so local data lives there.
   (
-    cd "${ROOT_DIR}/backend"
+    cd "${ROOT_DIR}/kachava-backend"
     NODE_ENV=development PORT="${BACKEND_PORT}" USE_FIRESTORE=true \
       FIRESTORE_EMULATOR_HOST="127.0.0.1:${FIRESTORE_EMULATOR_PORT}" \
       FIREBASE_STORAGE_EMULATOR_HOST="127.0.0.1:${STORAGE_EMULATOR_PORT}" \
@@ -193,8 +193,8 @@ start_emulators
 start_backend
 if [[ "${RUN_MODE}" != "--backend-only" ]]; then
   for cmd in flutter python3; do require_command "${cmd}"; done
-  start_flutter_app web "${GUEST_WEB_PORT}" "[3/4] Guest portal"
-  start_flutter_app admin "${ADMIN_WEB_PORT}" "[4/4] Admin console"
+  start_flutter_app kachava-web "${GUEST_WEB_PORT}" "[3/4] Guest portal"
+  start_flutter_app kachava-admin "${ADMIN_WEB_PORT}" "[4/4] Admin console"
 fi
 
 echo "------------------------------------------------------------------------------"

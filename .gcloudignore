@@ -4,9 +4,9 @@
 **/dist/
 **/build/
 **/.dart_tool/
-/web/
-/admin/
-/e2e/
+/kachava-web/
+/kachava-admin/
+/kachava-e2e/
 /old/
 /docs/
 /doc/

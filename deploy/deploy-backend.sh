@@ -10,8 +10,8 @@ GUEST_PORTAL_URL="${GUEST_PORTAL_URL:-https://kavacha-app-guest-portal.web.app}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# The backend refuses to start in production without these (see backend/src/main.ts).
-: "${ADMIN_SERVICE_EMAIL:?Set ADMIN_SERVICE_EMAIL to the same value as ADMIN_STAFF_EMAIL in admin/config/prod.json}"
+# The backend refuses to start in production without these (see kachava-backend/src/main.ts).
+: "${ADMIN_SERVICE_EMAIL:?Set ADMIN_SERVICE_EMAIL to the same value as ADMIN_STAFF_EMAIL in kachava-admin/config/prod.json}"
 for SECRET in kachava-staff-jwt-secret kachava-realtime-admin-channel; do
   gcloud secrets describe "${SECRET}" --project="${PROJECT_ID}" >/dev/null || {
     echo "ERROR: secret ${SECRET} is missing in ${PROJECT_ID}." >&2
@@ -72,7 +72,7 @@ API_BASE_URL="${API_BASE_URL}" node -e '
     config.API_BASE_URL = process.env.API_BASE_URL;
     fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
   }
-' "${REPO_ROOT}/web/config/prod.json" "${REPO_ROOT}/admin/config/prod.json"
+' "${REPO_ROOT}/kachava-web/config/prod.json" "${REPO_ROOT}/kachava-admin/config/prod.json"
 
 echo "Backend deployed at: ${CLOUD_RUN_URL}"
-echo "Updated web/config/prod.json and admin/config/prod.json with API_BASE_URL=${API_BASE_URL}"
+echo "Updated kachava-web/config/prod.json and kachava-admin/config/prod.json with API_BASE_URL=${API_BASE_URL}"

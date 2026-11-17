@@ -10,8 +10,8 @@ Built with a custom biophilic design system (*Travertine Limestone, Raw Silk, Ob
 
 | Service / Portal | Platform | Live Production URL |
 | :--- | :--- | :--- |
-| **Guest Sanctuary Portal** | Firebase Hosting (`web/`) | [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app) |
-| **Admin & Concierge Command Center** | Firebase Hosting (`admin/`) | [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) |
+| **Guest Sanctuary Portal** | Firebase Hosting (`kachava-web/`) | [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app) |
+| **Admin & Concierge Command Center** | Firebase Hosting (`kachava-admin/`) | [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) |
 | **Backend REST API** | Google Cloud Run (`us-central1`) | [https://kachava-backend-dwapx2x7fa-uc.a.run.app](https://kachava-backend-dwapx2x7fa-uc.a.run.app) |
 | **API Health & Base Endpoint** | NestJS 11 (`api/v1`) | [https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1/health](https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1/health) |
 
@@ -47,7 +47,7 @@ flowchart LR
 
 ## Current Features (`Funcionalidades Actuales`)
 
-### 1. Guest Sanctuary Portal (`web/`)
+### 1. Guest Sanctuary Portal (`kachava-web/`)
 
 - **Unified Responsive Mobile & Desktop Experience (`SanctuaryShell`)**:
   - **Mobile-Native Sanctuary (`< 768px`)**: Exact mobile-first experience with tactile bottom navigation bar (`SanctuaryBottomNav`: `Inicio`, `Explorar`, `Concierge`, `Estancia`), quick-access `todas las pantallas` (`All Sanctuary Screens`) modal drawer covering all `1..11` sanctuary modules, and floating action bar.
@@ -78,7 +78,7 @@ flowchart LR
 
 ---
 
-### 2. Admin & Concierge Command Center (`admin/`)
+### 2. Admin & Concierge Command Center (`kachava-admin/`)
 
 - **1. Live Summary & Alerts (`OverviewWorkspace`)**:
   - Real-time operational alert feed with unread badge counters across navigation tabs.
@@ -109,7 +109,7 @@ flowchart LR
 | **Backend API** | `NestJS 11` (`Node.js 22 Alpine`, `TypeScript`) | Clean / Hexagonal Architecture (Ports & Adapters), strict DTO validation, REST `/api/v1` endpoints, and real-time polling state sync. |
 | **Database & Storage** | `Google Cloud Firestore` (`kavacha-db`) & `Cloud Storage` (`kavacha-store`) | Automatic cold-start state hydration from Firestore with resilient dual-write persistence and media storage bucket. |
 | **Cloud Infrastructure & FinOps** | `Google Cloud Run` + `Cloud Build` + `Firebase Hosting` | Serverless container scaling (`--min-instances=0`, `--max-instances=2`, `1 vCPU`, `512Mi RAM`, `--cpu-throttling`, `--concurrency=80`) achieving **$0 idle compute cost**, paired with global Firebase Hosting multi-site CDN. |
-| **Quality Assurance & Testing** | `Jest`, `Flutter Test`, `Playwright` | Backend unit & integration tests (`backend/`), Flutter widget & controller tests (`web/`, `admin/`), and automated Playwright Chromium E2E test suites (`e2e/`). |
+| **Quality Assurance & Testing** | `Jest`, `Flutter Test`, `Playwright` | Backend unit & integration tests (`kachava-backend/`), Flutter widget & controller tests (`kachava-web/`, `kachava-admin/`), and automated Playwright Chromium E2E test suites (`kachava-e2e/`). |
 
 ---
 
@@ -117,7 +117,7 @@ flowchart LR
 
 ```text
 kachava-lux-guest-experience-app/
-├── web/                        # Guest Sanctuary Portal (Flutter 3.x Web)
+├── kachava-web/                        # Guest Sanctuary Portal (Flutter 3.x Web)
 │   ├── config/                 # Environment configs (dev.json, prod.json)
 │   ├── lib/
 │   │   ├── application/        # SanctuaryController & state orchestration
@@ -126,11 +126,11 @@ kachava-lux-guest-experience-app/
 │   │   ├── domain/             # Immutable domain entities & repositories
 │   │   └── presentation/       # Responsive SanctuaryShell & 12 sanctuary screens
 │   └── test/                   # Unit & widget test suites
-├── admin/                      # Admin & Concierge Command Center (Flutter 3.x Web)
+├── kachava-admin/                      # Admin & Concierge Command Center (Flutter 3.x Web)
 │   ├── config/                 # Environment configs (dev.json, prod.json)
 │   ├── lib/                    # 6 operational workspaces & WebAudio alert engine
 │   └── test/                   # Admin dashboard widget tests
-├── backend/                    # Shared NestJS 11 REST API (Clean/Hexagonal)
+├── kachava-backend/                    # Shared NestJS 11 REST API (Clean/Hexagonal)
 │   ├── src/
 │   │   ├── modules/            # Auth, Stays, Larder, Experiences, Concierge, Folio, Sync
 │   │   └── shared/             # Firestore & Storage infrastructure adapters
@@ -141,7 +141,7 @@ kachava-lux-guest-experience-app/
 │   ├── deploy-backend.sh       # Cloud Build + Cloud Run deployment & prod.json sync
 │   ├── deploy-hosting.sh       # Flutter Web release builds + Firebase multi-site deploy
 │   └── deploy-all.sh           # One-command full-stack cloud deployment
-├── e2e/                        # Playwright Chromium End-to-End validation suites
+├── kachava-e2e/                        # Playwright Chromium End-to-End validation suites
 ├── firebase.json               # Firebase Hosting multi-site & Firestore/Storage rules config
 └── run-local.sh                # Unified local full-stack launcher (ports 3000, 3001, 3002)
 ```
@@ -161,7 +161,7 @@ kachava-lux-guest-experience-app/
 Run the unified launcher from the repository root to start the NestJS Backend, Guest Sanctuary Portal, and Admin Command Center concurrently:
 
 ```bash
-# Default mode (serves prebuilt web/build/web & admin/build/web if present, or runs flutter)
+# Default mode (serves prebuilt kachava-web/build/web & kachava-admin/build/web if present, or runs flutter)
 ./run-local.sh
 
 # Live development mode (forces live `flutter run -d web-server` compilation)
@@ -191,7 +191,7 @@ Desde la raíz del repositorio, ejecuta el lanzador unificado para iniciar simul
 - **Consola Host Admin (Local)**: `http://localhost:3002`
 - **Portal del Huésped (Local)**: `http://localhost:3000/?guestId=<uuid>` *(generado al crear la estancia en el Admin; abrir `http://localhost:3000` sin `?guestId=` muestra la pantalla de bloqueo **Acceso Restringido — ID de Huésped Obligatorio**)*
 - **Backend API (Local)**: `http://localhost:3001/api/v1`
-- *(Nota: Si modificas código Dart y deseas recompilar los bundles estáticos locales con `config/dev.json`, ejecuta: `cd web && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json` y `cd admin && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json`, o bien inicia en modo compilación en vivo con `./run-local.sh --dev`)*.
+- *(Nota: Si modificas código Dart y deseas recompilar los bundles estáticos locales con `config/dev.json`, ejecuta: `cd kachava-web && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json` y `cd kachava-admin && flutter build web --release --pwa-strategy=none --dart-define-from-file=config/dev.json`, o bien inicia en modo compilación en vivo con `./run-local.sh --dev`)*.
 
 ### Paso 1 — Crear la Estancia y Generar el Magic Link (Host Admin)
 
@@ -227,17 +227,17 @@ Desde la raíz del repositorio, ejecuta el lanzador unificado para iniciar simul
 ## Running Tests & Static Analysis
 
 ```bash
-# 1. Guest Sanctuary Portal (web/) — Static Analysis & Widget/Unit Tests
-cd web && flutter analyze && flutter test
+# 1. Guest Sanctuary Portal (kachava-web/) — Static Analysis & Widget/Unit Tests
+cd kachava-web && flutter analyze && flutter test
 
-# 2. Admin Command Center (admin/) — Static Analysis & Widget Tests
-cd admin && flutter analyze && flutter test
+# 2. Admin Command Center (kachava-admin/) — Static Analysis & Widget Tests
+cd kachava-admin && flutter analyze && flutter test
 
-# 3. Shared NestJS Backend (backend/) — Unit & API Integration Tests
-cd backend && npm test
+# 3. Shared NestJS Backend (kachava-backend/) — Unit & API Integration Tests
+cd kachava-backend && npm test
 
-# 4. End-to-End Browser Verification (e2e/) — Playwright Chromium Suite
-cd e2e && npx playwright test
+# 4. End-to-End Browser Verification (kachava-e2e/) — Playwright Chromium Suite
+cd kachava-e2e && npx playwright test
 ```
 
 ---

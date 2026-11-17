@@ -18,8 +18,8 @@ node -e '
     const missing = keys.filter((key) => !config[key]);
     if (missing.length) throw new Error(`${file} is missing: ${missing.join(", ")}`);
   };
-  check(process.argv[1] + "/web/config/prod.json", required);
-  check(process.argv[1] + "/admin/config/prod.json", [...required, "ADMIN_STAFF_EMAIL"]);
+  check(process.argv[1] + "/kachava-web/config/prod.json", required);
+  check(process.argv[1] + "/kachava-admin/config/prod.json", [...required, "ADMIN_STAFF_EMAIL"]);
 ' "${REPO_ROOT}"
 
 echo "==> [1/4] Ensuring Firebase Hosting sites exist in project ${PROJECT_ID}..."
@@ -31,13 +31,13 @@ cd "${REPO_ROOT}"
 npx -y firebase-tools target:apply hosting guest-portal "${GUEST_SITE}" --project "${PROJECT_ID}" --non-interactive
 npx -y firebase-tools target:apply hosting admin-dashboard "${ADMIN_SITE}" --project "${PROJECT_ID}" --non-interactive
 
-echo "==> [3/4] Building Flutter Web Guest Portal (web/) and Admin Dashboard (admin/)..."
+echo "==> [3/4] Building Flutter Web Guest Portal (kachava-web/) and Admin Dashboard (kachava-admin/)..."
 (
-  cd "${REPO_ROOT}/web"
+  cd "${REPO_ROOT}/kachava-web"
   flutter build web --release --pwa-strategy=none --dart-define-from-file=config/prod.json
 )
 (
-  cd "${REPO_ROOT}/admin"
+  cd "${REPO_ROOT}/kachava-admin"
   flutter build web --release --pwa-strategy=none --dart-define-from-file=config/prod.json
 )
 

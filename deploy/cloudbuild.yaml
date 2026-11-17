@@ -8,8 +8,8 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest'
       - '-f'
-      - 'backend/Dockerfile'
-      - 'backend'
+      - 'kachava-backend/Dockerfile'
+      - 'kachava-backend'
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-backend-image'
