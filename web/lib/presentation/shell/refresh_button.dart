@@ -16,7 +16,7 @@ class RefreshButton extends StatelessWidget {
       key: const Key('guest-refresh-button'),
       tooltip: controller.l10n.refresh,
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-      color: KachavaColors.onSurfaceVariant,
+      color: KachavaColors.muted,
       onPressed: busy ? null : controller.refreshNow,
       icon: busy
           ? const SizedBox.square(

@@ -28,7 +28,7 @@ class SettingsAirportsSection extends StatelessWidget {
       key: const Key('settings-airports'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(_s.airports, style: Theme.of(context).textTheme.titleMedium),
+        RuledSection(child: SectionHead(title: _s.airports)),
         const SizedBox(height: KachavaTokens.space2),
         if (airports.isEmpty)
           AdminStateLine(
@@ -55,8 +55,10 @@ class SettingsAirportsSection extends StatelessWidget {
   }
 
   Widget _header(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: KachavaTokens.textSecondary, fontWeight: FontWeight.w500);
+    final style = Theme.of(context)
+        .textTheme
+        .labelMedium
+        ?.copyWith(color: KachavaTokens.muted, fontWeight: FontWeight.w500);
     return _AirportGrid(
       code: Text(_s.code, style: style),
       name: Text(_s.name, style: style),
@@ -162,7 +164,7 @@ class _AirportGrid extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(minHeight: 48),
       decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: KachavaTokens.border))),
+          border: Border(bottom: BorderSide(color: KachavaTokens.line))),
       child: Row(children: [
         SizedBox(width: 64, child: code),
         Expanded(child: name),

@@ -19,8 +19,8 @@ class DesktopCommandSidebar extends StatelessWidget {
       key: const Key('desktop-sidebar'),
       width: width,
       decoration: const BoxDecoration(
-        color: KachavaTokens.background,
-        border: Border(right: BorderSide(color: KachavaTokens.border)),
+        color: KachavaTokens.paper,
+        border: Border(right: BorderSide(color: KachavaTokens.line)),
       ),
       child: AdminNavList(
         activeTab: controller.activeTab,

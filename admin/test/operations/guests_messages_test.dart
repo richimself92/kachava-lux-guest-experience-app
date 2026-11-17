@@ -66,7 +66,7 @@ void main() {
       (tester) async {
     await pump(tester);
     for (final h in ['Guest', 'Villa', 'Dates', 'Language', 'Allergies']) {
-      expect(find.text(h), findsWidgets, reason: h);
+      expect(find.text(h.toUpperCase()), findsWidgets, reason: h); // klLabel
     }
     expect(find.byKey(const Key('guest-allergy-stay_a')), findsOneWidget);
     expect(find.text('Spanish'), findsOneWidget);

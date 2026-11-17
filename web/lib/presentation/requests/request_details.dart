@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/i18n/l10n.dart';
 import '../../core/platform/phone_dialer.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../domain/requests.dart';
 import '../../domain/trip.dart';
 import '../common/labels.dart';
@@ -22,8 +23,12 @@ class RequestDetails extends StatelessWidget {
   final GuestRequest request;
   final String title;
 
-  static const _body = TextStyle(fontSize: 15);
-  static const _bold = TextStyle(fontSize: 15, fontWeight: FontWeight.w700);
+  static const _body =
+      TextStyle(fontSize: 15, fontFeatures: KachavaTheme.tabular);
+  static const _bold = TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w500,
+      fontFeatures: KachavaTheme.tabular);
 
   @override
   Widget build(BuildContext context) {
@@ -90,9 +95,7 @@ class RequestDetails extends StatelessWidget {
   Widget _step(RequestStatus s, bool reached) => Row(children: [
         Icon(reached ? Icons.check_circle : Icons.radio_button_unchecked,
             size: 20,
-            color: reached
-                ? KachavaColors.confirmedGreen
-                : KachavaColors.onSurfaceVariant),
+            color: reached ? KachavaColors.okText : KachavaColors.lineStrong),
         const SizedBox(width: 8),
         Text(l10n.status(s), style: const TextStyle(fontSize: 15, height: 2)),
       ]);
@@ -133,11 +136,9 @@ class _DriverBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(height: 24),
-        Text(l10n.driver,
-            style: const TextStyle(
-                fontSize: 14, color: KachavaColors.onSurfaceVariant)),
+        KlLabel(l10n.driver),
         Text(trip.driverName,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         if (vehicle.isNotEmpty)
           Text(vehicle, style: const TextStyle(fontSize: 15)),
         if (trip.driverPhone.isNotEmpty)

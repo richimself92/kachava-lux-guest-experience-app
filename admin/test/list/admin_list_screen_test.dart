@@ -190,7 +190,7 @@ void main() {
       final allowed = <String>{
         'Items', 'New item', // header
         'Search', 'Status', // toolbar
-        'Name', // column headers ("Status" above)
+        'NAME', 'STATUS', // klLabel column headers
         for (final r in rows) r.name,
         'Active', 'Disabled', // status chips
         'Rows per page', '25', '1–25 of 132', // pager

@@ -78,7 +78,8 @@ void main() {
       'Guests / qty',
       'Status'
     ]) {
-      expect(find.text(header), findsWidgets, reason: header);
+      expect(find.text(header.toUpperCase()), findsWidgets,
+          reason: header); // klLabel
     }
     final (section, query) = requests.queries.last;
     expect(section, ServiceSection.experiences);

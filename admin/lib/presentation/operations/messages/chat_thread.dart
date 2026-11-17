@@ -160,8 +160,7 @@ class _ChatThreadState extends State<ChatThread>
             children: [
               TruncatedText(widget.row.guestName, style: text.titleMedium),
               TruncatedText(widget.row.villaName,
-                  style: text.bodySmall
-                      ?.copyWith(color: KachavaTokens.textSecondary)),
+                  style: text.bodySmall?.copyWith(color: KachavaTokens.muted)),
             ],
           ),
         ),
@@ -261,8 +260,8 @@ class _DaySeparator extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
                 horizontal: KachavaTokens.space3, vertical: 2),
             decoration: BoxDecoration(
-              color: KachavaTokens.neutralBackground,
-              borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+              color: KachavaTokens.wash,
+              borderRadius: BorderRadius.circular(KachavaTokens.radius),
             ),
             child: Text(label, style: Theme.of(context).textTheme.labelSmall),
           ),
@@ -270,8 +269,8 @@ class _DaySeparator extends StatelessWidget {
       );
 }
 
-/// Guest bubbles on the left (surface), staff on the right (restrained
-/// brown tint); the time sits under each bubble.
+/// Guest bubbles on the left (surface + line), staff on the right (wash);
+/// square, no shadow. The time sits under each bubble (on paper).
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
@@ -301,12 +300,7 @@ class ChatBubble extends StatelessWidget {
             Container(
               key: Key('message-${m.id}'),
               padding: const EdgeInsets.all(KachavaTokens.space3),
-              decoration: BoxDecoration(
-                color: m.fromGuest
-                    ? KachavaTokens.surface
-                    : KachavaTokens.primarySelected,
-                borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
-              ),
+              decoration: bubbleDecoration(fromGuest: m.fromGuest),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -314,7 +308,7 @@ class ChatBubble extends StatelessWidget {
                     if (m.photoUrl case final url?)
                       ClipRRect(
                         borderRadius:
-                            BorderRadius.circular(KachavaTokens.radiusSm),
+                            BorderRadius.circular(KachavaTokens.radius),
                         child: Image.network(url,
                             key: Key('message-photo-${m.id}'),
                             height: 180,
@@ -331,8 +325,8 @@ class ChatBubble extends StatelessWidget {
               padding: const EdgeInsets.only(
                   top: 2, bottom: KachavaTokens.space2, left: 4, right: 4),
               child: Text(m.fromGuest ? time : '${m.senderName} · $time',
-                  style: theme.labelSmall
-                      ?.copyWith(color: KachavaTokens.textSecondary)),
+                  style:
+                      theme.labelSmall?.copyWith(color: KachavaTokens.muted)),
             ),
           ],
         ),

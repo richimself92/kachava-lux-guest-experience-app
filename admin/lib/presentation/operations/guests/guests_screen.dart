@@ -75,7 +75,7 @@ class _GuestsScreenState extends State<GuestsScreen>
   Widget build(BuildContext context) {
     return Container(
       key: const Key('workspace-admin-guests'),
-      color: KachavaTokens.background,
+      color: KachavaTokens.paper,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -83,10 +83,10 @@ class _GuestsScreenState extends State<GuestsScreen>
             controller: _tabs,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: KachavaTokens.text,
-            unselectedLabelColor: KachavaTokens.textSecondary,
-            indicatorColor: KachavaTokens.primary,
-            dividerColor: KachavaTokens.border,
+            labelColor: KachavaTokens.ink,
+            unselectedLabelColor: KachavaTokens.muted,
+            indicatorColor: KachavaTokens.brand,
+            dividerColor: KachavaTokens.line,
             tabs: [
               Tab(key: const Key('guests-tab-guests'), text: _s.guestsTitle),
               Tab(key: const Key('guests-tab-messages'), text: _s.messages),

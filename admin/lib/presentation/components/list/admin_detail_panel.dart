@@ -89,7 +89,7 @@ class _AdminDetailPanelState extends State<AdminDetailPanel> {
         focusNode: _focus,
         child: Material(
           key: const Key('detail-panel'),
-          color: KachavaTokens.background,
+          color: KachavaTokens.surface,
           child: content,
         ),
       ),
@@ -117,16 +117,27 @@ class _AdminDetailPanelState extends State<AdminDetailPanel> {
         ]),
       );
 
-  Widget _tabs() => DefaultTabController(
+  Widget _tabs() => Builder(builder: _tabsIn);
+
+  Widget _tabsIn(BuildContext context) => DefaultTabController(
         length: widget.tabs.length,
         child: Column(children: [
           TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: KachavaTokens.text,
-            unselectedLabelColor: KachavaTokens.textSecondary,
-            indicatorColor: KachavaTokens.text,
-            dividerColor: KachavaTokens.border,
+            labelColor: KachavaTokens.ink,
+            unselectedLabelColor: KachavaTokens.muted,
+            // Text-only tabs: selected = ink text over a 1px ink rule.
+            indicator: const UnderlineTabIndicator(
+                borderSide: BorderSide(color: KachavaTokens.ink, width: 1)),
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: KachavaTokens.line,
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            labelStyle: Theme.of(context).textTheme.labelLarge,
+            unselectedLabelStyle: Theme.of(context)
+                .textTheme
+                .labelLarge
+                ?.copyWith(fontWeight: FontWeight.w400),
             tabs: [for (final t in widget.tabs) Tab(text: t.label)],
           ),
           Expanded(

@@ -76,7 +76,7 @@ void main() {
       'Phone',
       'Active'
     ]) {
-      expect(find.text(h), findsWidgets, reason: h);
+      expect(find.text(h.toUpperCase()), findsWidgets, reason: h); // klLabel
     }
     expect(roster.queries.last.sort?.wireValue, 'fullName:asc');
     expect(find.text('Member 1'), findsOneWidget);

@@ -9,11 +9,11 @@ import '../../domain/admin_enums.dart';
 import '../components/focus_ring.dart';
 import 'admin_refresh_button.dart';
 
-/// White 64px top bar: page title, EN|ES toggle, Refresh, alert bell and
+/// Paper 64px top bar: page title, EN|ES toggle, Refresh, alert bell and
 /// the Settings gear. No global search or filters: each list has its own toolbar.
 /// Mobile adds the drawer menu button.
 class TopCommandBar extends StatelessWidget {
-  static const TextTheme _text = KachavaAdminTheme.textTheme;
+  static final TextTheme _text = KachavaTextStyles.textTheme(inputSize: 14);
 
   const TopCommandBar({
     super.key,
@@ -40,8 +40,8 @@ class TopCommandBar extends StatelessWidget {
       height: AdminBreakpoints.topBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        color: KachavaTokens.background,
-        border: Border(bottom: BorderSide(color: KachavaTokens.border)),
+        color: KachavaTokens.paper,
+        border: Border(bottom: BorderSide(color: KachavaTokens.line)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -53,7 +53,7 @@ class TopCommandBar extends StatelessWidget {
                 IconButton(
                   key: const Key('mobile-nav-menu-button'),
                   tooltip: AdminI18n.tr(controller.isEs, 'Menu', 'Menú'),
-                  icon: const Icon(Icons.menu, color: KachavaTokens.text),
+                  icon: const Icon(Icons.menu, color: KachavaTokens.ink),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               Expanded(child: _buildTitle()),
@@ -84,9 +84,9 @@ class TopCommandBar extends StatelessWidget {
       isSelected: selected,
       style: IconButton.styleFrom(
         fixedSize: const Size(48, 48),
-        backgroundColor: selected ? KachavaTokens.surface : null,
+        backgroundColor: selected ? KachavaTokens.wash : null,
       ),
-      icon: const Icon(Icons.settings_outlined, color: KachavaTokens.text),
+      icon: const Icon(Icons.settings_outlined, color: KachavaTokens.ink),
       onPressed: () => controller.selectTab(AdminWorkspaceTab.adminSettings),
     );
   }
@@ -101,19 +101,15 @@ class TopCommandBar extends StatelessWidget {
           key: const Key('top-bar-page-title'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-              fontSize: 20,
-              height: 28 / 20,
-              fontWeight: FontWeight.w500,
-              color: KachavaTokens.text),
+          style: _text.titleLarge?.copyWith(color: KachavaTokens.ink),
         ),
       ),
     );
   }
 
-  /// Neutral gray pill (or [background]).
+  /// Quiet square control (no fill unless [background]); hover is wash.
   ///
-  /// The visible pill stays compact, but its tap target is at least 48dp
+  /// The visible control stays compact, but its tap target is at least 48dp
   /// (DESIGN.md) and keyboard focus draws the shared [FocusRing].
   Widget _pill({
     required Key key,
@@ -123,9 +119,9 @@ class TopCommandBar extends StatelessWidget {
     EdgeInsets padding =
         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
   }) {
-    final radius = BorderRadius.circular(KachavaTokens.radiusPill);
+    final radius = BorderRadius.circular(KachavaTokens.radius);
     return FocusRing(
-      borderRadius: KachavaTokens.radiusPill,
+      borderRadius: KachavaTokens.radius,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
@@ -140,7 +136,7 @@ class TopCommandBar extends StatelessWidget {
               child: Ink(
                 padding: padding,
                 decoration: BoxDecoration(
-                  color: background ?? KachavaTokens.surface,
+                  color: background,
                   borderRadius: radius,
                 ),
                 child: child,
@@ -175,15 +171,17 @@ class TopCommandBar extends StatelessWidget {
   Widget _buildLocaleSegment(String label, bool active, bool isCompact) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 5 : 8, vertical: 4),
+      // Text-only switch: the selected language is ink with an ink rule.
       decoration: BoxDecoration(
-        color: active ? KachavaTokens.background : Colors.transparent,
-        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+        border: Border(
+          bottom: BorderSide(
+              color: active ? KachavaTokens.ink : Colors.transparent),
+        ),
       ),
       child: Text(
         label,
         style: _text.labelMedium?.copyWith(
-          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-          color: active ? KachavaTokens.text : KachavaTokens.textSecondary,
+          color: active ? KachavaTokens.ink : KachavaTokens.muted,
         ),
       ),
     );
@@ -191,6 +189,7 @@ class TopCommandBar extends StatelessWidget {
 
   Widget _buildNotificationBell(bool isCompact) {
     final unread = bell.unread;
+    // Plain tabular count: danger/pending when something needs attention.
     final tone = bell.counts.urgentUnread > 0
         ? StatusTone.error
         : unread > 0
@@ -205,7 +204,6 @@ class TopCommandBar extends StatelessWidget {
         excludeFromSemantics: true,
         child: _pill(
           key: const Key('top-bar-alert-bell'),
-          background: tone.background,
           padding:
               EdgeInsets.symmetric(horizontal: isCompact ? 6 : 10, vertical: 6),
           onTap: () =>
@@ -219,7 +217,8 @@ class TopCommandBar extends StatelessWidget {
                 '$unread',
                 key: const Key('unread-alerts-badge'),
                 style: _text.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700, color: tone.foreground),
+                    color: tone.foreground,
+                    fontFeatures: KachavaTextStyles.tabular),
               ),
             ],
           ),

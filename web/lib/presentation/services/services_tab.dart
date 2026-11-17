@@ -124,7 +124,8 @@ class _ServicesTabState extends State<ServicesTab> {
       children: [
         if (widget.focus != null)
           Material(
-            color: KachavaColors.surface,
+            color: KachavaColors.paper,
+            shape: const Border(bottom: BorderSide(color: KachavaColors.line)),
             child: Row(children: [
               IconButton(
                 key: const Key('services-back'),
@@ -136,11 +137,7 @@ class _ServicesTabState extends State<ServicesTab> {
                 child: Text(widget.focus!.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontFamily: KachavaTheme.serifFamily,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: KachavaColors.primary)),
+                    style: KachavaTheme.display(18)),
               ),
             ]),
           ),
@@ -160,7 +157,8 @@ class _ServicesTabState extends State<ServicesTab> {
                         key: const Key('services-count'),
                         style: const TextStyle(
                             fontSize: 14,
-                            color: KachavaColors.onSurfaceVariant)),
+                            color: KachavaColors.muted,
+                            fontFeatures: KachavaTheme.tabular)),
                   ),
                   const SizedBox(height: 8),
                   ..._results(l10n, catalog, results, sections, columns,
@@ -195,8 +193,9 @@ class _ServicesTabState extends State<ServicesTab> {
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
+          spacing: 4,
           runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             SelectChip(
                 l10n.all,
@@ -344,17 +343,13 @@ class ServiceCard extends StatelessWidget {
                 Text(name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontFamily: KachavaTheme.serifFamily,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: KachavaColors.onSurface)),
+                    style: KachavaTheme.display(17)),
                 if (l10n.text(service.shortDescription).isNotEmpty)
                   Text(l10n.text(service.shortDescription),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 15, color: KachavaColors.onSurfaceVariant)),
+                          fontSize: 15, color: KachavaColors.muted)),
                 const SizedBox(height: 6),
                 ServiceChips(l10n: l10n, service: service),
               ],
@@ -398,15 +393,16 @@ class WhenFilterButton extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 48),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: KachavaColors.outlineStrong),
-          borderRadius: BorderRadius.circular(8),
+          color: KachavaColors.surface,
+          border: Border.all(color: KachavaColors.lineStrong),
+          borderRadius: KachavaTheme.borderRadius,
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Flexible(
             child: Text('${l10n.when}: $label',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14)),
+                style: const TextStyle(fontSize: 14, color: KachavaColors.ink)),
           ),
           const Icon(Icons.arrow_drop_down),
         ]),

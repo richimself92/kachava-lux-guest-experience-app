@@ -117,8 +117,9 @@ class _HomeTabState extends State<HomeTab> {
             key: const Key('home-strip'),
             style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: KachavaColors.onSurface)),
+                fontWeight: FontWeight.w500,
+                color: KachavaColors.ink,
+                fontFeatures: KachavaTheme.tabular)),
         if (stay.wifiSsid.isNotEmpty)
           TextButton.icon(
             key: const Key('wifi-button'),
@@ -147,52 +148,60 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// One phase as a quiet section under a 1px rule (no card box).
   Widget _stepCard(L10n l10n, JourneyStep step) {
     final expanded = _expanded == step.number;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: KachavaColors.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            expanded: expanded,
+            label: l10n.stepSemantics(
+                step.number, step.done, step.total, expanded),
+            excludeSemantics: true,
+            child: InkWell(
+              key: Key('step-${step.number}'),
+              onTap: () =>
+                  setState(() => _expanded = expanded ? null : step.number),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: _stepHeader(l10n, step, expanded),
+              ),
+            ),
+          ),
+          if (expanded) ..._stepRows(l10n, step),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _stepRows(L10n l10n, JourneyStep step) {
     final showAll = _showAll.contains(step.number);
     final rows = showAll || step.tasks.length <= journeyMaxRows
         ? step.tasks
         : step.tasks.take(journeyMaxRows).toList();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Semantics(
-              button: true,
-              expanded: expanded,
-              label: l10n.stepSemantics(
-                  step.number, step.done, step.total, expanded),
-              excludeSemantics: true,
-              child: InkWell(
-                key: Key('step-${step.number}'),
-                borderRadius: BorderRadius.circular(16),
-                onTap: () =>
-                    setState(() => _expanded = expanded ? null : step.number),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: _stepHeader(l10n, step, expanded),
-                ),
-              ),
-            ),
-            if (expanded) ...[
-              for (final task in rows) _taskRow(l10n, task, step.locked),
-              if (step.tasks.length > journeyMaxRows)
-                TextButton(
-                  key: Key('see-all-${step.number}'),
-                  onPressed: () => setState(() => showAll
-                      ? _showAll.remove(step.number)
-                      : _showAll.add(step.number)),
-                  child: Text(
-                      showAll ? l10n.showLess : l10n.seeAll(step.tasks.length)),
-                ),
-              const SizedBox(height: 6),
-            ],
-          ],
+    return [
+      for (final task in rows) _taskRow(l10n, task, step.locked),
+      if (step.tasks.length > journeyMaxRows)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: Key('see-all-${step.number}'),
+            onPressed: () => setState(() => showAll
+                ? _showAll.remove(step.number)
+                : _showAll.add(step.number)),
+            child:
+                Text(showAll ? l10n.showLess : l10n.seeAll(step.tasks.length)),
+          ),
         ),
-      ),
-    );
+      const SizedBox(height: 8),
+    ];
   }
 
   Widget _stepHeader(L10n l10n, JourneyStep step, bool expanded) {
@@ -203,34 +212,29 @@ class _HomeTabState extends State<HomeTab> {
         const SizedBox(width: 6),
         Expanded(
           child: Text('${step.number} ${l10n.stepTitle(step.number)}',
-              style: const TextStyle(
-                  fontFamily: KachavaTheme.serifFamily,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: KachavaColors.onSurface)),
+              style: KachavaTheme.display(18)),
         ),
         if (step.locked)
           Text(l10n.opens(step.opensOn),
-              style: const TextStyle(
-                  fontSize: 14, color: KachavaColors.onSurfaceVariant))
+              style: const TextStyle(fontSize: 14, color: KachavaColors.muted))
         else if (step.total > 0) ...[
           SizedBox(
             width: 48,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: step.done / step.total,
-                minHeight: 6,
-                color: KachavaColors.primary,
-                backgroundColor: KachavaColors.surfaceContainerHighest,
-              ),
+            child: LinearProgressIndicator(
+              value: step.done / step.total,
+              minHeight: 3,
+              borderRadius: BorderRadius.zero,
+              color: KachavaColors.brand,
+              backgroundColor: KachavaColors.line,
             ),
           ),
           const SizedBox(width: 8),
           Text(l10n.progress(step.done, step.total),
               key: Key('progress-${step.number}'),
               style: const TextStyle(
-                  fontSize: 14, color: KachavaColors.onSurfaceVariant)),
+                  fontSize: 14,
+                  color: KachavaColors.muted,
+                  fontFeatures: KachavaTheme.tabular)),
         ],
       ],
     );
@@ -264,10 +268,10 @@ class _HomeTabState extends State<HomeTab> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 52),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.fromLTRB(4, 6, 0, 6),
             child: Row(
               children: [
-                _stateIcon(task),
+                _TaskStateIcon(task),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(title,
@@ -276,8 +280,8 @@ class _HomeTabState extends State<HomeTab> {
                       style: TextStyle(
                           fontSize: 16,
                           color: locked
-                              ? KachavaColors.onSurfaceVariant
-                              : KachavaColors.onSurface)),
+                              ? KachavaColors.muted
+                              : KachavaColors.ink)),
                 ),
                 if (trailing.isNotEmpty)
                   Flexible(
@@ -286,14 +290,12 @@ class _HomeTabState extends State<HomeTab> {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
                         style: const TextStyle(
-                            fontSize: 14,
-                            color: KachavaColors.onSurfaceVariant)),
+                            fontSize: 14, color: KachavaColors.muted)),
                   ),
                 if (locked)
                   InfoTip(l10n.lockedInfo)
                 else
-                  const Icon(Icons.chevron_right,
-                      color: KachavaColors.onSurfaceVariant),
+                  const Icon(Icons.chevron_right, color: KachavaColors.muted),
               ],
             ),
           ),
@@ -301,16 +303,23 @@ class _HomeTabState extends State<HomeTab> {
       ),
     );
   }
+}
 
-  Widget _stateIcon(JourneyTask task) {
+/// Done check, draft clock, skipped arrow or the numbered step circle.
+class _TaskStateIcon extends StatelessWidget {
+  const _TaskStateIcon(this.task);
+  final JourneyTask task;
+
+  @override
+  Widget build(BuildContext context) {
     const size = 26.0;
     return switch (task.state) {
-      TaskState.done => const Icon(Icons.check_circle,
-          color: KachavaColors.confirmedGreen, size: size),
+      TaskState.done =>
+        const Icon(Icons.check_circle, color: KachavaColors.okText, size: size),
       TaskState.draft =>
         const Icon(Icons.timelapse, color: KachavaColors.primary, size: size),
-      TaskState.skipped => const Icon(Icons.redo,
-          color: KachavaColors.onSurfaceVariant, size: size),
+      TaskState.skipped =>
+        const Icon(Icons.redo, color: KachavaColors.muted, size: size),
       TaskState.pending => Container(
           width: size,
           height: size,
@@ -321,8 +330,9 @@ class _HomeTabState extends State<HomeTab> {
           ),
           child: Text('${task.slot}',
               style: const TextStyle(
+                  fontFeatures: KachavaTheme.tabular,
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: KachavaColors.primary)),
         ),
     };

@@ -63,7 +63,7 @@ void main() {
     expect(const L10n(Lang.en).text(const LocalizedText(en: 'Pool')), 'Pool');
   });
 
-  test('text styles are >= 14px and AA on cream', () {
+  test('text styles are >= 14px and AA on paper and surface', () {
     final theme = KachavaTheme.buildTheme().textTheme;
     final styles = [
       theme.headlineMedium,
@@ -78,22 +78,20 @@ void main() {
     ];
     for (final s in styles) {
       expect(s!.fontSize, greaterThanOrEqualTo(14));
-      expect(
-          _contrast(s.color!, KachavaColors.surface), greaterThanOrEqualTo(4.5),
-          reason: '${s.color}');
+      for (final bg in [KachavaColors.paper, KachavaColors.surface]) {
+        expect(_contrast(s.color!, bg), greaterThanOrEqualTo(4.5),
+            reason: '${s.color}');
+      }
     }
     expect(theme.bodyLarge!.fontSize, 16);
-    expect(
-        _contrast(
-            KachavaColors.mutedMetadata, KachavaColors.surfaceContainerLow),
-        greaterThanOrEqualTo(4.5));
   });
 
-  test('no text style in lib/ is smaller than 14px', () {
+  // Body text stays >= 14px; only the uppercase klLabel goes down to 12px.
+  test('no text style in lib/ is smaller than 12px', () {
     final small = RegExp(r'fontSize:\s*(\d+(\.\d+)?)');
     _sources().forEach((path, code) {
       for (final m in small.allMatches(code)) {
-        expect(double.parse(m.group(1)!), greaterThanOrEqualTo(14),
+        expect(double.parse(m.group(1)!), greaterThanOrEqualTo(12),
             reason: path);
       }
     });

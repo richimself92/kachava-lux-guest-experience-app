@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/kachava_tokens.dart';
 
-/// Paints a double focus ring (2px focus blue outside + 2px white inside)
-/// around [child] while a descendant has focus via the keyboard.
+/// Paints the MUJI focus outline (1.5px ink, 2px outside [child]) while a
+/// descendant has focus via the keyboard.
 ///
 /// The ring is hidden for pointer/touch interaction (highlight mode touch).
 class FocusRing extends StatefulWidget {
   const FocusRing({
     super.key,
     required this.child,
-    this.borderRadius = KachavaTokens.radiusMd,
+    this.borderRadius = KachavaTokens.radius,
   });
 
   final Widget child;
@@ -64,17 +64,16 @@ class _RingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    Paint stroke(Color c) => Paint()
+    const width = 1.5;
+    const offset = 2 + width / 2;
+    final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = c;
+      ..strokeWidth = width
+      ..color = KachavaTokens.ink;
     canvas.drawRRect(
-        RRect.fromRectAndRadius(rect.deflate(1), Radius.circular(radius)),
-        stroke(Colors.white));
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(rect.inflate(1), Radius.circular(radius + 2)),
-        stroke(KachavaTokens.focus));
+        RRect.fromRectAndRadius(
+            (Offset.zero & size).inflate(offset), Radius.circular(radius)),
+        paint);
   }
 
   @override

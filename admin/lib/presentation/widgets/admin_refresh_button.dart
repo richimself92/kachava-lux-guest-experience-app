@@ -46,8 +46,8 @@ class _AdminRefreshButtonState extends State<AdminRefreshButton> {
             ? const SizedBox.square(
                 dimension: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: KachavaTokens.text),
+                    strokeWidth: 2, color: KachavaTokens.ink),
               )
-            : const Icon(Icons.refresh, color: KachavaTokens.text),
+            : const Icon(Icons.refresh, color: KachavaTokens.ink),
       );
 }

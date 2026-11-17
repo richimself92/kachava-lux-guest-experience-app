@@ -18,12 +18,11 @@ class ReconnectingIndicator extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.cloud_sync_outlined,
-                size: 16, color: KachavaColors.onSurfaceVariant),
+                size: 16, color: KachavaColors.muted),
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
-                  fontSize: 14, color: KachavaColors.onSurfaceVariant),
+              style: const TextStyle(fontSize: 14, color: KachavaColors.muted),
             ),
           ],
         ),

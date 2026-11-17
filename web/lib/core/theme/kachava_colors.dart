@@ -1,46 +1,59 @@
 import 'package:flutter/material.dart';
 
-/// Kachava Lux guest-portal brand tokens (the guest portal keeps its own
-/// look; root `DESIGN.md` governs the admin only).
+/// Text, quiet background and hairline of one status label.
+@immutable
+class StatusTone {
+  const StatusTone(this.text, this.wash, this.line);
+  final Color text;
+  final Color wash;
+  final Color line;
+}
+
+/// Kachava Lux MUJI tokens, shared with the admin Command Center.
 ///
-/// Text on cream must use [onSurface], [onSurfaceVariant] (8.5:1) or
-/// [tertiary] (5.4:1). [secondary] (3.5:1) is decorative only.
+/// Contrast (WCAG): ink 12.9 / muted 4.8 on paper; ink 13.7 / muted 5.1 on
+/// surface; ink 11.9 / brand 6.8 on wash; onBrand 7.8 on brand. Muted on
+/// wash is only 4.47, so text on wash is always [ink] or [brand].
+/// [lineStrong] (1.8:1) is decorative; focus is shown in [ink] at 1.5px.
 abstract final class KachavaColors {
-  // Primary Palette (Mayan Zapote Timber & Espresso)
-  static const Color primary = Color(0xFF754D24);
-  static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color primaryContainer = Color(0xFF8B6339);
-  static const Color onPrimaryContainer = Color(0xFFF7E8D0);
-  static const Color inversePrimary = Color(0xFFC6B198);
+  // Neutrals: warm paper and ink.
+  static const Color paper = Color(0xFFF4F2EC);
+  static const Color surface = Color(0xFFFAF9F5);
+  static const Color wash = Color(0xFFECE9E1);
+  static const Color ink = Color(0xFF2A2A28);
+  static const Color muted = Color(0xFF6B6A65);
+  static const Color faint = Color(0xFFA3A097);
+  static const Color line = Color(0xFFD9D6CD);
+  static const Color lineStrong = Color(0xFFC2BEB2);
 
-  // Secondary & Tertiary Palette (Copal Resin & Caribbean Sand)
-  static const Color secondary = Color(0xFFA67D52);
-  static const Color onSecondary = Color(0xFFFFFFFF);
-  static const Color secondaryContainer = Color(0xFFC49A6C);
-  static const Color onSecondaryContainer = Color(0xFF603917);
-  static const Color tertiary = Color(0xFF736458);
-  static const Color tertiaryContainer = Color(0xFFC6B198);
+  // The single accent.
+  static const Color brand = Color(0xFF6D4627);
+  static const Color primary = brand;
+  static const Color brandDeep = Color(0xFF55361D);
+  static const Color onBrand = Color(0xFFFAF9F5);
 
-  // Surface & Background Palette (Warm Chukum Cream)
-  static const Color surface = Color(0xFFFDF9F0);
-  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color surfaceContainerLow = Color(0xFFF7F3EA);
-  static const Color surfaceContainerHigh = Color(0xFFECE8DF);
-  static const Color surfaceContainerHighest = Color(0xFFE6E2D9);
+  // Status colours carry meaning only (text / wash / line).
+  static const Color pendingText = Color(0xFF8F611A);
+  static const Color pendingWash = Color(0xFFF3EBD9);
+  static const Color pendingLine = Color(0xFFE2D2AE);
+  static const StatusTone pending =
+      StatusTone(pendingText, pendingWash, pendingLine);
 
-  // Typography, Outline & Semantic Status Colors
-  static const Color onSurface = Color(0xFF1C1C16);
-  static const Color onSurfaceVariant = Color(0xFF544741);
+  static const Color infoText = Color(0xFF3F5A7A);
+  static const Color infoWash = Color(0xFFE6EBF1);
+  static const Color infoLine = Color(0xFFC9D3DF);
+  static const StatusTone info = StatusTone(infoText, infoWash, infoLine);
 
-  /// Metadata text; same value as [tertiary] so it passes WCAG AA on cream.
-  static const Color mutedMetadata = Color(0xFF736458);
-  static const Color outline = Color(0xFFC6B198);
-  static const Color outlineStrong = Color(0xFF988575);
-  static const Color inputBorder = Color(0xFFD1C5B8);
+  static const Color okText = Color(0xFF4F6B3A);
+  static const Color okWash = Color(0xFFE8EDE1);
+  static const Color okLine = Color(0xFFCDD8C1);
+  static const StatusTone ok = StatusTone(okText, okWash, okLine);
 
-  // Semantic Status Tokens
-  static const Color confirmedGreen = Color(0xFF3B6D41);
-  static const Color confirmedGreenBg = Color(0xFFEEF5ED);
-  static const Color errorRed = Color(0xFFBA1A1A);
-  static const Color errorRedContainer = Color(0xFFFFDAD6);
+  static const Color dangerText = Color(0xFFA8322D);
+  static const Color dangerWash = Color(0xFFF5E3E1);
+  static const Color dangerLine = Color(0xFFE6C3BF);
+  static const StatusTone danger =
+      StatusTone(dangerText, dangerWash, dangerLine);
+
+  static const List<StatusTone> statuses = [pending, info, ok, danger];
 }

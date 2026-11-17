@@ -102,8 +102,7 @@ class FactRow extends StatelessWidget {
         SizedBox(
           width: 140,
           child: Text(label,
-              style: theme.bodyMedium
-                  ?.copyWith(color: KachavaTokens.textSecondary)),
+              style: theme.bodyMedium?.copyWith(color: KachavaTokens.muted)),
         ),
         Expanded(
           child:
@@ -114,7 +113,8 @@ class FactRow extends StatelessWidget {
   }
 }
 
-/// A short section heading inside a panel.
+/// A short section heading inside a panel: a 1px top rule, then the
+/// quiet display title (MUJI "rules, not boxes").
 class PanelHeading extends StatelessWidget {
   const PanelHeading(this.text, {super.key});
 
@@ -124,7 +124,12 @@ class PanelHeading extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(
             top: KachavaTokens.space4, bottom: KachavaTokens.space2),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+        child: RuledSection(
+          child: Semantics(
+            header: true,
+            child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+          ),
+        ),
       );
 }
 

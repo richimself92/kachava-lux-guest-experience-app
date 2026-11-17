@@ -77,10 +77,10 @@ class ServiceSectionWorkspace extends StatelessWidget {
         TabBar(
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          labelColor: KachavaTokens.text,
-          unselectedLabelColor: KachavaTokens.textSecondary,
-          indicatorColor: KachavaTokens.text,
-          dividerColor: KachavaTokens.border,
+          labelColor: KachavaTokens.ink,
+          unselectedLabelColor: KachavaTokens.muted,
+          indicatorColor: KachavaTokens.ink,
+          dividerColor: KachavaTokens.line,
           tabs: [
             Tab(
                 key: Key('section-tab-requests-${section.wire.toLowerCase()}'),

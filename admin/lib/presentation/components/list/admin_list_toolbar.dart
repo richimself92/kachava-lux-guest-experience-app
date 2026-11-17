@@ -255,7 +255,7 @@ class _FilterChipMenu extends StatelessWidget {
     final current = filter.labelFor(value);
     final label = current == null ? filter.label : '${filter.label}: $current';
     return FocusRing(
-      borderRadius: KachavaTokens.radiusMd,
+      borderRadius: KachavaTokens.radius,
       child: PopupMenuButton<String>(
         tooltip: '',
         onSelected: (v) => onSelected(v.isEmpty ? null : v),
@@ -271,11 +271,9 @@ class _FilterChipMenu extends StatelessWidget {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: KachavaTokens.space3),
           decoration: BoxDecoration(
-            color: current == null
-                ? KachavaTokens.background
-                : KachavaTokens.surface,
-            border: Border.all(color: KachavaTokens.inputBorder),
-            borderRadius: BorderRadius.circular(KachavaTokens.radiusMd),
+            color: current == null ? KachavaTokens.surface : KachavaTokens.wash,
+            border: Border.all(color: KachavaTokens.lineStrong),
+            borderRadius: BorderRadius.circular(KachavaTokens.radius),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Text(label, style: Theme.of(context).textTheme.labelLarge),

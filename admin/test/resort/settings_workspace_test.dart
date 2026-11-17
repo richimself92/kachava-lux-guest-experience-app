@@ -223,7 +223,7 @@ void main() {
   testWidgets('Spanish labels and 375px without overflow', (tester) async {
     await _pump(tester, isEs: true, size: const Size(375, 812));
     expect(find.text('Ajustes'), findsOneWidget);
-    expect(find.text('Zona horaria'), findsOneWidget);
+    expect(find.text('ZONA HORARIA'), findsOneWidget); // klLabel
     expect(find.text('Sin aeropuertos'), findsOneWidget);
     expect(find.text('Sin configurar'), findsNWidgets(4));
     expect(tester.takeException(), isNull);

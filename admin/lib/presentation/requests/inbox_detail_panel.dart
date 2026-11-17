@@ -323,17 +323,18 @@ class InboxTimeline extends StatelessWidget {
         for (var i = 0; i < flow.length; i++)
           Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(
-              i <= current ? Icons.check_circle : Icons.radio_button_unchecked,
+              // Outline glyphs only: never an icon inside a filled circle.
+              i <= current
+                  ? Icons.check_circle_outline
+                  : Icons.radio_button_unchecked,
               size: 16,
-              color: i <= current
-                  ? KachavaTokens.primary
-                  : KachavaTokens.textSecondary,
+              color: i <= current ? KachavaTokens.brand : KachavaTokens.muted,
             ),
             const SizedBox(width: KachavaTokens.space1),
             Text(s.stageStatus(flow[i]),
                 style: text?.copyWith(
                     fontWeight:
-                        i == current ? FontWeight.w700 : FontWeight.w400)),
+                        i == current ? FontWeight.w500 : FontWeight.w400)),
           ]),
         if (current < 0) Text(s.stageStatus(item.status), style: text),
       ],

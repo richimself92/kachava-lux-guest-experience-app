@@ -5,7 +5,7 @@ import '../../core/admin_theme.dart' show statusToneFor;
 import '../../core/status_vocabulary.dart';
 import '../../core/theme/kachava_tokens.dart';
 
-/// Pill-shaped status label: light tone background + dark tone text (AA).
+/// Square status label: tone wash, tone text (AA) and a 1px tone line.
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.label, required this.tone});
 
@@ -26,18 +26,18 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: tone.background,
-        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+        color: tone.wash,
+        border: Border.all(color: tone.line),
+        borderRadius: BorderRadius.circular(KachavaTokens.radius),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: tone.foreground,
-            ),
+        style: Theme.of(context)
+            .textTheme
+            .labelMedium
+            ?.copyWith(color: tone.foreground),
       ),
     );
   }

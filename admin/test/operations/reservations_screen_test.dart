@@ -84,7 +84,7 @@ void main() {
       'Status',
       'Resort Host'
     ]) {
-      expect(find.text(h), findsWidgets, reason: h);
+      expect(find.text(h.toUpperCase()), findsWidgets, reason: h); // klLabel
     }
     expect(reservations.queries.first.sort?.wireValue, 'checkIn:asc');
     expect(find.text('Nov 3'), findsWidgets);

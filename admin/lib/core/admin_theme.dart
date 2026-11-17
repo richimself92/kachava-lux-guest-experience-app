@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
+import 'theme/kachava_component_themes.dart';
+import 'theme/kachava_fade_transitions.dart';
+import 'theme/kachava_text_styles.dart';
 import 'theme/kachava_tokens.dart';
 
+export 'theme/kachava_fade_transitions.dart';
+export 'theme/kachava_text_styles.dart';
 export 'theme/kachava_tokens.dart';
 
 /// Maps a raw operational status string to its [StatusTone].
@@ -32,199 +38,150 @@ StatusTone statusToneFor(String rawStatus) {
   return StatusTone.neutral;
 }
 
-/// Material 3 theme for the Kachava Lux admin (root `DESIGN.md`).
+/// Material 3 theme for the Kachava Lux admin (MUJI restyle, root
+/// `DESIGN.md` v2.0): paper canvas, one brown accent, square hairlined
+/// components, quiet type and fades.
 class KachavaAdminTheme {
   const KachavaAdminTheme._();
 
+  /// Small uppercase display label (widgets apply the uppercase).
+  static const TextStyle klLabel = KachavaTextStyles.klLabel;
+
   static const ColorScheme colorScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: KachavaTokens.primary,
-    onPrimary: KachavaTokens.onPrimary,
-    primaryContainer: KachavaTokens.surface,
-    onPrimaryContainer: KachavaTokens.text,
-    secondary: KachavaTokens.textSecondary,
-    onSecondary: KachavaTokens.onPrimary,
-    secondaryContainer: KachavaTokens.surface,
-    onSecondaryContainer: KachavaTokens.text,
-    tertiary: KachavaTokens.accent,
-    onTertiary: KachavaTokens.text,
-    error: KachavaTokens.error,
-    onError: KachavaTokens.onPrimary,
-    errorContainer: KachavaTokens.errorBackground,
-    onErrorContainer: KachavaTokens.errorForeground,
-    surface: KachavaTokens.background,
-    onSurface: KachavaTokens.text,
-    onSurfaceVariant: KachavaTokens.textSecondary,
-    surfaceContainerLowest: KachavaTokens.background,
+    primary: KachavaTokens.brand,
+    onPrimary: KachavaTokens.onBrand,
+    primaryContainer: KachavaTokens.wash,
+    onPrimaryContainer: KachavaTokens.ink,
+    secondary: KachavaTokens.muted,
+    onSecondary: KachavaTokens.onBrand,
+    secondaryContainer: KachavaTokens.wash,
+    onSecondaryContainer: KachavaTokens.ink,
+    tertiary: KachavaTokens.brand,
+    onTertiary: KachavaTokens.onBrand,
+    error: KachavaTokens.danger,
+    onError: KachavaTokens.onBrand,
+    errorContainer: KachavaTokens.dangerWash,
+    onErrorContainer: KachavaTokens.danger,
+    surface: KachavaTokens.surface,
+    onSurface: KachavaTokens.ink,
+    onSurfaceVariant: KachavaTokens.muted,
+    surfaceContainerLowest: KachavaTokens.surface,
     surfaceContainerLow: KachavaTokens.surface,
     surfaceContainer: KachavaTokens.surface,
     surfaceContainerHigh: KachavaTokens.surface,
-    surfaceContainerHighest: KachavaTokens.surface,
-    outline: KachavaTokens.inputBorder,
-    outlineVariant: KachavaTokens.border,
+    surfaceContainerHighest: KachavaTokens.wash,
+    outline: KachavaTokens.lineStrong,
+    outlineVariant: KachavaTokens.line,
+    shadow: Colors.transparent,
+    scrim: KachavaTokens.ink,
     surfaceTint: Colors.transparent,
-    inverseSurface: KachavaTokens.text,
-    onInverseSurface: KachavaTokens.background,
+    inverseSurface: KachavaTokens.ink,
+    onInverseSurface: KachavaTokens.onBrand,
+    inversePrimary: KachavaTokens.wash,
   );
 
-  static const TextTheme textTheme = TextTheme(
-    headlineSmall:
-        TextStyle(fontSize: 24, height: 32 / 24, fontWeight: FontWeight.w500),
-    titleLarge:
-        TextStyle(fontSize: 18, height: 26 / 18, fontWeight: FontWeight.w500),
-    titleMedium:
-        TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500),
-    titleSmall:
-        TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500),
-    bodyLarge:
-        TextStyle(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400),
-    bodyMedium:
-        TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400),
-    bodySmall:
-        TextStyle(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w400),
-    labelLarge:
-        TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500),
-    labelMedium:
-        TextStyle(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w500),
-    labelSmall:
-        TextStyle(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w500),
-  );
+  /// Touch platforms get 16px input text so iOS never zooms into a field.
+  static bool isTouch(TargetPlatform p) =>
+      p == TargetPlatform.iOS || p == TargetPlatform.android;
 
-  static ThemeData build() {
+  static ThemeData build({TargetPlatform? platform}) {
+    final inputSize = isTouch(platform ?? defaultTargetPlatform) ? 16.0 : 14.0;
+    final text = KachavaTextStyles.textTheme(inputSize: inputSize)
+        .apply(bodyColor: KachavaTokens.ink, displayColor: KachavaTokens.ink);
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      fontFamily: KachavaTokens.fontFamily,
-      fontFamilyFallback: KachavaTokens.fontFamilyFallback,
-      textTheme: textTheme,
+      textTheme: text,
+      scaffoldBackgroundColor: KachavaTokens.paper,
+      canvasColor: KachavaTokens.paper,
+      dividerColor: KachavaTokens.line,
+      focusColor: KachavaTokens.wash,
+      hoverColor: KachavaTokens.wash,
+      highlightColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      shadowColor: Colors.transparent,
+      pageTransitionsTheme: kachavaFadePageTransitions,
+      iconTheme: const IconThemeData(color: KachavaTokens.muted),
     );
+    return _surfaces(_controls(base, text, inputSize), text);
+  }
+
+  /// Buttons, inputs, tables, chips and tabs.
+  static ThemeData _controls(ThemeData base, TextTheme t, double input) {
+    final c = KachavaComponentThemes.primary(t);
     return base.copyWith(
-      scaffoldBackgroundColor: KachavaTokens.background,
-      canvasColor: KachavaTokens.background,
-      dividerColor: KachavaTokens.border,
-      focusColor: KachavaTokens.focus.withValues(alpha: 0.12),
-      hoverColor: KachavaTokens.text.withValues(alpha: 0.04),
-      splashColor: KachavaTokens.text.withValues(alpha: 0.06),
-      textTheme: base.textTheme.apply(
-        bodyColor: KachavaTokens.text,
-        displayColor: KachavaTokens.text,
-      ),
-      filledButtonTheme: FilledButtonThemeData(style: _primaryButton),
-      elevatedButtonTheme: ElevatedButtonThemeData(style: _primaryButton),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: KachavaTokens.text,
-          side: const BorderSide(color: KachavaTokens.inputBorder),
-          shape: _radius(KachavaTokens.radiusMd),
-          textStyle: textTheme.labelLarge,
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: KachavaTokens.text,
-          shape: _radius(KachavaTokens.radiusMd),
-          textStyle: textTheme.labelLarge,
-        ),
-      ),
-      iconTheme: const IconThemeData(color: KachavaTokens.textSecondary),
-      inputDecorationTheme: _inputs,
-      dataTableTheme: _dataTable,
-      chipTheme: ChipThemeData(
-        backgroundColor: KachavaTokens.surface,
-        selectedColor: KachavaTokens.surfaceHover,
-        side: BorderSide.none,
-        shape: _radius(KachavaTokens.radiusMd),
-        labelStyle: textTheme.labelLarge?.copyWith(color: KachavaTokens.text),
-      ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: KachavaTokens.background,
-        surfaceTintColor: Colors.transparent,
-        shape: _radius(KachavaTokens.radiusLg),
-        titleTextStyle:
-            textTheme.titleLarge?.copyWith(color: KachavaTokens.text),
-      ),
+      filledButtonTheme: FilledButtonThemeData(style: c),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: c),
+      outlinedButtonTheme:
+          OutlinedButtonThemeData(style: KachavaComponentThemes.outlined(t)),
+      textButtonTheme:
+          TextButtonThemeData(style: KachavaComponentThemes.quiet(t)),
+      inputDecorationTheme: KachavaComponentThemes.inputs(input),
+      dataTableTheme: KachavaComponentThemes.dataTable,
+      chipTheme: KachavaComponentThemes.chip(t),
+      dialogTheme: KachavaComponentThemes.dialog(t),
       dividerTheme: const DividerThemeData(
-          color: KachavaTokens.border, thickness: 1, space: 1),
-      cardTheme: CardThemeData(
-        color: KachavaTokens.background,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusLg),
-          side: const BorderSide(color: KachavaTokens.border),
-        ),
-      ),
-      tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(
-          color: KachavaTokens.tooltip,
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusSm),
-        ),
-        textStyle: const TextStyle(
-            fontSize: 12, height: 16 / 12, color: KachavaTokens.onPrimary),
-        waitDuration: const Duration(milliseconds: 300),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: KachavaTokens.background,
-        foregroundColor: KachavaTokens.text,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      navigationRailTheme: const NavigationRailThemeData(
-        backgroundColor: KachavaTokens.background,
-        indicatorColor: KachavaTokens.surface,
-        selectedIconTheme: IconThemeData(color: KachavaTokens.text),
-        unselectedIconTheme: IconThemeData(color: KachavaTokens.textSecondary),
-      ),
-      navigationDrawerTheme: const NavigationDrawerThemeData(
-        backgroundColor: KachavaTokens.background,
-        indicatorColor: KachavaTokens.surface,
-        surfaceTintColor: Colors.transparent,
-      ),
-      drawerTheme: const DrawerThemeData(
-        backgroundColor: KachavaTokens.background,
-        surfaceTintColor: Colors.transparent,
-      ),
+          color: KachavaTokens.line, thickness: 1, space: 1),
+      cardTheme: KachavaComponentThemes.card,
+      iconButtonTheme: KachavaComponentThemes.iconButton,
     );
   }
 
-  static RoundedRectangleBorder _radius(double r) =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(r));
+  /// Overlays, menus, lists and navigation surfaces.
+  static ThemeData _surfaces(ThemeData base, TextTheme t) {
+    return base.copyWith(
+      tooltipTheme: KachavaComponentThemes.tooltip(t),
+      snackBarTheme: KachavaComponentThemes.snackBar(t),
+      popupMenuTheme: KachavaComponentThemes.popupMenu(t),
+      menuTheme: MenuThemeData(style: KachavaComponentThemes.menuStyle),
+      dropdownMenuTheme:
+          DropdownMenuThemeData(menuStyle: KachavaComponentThemes.menuStyle),
+      bottomSheetTheme: KachavaComponentThemes.bottomSheet,
+      listTileTheme: KachavaComponentThemes.listTile(t),
+      badgeTheme: KachavaComponentThemes.badge,
+      segmentedButtonTheme: KachavaComponentThemes.segmented(t),
+      tabBarTheme: KachavaComponentThemes.tabBar(t),
+      appBarTheme: _appBar(t),
+      navigationRailTheme: _rail,
+      navigationDrawerTheme: _navDrawer,
+      drawerTheme: _drawer,
+    );
+  }
 
-  static final ButtonStyle _primaryButton = ElevatedButton.styleFrom(
-    backgroundColor: KachavaTokens.primary,
-    foregroundColor: KachavaTokens.onPrimary,
-    elevation: 0,
-    shape: _radius(KachavaTokens.radiusMd),
-    textStyle: textTheme.labelLarge,
-  );
-
-  static OutlineInputBorder _outline(Color color, double width) =>
-      OutlineInputBorder(
-        borderRadius: BorderRadius.circular(KachavaTokens.radiusMd),
-        borderSide: BorderSide(color: color, width: width),
+  static AppBarTheme _appBar(TextTheme t) => AppBarTheme(
+        backgroundColor: KachavaTokens.paper,
+        foregroundColor: KachavaTokens.ink,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: t.titleLarge,
       );
 
-  static final InputDecorationThemeData _inputs = InputDecorationThemeData(
-    border: _outline(KachavaTokens.inputBorder, 1),
-    enabledBorder: _outline(KachavaTokens.inputBorder, 1),
-    focusedBorder: _outline(KachavaTokens.focus, 2),
-    errorBorder: _outline(KachavaTokens.error, 1),
-    focusedErrorBorder: _outline(KachavaTokens.error, 2),
-    labelStyle: const TextStyle(color: KachavaTokens.textSecondary),
-    hintStyle: const TextStyle(color: KachavaTokens.textSecondary),
+  static const NavigationDrawerThemeData _navDrawer = NavigationDrawerThemeData(
+    backgroundColor: KachavaTokens.paper,
+    indicatorColor: KachavaTokens.wash,
+    indicatorShape: KachavaComponentThemes.square,
+    surfaceTintColor: Colors.transparent,
+    shadowColor: Colors.transparent,
+    elevation: 0,
   );
 
-  static const DataTableThemeData _dataTable = DataTableThemeData(
-    dataRowColor: WidgetStatePropertyAll(KachavaTokens.background),
-    headingRowColor: WidgetStatePropertyAll(KachavaTokens.background),
-    headingTextStyle: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: KachavaTokens.textSecondary),
-    dataTextStyle: TextStyle(fontSize: 14, color: KachavaTokens.text),
-    dividerThickness: 1,
-    horizontalMargin: 16,
-    columnSpacing: 24,
+  static const DrawerThemeData _drawer = DrawerThemeData(
+    backgroundColor: KachavaTokens.paper,
+    surfaceTintColor: Colors.transparent,
+    shadowColor: Colors.transparent,
+    elevation: 0,
+    shape: RoundedRectangleBorder(),
+  );
+
+  static const NavigationRailThemeData _rail = NavigationRailThemeData(
+    backgroundColor: KachavaTokens.paper,
+    elevation: 0,
+    indicatorColor: KachavaTokens.wash,
+    indicatorShape: KachavaComponentThemes.square,
+    selectedIconTheme: IconThemeData(color: KachavaTokens.ink),
+    unselectedIconTheme: IconThemeData(color: KachavaTokens.muted),
   );
 }

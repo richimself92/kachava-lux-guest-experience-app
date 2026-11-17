@@ -196,10 +196,10 @@ class _AdminFormPanelState extends State<AdminFormPanel>
             controller: _tabs,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: KachavaTokens.text,
-            unselectedLabelColor: KachavaTokens.textSecondary,
-            indicatorColor: KachavaTokens.text,
-            dividerColor: KachavaTokens.border,
+            labelColor: KachavaTokens.ink,
+            unselectedLabelColor: KachavaTokens.muted,
+            indicatorColor: KachavaTokens.ink,
+            dividerColor: KachavaTokens.line,
             tabs: [for (final t in widget.tabs) Tab(text: t.label)],
           ),
           Expanded(
@@ -238,7 +238,7 @@ class _AdminFormPanelState extends State<AdminFormPanel>
               padding: const EdgeInsets.only(bottom: KachavaTokens.space2),
               child: Row(children: [
                 const Icon(Icons.error_outline,
-                    size: 18, color: KachavaTokens.error),
+                    size: 18, color: KachavaTokens.danger),
                 const SizedBox(width: KachavaTokens.space2),
                 Expanded(
                   child: Text(_failure!,

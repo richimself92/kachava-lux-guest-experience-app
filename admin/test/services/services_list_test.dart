@@ -49,7 +49,8 @@ void main() {
         'Price',
         'Status'
       ]) {
-        expect(find.text(header), findsWidgets, reason: header);
+        expect(find.text(header.toUpperCase()), findsWidgets,
+            reason: header); // klLabel
       }
       expect(repo.queries.first.sort?.wireValue, 'order:asc');
       expect(find.text('Service 001'), findsOneWidget);

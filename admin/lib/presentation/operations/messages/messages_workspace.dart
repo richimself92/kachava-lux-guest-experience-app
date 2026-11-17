@@ -69,7 +69,7 @@ class _MessagesWorkspaceState extends State<MessagesWorkspace> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: KachavaTokens.background,
+      color: KachavaTokens.paper,
       child: LayoutBuilder(builder: (context, constraints) {
         final wide =
             constraints.maxWidth >= MessagesWorkspace.twoPaneBreakpoint;

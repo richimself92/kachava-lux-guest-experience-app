@@ -91,7 +91,7 @@ class _VillasWorkspaceState extends State<VillasWorkspace> {
   Widget build(BuildContext context) {
     return Container(
       key: const Key('workspace-admin-villas'),
-      color: KachavaTokens.background,
+      color: KachavaTokens.paper,
       child: AdminListScreen<AdminVilla>(
         entity: 'villas',
         title: _s.villas,

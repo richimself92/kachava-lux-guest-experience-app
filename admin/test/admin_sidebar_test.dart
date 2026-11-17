@@ -79,34 +79,64 @@ void main() {
           .renderObject<RenderParagraph>(inSidebar(find.text('KACHAVA LUX')));
       expect(wordmark.didExceedMaxLines, isFalse);
       final pill = tester.widget<Text>(inSidebar(find.text('COMMAND CENTER')));
-      expect(pill.style?.fontSize, 12);
+      expect(pill.style?.fontSize, 11); // klLabel
+      expect(pill.style?.color, KachavaTokens.muted);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('test_selectedItem_usesRestrainedBrownTreatment_andTapSwitches',
+    testWidgets('test_selectedItem_usesWashAndBrandLeftRule_andTapSwitches',
         (tester) async {
       await pumpApp(tester, const Size(1440, 900));
       final dashText = tester.widget<Text>(inSidebar(find.text('Dashboard')));
-      expect(dashText.style?.fontWeight, FontWeight.w700);
-      expect(dashText.style?.color, KachavaTokens.primary);
+      expect(dashText.style?.fontWeight, FontWeight.w500);
+      expect(dashText.style?.color, KachavaTokens.ink);
       final resText = tester.widget<Text>(inSidebar(find.text('Reservations')));
-      expect(resText.style?.fontWeight, isNot(FontWeight.w700));
-      expect(resText.style?.color, KachavaTokens.text);
+      expect(resText.style?.fontWeight, FontWeight.w400);
+      expect(resText.style?.color, KachavaTokens.ink);
 
       final selectedBox = tester.widget<Ink>(find.descendant(
           of: find.byKey(const Key('nav-tab-admin-overview')),
           matching: find.byType(Ink)));
       final decoration = selectedBox.decoration! as BoxDecoration;
-      // DESIGN.md: "Selected item uses a restrained brown treatment".
-      expect(decoration.color, KachavaTokens.primarySelected);
-      expect(decoration.color, isNot(KachavaTokens.primary));
+      // MUJI: active item = wash + 1px brand rule on the left, square corners.
+      expect(decoration.color, KachavaTokens.wash);
+      final border = decoration.border! as Border;
+      expect(border.left.color, KachavaTokens.brand);
+      expect(border.left.width, 1);
+      expect(decoration.borderRadius, isNull);
+
+      final idleBox = tester.widget<Ink>(find.descendant(
+          of: find.byKey(const Key('nav-tab-admin-stays')),
+          matching: find.byType(Ink)));
+      expect((idleBox.decoration! as BoxDecoration).color, isNull);
 
       await tester.tap(find.byKey(const Key('nav-tab-admin-stays')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('workspace-admin-stays')), findsOneWidget);
       final resAfter =
           tester.widget<Text>(inSidebar(find.text('Reservations')));
-      expect(resAfter.style?.fontWeight, FontWeight.w700);
+      expect(resAfter.style?.fontWeight, FontWeight.w500);
+    });
+
+    testWidgets('test_navCountBadge_isPlainTabularNumber_pendingWhenPositive',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(
+          home: Scaffold(
+              body: Column(children: [
+        NavCountBadge(key: Key('n5'), count: 5),
+        NavCountBadge(key: Key('n0'), count: 0),
+      ]))));
+      final five = tester.widget<Text>(find.text('5'));
+      expect(five.style?.color, KachavaTokens.pending);
+      expect(five.style?.fontFeatures,
+          contains(const FontFeature.tabularFigures()));
+      expect(tester.widget<Text>(find.text('0')).style?.color,
+          KachavaTokens.muted);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('n5')),
+              matching: find.byType(DecoratedBox)),
+          findsNothing);
     });
 
     testWidgets('test_scrollDownButton_appearsOnlyWhenListOverflows',

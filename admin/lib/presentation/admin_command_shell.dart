@@ -129,18 +129,20 @@ class _UrgentBanner extends StatelessWidget {
         builder: (context, _) {
           if (!bell.hasUrgentAlert) return const SizedBox.shrink();
           final s = OpsStrings(controller.isEs);
-          const onDark = TextStyle(
-              fontSize: 14, height: 20 / 14, color: KachavaTokens.onPrimary);
+          final onDark = Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: KachavaTokens.onBrand);
           final button =
-              TextButton.styleFrom(foregroundColor: KachavaTokens.onPrimary);
+              TextButton.styleFrom(foregroundColor: KachavaTokens.onBrand);
           return Container(
             key: const Key('admin-toast-banner'),
             width: double.infinity,
-            color: KachavaTokens.text,
+            color: KachavaTokens.ink,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(children: [
               const Icon(Icons.notifications_active_outlined,
-                  size: 18, color: KachavaTokens.onPrimary),
+                  size: 18, color: KachavaTokens.onBrand),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(s.urgentArrived,

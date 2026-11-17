@@ -4,6 +4,7 @@ import '../../../application/paged_list_controller.dart';
 import '../../../core/admin_list_strings.dart';
 import '../../../core/theme/kachava_tokens.dart';
 import '../../../domain/list_query.dart';
+import '../text_segmented.dart';
 import 'admin_table_column.dart';
 
 /// Bottom sheet with filters (and sort on mobile): edits a draft and applies
@@ -20,7 +21,7 @@ Future<void> showAdminFilterSheet<T>({
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: KachavaTokens.background,
+      backgroundColor: KachavaTokens.paper,
       builder: (_) => _AdminFilterSheet<T>(
         entity: entity,
         controller: controller,
@@ -128,21 +129,14 @@ class _AdminFilterSheetState<T> extends State<_AdminFilterSheet<T>> {
         ),
         if (_sort != null) ...[
           const SizedBox(height: KachavaTokens.space2),
-          SegmentedButton<SortDirection>(
+          TextSegmented<SortDirection>(
             key: const Key('filter-sheet-direction'),
-            segments: [
-              ButtonSegment(
-                  value: SortDirection.asc,
-                  icon: const Icon(Icons.arrow_upward, size: 16),
-                  label: Text(_s.ascending)),
-              ButtonSegment(
-                  value: SortDirection.desc,
-                  icon: const Icon(Icons.arrow_downward, size: 16),
-                  label: Text(_s.descending)),
-            ],
-            selected: {_sort!.direction},
-            onSelectionChanged: (s) =>
-                setState(() => _sort = ListSort(_sort!.field, s.first)),
+            options: {
+              SortDirection.asc: _s.ascending,
+              SortDirection.desc: _s.descending,
+            },
+            selected: _sort!.direction,
+            onChanged: (d) => setState(() => _sort = ListSort(_sort!.field, d)),
           ),
         ],
         const SizedBox(height: KachavaTokens.space4),

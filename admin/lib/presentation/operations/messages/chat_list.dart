@@ -198,7 +198,8 @@ class ChatRow extends StatelessWidget {
             ? InboxStrings(isEs).ago(now.difference(at))
             : resortTime.label(at, isEs: isEs);
     return Material(
-      color: selected ? KachavaTokens.primarySelected : Colors.transparent,
+      // Selected = surface + brand rule; muted text stays AA (5.14:1).
+      color: selected ? KachavaTokens.surface : Colors.transparent,
       child: InkWell(
         key: Key('chat-row-${row.stayId}'),
         onTap: onTap,
@@ -208,18 +209,19 @@ class ChatRow extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
-                  width: 3,
-                  color: unread ? KachavaTokens.primary : Colors.transparent),
-              bottom: const BorderSide(color: KachavaTokens.border),
+                  width: 2,
+                  color: unread || selected
+                      ? KachavaTokens.brand
+                      : Colors.transparent),
+              bottom: const BorderSide(color: KachavaTokens.line),
             ),
           ),
           child: Row(children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: KachavaTokens.surface,
-              foregroundColor: KachavaTokens.text,
-              child: Text(initialsOf(row.guestName),
-                  style: const TextStyle(fontSize: 14)),
+              backgroundColor: KachavaTokens.wash,
+              foregroundColor: KachavaTokens.ink,
+              child: Text(initialsOf(row.guestName), style: text.labelLarge),
             ),
             const SizedBox(width: KachavaTokens.space3),
             Expanded(
@@ -231,23 +233,23 @@ class ChatRow extends StatelessWidget {
                       child: TruncatedText(row.guestName,
                           style: text.bodyMedium?.copyWith(
                               fontWeight:
-                                  unread ? FontWeight.w700 : FontWeight.w400)),
+                                  unread ? FontWeight.w500 : FontWeight.w400)),
                     ),
                     Text(when,
                         key: Key('chat-when-${row.stayId}'),
                         style: text.bodySmall?.copyWith(
                             color: row.awaitingReply
-                                ? KachavaTokens.warningForeground
-                                : KachavaTokens.textSecondary)),
+                                ? KachavaTokens.pending
+                                : KachavaTokens.muted)),
                   ]),
                   TruncatedText(row.villaName,
-                      style: text.bodySmall
-                          ?.copyWith(color: KachavaTokens.textSecondary)),
+                      style:
+                          text.bodySmall?.copyWith(color: KachavaTokens.muted)),
                   Row(children: [
                     Expanded(
                       child: TruncatedText(preview,
                           style: text.bodySmall
-                              ?.copyWith(color: KachavaTokens.textSecondary)),
+                              ?.copyWith(color: KachavaTokens.muted)),
                     ),
                     if (unread)
                       StatusChip(

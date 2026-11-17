@@ -152,8 +152,8 @@ class _PreferenceFormState extends State<PreferenceForm> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(deadline,
-                style: const TextStyle(
-                    fontSize: 14, color: KachavaColors.tertiary)),
+                style:
+                    const TextStyle(fontSize: 14, color: KachavaColors.muted)),
           ),
         PreferenceChoices(
           l10n: l10n,
@@ -322,7 +322,7 @@ class _PreferencesWizardState extends State<PreferencesWizard> {
               if (deadline != null)
                 Text(deadline,
                     style: const TextStyle(
-                        fontSize: 14, color: KachavaColors.tertiary)),
+                        fontSize: 14, color: KachavaColors.muted)),
               const SizedBox(height: 8),
               PreferenceChoices(
                 l10n: l10n,

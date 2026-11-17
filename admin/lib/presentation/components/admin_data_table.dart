@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/admin_list_strings.dart';
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import '../../domain/list_query.dart';
 import 'focus_ring.dart';
 import 'list/admin_table_column.dart';
@@ -68,16 +68,16 @@ class AdminDataTable<T> extends StatelessWidget {
     final id = rowId(item);
     final selected = id == selectedId;
     return FocusRing(
-      borderRadius: KachavaTokens.radiusSm,
+      borderRadius: KachavaTokens.radius,
+      // Selected = surface + 2px brand left rule (muted text keeps 5.14:1);
+      // wash is only the transient hover.
       child: Material(
-        color: selected ? KachavaTokens.surface : KachavaTokens.background,
+        color: KachavaTokens.surface,
         child: InkWell(
           key: Key('row-$entity-$id'),
           onTap: onRowTap == null ? null : () => onRowTap!(item),
           child: DecoratedBox(
-            decoration: const BoxDecoration(
-                border:
-                    Border(bottom: BorderSide(color: KachavaTokens.border))),
+            decoration: _rowDecoration(selected),
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: KachavaTokens.space4),
@@ -92,11 +92,21 @@ class AdminDataTable<T> extends StatelessWidget {
     );
   }
 
+  static BoxDecoration _rowDecoration(bool selected) => BoxDecoration(
+        border: Border(
+          left: BorderSide(
+              width: 2,
+              color: selected ? KachavaTokens.brand : Colors.transparent),
+          bottom: const BorderSide(color: KachavaTokens.line),
+        ),
+      );
+
   Widget _cell(AdminTableColumn<T> column, T item) {
     final align = column.numeric ? Alignment.centerRight : Alignment.centerLeft;
     final child = column.cell != null
         ? column.cell!(item)
         : TruncatedText(column.text!(item),
+            tabular: column.numeric,
             textAlign: column.numeric ? TextAlign.right : TextAlign.left);
     return Padding(
       padding: const EdgeInsets.only(right: KachavaTokens.space4),
@@ -120,11 +130,7 @@ class _AdminTableHeader<T> extends StatelessWidget {
   final AdminListStrings strings;
   final String entity;
 
-  static const TextStyle _style = TextStyle(
-      fontSize: 12,
-      height: 16 / 12,
-      fontWeight: FontWeight.w500,
-      color: KachavaTokens.textSecondary);
+  static const TextStyle _style = KachavaTextStyles.klLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +149,7 @@ class _AdminTableHeader<T> extends StatelessWidget {
                       c.numeric ? Alignment.centerRight : Alignment.centerLeft,
                   child: c.sortable && onSort != null
                       ? _sortButton(c)
-                      : Text(c.label,
+                      : Text(c.label.toUpperCase(),
                           style: _style,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
@@ -167,19 +173,19 @@ class _AdminTableHeader<T> extends StatelessWidget {
       label: semantics,
       excludeSemantics: true,
       child: FocusRing(
-        borderRadius: KachavaTokens.radiusSm,
+        borderRadius: KachavaTokens.radius,
         child: InkWell(
           key: Key('sort-$entity-${column.sortField}'),
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusSm),
+          borderRadius: BorderRadius.circular(KachavaTokens.radius),
           onTap: () => onSort!(column.sortField!),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 40),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Flexible(
-                child: Text(column.label,
+                child: Text(column.label.toUpperCase(),
                     style: active == null
                         ? _style
-                        : _style.copyWith(color: KachavaTokens.text),
+                        : _style.copyWith(color: KachavaTokens.ink),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
               ),
@@ -189,8 +195,7 @@ class _AdminTableHeader<T> extends StatelessWidget {
                     ? Icons.arrow_downward
                     : Icons.arrow_upward,
                 size: 16,
-                color:
-                    active == null ? KachavaTokens.border : KachavaTokens.text,
+                color: active == null ? KachavaTokens.line : KachavaTokens.ink,
               ),
             ]),
           ),
@@ -204,15 +209,23 @@ class _AdminTableHeader<T> extends StatelessWidget {
 /// only when it is actually truncated.
 class TruncatedText extends StatelessWidget {
   const TruncatedText(this.text,
-      {super.key, this.style, this.textAlign = TextAlign.left});
+      {super.key,
+      this.style,
+      this.textAlign = TextAlign.left,
+      this.tabular = false});
 
   final String text;
   final TextStyle? style;
   final TextAlign textAlign;
 
+  /// Tabular figures for numbers that sit in columns.
+  final bool tabular;
+
   @override
   Widget build(BuildContext context) {
-    final effective = style ?? Theme.of(context).textTheme.bodyMedium!;
+    final base = style ?? Theme.of(context).textTheme.bodyMedium!;
+    final effective =
+        tabular ? base.copyWith(fontFeatures: KachavaTextStyles.tabular) : base;
     return LayoutBuilder(builder: (context, constraints) {
       final label = Text(text,
           style: effective,

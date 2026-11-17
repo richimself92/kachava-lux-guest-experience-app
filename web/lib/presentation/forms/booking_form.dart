@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/portal_controller.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../data/guest_api.dart';
 import '../../domain/catalog.dart';
 import '../../domain/forms.dart';
@@ -153,7 +154,7 @@ class _BookingFormState extends State<BookingForm> {
       if (_showIssues && _itemId == null)
         Text(l10n.issue(FormIssue.required),
             style:
-                const TextStyle(color: KachavaColors.errorRed, fontSize: 14)),
+                const TextStyle(color: KachavaColors.dangerText, fontSize: 14)),
     ];
   }
 
@@ -264,12 +265,13 @@ class _BookingFormState extends State<BookingForm> {
       Text(l10n.review, style: Theme.of(context).textTheme.titleMedium),
       const SizedBox(height: 8),
       Text(l10n.text(widget.service.name),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
       if (item != null)
         Text(l10n.text(item.name), style: const TextStyle(fontSize: 16)),
       Text(line,
           key: const Key('booking-review-line'),
-          style: const TextStyle(fontSize: 16)),
+          style: const TextStyle(
+              fontSize: 16, fontFeatures: KachavaTheme.tabular)),
       if (_draft.notes.trim().isNotEmpty)
         Text(_draft.notes.trim(), style: const TextStyle(fontSize: 15)),
     ];

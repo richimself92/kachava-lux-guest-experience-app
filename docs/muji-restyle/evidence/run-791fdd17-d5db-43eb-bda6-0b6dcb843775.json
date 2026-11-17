@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "pages": [
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+    "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/flutter_bootstrap.js?v=20261102a",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/?guestId=3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/flutter_bootstrap.js?v=20261102a",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/main.dart.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.wasm",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/assets/FontManifest.json",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/assets/fonts/MaterialIcons-Regular.otf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/assets/assets/fonts/ZenKakuGothicNew-Regular.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/assets/assets/fonts/ZenKakuGothicNew-Medium.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3005/assets/assets/fonts/NotoSans-VariableFont_wght.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/stays/3c0a4e53-a9e2-4ece-ae24-07a72172acc7",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/stays/3c0a4e53-a9e2-4ece-ae24-07a72172acc7/trips",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/catalog/services?page=1&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-stocking.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-pillow.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-bar.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-breakfast.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-chef.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/notosanssymbols2/v24/I_uyMoGduATTei9eI8daxVHDyfisHr71-vrgfE71.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore-pipelines.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=10102&CVER=22&X-HTTP-Session-Id=gsessionid&zx=o6jc7b8dw7ok&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=rpc&SID=sGllaV1Gw81n6LhkycPgPQ%3D%3D&AID=0&CI=0&TYPE=xmlhttp&zx=a7zz961hx1jq&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    }
+  ],
+  "dataChecks": [
+    {
+      "kind": "source-on-screen",
+      "detail": "Valeria home shows Villa Coral from backend"
+    }
+  ],
+  "demo": true,
+  "prefix": "guest"
+}

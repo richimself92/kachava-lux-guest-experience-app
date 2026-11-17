@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../application/service_catalog_deps.dart';
 import '../../core/admin_list_strings.dart';
 import '../../core/service_catalog_strings.dart';
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import '../../domain/admin_service.dart';
 import '../../domain/uploads.dart';
 import '../components/components.dart';
@@ -148,8 +148,8 @@ class _CatalogImageFieldState extends State<CatalogImageField> {
             ),
             if (field.errorText != null)
               Text(field.errorText!,
-                  style: const TextStyle(
-                      fontSize: 12, color: KachavaTokens.error)),
+                  style: KachavaTextStyles.caption
+                      .copyWith(color: KachavaTokens.danger)),
           ],
         ),
       );

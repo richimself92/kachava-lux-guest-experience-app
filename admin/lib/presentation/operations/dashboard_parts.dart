@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/stay_strings.dart';
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import '../../domain/dashboard_view.dart';
 import '../components/components.dart';
 
-/// Neutral "Today · Nov 3" pill (resort day from Settings).
+/// Quiet square "Today · Nov 3" label (resort day from Settings).
 class TodayPill extends StatelessWidget {
   const TodayPill({super.key, required this.label});
 
@@ -16,14 +16,19 @@ class TodayPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: KachavaTokens.space3, vertical: KachavaTokens.space1),
         decoration: BoxDecoration(
-          color: KachavaTokens.surface,
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
+          color: KachavaTokens.wash,
+          border: Border.all(color: KachavaTokens.line),
+          borderRadius: BorderRadius.circular(KachavaTokens.radius),
         ),
-        child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+        child: Text(label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: KachavaTokens.ink,
+                fontFeatures: KachavaTextStyles.tabular)),
       );
 }
 
-/// Six KPI tiles: 3 per row on wide screens, 2 on narrow ones.
+/// Six KPI cells in a [HairlineGrid]: 3 per row on desktop, 2 on tablets
+/// and phones, 1 below 360px.
 class DashboardKpiGrid extends StatelessWidget {
   const DashboardKpiGrid({super.key, required this.kpis, required this.isEs});
 
@@ -51,23 +56,12 @@ class DashboardKpiGrid extends StatelessWidget {
         s.openRequestsInfo
       ),
     ];
-    return LayoutBuilder(builder: (context, constraints) {
-      const gap = KachavaTokens.space4;
-      final columns = constraints.maxWidth >= 720 ? 3 : 2;
-      final width = (constraints.maxWidth - (columns - 1) * gap) / columns;
-      return Wrap(
-        spacing: gap,
-        runSpacing: gap,
-        children: [
-          for (final (id, value, label, info) in tiles)
-            SizedBox(
-              width: width,
-              child: KpiTile(
-                  key: Key('kpi-$id'), value: value, label: label, info: info),
-            ),
-        ],
-      );
-    });
+    return HairlineGrid(
+      children: [
+        for (final (id, value, label, info) in tiles)
+          KpiTile(key: Key('kpi-$id'), value: value, label: label, info: info),
+      ],
+    );
   }
 }
 

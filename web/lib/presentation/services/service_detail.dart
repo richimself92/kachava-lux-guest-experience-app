@@ -21,7 +21,7 @@ Future<void> showServiceDetail(
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: KachavaColors.surface,
+      sheetAnimationStyle: KachavaTheme.sheetMotion,
       builder: (ctx) =>
           FractionallySizedBox(heightFactor: 0.92, child: sheet(ctx)),
     );
@@ -30,10 +30,16 @@ Future<void> showServiceDetail(
     context: context,
     barrierDismissible: true,
     barrierLabel: c.l10n.close,
+    barrierColor: KachavaColors.ink.withValues(alpha: 0.4),
+    transitionDuration: KachavaTheme.motion,
+    transitionBuilder: (_, animation, __, child) => FadeTransition(
+        opacity: animation.drive(CurveTween(curve: KachavaTheme.ease)),
+        child: child),
     pageBuilder: (ctx, _, __) => Align(
       alignment: Alignment.centerRight,
       child: Material(
         color: KachavaColors.surface,
+        shape: const Border(left: BorderSide(color: KachavaColors.line)),
         child: SizedBox(
             width: 480,
             height: double.infinity,
@@ -62,6 +68,8 @@ class ServiceDetail extends StatefulWidget {
 }
 
 class _ServiceDetailState extends State<ServiceDetail> {
+  static const _rule = Border(top: BorderSide(color: KachavaColors.line));
+
   final PageController _pages = PageController();
   int _photo = 0;
   bool _more = false;
@@ -75,7 +83,7 @@ class _ServiceDetailState extends State<ServiceDetail> {
   void _go(int index, int count) {
     if (index < 0 || index >= count) return;
     _pages.animateToPage(index,
-        duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+        duration: KachavaTheme.motion, curve: KachavaTheme.ease);
   }
 
   void _primary() {
@@ -123,12 +131,7 @@ class _ServiceDetailState extends State<ServiceDetail> {
                 children: [
                   if (photos.isNotEmpty) _gallery(l10n, photos),
                   const SizedBox(height: 12),
-                  Text(l10n.text(s.name),
-                      style: const TextStyle(
-                          fontFamily: KachavaTheme.serifFamily,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: KachavaColors.primary)),
+                  Text(l10n.text(s.name), style: KachavaTheme.display(22)),
                   const SizedBox(height: 8),
                   ServiceChips(l10n: l10n, service: s),
                   if (summary.isNotEmpty) ...[
@@ -137,7 +140,7 @@ class _ServiceDetailState extends State<ServiceDetail> {
                         maxLines: _more ? null : 3,
                         overflow: _more ? null : TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 16, color: KachavaColors.onSurface)),
+                            fontSize: 16, color: KachavaColors.ink)),
                     if (!_more && summary.length > 140)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -158,8 +161,7 @@ class _ServiceDetailState extends State<ServiceDetail> {
                       child: Text(reason,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              fontSize: 14,
-                              color: KachavaColors.onSurfaceVariant)),
+                              fontSize: 14, color: KachavaColors.muted)),
                     ),
               child: FilledButton(
                 key: const Key('detail-primary'),
@@ -195,11 +197,13 @@ class _ServiceDetailState extends State<ServiceDetail> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                        color: KachavaColors.onSurface.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(10)),
+                        color: KachavaColors.ink.withValues(alpha: 0.75),
+                        borderRadius: KachavaTheme.borderRadius),
                     child: Text(l10n.photoOf(_photo + 1, photos.length),
-                        style:
-                            const TextStyle(fontSize: 14, color: Colors.white)),
+                        style: const TextStyle(
+                            fontSize: 14,
+                            color: KachavaColors.onBrand,
+                            fontFeatures: KachavaTheme.tabular)),
                   ),
                 ),
             ],
@@ -223,8 +227,8 @@ class _ServiceDetailState extends State<ServiceDetail> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: i == _photo
-                        ? KachavaColors.primary
-                        : KachavaColors.outline,
+                        ? KachavaColors.brand
+                        : KachavaColors.lineStrong,
                   ),
                 ),
               IconButton(
@@ -259,22 +263,23 @@ class _ServiceDetailState extends State<ServiceDetail> {
       for (final (title, body) in sections)
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
+          shape: _rule,
+          collapsedShape: _rule,
           title: Text(title,
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           expandedAlignment: Alignment.centerLeft,
           childrenPadding: const EdgeInsets.only(bottom: 8),
           children: [
             Text(body,
-                style: const TextStyle(
-                    fontSize: 15, color: KachavaColors.onSurface))
+                style: const TextStyle(fontSize: 15, color: KachavaColors.ink))
           ],
         ),
     ];
   }
 }
 
-/// Price chip + lead time chip.
+/// Price tag + lead-time tag (square labels, never pills).
 class ServiceChips extends StatelessWidget {
   const ServiceChips({super.key, required this.l10n, required this.service});
   final L10n l10n;
@@ -283,16 +288,19 @@ class ServiceChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lead = l10n.leadTime(service.availability.minLeadHours);
+    // Rectangular tag on wash; ink text (muted on wash is below AA).
     Widget chip(String text, {Key? key}) => Container(
           key: key,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: KachavaColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(10),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: const BoxDecoration(
+            color: KachavaColors.wash,
+            borderRadius: KachavaTheme.borderRadius,
           ),
           child: Text(text,
               style: const TextStyle(
-                  fontSize: 14, color: KachavaColors.onSurface)),
+                  fontSize: 14,
+                  color: KachavaColors.ink,
+                  fontFeatures: KachavaTheme.tabular)),
         );
     return Wrap(
       spacing: 8,

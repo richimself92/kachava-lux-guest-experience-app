@@ -33,16 +33,15 @@ class AdminPaginationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AdminListStrings(isEs);
-    final secondary = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.copyWith(color: KachavaTokens.textSecondary);
+    final secondary = Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: KachavaTokens.muted,
+        fontFeatures: const [FontFeature.tabularFigures()]);
     return Container(
       key: Key('pager-$entity'),
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: KachavaTokens.space2),
       decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: KachavaTokens.border))),
+          border: Border(top: BorderSide(color: KachavaTokens.line))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -119,8 +118,7 @@ class AdminTableSkeleton extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: KachavaTokens.space4),
             decoration: const BoxDecoration(
-                border:
-                    Border(bottom: BorderSide(color: KachavaTokens.border))),
+                border: Border(bottom: BorderSide(color: KachavaTokens.line))),
             child: Row(children: [
               for (final flex in compact ? const [1] : flexes)
                 Expanded(
@@ -132,9 +130,9 @@ class AdminTableSkeleton extends StatelessWidget {
                       child: Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: KachavaTokens.surface,
+                          color: KachavaTokens.wash,
                           borderRadius:
-                              BorderRadius.circular(KachavaTokens.radiusSm),
+                              BorderRadius.circular(KachavaTokens.radius),
                         ),
                       ),
                     ),
@@ -148,7 +146,7 @@ class AdminTableSkeleton extends StatelessWidget {
   }
 }
 
-/// Mobile list row (min 64px): bold primary line + trailing chip, gray
+/// Mobile list row (min 64px): medium primary line + trailing chip, gray
 /// secondary line (`ux-patterns.md` §2).
 class AdminCompactList<T> extends StatelessWidget {
   const AdminCompactList({
@@ -185,7 +183,7 @@ class AdminCompactList<T> extends StatelessWidget {
         final second = subtitle?.call(item) ?? '';
         final trail = trailing?.call(item);
         return FocusRing(
-          borderRadius: KachavaTokens.radiusSm,
+          borderRadius: KachavaTokens.radius,
           child: InkWell(
             key: Key('row-$entity-${rowId(item)}'),
             onTap: onTap == null ? null : () => onTap!(item),
@@ -196,7 +194,7 @@ class AdminCompactList<T> extends StatelessWidget {
                   vertical: KachavaTokens.space2),
               decoration: const BoxDecoration(
                   border:
-                      Border(bottom: BorderSide(color: KachavaTokens.border))),
+                      Border(bottom: BorderSide(color: KachavaTokens.line))),
               child: Row(children: [
                 Expanded(
                   child: content?.call(item) ??
@@ -206,11 +204,11 @@ class AdminCompactList<T> extends StatelessWidget {
                         children: [
                           TruncatedText(title(item),
                               style: text.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
+                                  ?.copyWith(fontWeight: FontWeight.w500)),
                           if (second.isNotEmpty)
                             TruncatedText(second,
-                                style: text.bodyMedium?.copyWith(
-                                    color: KachavaTokens.textSecondary)),
+                                style: text.bodyMedium
+                                    ?.copyWith(color: KachavaTokens.muted)),
                         ],
                       ),
                 ),
@@ -248,7 +246,7 @@ class AdminStateLine extends StatelessWidget {
     final style = Theme.of(context)
         .textTheme
         .bodyMedium
-        ?.copyWith(color: KachavaTokens.textSecondary);
+        ?.copyWith(color: KachavaTokens.muted);
     return Padding(
       padding: const EdgeInsets.all(KachavaTokens.space6),
       child: Wrap(
@@ -258,7 +256,7 @@ class AdminStateLine extends StatelessWidget {
         children: [
           if (isError)
             const Icon(Icons.error_outline,
-                size: 18, color: KachavaTokens.error),
+                size: 18, color: KachavaTokens.danger),
           Text(message, style: style),
           if (actionLabel != null && onAction != null)
             OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),

@@ -71,7 +71,7 @@ class _TransportationWorkspaceState extends State<TransportationWorkspace>
   Widget build(BuildContext context) {
     return Container(
       key: const Key('workspace-admin-transportation'),
-      color: KachavaTokens.background,
+      color: KachavaTokens.paper,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -79,10 +79,10 @@ class _TransportationWorkspaceState extends State<TransportationWorkspace>
             controller: _tabs,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: KachavaTokens.text,
-            unselectedLabelColor: KachavaTokens.textSecondary,
-            indicatorColor: KachavaTokens.primary,
-            dividerColor: KachavaTokens.border,
+            labelColor: KachavaTokens.ink,
+            unselectedLabelColor: KachavaTokens.muted,
+            indicatorColor: KachavaTokens.brand,
+            dividerColor: KachavaTokens.line,
             tabs: [
               Tab(key: const Key('transport-tab-trips'), text: _s.trips),
               Tab(

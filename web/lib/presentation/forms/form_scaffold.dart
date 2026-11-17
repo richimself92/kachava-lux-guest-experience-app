@@ -48,10 +48,7 @@ class FormScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: KachavaColors.surface,
       appBar: AppBar(
-        backgroundColor: KachavaColors.surface,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: l10n.back,
           icon: const Icon(Icons.arrow_back),
@@ -61,11 +58,7 @@ class FormScaffold extends StatelessWidget {
         title: Text(title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-                fontFamily: KachavaTheme.serifFamily,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: KachavaColors.primary)),
+            style: KachavaTheme.display(18)),
         actions: [if (info != null) InfoTip(info!)],
       ),
       body: Column(
@@ -77,17 +70,17 @@ class FormScaffold extends StatelessWidget {
                 children: [
                   Text(l10n.stepOf(page + 1, pages),
                       style: const TextStyle(
-                          fontSize: 14, color: KachavaColors.onSurfaceVariant)),
+                          fontSize: 14,
+                          color: KachavaColors.muted,
+                          fontFeatures: KachavaTheme.tabular)),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: (page + 1) / pages,
-                        minHeight: 6,
-                        color: KachavaColors.primary,
-                        backgroundColor: KachavaColors.surfaceContainerHighest,
-                      ),
+                    child: LinearProgressIndicator(
+                      value: (page + 1) / pages,
+                      minHeight: 3,
+                      borderRadius: BorderRadius.zero,
+                      color: KachavaColors.brand,
+                      backgroundColor: KachavaColors.line,
                     ),
                   ),
                 ],
@@ -151,21 +144,17 @@ class LabeledField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: KachavaColors.onSurface)),
+            KlLabel(label),
             if (info != null) InfoTip(info!),
           ]),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           child,
           if (issue != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(issue!,
                   style: const TextStyle(
-                      fontSize: 14, color: KachavaColors.errorRed)),
+                      fontSize: 14, color: KachavaColors.dangerText)),
             ),
         ],
       ),
@@ -198,8 +187,10 @@ class DateField extends StatelessWidget {
       key: fieldKey,
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
-        minimumSize: const Size.fromHeight(52),
-        foregroundColor: KachavaColors.onSurface,
+        minimumSize: const Size.fromHeight(48),
+        foregroundColor: KachavaColors.ink,
+        textStyle:
+            const TextStyle(fontSize: 16, fontFeatures: KachavaTheme.tabular),
       ),
       icon: const Icon(Icons.calendar_today_outlined, size: 18),
       label: Text(value == null ? l10n.pickDate : l10n.date(value!)),
@@ -251,19 +242,17 @@ class ChoiceCard extends StatelessWidget {
         inMutuallyExclusiveGroup: !multiple,
         button: true,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: KachavaTheme.borderRadius,
           onTap: enabled ? onTap : null,
           child: Container(
             constraints: const BoxConstraints(minHeight: 56),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: KachavaColors.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(14),
+              color: KachavaColors.surface,
+              borderRadius: KachavaTheme.borderRadius,
               border: Border.all(
-                color: selected
-                    ? KachavaColors.primary
-                    : KachavaColors.inputBorder,
-                width: selected ? 2 : 1,
+                color: selected ? KachavaColors.ink : KachavaColors.line,
+                width: selected ? 1.5 : 1,
               ),
             ),
             child: Row(
@@ -276,9 +265,7 @@ class ChoiceCard extends StatelessWidget {
                       : (selected
                           ? Icons.radio_button_checked
                           : Icons.radio_button_off),
-                  color: selected
-                      ? KachavaColors.primary
-                      : KachavaColors.onSurfaceVariant,
+                  color: selected ? KachavaColors.brand : KachavaColors.muted,
                 ),
                 const SizedBox(width: 10),
                 if (leading != null) ...[
@@ -293,14 +280,13 @@ class ChoiceCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                              fontSize: 16, fontWeight: FontWeight.w500)),
                       if (subtitle != null && subtitle!.isNotEmpty)
                         Text(subtitle!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 14,
-                                color: KachavaColors.onSurfaceVariant)),
+                                fontSize: 14, color: KachavaColors.muted)),
                     ],
                   ),
                 ),

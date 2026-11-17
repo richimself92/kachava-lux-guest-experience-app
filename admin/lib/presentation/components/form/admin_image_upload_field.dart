@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../core/admin_list_strings.dart';
-import '../../../core/theme/kachava_tokens.dart';
+import '../../../core/admin_theme.dart';
 import '../../../domain/uploads.dart';
 import '../info_tooltip.dart';
 import 'admin_form_fields.dart';
@@ -143,12 +143,12 @@ class _UploadBodyState extends State<_UploadBody> {
               padding: const EdgeInsets.only(top: KachavaTokens.space1),
               child: Row(children: [
                 const Icon(Icons.error_outline,
-                    size: 16, color: KachavaTokens.error),
+                    size: 16, color: KachavaTokens.danger),
                 const SizedBox(width: KachavaTokens.space1),
                 Text(error,
                     key: Key('upload-${_c.id}-error'),
-                    style: const TextStyle(
-                        fontSize: 12, color: KachavaTokens.error)),
+                    style: KachavaTextStyles.caption
+                        .copyWith(color: KachavaTokens.danger)),
               ]),
             ),
         ],
@@ -185,7 +185,7 @@ class _UploadBodyState extends State<_UploadBody> {
     Widget broken(BuildContext _, Object __, StackTrace? ___) =>
         const Icon(Icons.broken_image_outlined);
     final image = value == null
-        ? const Icon(Icons.image_outlined, color: KachavaTokens.textSecondary)
+        ? const Icon(Icons.image_outlined, color: KachavaTokens.muted)
         : _localPreview != null
             ? Image.memory(_localPreview!,
                 fit: BoxFit.cover, cacheWidth: 192, errorBuilder: broken)
@@ -200,8 +200,8 @@ class _UploadBodyState extends State<_UploadBody> {
         height: size,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: KachavaTokens.surface,
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusMd),
+          color: KachavaTokens.wash,
+          borderRadius: BorderRadius.circular(KachavaTokens.radius),
         ),
         child: Center(child: image),
       ),

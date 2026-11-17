@@ -270,7 +270,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('clear-filters-villas')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Name').first);
+    await tester.tap(find.text('NAME').first); // klLabel header
     await tester.pumpAndSettle();
     expect(repo.queries.last.sort?.wireValue, 'name:desc');
     expect(_row('v30'), findsOneWidget);
@@ -288,7 +288,7 @@ void main() {
     await tester.tap(_row('v1'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('detail-panel')), findsOneWidget);
-    expect(find.text('Capacidad *', findRichText: true), findsOneWidget);
+    expect(find.text('CAPACIDAD *', findRichText: true), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

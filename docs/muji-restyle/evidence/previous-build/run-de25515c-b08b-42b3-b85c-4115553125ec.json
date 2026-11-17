@@ -1,0 +1,999 @@
+{
+  "version": 1,
+  "pages": [
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/",
+    "http://127.0.0.1:3002/"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/flutter_bootstrap.js?v=20261019c",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/flutter_bootstrap.js?v=20261019c",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.wasm",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/main.dart.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/FontManifest.json",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/fonts/MaterialIcons-Regular.otf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Medium.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Regular.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/NotoSans-VariableFont_wght.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3011/api/v1/admin/auth/login",
+      "status": 201,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/notosanssymbols2/v24/I_uyMoGduATTei9eI8daxVHDyfisHr71-vrgfE71.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/settings",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/staff?isActive=true&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore-pipelines.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/dashboard",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=55944&CVER=22&X-HTTP-Session-Id=gsessionid&zx=uw1ex9y6xh6u&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=rpc&SID=MmvhZKaxBQnToL6W1h-n0w%3D%3D&AID=0&CI=0&TYPE=xmlhttp&zx=r9hhuwxbq3ym&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=25&sort=queue%3Aasc&status=OPEN",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/tasks/task_order_stay_1678a37a-7d4d-482f-858b-92e6957434f6_24153aa5-01fa-487f-af57-6559f24b002a",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/flutter_bootstrap.js?v=20261019c",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/main.dart.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.wasm",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/FontManifest.json",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/fonts/MaterialIcons-Regular.otf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Regular.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Medium.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/NotoSans-VariableFont_wght.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3011/api/v1/admin/auth/login",
+      "status": 201,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/notosanssymbols2/v24/I_uyMoGduATTei9eI8daxVHDyfisHr71-vrgfE71.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore-pipelines.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/settings",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/staff?isActive=true&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=56712&CVER=22&X-HTTP-Session-Id=gsessionid&zx=c1jpicmvd2au&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=rpc&SID=lHQ7XK-EOrSXD0pO6aVlFQ%3D%3D&AID=0&CI=0&TYPE=xmlhttp&zx=oipf39g12o9e&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/dashboard",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=25&sort=queue%3Aasc&status=OPEN",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/tasks/task_order_stay_1678a37a-7d4d-482f-858b-92e6957434f6_24153aa5-01fa-487f-af57-6559f24b002a",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/messages?page=1&pageSize=50",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/read",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/messages?page=1&pageSize=50",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/",
+      "status": 200,
+      "resourceType": "document",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/flutter_bootstrap.js?v=20261019c",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/main.dart.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/flutter-canvaskit/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/chromium/canvaskit.wasm",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/FontManifest.json",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/fonts/MaterialIcons-Regular.otf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Regular.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/ZenKakuGothicNew-Medium.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/assets/assets/fonts/NotoSans-VariableFont_wght.ttf",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3011/api/v1/admin/auth/login",
+      "status": 201,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3002/favicon.svg",
+      "status": 200,
+      "resourceType": "other",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.gstatic.com/s/notosanssymbols2/v24/I_uyMoGduATTei9eI8daxVHDyfisHr71-vrgfE71.woff2",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore-pipelines.js",
+      "status": 200,
+      "resourceType": "script",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/settings",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/staff?isActive=true&pageSize=100",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=59311&CVER=22&X-HTTP-Session-Id=gsessionid&zx=xkcdfuum72r3&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/dashboard",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8095/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-kachava%2Fdatabases%2F(default)&RID=rpc&SID=ETLaNigC14YUzWymeNpuKA%3D%3D&AID=0&CI=0&TYPE=xmlhttp&zx=i9n74ypxn87o&t=1",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/messages?page=1&pageSize=50",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/read",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/requests?page=1&pageSize=50&sort=queue%3Adesc&status=RECEIVED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations/stay_8b0b95d4-757c-4a9b-9964-71d48ca4f678/messages?page=1&pageSize=50",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&sort=lastMessageAt%3Adesc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/notifications/unread-count",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/trips?page=1&pageSize=100&status=REQUESTED",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/conversations?page=1&pageSize=50&awaitingReply=true",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/stays?page=1&pageSize=25&sort=checkIn%3Aasc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/villas?page=1&pageSize=100&sort=name%3Aasc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/stays?q=Sophie&page=1&pageSize=25&sort=checkIn%3Aasc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/stays/stay_1678a37a-7d4d-482f-858b-92e6957434f6",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/guests/stay_1678a37a-7d4d-482f-858b-92e6957434f6",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/stays/stay_1678a37a-7d4d-482f-858b-92e6957434f6/folio",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/stays/stay_1678a37a-7d4d-482f-858b-92e6957434f6/folio",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:3011/api/v1/admin/services?page=1&pageSize=25&sort=order%3Aasc",
+      "status": 200,
+      "resourceType": "fetch",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-stocking.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-bar.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-breakfast.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-grill.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-sensorial.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-massage.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-aromatherapy.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-local.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-chef.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-yoga.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-cenoteswim.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-tulum.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-sunsetcatamaran.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-cooking.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-tequilamezcaltasting.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:9209/v0/b/demo-kachava.appspot.com/o/catalog%2Fservices%2Fdemo-temazcalceremony.jpg?alt=media",
+      "status": 200,
+      "resourceType": "xhr",
+      "remote": true
+    }
+  ],
+  "dataChecks": [
+    {
+      "kind": "source-on-screen",
+      "detail": "Dashboard guest names from API (true) shown on screen: true"
+    },
+    {
+      "kind": "persisted-after-reload",
+      "detail": "request status after reload: Confirmed 20 min ago / New Confirmed In progress Done / Guest Sophie Laurent / Villa Villa"
+    },
+    {
+      "kind": "persisted-after-reload",
+      "detail": "chat message \"Prueba MUJI admin\" after reload: true"
+    }
+  ],
+  "name": "admin-journeys"
+}

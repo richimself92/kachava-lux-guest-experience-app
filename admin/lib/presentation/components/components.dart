@@ -3,8 +3,10 @@ library;
 
 export 'admin_data_table.dart';
 export 'async_state_view.dart';
+export 'chat_bubble_style.dart';
 export 'confirm_dialog.dart';
 export 'focus_ring.dart';
+export 'hairline_grid.dart';
 export 'form/admin_form_fields.dart';
 export 'form/admin_form_panel.dart';
 export 'form/admin_image_upload_field.dart';
@@ -17,5 +19,7 @@ export 'list/admin_list_screen.dart';
 export 'list/admin_list_toolbar.dart';
 export 'page_header.dart';
 export 'realtime_scope.dart';
+export 'section_head.dart';
 export 'settings_setup_link.dart';
 export 'status_chip.dart';
+export 'text_segmented.dart';

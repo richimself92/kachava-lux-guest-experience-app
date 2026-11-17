@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/i18n/l10n.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../domain/requests.dart';
 import '../common/labels.dart';
 import '../common/widgets.dart';
 
-/// One row of My requests: what was asked, when, the plain status word and,
+/// One hairline-separated row of My requests: what was asked, when, the plain status word and,
 /// once a trip is confirmed, the driver.
 class RequestCard extends StatelessWidget {
   const RequestCard({
@@ -22,8 +23,10 @@ class RequestCard extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
-  static const _secondary =
-      TextStyle(fontSize: 14, color: KachavaColors.onSurfaceVariant);
+  static const _secondary = TextStyle(
+      fontSize: 14,
+      color: KachavaColors.muted,
+      fontFeatures: KachavaTheme.tabular);
 
   List<String> _details() {
     final r = request;
@@ -40,18 +43,19 @@ class RequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = request;
     final details = _details();
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: KachavaColors.line)),
+      ),
       child: Semantics(
         button: true,
         label: [title, l10n.status(r.status), ...details].join(', '),
         excludeSemantics: true,
         child: InkWell(
           key: Key('request-${r.id}'),
-          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -73,7 +77,7 @@ class RequestCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           for (final line in details)
             Text(line,
                 maxLines: 2,

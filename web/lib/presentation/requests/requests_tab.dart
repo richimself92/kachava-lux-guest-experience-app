@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/portal_controller.dart';
 import '../../core/i18n/l10n.dart';
-import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../data/guest_api.dart';
 import '../../domain/catalog.dart';
 import '../../domain/journey.dart';
@@ -70,24 +70,17 @@ class _RequestsTabState extends State<RequestsTab> {
         children: [
           Text(l10n.myRequests, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Wrap(spacing: 8, children: [
+          Wrap(spacing: 4, children: [
             for (final (f, label) in [
               (RequestsFilter.all, l10n.all),
               (RequestsFilter.active, l10n.chipActive),
               (RequestsFilter.done, l10n.chipDone),
             ])
-              ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: FilterChip(
-                  key: Key('requests-${f.name}'),
-                  label: Text(label),
-                  selected: _filter == f,
-                  materialTapTargetSize: MaterialTapTargetSize.padded,
-                  onSelected: (_) => setState(() => _filter = f),
-                ),
-              ),
+              SegmentTab(label, _filter == f, () => setState(() => _filter = f),
+                  key: Key('requests-${f.name}')),
           ]),
           const SizedBox(height: 8),
+          const Divider(),
           if (all.isEmpty)
             OneLineState(
               key: const Key('requests-empty'),
@@ -121,7 +114,7 @@ class _RequestsTabState extends State<RequestsTab> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: KachavaColors.surface,
+      sheetAnimationStyle: KachavaTheme.sheetMotion,
       builder: (ctx) => ConstrainedBox(
         constraints:
             BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),

@@ -58,14 +58,15 @@ class GuestArrivalBanner extends StatelessWidget {
   Widget _line(
       BuildContext context, GuestActivityWatcher watcher, GuestArrival a) {
     final s = InboxStrings(controller.isEs);
-    const onDark = TextStyle(
-        fontSize: 14, height: 20 / 14, color: KachavaTokens.onPrimary);
-    final button =
-        TextButton.styleFrom(foregroundColor: KachavaTokens.onPrimary);
+    final onDark = Theme.of(context)
+        .textTheme
+        .bodyMedium
+        ?.copyWith(color: KachavaTokens.onBrand);
+    final button = TextButton.styleFrom(foregroundColor: KachavaTokens.onBrand);
     return Container(
       key: const Key('guest-arrival-toast'),
       width: double.infinity,
-      color: KachavaTokens.primary,
+      color: KachavaTokens.brand,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(children: [
         Icon(
@@ -73,7 +74,7 @@ class GuestArrivalBanner extends StatelessWidget {
                 ? Icons.chat_bubble_outline
                 : Icons.inbox_outlined,
             size: 18,
-            color: KachavaTokens.onPrimary),
+            color: KachavaTokens.onBrand),
         const SizedBox(width: 12),
         Expanded(
           child: Text(_text(a, s),
@@ -88,7 +89,7 @@ class GuestArrivalBanner extends StatelessWidget {
         IconButton(
           key: const Key('guest-arrival-dismiss'),
           tooltip: s.dismiss,
-          color: KachavaTokens.onPrimary,
+          color: KachavaTokens.onBrand,
           onPressed: () {
             bell.silence();
             watcher.dismiss();

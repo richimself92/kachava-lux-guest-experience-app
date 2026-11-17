@@ -17,6 +17,7 @@ import '../services/services_tab.dart';
 import 'access_restricted_screen.dart';
 import 'reconnecting_indicator.dart';
 import 'refresh_button.dart';
+import 'tab_fade.dart';
 
 /// Root screen: access screen, loading skeleton or the 4-tab portal.
 class PortalRoot extends StatelessWidget {
@@ -105,19 +106,12 @@ class _PortalShellState extends State<PortalShell> {
     final l10n = _c.l10n;
     final stay = _c.stay!;
     return Scaffold(
-      backgroundColor: KachavaColors.surfaceContainerLow,
       appBar: AppBar(
-        backgroundColor: KachavaColors.surface,
-        surfaceTintColor: Colors.transparent,
         titleSpacing: 16,
         title: Text(stay.villaName.isEmpty ? 'Kachava Lux' : stay.villaName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-                fontFamily: KachavaTheme.serifFamily,
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: KachavaColors.primary)),
+            style: KachavaTheme.display(19)),
         actions: [
           RefreshButton(controller: _c),
           LanguageToggle(controller: _c),
@@ -133,32 +127,45 @@ class _PortalShellState extends State<PortalShell> {
       body: SafeArea(
         top: false,
         bottom: false,
-        child: IndexedStack(
+        child: TabFade(
           index: _tab.index,
-          children: [
-            HomeTab(
+          child: IndexedStack(
+            index: _tab.index,
+            children: [
+              HomeTab(
+                  controller: _c,
+                  installPrompt: widget.installPrompt,
+                  onOpenTask: _openTask),
+              ServicesTab(
                 controller: _c,
-                installPrompt: widget.installPrompt,
-                onOpenTask: _openTask),
-            ServicesTab(
-              controller: _c,
-              focus: _focus,
-              onBack: () => _select(PortalTab.home),
-              onAskHost: _askHost,
-            ),
-            RequestsTab(
-              controller: _c,
-              onBrowse: () => _select(PortalTab.services),
-              onAskHost: _askHost,
-            ),
-            HostTab(
+                focus: _focus,
+                onBack: () => _select(PortalTab.home),
+                onAskHost: _askHost,
+              ),
+              RequestsTab(
                 controller: _c,
-                photoPicker: widget.photoPicker,
-                prefill: _hostPrefill),
-          ],
+                onBrowse: () => _select(PortalTab.services),
+                onAskHost: _askHost,
+              ),
+              HostTab(
+                  controller: _c,
+                  photoPicker: widget.photoPicker,
+                  prefill: _hostPrefill),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: _tabs(l10n),
+    );
+  }
+
+  /// Paper bar under a hairline; active tab = ink on a square wash.
+  Widget _tabs(L10n l10n) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: KachavaColors.line)),
+      ),
+      child: NavigationBar(
         key: const Key('portal-tabs'),
         selectedIndex: _tab.index,
         height: 64,
@@ -207,12 +214,13 @@ class LanguageToggle extends StatelessWidget {
           style: TextButton.styleFrom(
             minimumSize: const Size(48, 48),
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            foregroundColor: selected
-                ? KachavaColors.primary
-                : KachavaColors.onSurfaceVariant,
+            foregroundColor: selected ? KachavaColors.ink : KachavaColors.muted,
             textStyle: TextStyle(
                 fontSize: 15,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500),
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                decoration:
+                    selected ? TextDecoration.underline : TextDecoration.none,
+                decorationColor: KachavaColors.ink),
           ),
           onPressed: () => controller.setLang(lang),
           child: Text(label),
@@ -225,8 +233,7 @@ class LanguageToggle extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         option(Lang.en, 'EN'),
         const Text('|',
-            style:
-                TextStyle(fontSize: 15, color: KachavaColors.onSurfaceVariant)),
+            style: TextStyle(fontSize: 15, color: KachavaColors.muted)),
         option(Lang.es, 'ES'),
       ]),
     );
@@ -243,9 +250,7 @@ class LoadingSkeleton extends StatelessWidget {
     final l10n = controller.l10n;
     return Scaffold(
       key: const Key('portal-loading'),
-      backgroundColor: KachavaColors.surfaceContainerLow,
       appBar: AppBar(
-        backgroundColor: KachavaColors.surface,
         title: const SkeletonBox(width: 160, height: 20),
         actions: [
           LanguageToggle(controller: controller),
@@ -265,7 +270,7 @@ class LoadingSkeleton extends StatelessWidget {
               const SkeletonBox(width: 220, height: 18),
               const SizedBox(height: 16),
               for (var i = 0; i < 3; i++) ...[
-                const SkeletonBox(height: 52, radius: 16),
+                const SkeletonBox(height: 52),
                 const SizedBox(height: 10),
               ],
             ],

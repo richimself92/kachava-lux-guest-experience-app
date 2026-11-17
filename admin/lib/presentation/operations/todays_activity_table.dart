@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/dashboard_strings.dart';
 import '../../core/resort_time.dart';
 import '../../core/stay_strings.dart';
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import '../../domain/dashboard_view.dart';
 import '../components/components.dart';
 import 'dashboard_parts.dart';
@@ -42,17 +42,13 @@ class TodaysActivityTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = StayStrings(isEs);
-    final theme = Theme.of(context);
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= tableBreakpoint;
       return Column(
         key: const Key('dashboard-activity'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Expanded(
-                child:
-                    Text(s.todaysActivity, style: theme.textTheme.titleLarge)),
+          SectionHead(title: s.todaysActivity, trailing: [
             if (view.total > 0)
               TextButton(
                 key: const Key('dashboard-view-all'),
@@ -80,16 +76,13 @@ class TodaysActivityTable extends StatelessWidget {
     final d = DashboardStrings(isEs);
     return _cells(
       context,
-      style: Theme.of(context)
-          .textTheme
-          .labelMedium
-          ?.copyWith(color: KachavaTokens.textSecondary),
+      style: KachavaTextStyles.klLabel,
       cells: [
-        Text(s.guest),
-        Text(s.villa),
-        Text(s.status),
-        Text(d.next),
-        Text(d.pending),
+        Text(s.guest.toUpperCase()),
+        Text(s.villa.toUpperCase()),
+        Text(s.status.toUpperCase()),
+        Text(d.next.toUpperCase()),
+        Text(d.pending.toUpperCase()),
         const SizedBox.shrink(),
       ],
     );
@@ -103,9 +96,13 @@ class TodaysActivityTable extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 52),
         padding: const EdgeInsets.symmetric(horizontal: KachavaTokens.space2),
         decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: KachavaTokens.border))),
+            border: Border(bottom: BorderSide(color: KachavaTokens.line))),
         child: DefaultTextStyle.merge(
-          style: style ?? Theme.of(context).textTheme.bodyMedium,
+          style: style ??
+              Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontFeatures: KachavaTextStyles.tabular),
           child: Row(children: [
             for (var i = 0; i < cells.length; i++)
               Expanded(flex: _flex[i], child: cells[i]),
@@ -210,7 +207,7 @@ class _ActivityLineState extends State<_ActivityLine> {
           ])
         : _compact(context, chip);
     return FocusRing(
-      borderRadius: KachavaTokens.radiusSm,
+      borderRadius: KachavaTokens.radius,
       child: InkWell(
         key: Key('activity-${_row.stayId}'),
         onTap: () => _t.onOpenStay(_row.stayId),
@@ -223,7 +220,7 @@ class _ActivityLineState extends State<_ActivityLine> {
         padding: const EdgeInsets.symmetric(
             horizontal: KachavaTokens.space2, vertical: KachavaTokens.space2),
         decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: KachavaTokens.border))),
+            border: Border(bottom: BorderSide(color: KachavaTokens.line))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -235,7 +232,7 @@ class _ActivityLineState extends State<_ActivityLine> {
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                        ?.copyWith(fontWeight: FontWeight.w500)),
               ),
               ActivityStatusChip(row: _row, isEs: _t.isEs),
             ]),

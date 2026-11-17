@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import '../../domain/admin_enums.dart';
 import '../components/focus_ring.dart';
 import '../requests/request_inbox_scope.dart';
@@ -19,7 +19,7 @@ int? navBadgeFor(BuildContext context, AdminNavItem item) {
 
 /// Sidebar content shared by the desktop sidebar and the mobile drawer:
 /// brand header, Dashboard row, section labels and chevron items, plus a
-/// circular "scroll down" button while the list overflows.
+/// square "scroll down" button while the list overflows.
 class AdminNavList extends StatefulWidget {
   const AdminNavList({
     super.key,
@@ -66,7 +66,7 @@ class _AdminNavListState extends State<AdminNavList> {
     final target = (p.pixels + p.viewportDimension * 0.8)
         .clamp(p.minScrollExtent, p.maxScrollExtent);
     _scroll.animateTo(target,
-        duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+        duration: KachavaTokens.motion, curve: KachavaTokens.easeQuiet);
   }
 
   @override
@@ -105,30 +105,34 @@ class _AdminNavListState extends State<AdminNavList> {
                   ],
                 ),
               ),
-              if (_canScrollDown)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: IconButton.outlined(
-                      key: const Key('sidebar-scroll-down'),
-                      tooltip: widget.isEs ? 'Desplazar abajo' : 'Scroll down',
-                      style: IconButton.styleFrom(
-                        backgroundColor: KachavaTokens.background,
-                        foregroundColor: KachavaTokens.text,
-                        side: const BorderSide(color: KachavaTokens.border),
-                      ),
-                      onPressed: _scrollDown,
-                      icon: const Icon(Icons.arrow_downward, size: 20),
-                    ),
-                  ),
-                ),
+              if (_canScrollDown) _scrollDownButton(),
             ],
           ),
         ),
       ],
     );
   }
+
+  Widget _scrollDownButton() => Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: IconButton.outlined(
+            key: const Key('sidebar-scroll-down'),
+            tooltip: widget.isEs ? 'Desplazar abajo' : 'Scroll down',
+            style: IconButton.styleFrom(
+              backgroundColor: KachavaTokens.surface,
+              foregroundColor: KachavaTokens.ink,
+              side: const BorderSide(color: KachavaTokens.lineStrong),
+              shape: const RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.all(Radius.circular(KachavaTokens.radius))),
+            ),
+            onPressed: _scrollDown,
+            icon: const Icon(Icons.arrow_downward, size: 20),
+          ),
+        ),
+      );
 
   Widget _item(AdminNavItem item, AdminNavItem? selected) => AdminNavTile(
         item: item,
@@ -139,7 +143,7 @@ class _AdminNavListState extends State<AdminNavList> {
       );
 }
 
-/// "KACHAVA LUX" + gray "COMMAND CENTER" pill with a hairline below.
+/// "KACHAVA LUX" wordmark + "COMMAND CENTER" `klLabel`, hairline below.
 class AdminNavHeader extends StatelessWidget {
   const AdminNavHeader({super.key});
 
@@ -148,13 +152,13 @@ class AdminNavHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: KachavaTokens.border)),
+        border: Border(bottom: BorderSide(color: KachavaTokens.line)),
       ),
-      child: Row(
+      child: const Row(
         children: [
           // The wordmark is never ellipsized: it scales down only if the
           // sidebar is narrower than the mockup's 300px.
-          const Flexible(
+          Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -162,31 +166,16 @@ class AdminNavHeader extends StatelessWidget {
                 'KACHAVA LUX',
                 maxLines: 1,
                 softWrap: false,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.4,
-                    color: KachavaTokens.text),
+                style: KachavaTextStyles.wordmark,
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: KachavaTokens.surface,
-              borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
-            ),
-            child: const Text(
-              'COMMAND CENTER',
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.6,
-                  color: KachavaTokens.text),
-            ),
+          SizedBox(width: 8),
+          Text(
+            'COMMAND CENTER',
+            maxLines: 1,
+            softWrap: false,
+            style: KachavaAdminTheme.klLabel,
           ),
         ],
       ),
@@ -205,21 +194,14 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
       child: Semantics(
         header: true,
-        child: Text(
-          text,
-          style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.8,
-              color: KachavaTokens.textSecondary),
-        ),
+        child: Text(text.toUpperCase(), style: KachavaAdminTheme.klLabel),
       ),
     );
   }
 }
 
-/// One menu row: optional icon (Dashboard), label, gray chevron. Selected =
-/// light-gray rounded background + bold text (never brown).
+/// One menu row: optional icon (Dashboard), label, muted chevron. Selected =
+/// wash background + 1px brand rule on the left edge, square corners.
 class AdminNavTile extends StatelessWidget {
   const AdminNavTile({
     super.key,
@@ -240,63 +222,22 @@ class AdminNavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDashboard = AdminNavModel.topItems.any((i) => i.id == item.id);
-    final radius = BorderRadius.circular(KachavaTokens.radiusLg);
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Semantics(
         selected: selected,
         button: true,
         child: FocusRing(
-          borderRadius: KachavaTokens.radiusLg,
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
               key: Key('nav-tab-${item.workspace!.id}'),
-              borderRadius: radius,
               onTap: onTap,
               child: Ink(
-                height: 52,
+                height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  // DESIGN.md: restrained brown treatment for the selected item.
-                  color: selected ? KachavaTokens.primarySelected : null,
-                  borderRadius: radius,
-                ),
-                child: Row(
-                  children: [
-                    if (isDashboard && item.icon != null) ...[
-                      Icon(item.icon,
-                          size: 22,
-                          color: selected
-                              ? KachavaTokens.primary
-                              : KachavaTokens.text),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: Text(
-                        item.label(isEs),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 22 / 15,
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w400,
-                          color: selected
-                              ? KachavaTokens.primary
-                              : KachavaTokens.text,
-                        ),
-                      ),
-                    ),
-                    if ((badge ?? 0) > 0)
-                      NavCountBadge(
-                          key: Key('nav-badge-${item.id}'), count: badge!),
-                    if (!isDashboard)
-                      const Icon(Icons.chevron_right,
-                          size: 20, color: KachavaTokens.textSecondary),
-                  ],
-                ),
+                decoration: _decoration,
+                child: _row(context),
               ),
             ),
           ),
@@ -304,9 +245,43 @@ class AdminNavTile extends StatelessWidget {
       ),
     );
   }
+
+  BoxDecoration get _decoration => BoxDecoration(
+        color: selected ? KachavaTokens.wash : null,
+        border: Border(
+          left: BorderSide(
+              color: selected ? KachavaTokens.brand : Colors.transparent),
+        ),
+      );
+
+  Widget _row(BuildContext context) {
+    final isDashboard = AdminNavModel.topItems.any((i) => i.id == item.id);
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: KachavaTextStyles.navSize,
+          fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+          color: KachavaTokens.ink,
+        );
+    return Row(
+      children: [
+        if (isDashboard && item.icon != null) ...[
+          Icon(item.icon, size: 20, color: KachavaTokens.ink),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Text(item.label(isEs),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+        ),
+        if ((badge ?? 0) > 0)
+          NavCountBadge(key: Key('nav-badge-${item.id}'), count: badge!),
+        if (!isDashboard)
+          const Icon(Icons.chevron_right, size: 18, color: KachavaTokens.muted),
+      ],
+    );
+  }
 }
 
-/// Small count bubble of a menu item (primary tone, pill radius).
+/// Count of a menu item as a plain tabular number: pending when there is
+/// something to attend, muted otherwise. No pill.
 class NavCountBadge extends StatelessWidget {
   const NavCountBadge({super.key, required this.count});
 
@@ -314,20 +289,15 @@ class NavCountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 22),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: KachavaTokens.primary,
-        borderRadius: BorderRadius.circular(KachavaTokens.radiusPill),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Text(
         count > 99 ? '99+' : '$count',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: KachavaTokens.onPrimary),
+        textAlign: TextAlign.end,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: count > 0 ? KachavaTokens.pending : KachavaTokens.muted,
+              fontFeatures: KachavaTextStyles.tabular,
+            ),
       ),
     );
   }

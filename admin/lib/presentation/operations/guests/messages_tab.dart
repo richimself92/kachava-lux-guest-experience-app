@@ -145,7 +145,7 @@ class _MessagesTabState extends State<MessagesTab> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                     fontWeight:
-                        c.hasUnread ? FontWeight.w700 : FontWeight.w400))),
+                        c.hasUnread ? FontWeight.w500 : FontWeight.w400))),
         AdminTableColumn(
             label: StayStrings(widget.isEs).villa, text: (c) => c.villaName),
         AdminTableColumn(

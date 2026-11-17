@@ -106,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       padding: const EdgeInsets.all(KachavaTokens.space6),
       children: [
         _header(context),
-        const SizedBox(height: KachavaTokens.space4),
+        const SizedBox(height: KachavaTokens.space6),
         ..._body(),
       ],
     );
@@ -114,18 +114,18 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _header(BuildContext context) {
     final day = _view?.resortDate;
-    return Row(children: [
-      Expanded(
-        child: Text(_s.overview,
-            key: const Key('dashboard-title'),
-            style: Theme.of(context).textTheme.headlineSmall),
-      ),
-      if (day != null)
-        TodayPill(
-          key: const Key('dashboard-today'),
-          label: '${_s.today} · ${ResortTime.dayLabel(day, isEs: widget.isEs)}',
-        ),
-    ]);
+    return PageHeader(
+      title: _s.overview,
+      titleKey: const Key('dashboard-title'),
+      actions: [
+        if (day != null)
+          TodayPill(
+            key: const Key('dashboard-today'),
+            label:
+                '${_s.today} · ${ResortTime.dayLabel(day, isEs: widget.isEs)}',
+          ),
+      ],
+    );
   }
 
   List<Widget> _body() {

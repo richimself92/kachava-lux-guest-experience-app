@@ -65,7 +65,7 @@ class _SettingsWorkspaceState extends State<SettingsWorkspace>
     final s = StaffStrings(widget.isEs);
     return Container(
       key: const Key('workspace-admin-settings'),
-      color: KachavaTokens.background,
+      color: KachavaTokens.paper,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -73,10 +73,10 @@ class _SettingsWorkspaceState extends State<SettingsWorkspace>
             controller: _tabs,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: KachavaTokens.text,
-            unselectedLabelColor: KachavaTokens.textSecondary,
-            indicatorColor: KachavaTokens.primary,
-            dividerColor: KachavaTokens.border,
+            labelColor: KachavaTokens.ink,
+            unselectedLabelColor: KachavaTokens.muted,
+            indicatorColor: KachavaTokens.brand,
+            dividerColor: KachavaTokens.line,
             tabs: [
               Tab(key: const Key('settings-tab-general'), text: s.general),
               Tab(key: const Key('settings-tab-staff'), text: s.staff),

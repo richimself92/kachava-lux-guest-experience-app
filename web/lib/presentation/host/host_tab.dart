@@ -4,6 +4,7 @@ import '../../application/portal_controller.dart';
 import '../../core/i18n/l10n.dart';
 import '../../core/platform/photo_picker.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../data/guest_api.dart';
 import '../../domain/stay.dart';
 import '../common/widgets.dart';
@@ -105,7 +106,7 @@ class _HostTabState extends State<HostTab> {
                 if (hostName.isNotEmpty)
                   Text(hostName,
                       style: const TextStyle(
-                          fontSize: 15, color: KachavaColors.onSurfaceVariant)),
+                          fontSize: 15, color: KachavaColors.muted)),
                 const SizedBox(height: 12),
                 if (messages.isEmpty)
                   OneLineState(
@@ -133,12 +134,11 @@ class _HostTabState extends State<HostTab> {
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(10),
+          // Guest = wash; host = surface with a hairline. Square, no shadow.
           decoration: BoxDecoration(
-            color: mine
-                ? KachavaColors.surfaceContainerHigh
-                : KachavaColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: KachavaColors.surfaceContainerHighest),
+            color: mine ? KachavaColors.wash : KachavaColors.surface,
+            borderRadius: KachavaTheme.borderRadius,
+            border: mine ? null : Border.all(color: KachavaColors.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +147,7 @@ class _HostTabState extends State<HostTab> {
               if (m.text.isNotEmpty)
                 Text(m.text,
                     style: const TextStyle(
-                        fontSize: 16, color: KachavaColors.onSurface)),
+                        fontSize: 16, color: KachavaColors.ink)),
               Text(
                 [
                   mine
@@ -155,8 +155,11 @@ class _HostTabState extends State<HostTab> {
                       : (m.senderName.isEmpty ? l10n.resortHost : m.senderName),
                   time
                 ].where((s) => s.isNotEmpty).join(' · '),
-                style: const TextStyle(
-                    fontSize: 14, color: KachavaColors.tertiary),
+                // Ink on the guest wash: muted on wash is below AA.
+                style: TextStyle(
+                    fontSize: 14,
+                    color: mine ? KachavaColors.ink : KachavaColors.muted,
+                    fontFeatures: KachavaTheme.tabular),
               ),
             ],
           ),
@@ -172,12 +175,12 @@ class _HostTabState extends State<HostTab> {
       const Icon(Icons.photo_outlined, size: 18, color: KachavaColors.primary),
       const SizedBox(width: 4),
       Text(l10n.photo,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
     ]);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: KachavaTheme.borderRadius,
         child: SizedBox(
           height: 180,
           child: Image.network(
@@ -254,7 +257,7 @@ class _HostTabState extends State<HostTab> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.send, color: KachavaColors.primary),
+                : const Icon(Icons.send, color: KachavaColors.brand),
           ),
         ],
       ),

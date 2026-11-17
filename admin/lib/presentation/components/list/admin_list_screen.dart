@@ -355,7 +355,8 @@ class _AdminListScreenState<T> extends State<AdminListScreen<T>>
       case ListLoadStatus.data:
         return AnimatedOpacity(
           opacity: _c.isRefreshing ? 0.5 : 1,
-          duration: const Duration(milliseconds: 150),
+          duration: KachavaTokens.motionFast,
+          curve: KachavaTokens.easeQuiet,
           child: wide ? _table() : _compact(),
         );
     }

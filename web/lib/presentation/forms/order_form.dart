@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/portal_controller.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../data/guest_api.dart';
 import '../../domain/catalog.dart';
 import '../../domain/forms.dart';
@@ -103,8 +104,10 @@ class _OrderFormState extends State<OrderForm> {
             child: Text(totalLabel,
                 key: const Key('order-total'),
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFeatures: KachavaTheme.tabular)),
           ),
         ),
         children: [
@@ -142,19 +145,23 @@ class _OrderFormState extends State<OrderForm> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                   '${_cart.quantityOf(item.id)} × ${l10n.text(item.name)}'),
-              trailing: Text(_cart.unitPrice(item) == null
-                  ? ''
-                  : l10n.money(
-                      _cart.unitPrice(item)! * _cart.quantityOf(item.id))),
+              trailing: Text(
+                  _cart.unitPrice(item) == null
+                      ? ''
+                      : l10n.money(
+                          _cart.unitPrice(item)! * _cart.quantityOf(item.id)),
+                  style: const TextStyle(fontFeatures: KachavaTheme.tabular)),
             ),
         const Divider(),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(l10n.total,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontWeight: FontWeight.w500)),
           trailing: Text(l10n.money(_cart.total),
-              style:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  fontFeatures: KachavaTheme.tabular)),
         ),
         if (widget.service.ageConfirmationRequired)
           CheckboxListTile(
@@ -167,7 +174,7 @@ class _OrderFormState extends State<OrderForm> {
             subtitle: _showIssues && !_ageOk
                 ? Text(l10n.issue(FormIssue.ageRequired),
                     style: const TextStyle(
-                        color: KachavaColors.errorRed, fontSize: 14))
+                        color: KachavaColors.dangerText, fontSize: 14))
                 : null,
           ),
       ],
@@ -195,11 +202,11 @@ class _OrderFormState extends State<OrderForm> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
+                        fontSize: 16, fontWeight: FontWeight.w500)),
                 if (price != null)
                   Text(l10n.money(price),
                       style: const TextStyle(
-                          fontSize: 14, color: KachavaColors.onSurfaceVariant)),
+                          fontSize: 14, color: KachavaColors.muted)),
               ],
             ),
           ),

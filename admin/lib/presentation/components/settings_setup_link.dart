@@ -21,13 +21,13 @@ class SettingsSetupLink extends StatelessWidget {
     final style = Theme.of(context)
         .textTheme
         .bodyMedium
-        ?.copyWith(color: KachavaTokens.textSecondary);
+        ?.copyWith(color: KachavaTokens.muted);
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: KachavaTokens.space2,
       children: [
         const Icon(Icons.settings_outlined,
-            size: 18, color: KachavaTokens.textSecondary),
+            size: 18, color: KachavaTokens.muted),
         Text(message, style: style),
         TextButton(
           key: const Key('setup-in-settings'),

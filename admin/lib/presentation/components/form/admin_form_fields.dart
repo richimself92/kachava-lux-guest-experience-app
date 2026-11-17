@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/admin_list_strings.dart';
-import '../../../core/theme/kachava_tokens.dart';
+import '../../../core/admin_theme.dart';
 import '../info_tooltip.dart';
 
 /// Field label above the input; required fields get a small asterisk (no
@@ -24,16 +24,15 @@ class AdminFieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelLarge;
+    const style = KachavaTextStyles.klLabel;
     final text = ExcludeSemantics(
       excluding: readByInput,
       // Labels are 1-3 words: one line keeps neighbouring inputs aligned.
       child: Text.rich(
-        TextSpan(text: label, style: style, children: [
+        TextSpan(text: label.toUpperCase(), style: style, children: [
           if (isRequired)
             const TextSpan(
-                text: ' *',
-                style: TextStyle(fontSize: 12, color: KachavaTokens.error)),
+                text: ' *', style: TextStyle(color: KachavaTokens.danger)),
         ]),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,

@@ -73,7 +73,7 @@ void main() {
       (tester) async {
     await pump(tester);
     for (final header in ['Guest', 'Villa', 'Status']) {
-      expect(find.text(header), findsOneWidget);
+      expect(find.text(header.toUpperCase()), findsOneWidget); // klLabel
     }
     final overdue = tester.widget<StatusChip>(find.descendant(
         of: find.byKey(const Key('activity-stay_a')),

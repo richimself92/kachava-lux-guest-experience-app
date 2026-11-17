@@ -5,7 +5,7 @@ import '../../../application/paged_list_controller.dart';
 import '../../../core/admin_i18n.dart';
 import '../../../core/ops_strings.dart';
 import '../../../core/resort_time.dart';
-import '../../../core/theme/kachava_tokens.dart';
+import '../../../core/admin_theme.dart';
 import '../../../domain/admin_catalog_repositories.dart';
 import '../../../domain/admin_task.dart';
 import '../../../domain/list_query.dart';
@@ -139,7 +139,7 @@ class _TasksScreenState extends State<TasksScreen> {
         children: [
           TruncatedText(t.title),
           DefaultTextStyle.merge(
-              style: const TextStyle(fontSize: 12), child: _originCell(t)),
+              style: KachavaTextStyles.caption, child: _originCell(t)),
         ],
       );
 
@@ -152,7 +152,7 @@ class _TasksScreenState extends State<TasksScreen> {
         key: Key('task-origin-${t.id}'),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: KachavaTokens.textSecondary),
+        style: const TextStyle(color: KachavaTokens.muted),
       );
 
   List<AdminTableColumn<AdminTask>> _columns() => [

@@ -66,7 +66,7 @@ void main() {
       (tester) async {
     await pump(tester);
     for (final h in ['Title', 'Villa / Guest', 'Owner', 'Priority', 'Due']) {
-      expect(find.text(h), findsWidgets, reason: h);
+      expect(find.text(h.toUpperCase()), findsWidgets, reason: h); // klLabel
     }
     expect(tasks.queries.first.sort?.wireValue, 'dueAt:asc');
     final overdue =

@@ -24,7 +24,7 @@ class AccessRestrictedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: const Key('access-restricted'),
-      backgroundColor: KachavaColors.surfaceContainerLow,
+      backgroundColor: KachavaColors.paper,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -42,19 +42,14 @@ class AccessRestrictedScreen extends StatelessWidget {
                     Text(
                       l10n.accessTitle,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: KachavaTheme.serifFamily,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: KachavaColors.primary,
-                      ),
+                      style: KachavaTheme.display(20),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _message,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 16, color: KachavaColors.onSurface),
+                          fontSize: 16, color: KachavaColors.ink),
                     ),
                   ],
                 ),

@@ -63,7 +63,9 @@ void main() {
 
   Finder field(String label) => find.descendant(
       of: find
-          .ancestor(of: find.text(label), matching: find.byType(Column))
+          .ancestor(
+              of: find.text(label, findRichText: true),
+              matching: find.byType(Column))
           .first,
       matching: find.byType(TextFormField));
 
@@ -73,7 +75,7 @@ void main() {
       var saves = 0;
       await pumpForm(tester, onSave: () async => saves++);
       expect(find.text(' *', findRichText: true), findsNothing); // in a span
-      expect(find.textContaining('Name *', findRichText: true), findsOneWidget);
+      expect(find.textContaining('NAME *', findRichText: true), findsOneWidget);
       expect(find.text('Internal note'), findsNothing); // collapsed
       await tester.tap(find.byKey(const Key('form-save')));
       await tester.pumpAndSettle();
@@ -84,7 +86,7 @@ void main() {
     testWidgets('valid save awaits onSave then closes', (tester) async {
       var saves = 0;
       await pumpForm(tester, onSave: () async => saves++);
-      await tester.enterText(field('Name *'), 'Ceiba');
+      await tester.enterText(field('NAME *'), 'Ceiba');
       await tester.tap(find.byKey(const Key('form-save')));
       await tester.pumpAndSettle();
       expect(saves, 1);
@@ -94,7 +96,7 @@ void main() {
     testWidgets('save failure keeps the form open with "Couldn\'t save"',
         (tester) async {
       await pumpForm(tester, onSave: () async => throw StateError('500'));
-      await tester.enterText(field('Name *'), 'Ceiba');
+      await tester.enterText(field('NAME *'), 'Ceiba');
       await tester.tap(find.byKey(const Key('form-save')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('form-save-error')), findsOneWidget);
@@ -104,7 +106,7 @@ void main() {
     testWidgets('unsaved changes: Cancel asks; Keep editing stays',
         (tester) async {
       await pumpForm(tester, onSave: () async {});
-      await tester.enterText(field('Name *'), 'Ceiba');
+      await tester.enterText(field('NAME *'), 'Ceiba');
       await tester.tap(find.byKey(const Key('form-cancel')));
       await tester.pumpAndSettle();
       expect(find.text('Discard changes?'), findsOneWidget);

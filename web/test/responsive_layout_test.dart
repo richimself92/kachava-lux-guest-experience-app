@@ -68,6 +68,9 @@ void main() {
       await _tab(tester, 'Services');
       await tester.tap(find.byKey(const Key('chip-WELLNESS')));
       await tester.pumpAndSettle();
+      // MUJI type is taller (line height 1.5): bring the card above the tabs.
+      await tester.ensureVisible(find.byKey(const Key('service-card-spa')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('service-card-spa')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);

@@ -224,20 +224,17 @@ class MessageBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 300),
         margin: const EdgeInsets.only(bottom: KachavaTokens.space2),
         padding: const EdgeInsets.all(KachavaTokens.space3),
-        decoration: BoxDecoration(
-          color: m.fromGuest
-              ? KachavaTokens.surface
-              : KachavaTokens.primarySelected,
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusMd),
-        ),
+        decoration: bubbleDecoration(fromGuest: m.fromGuest),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${m.senderName} · ${resortTime.label(m.at, isEs: isEs)}',
-              style: theme.labelSmall
-                  ?.copyWith(color: KachavaTokens.textSecondary)),
+              // Muted only on the surface bubble (muted on wash is < 4.5:1).
+              style: theme.labelSmall?.copyWith(
+                  color:
+                      m.fromGuest ? KachavaTokens.muted : KachavaTokens.ink)),
           if (m.photoUrl case final url?) ...[
             const SizedBox(height: KachavaTokens.space1),
             ClipRRect(
-              borderRadius: BorderRadius.circular(KachavaTokens.radiusSm),
+              borderRadius: BorderRadius.circular(KachavaTokens.radius),
               child: Image.network(url,
                   key: Key('message-photo-${m.id}'),
                   height: 160,

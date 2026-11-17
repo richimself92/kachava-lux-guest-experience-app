@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../application/admin_live_sync.dart';
 import '../../core/admin_i18n.dart';
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 
 /// Small one-line status shown while the live sync is not healthy.
 ///
@@ -40,15 +40,15 @@ class ReconnectingIndicator extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        color: KachavaTokens.surface,
+        color: KachavaTokens.wash,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: KachavaTokens.textSecondary),
+            Icon(icon, size: 16, color: KachavaTokens.muted),
             const SizedBox(width: 8),
             Text(text,
-                style:
-                    const TextStyle(fontSize: 12, color: KachavaTokens.text)),
+                style: KachavaTextStyles.caption
+                    .copyWith(color: KachavaTokens.ink)),
           ],
         ),
       ),

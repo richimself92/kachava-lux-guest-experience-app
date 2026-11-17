@@ -79,12 +79,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // Field labels render as uppercase klLabels; section titles keep case.
+  Finder anyCase(String t) => find.byWidgetPredicate((w) {
+        if (w is! Text) return false;
+        final plain = w.data ?? w.textSpan?.toPlainText();
+        final up = t.toUpperCase();
+        return plain == t || plain == up || plain == '$up *';
+      });
+
   void expectTexts(List<String> visible, {List<String> hidden = const []}) {
     for (final t in visible) {
-      expect(find.text(t), findsWidgets, reason: 'visible: $t');
+      expect(anyCase(t), findsWidgets, reason: 'visible: $t');
     }
     for (final t in hidden) {
-      expect(find.text(t), findsNothing, reason: 'hidden: $t');
+      expect(anyCase(t), findsNothing, reason: 'hidden: $t');
     }
   }
 
@@ -208,7 +216,7 @@ void main() {
     expectTexts(['Pricing', 'Max guests', 'Time slots', 'Menus'],
         hidden: ['Pairing', 'Lead time (h)']);
     await pick(tester, 'svc-pricing.mode', 'Fixed');
-    expect(find.text('Amount (USD)'), findsOneWidget);
+    expect(anyCase('Amount (USD)'), findsOneWidget);
     await openMore(tester);
     expectTexts(['Pairing', 'Lead time (h)', 'Cancellation']);
     expect(find.byKey(const Key('svc-section')), findsNothing);
@@ -227,7 +235,7 @@ void main() {
     await pick(tester, 'svc-kind', 'Wellness');
     expectTexts(['Options', 'Time slots', 'Location', 'Max guests'],
         hidden: ['Contraindications', 'Pricing']);
-    expect(find.text('Health questions'), findsOneWidget);
+    expect(anyCase('Health questions'), findsOneWidget);
     await pick(tester, 'svc-kind', 'Preference');
     expectTexts(['Options', 'Selection'],
         hidden: ['Change until (h)', 'Time slots', 'Lead time (h)']);

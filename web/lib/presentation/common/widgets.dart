@@ -6,6 +6,9 @@ import '../../core/theme/kachava_theme.dart';
 import '../../data/guest_api.dart';
 import '../../domain/catalog.dart';
 import '../../domain/requests.dart';
+import 'kit.dart';
+
+export 'kit.dart';
 
 /// ⓘ: explanations live here, never as paragraphs on screen.
 class InfoTip extends StatelessWidget {
@@ -21,8 +24,7 @@ class InfoTip extends StatelessWidget {
       child: const SizedBox(
         width: KachavaTheme.minTarget,
         height: KachavaTheme.minTarget,
-        child: Icon(Icons.info_outline,
-            size: 20, color: KachavaColors.onSurfaceVariant),
+        child: Icon(Icons.info_outline, size: 20, color: KachavaColors.muted),
       ),
     );
   }
@@ -50,13 +52,11 @@ class OneLineState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null)
-            Icon(icon, size: 32, color: KachavaColors.onSurfaceVariant),
+          if (icon != null) Icon(icon, size: 32, color: KachavaColors.muted),
           if (icon != null) const SizedBox(height: 8),
           Text(message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 16, color: KachavaColors.onSurface)),
+              style: const TextStyle(fontSize: 16, color: KachavaColors.ink)),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 8),
             TextButton(onPressed: onAction, child: Text(actionLabel!)),
@@ -79,27 +79,31 @@ class InlineError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true,
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline,
-              size: 18, color: KachavaColors.errorRed),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(message,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 14, color: KachavaColors.errorRed)),
-          ),
-          if (onRetry != null && retryLabel != null)
-            TextButton(onPressed: onRetry, child: Text(retryLabel!)),
-        ],
+      child: Callout(
+        rule: KachavaColors.dangerText,
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline,
+                size: 18, color: KachavaColors.dangerText),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, color: KachavaColors.dangerText)),
+            ),
+            if (onRetry != null && retryLabel != null)
+              TextButton(onPressed: onRetry, child: Text(retryLabel!)),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Status chip: word + icon, never colour alone.
+/// Status label: word + icon on its status wash, square; never a pill and
+/// never colour alone.
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.status, required this.l10n});
   final RequestStatus status;
@@ -107,58 +111,38 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, fg, bg) = switch (status) {
-      RequestStatus.received => (
-          Icons.inbox_outlined,
-          KachavaColors.onSurfaceVariant,
-          KachavaColors.surfaceContainerHigh
-        ),
-      RequestStatus.arranging => (
-          Icons.support_agent,
-          KachavaColors.primary,
-          KachavaColors.surfaceContainerHigh
-        ),
-      RequestStatus.confirmed => (
-          Icons.check_circle_outline,
-          KachavaColors.confirmedGreen,
-          KachavaColors.confirmedGreenBg
-        ),
-      RequestStatus.preparing => (
-          Icons.timelapse,
-          KachavaColors.primary,
-          KachavaColors.surfaceContainerHigh
-        ),
+    final (icon, tone) = switch (status) {
+      RequestStatus.received => (Icons.inbox_outlined, KachavaColors.pending),
+      RequestStatus.arranging => (Icons.support_agent, KachavaColors.info),
+      RequestStatus.confirmed => (Icons.check_circle_outline, KachavaColors.ok),
+      RequestStatus.preparing => (Icons.timelapse, KachavaColors.info),
       RequestStatus.onTheWay => (
           Icons.directions_car_outlined,
-          KachavaColors.primary,
-          KachavaColors.surfaceContainerHigh
+          KachavaColors.info
         ),
-      RequestStatus.done => (
-          Icons.task_alt,
-          KachavaColors.confirmedGreen,
-          KachavaColors.confirmedGreenBg
-        ),
-      RequestStatus.cancelled => (
-          Icons.cancel_outlined,
-          KachavaColors.errorRed,
-          KachavaColors.errorRedContainer
-        ),
+      RequestStatus.done => (Icons.task_alt, KachavaColors.ok),
+      RequestStatus.cancelled => (Icons.cancel_outlined, KachavaColors.danger),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: tone.wash,
+        borderRadius: KachavaTheme.borderRadius,
+        border: Border.all(color: tone.line),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: fg),
+          Icon(icon, size: 14, color: tone.text),
           const SizedBox(width: 4),
           Flexible(
             child: Text(l10n.status(status),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600, color: fg)),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: tone.text)),
           ),
         ],
       ),
@@ -186,7 +170,7 @@ class StatusTrack extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: i <= at ? KachavaColors.primary : Colors.transparent,
-                border: Border.all(color: KachavaColors.outlineStrong),
+                border: Border.all(color: KachavaColors.lineStrong),
               ),
             ),
         ],
@@ -197,7 +181,11 @@ class StatusTrack extends StatelessWidget {
 
 /// Grey box with the final layout size (no layout shift).
 class SkeletonBox extends StatelessWidget {
-  const SkeletonBox({super.key, this.width, this.height = 16, this.radius = 8});
+  const SkeletonBox(
+      {super.key,
+      this.width,
+      this.height = 16,
+      this.radius = KachavaTheme.radius});
   final double? width;
   final double height;
   final double radius;
@@ -207,8 +195,8 @@ class SkeletonBox extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: KachavaColors.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(radius),
+          color: KachavaColors.wash,
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
         ),
       );
 }
@@ -220,7 +208,10 @@ class SkeletonBox extends StatelessWidget {
 /// opened Services and started typing in the search.
 class ServicePhoto extends StatelessWidget {
   const ServicePhoto(
-      {super.key, required this.image, required this.l10n, this.radius = 12});
+      {super.key,
+      required this.image,
+      required this.l10n,
+      this.radius = KachavaTheme.radius});
   final CatalogImage? image;
   final L10n l10n;
   final double radius;
@@ -241,12 +232,11 @@ class ServicePhoto extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
         child: Container(
-          color: KachavaColors.surfaceContainerHighest,
+          color: KachavaColors.wash,
           child: img == null
-              ? const Icon(Icons.image_outlined,
-                  color: KachavaColors.onSurfaceVariant)
+              ? const Icon(Icons.image_outlined, color: KachavaColors.muted)
               : LayoutBuilder(
                   builder: (context, box) => Semantics(
                     image: true,
@@ -258,7 +248,7 @@ class ServicePhoto extends StatelessWidget {
                       excludeFromSemantics: true,
                       errorBuilder: (_, __, ___) => const Icon(
                           Icons.image_not_supported_outlined,
-                          color: KachavaColors.onSurfaceVariant),
+                          color: KachavaColors.muted),
                     ),
                   ),
                 ),
@@ -303,8 +293,10 @@ class QuantityStepper extends StatelessWidget {
             width: 28,
             child: Text('$value',
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFeatures: KachavaTheme.tabular)),
           ),
           IconButton(
             tooltip: '+ $label',
@@ -330,13 +322,15 @@ void showPortalToast(BuildContext context, String message,
         liveRegion: true,
         child: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
-      backgroundColor: error ? KachavaColors.errorRed : KachavaColors.onSurface,
+      backgroundColor: error ? KachavaColors.dangerText : KachavaColors.ink,
+      shape: KachavaTheme.shape,
+      elevation: 0,
       duration: Duration(seconds: error ? 8 : 4),
       action: onRetry == null
           ? null
           : SnackBarAction(
               label: retryLabel ?? 'Retry',
-              textColor: Colors.white,
+              textColor: KachavaColors.onBrand,
               onPressed: onRetry),
     ));
 }
@@ -361,7 +355,7 @@ class StickyAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: KachavaColors.surface,
-      elevation: 6,
+      shape: const Border(top: BorderSide(color: KachavaColors.line)),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -395,7 +389,7 @@ class PageWidth extends StatelessWidget {
       );
 }
 
-/// Filter chip with a 48px target; selected = filled + check.
+/// Category filter: text-only segmented tab (see [SegmentTab]).
 class SelectChip extends StatelessWidget {
   const SelectChip(this.label, this.selected, this.onTap, {super.key});
   final String label;
@@ -403,15 +397,5 @@ class SelectChip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 48),
-        child: FilterChip(
-          label: Text(label),
-          selected: selected,
-          showCheckmark: true,
-          selectedColor: KachavaColors.surfaceContainerHighest,
-          materialTapTargetSize: MaterialTapTargetSize.padded,
-          onSelected: (_) => onTap(),
-        ),
-      );
+  Widget build(BuildContext context) => SegmentTab(label, selected, onTap);
 }

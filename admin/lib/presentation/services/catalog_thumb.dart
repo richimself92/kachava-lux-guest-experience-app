@@ -14,7 +14,7 @@ class CatalogThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final placeholder = Icon(Icons.image_outlined,
-        size: size * 0.55, color: KachavaTokens.textSecondary);
+        size: size * 0.55, color: KachavaTokens.muted);
     final source = url;
     return Semantics(
       image: source != null,
@@ -24,8 +24,8 @@ class CatalogThumb extends StatelessWidget {
         height: size,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: KachavaTokens.surface,
-          borderRadius: BorderRadius.circular(KachavaTokens.radiusSm),
+          color: KachavaTokens.wash,
+          borderRadius: BorderRadius.circular(KachavaTokens.radius),
         ),
         child: source == null || source.isEmpty
             ? placeholder

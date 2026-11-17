@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/i18n/l10n.dart';
 import '../../core/theme/kachava_colors.dart';
+import '../../core/theme/kachava_theme.dart';
 import '../../domain/catalog.dart';
 import '../../domain/forms.dart';
 import '../../domain/trip.dart';
@@ -39,7 +40,7 @@ class TripReview extends StatelessWidget {
   Widget build(BuildContext context) {
     final vehicle =
         service.items.where((v) => v.id == draft.vehicleId).firstOrNull;
-    const body = TextStyle(fontSize: 16);
+    const body = TextStyle(fontSize: 16, fontFeatures: KachavaTheme.tabular);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,14 +60,16 @@ class TripReview extends StatelessWidget {
             if (vehicle.priceUSD != null)
               Text(l10n.money(vehicle.priceUSD!),
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700)),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      fontFeatures: KachavaTheme.tabular)),
           ]),
         ],
         if (draft.type == TripType.departure)
           Row(children: [
             Text(l10n.pickupAt,
-                style: const TextStyle(
-                    fontSize: 14, color: KachavaColors.tertiary)),
+                style:
+                    const TextStyle(fontSize: 14, color: KachavaColors.muted)),
             InfoTip(l10n.pickupInfo),
           ]),
       ],

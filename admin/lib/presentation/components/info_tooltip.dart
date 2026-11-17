@@ -29,7 +29,6 @@ class _InfoTooltipState extends State<InfoTooltip> {
           message: widget.message,
           triggerMode: TooltipTriggerMode.tap,
           child: FocusRing(
-            borderRadius: 24,
             child: Focus(
               onFocusChange: (focused) {
                 if (focused) _tooltipKey.currentState?.ensureTooltipVisible();

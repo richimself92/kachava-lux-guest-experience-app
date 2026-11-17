@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../application/admin_shell_controller.dart';
 import '../../core/responsive_breakpoints.dart';
@@ -29,8 +31,8 @@ class TabletCompactRail extends StatelessWidget {
       key: const Key('tablet-compact-rail'),
       width: AdminBreakpoints.leftRailTabletWidth,
       decoration: const BoxDecoration(
-        color: KachavaTokens.background,
-        border: Border(right: BorderSide(color: KachavaTokens.border)),
+        color: KachavaTokens.paper,
+        border: Border(right: BorderSide(color: KachavaTokens.line)),
       ),
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -44,31 +46,43 @@ class TabletCompactRail extends StatelessWidget {
     );
   }
 
+  static BorderSide _rule(bool selected) =>
+      BorderSide(color: selected ? KachavaTokens.brand : Colors.transparent);
+
+  /// Plain tabular count in pending (badge theme), no pill.
+  Widget _railIcon(BuildContext context, AdminNavItem item, bool selected) {
+    final count = navBadgeFor(context, item) ?? 0;
+    return Badge(
+      isLabelVisible: count > 0,
+      label: Text('$count'),
+      child: Icon(item.icon,
+          color: selected ? KachavaTokens.ink : KachavaTokens.muted),
+    );
+  }
+
   Widget _railButton(BuildContext context, AdminNavItem item) {
     final selected =
         AdminNavModel.itemForWorkspace(controller.activeTab)?.id == item.id;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Center(
-        child: IconButton(
-          key: Key('nav-tab-${item.workspace!.id}'),
-          tooltip: item.label(controller.isEs),
-          isSelected: selected,
-          style: IconButton.styleFrom(
-            fixedSize: const Size(48, 48),
-            backgroundColor: selected ? KachavaTokens.primarySelected : null,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(KachavaTokens.radiusLg)),
+        // Selected = wash + 1px brand rule on the left edge, square corners.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(left: _rule(selected)),
           ),
-          onPressed: () => controller.selectTab(item.workspace!),
-          icon: Badge(
-            isLabelVisible: (navBadgeFor(context, item) ?? 0) > 0,
-            backgroundColor: KachavaTokens.primary,
-            label: Text('${navBadgeFor(context, item) ?? 0}'),
-            child: Icon(item.icon,
-                color: selected
-                    ? KachavaTokens.primary
-                    : KachavaTokens.textSecondary),
+          child: IconButton(
+            key: Key('nav-tab-${item.workspace!.id}'),
+            tooltip: item.label(controller.isEs),
+            isSelected: selected,
+            style: IconButton.styleFrom(
+              fixedSize: const Size(48, 48),
+              backgroundColor: selected ? KachavaTokens.wash : null,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(KachavaTokens.radius)),
+            ),
+            onPressed: () => controller.selectTab(item.workspace!),
+            icon: _railIcon(context, item, selected),
           ),
         ),
       ),
@@ -86,8 +100,10 @@ class AdminMobileNavDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       key: const Key('mobile-nav-drawer'),
-      backgroundColor: KachavaTokens.background,
+      backgroundColor: KachavaTokens.paper,
       shape: const RoundedRectangleBorder(),
+      // As wide as its content: min(18rem, 85vw).
+      width: math.min(288, MediaQuery.sizeOf(context).width * 0.85),
       child: SafeArea(
         child: AdminNavList(
           activeTab: controller.activeTab,

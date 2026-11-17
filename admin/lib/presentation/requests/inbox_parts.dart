@@ -109,13 +109,12 @@ class InboxGuestCell extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(
-              width: 3,
-              color: unread ? KachavaTokens.primary : Colors.transparent),
+              width: 2,
+              color: unread ? KachavaTokens.brand : Colors.transparent),
         ),
       ),
       child: Row(children: [
-        Icon(inboxIcon(item.type),
-            size: 18, color: KachavaTokens.textSecondary),
+        Icon(inboxIcon(item.type), size: 18, color: KachavaTokens.muted),
         const SizedBox(width: KachavaTokens.space2),
         Expanded(
           child: Column(
@@ -124,11 +123,13 @@ class InboxGuestCell extends StatelessWidget {
             children: [
               TruncatedText('${item.guestName} · ${item.villaName}',
                   style: text?.copyWith(
-                      fontWeight: unread ? FontWeight.w700 : FontWeight.w400)),
+                      fontWeight: unread ? FontWeight.w500 : FontWeight.w400)),
               TruncatedText(
                   '${s.typeLabel(item.type)} · ${s.sectionLabel(item.section)}',
-                  style: text?.copyWith(
-                      fontSize: 12, color: KachavaTokens.textSecondary)),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: KachavaTokens.muted)),
             ],
           ),
         ),

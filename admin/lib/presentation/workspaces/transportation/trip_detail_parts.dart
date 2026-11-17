@@ -6,6 +6,7 @@ import '../../../core/theme/kachava_tokens.dart';
 import '../../../core/transport_strings.dart';
 import '../../../domain/admin_trip.dart';
 import '../../../domain/transport_provider.dart';
+import '../../components/section_head.dart';
 
 /// Requested → Sent → Confirmed → En route → Completed. Reached steps show a
 /// check, the current one is filled; a cancelled trip keeps the steps it
@@ -49,16 +50,16 @@ class TripStatusStepper extends StatelessWidget {
                         : Icons.radio_button_unchecked,
                 size: 20,
                 color: i <= reached
-                    ? KachavaTokens.primary
-                    : KachavaTokens.inputBorder,
+                    ? KachavaTokens.brand
+                    : KachavaTokens.lineStrong,
               ),
               const SizedBox(height: KachavaTokens.space1),
               Text(s.stepLabel(step),
                   textAlign: TextAlign.center,
                   style: style?.copyWith(
                       color: i <= reached
-                          ? KachavaTokens.text
-                          : KachavaTokens.textSecondary)),
+                          ? KachavaTokens.ink
+                          : KachavaTokens.muted)),
             ]),
           ),
       ],
@@ -143,8 +144,7 @@ class TripDetailFacts extends StatelessWidget {
         SizedBox(
           width: 120,
           child: Text(label,
-              style: theme.bodySmall
-                  ?.copyWith(color: KachavaTokens.textSecondary)),
+              style: theme.bodySmall?.copyWith(color: KachavaTokens.muted)),
         ),
         Expanded(child: Text(value, style: theme.bodyMedium)),
       ]),
@@ -173,7 +173,9 @@ class TripHistoryList extends StatelessWidget {
       key: const Key('trip-history'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(TransportStrings(isEs).history, style: theme.titleSmall),
+        RuledSection(
+          child: Text(TransportStrings(isEs).history, style: theme.titleSmall),
+        ),
         const SizedBox(height: KachavaTokens.space2),
         for (final h in trip.history.reversed)
           Padding(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/kachava_tokens.dart';
+import '../../core/admin_theme.dart';
 import 'info_tooltip.dart';
 
-/// Light-gray dashboard tile: a large value, a short gray label and an
-/// optional ⓘ explanation.
+/// One metric cell of a [HairlineGrid]: an uppercase `klLabel` with an
+/// optional ⓘ explanation over a large tabular display value. It has no
+/// fill or radius of its own; the grid draws the cell and its rules.
 class KpiTile extends StatelessWidget {
   const KpiTile({
     super.key,
@@ -19,43 +20,24 @@ class KpiTile extends StatelessWidget {
   /// Optional formula/explanation shown in an [InfoTooltip].
   final String? info;
 
+  Widget _label() => Row(children: [
+        Flexible(
+          child: Text(label.toUpperCase(), style: KachavaAdminTheme.klLabel),
+        ),
+        if (info != null) InfoTooltip(info!) else const SizedBox(height: 48),
+      ]);
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(KachavaTokens.space6),
-      decoration: BoxDecoration(
-        color: KachavaTokens.surface,
-        borderRadius: BorderRadius.circular(KachavaTokens.radiusTile),
-      ),
+    final valueStyle = Theme.of(context).textTheme.displaySmall?.copyWith(
+        color: KachavaTokens.ink, fontFeatures: KachavaTextStyles.tabular);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(KachavaTokens.space4,
+          KachavaTokens.space2, KachavaTokens.space2, KachavaTokens.space4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-                fontSize: 40,
-                height: 48 / 40,
-                fontWeight: FontWeight.w400,
-                color: scheme.onSurface),
-          ),
-          const SizedBox(height: KachavaTokens.space1),
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                      fontSize: 14,
-                      height: 20 / 14,
-                      color: scheme.onSurfaceVariant),
-                ),
-              ),
-              if (info != null) InfoTooltip(info!),
-            ],
-          ),
-        ],
+        children: [_label(), Text(value, style: valueStyle)],
       ),
     );
   }
