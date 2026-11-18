@@ -6,12 +6,12 @@ Built with a custom biophilic design system (*Travertine Limestone, Raw Silk, Ob
 
 ---
 
-## Live Cloud Environments (`kavacha-app` on Google Cloud & Firebase)
+## Live Cloud Environments (`kachava-lux-guest-experience` on Google Cloud & Firebase)
 
 | Service / Portal | Platform | Live Production URL |
 | :--- | :--- | :--- |
-| **Guest Sanctuary Portal** | Firebase Hosting (`kachava-web/`) | [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app) |
-| **Admin & Concierge Command Center** | Firebase Hosting (`kachava-admin/`) | [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) |
+| **Guest Sanctuary Portal** | Firebase Hosting (`kachava-web/`) | [https://kachava-lux-guest-experience.web.app](https://kachava-lux-guest-experience.web.app) |
+| **Admin & Concierge Command Center** | Firebase Hosting (`kachava-admin/`) | [https://kachava-lux-admin.web.app](https://kachava-lux-admin.web.app) |
 | **Backend REST API** | Google Cloud Run (`us-central1`) | [https://kachava-backend-dwapx2x7fa-uc.a.run.app](https://kachava-backend-dwapx2x7fa-uc.a.run.app) |
 | **API Health & Base Endpoint** | NestJS 11 (`api/v1`) | [https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1/health](https://kachava-backend-dwapx2x7fa-uc.a.run.app/api/v1/health) |
 
@@ -33,7 +33,7 @@ flowchart LR
 
     subgraph Persistence["Google Cloud Persistence"]
         Firestore["Cloud Firestore (kavacha-db)"]
-        Storage["Cloud Storage (kavacha-store)"]
+        Storage["Cloud Storage (kachava-lux-store)"]
     end
 
     Guest <-->|"2s Polling & REST Sync (?guestId=UUID)"| API
@@ -107,7 +107,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | **Guest & Admin Frontends** | `Flutter 3.x Web` (`Dart 3`) | Material 3 custom biophilic design system (`Travertine`, `Obsidian`, `Brushed Gold`), custom SVG favicons, responsive mobile & desktop layouts. |
 | **Backend API** | `NestJS 11` (`Node.js 22 Alpine`, `TypeScript`) | Clean / Hexagonal Architecture (Ports & Adapters), strict DTO validation, REST `/api/v1` endpoints, and real-time polling state sync. |
-| **Database & Storage** | `Google Cloud Firestore` (`kavacha-db`) & `Cloud Storage` (`kavacha-store`) | Automatic cold-start state hydration from Firestore with resilient dual-write persistence and media storage bucket. |
+| **Database & Storage** | `Google Cloud Firestore` (`kavacha-db`) & `Cloud Storage` (`kachava-lux-store`) | Automatic cold-start state hydration from Firestore with resilient dual-write persistence and media storage bucket. |
 | **Cloud Infrastructure & FinOps** | `Google Cloud Run` + `Cloud Build` + `Firebase Hosting` | Serverless container scaling (`--min-instances=0`, `--max-instances=2`, `1 vCPU`, `512Mi RAM`, `--cpu-throttling`, `--concurrency=80`) achieving **$0 idle compute cost**, paired with global Firebase Hosting multi-site CDN. |
 | **Quality Assurance & Testing** | `Jest`, `Flutter Test`, `Playwright` | Backend unit & integration tests (`kachava-backend/`), Flutter widget & controller tests (`kachava-web/`, `kachava-admin/`), and automated Playwright Chromium E2E test suites (`kachava-e2e/`). |
 
@@ -195,23 +195,23 @@ Desde la raíz del repositorio, ejecuta el lanzador unificado para iniciar simul
 
 ### Paso 1 — Crear la Estancia y Generar el Magic Link (Host Admin)
 
-1. Abre la Consola Host Admin en **Local** (`http://localhost:3002`) o **Cloud** ([https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app)) y entra en **`2. Villas, Huéspedes, Links y Traslados`** (`2. Villas, Guests, Links & Transfers`).
+1. Abre la Consola Host Admin en **Local** (`http://localhost:3002`) o **Cloud** ([https://kachava-lux-admin.web.app](https://kachava-lux-admin.web.app)) y entra en **`2. Villas, Huéspedes, Links y Traslados`** (`2. Villas, Guests, Links & Transfers`).
 2. Verifica que las 8 Villas aparezcan en estado **`🟢 LIBRE`** (`🟢 FREE`). Haz clic en **`+ Nueva Estancia / Generar Magic Link`**, ingresa el nombre del huésped (`Familia Gómez`), selecciona **`Villa 102 — Ceiba Suite`**, y elige las fechas de Check-In / Check-Out (`19 Oct` al `22 Oct` → calcula automáticamente `3 noches`).
 3. Haz clic en **`Crear y Generar Link`**: `Villa 102` pasa inmediatamente a **`🔴 OCUPADA`** (`🔴 OCCUPIED`). Copia el Magic Link generado:
    - **En Local**: `http://localhost:3000/?guestId=<uuid>`
-   - **En Cloud**: `https://kavacha-app-guest-portal.web.app/?guestId=<uuid>`
-4. **Validación del Bloqueo de Seguridad**: Abre `http://localhost:3000` (o [https://kavacha-app-guest-portal.web.app](https://kavacha-app-guest-portal.web.app)) *sin* `?guestId=...` y verifica que el portal bloquee el acceso mostrando **`Acceso Restringido — ID de Huésped Obligatorio`**.
+   - **En Cloud**: `https://kachava-lux-guest-experience.web.app/?guestId=<uuid>`
+4. **Validación del Bloqueo de Seguridad**: Abre `http://localhost:3000` (o [https://kachava-lux-guest-experience.web.app](https://kachava-lux-guest-experience.web.app)) *sin* `?guestId=...` y verifica que el portal bloquee el acceso mostrando **`Acceso Restringido — ID de Huésped Obligatorio`**.
 
 ### Paso 2 — Pre-Llegada del Huésped: Vuelo, Confort y Minibar (Huésped)
 
-1. Abre el Magic Link copiado (`http://localhost:3000/?guestId=<uuid>` en Local o `https://kavacha-app-guest-portal.web.app/?guestId=<uuid>` en Cloud) en vista Móvil (`< 768px`) o Escritorio (`>= 768px`) y alterna el idioma `EN | ES` en el encabezado según prefieras.
+1. Abre el Magic Link copiado (`http://localhost:3000/?guestId=<uuid>` en Local o `https://kachava-lux-guest-experience.web.app/?guestId=<uuid>` en Cloud) en vista Móvil (`< 768px`) o Escritorio (`>= 768px`) y alterna el idioma `EN | ES` en el encabezado según prefieras.
 2. **`1. Registrar Vuelo y Transporte`**: Selecciona la fecha de llegada desde el calendario acotado a la estancia, ingresa aerolínea (`Aeroméxico`), número de vuelo (`AM 542`), aeropuerto (`CUN`), terminal (`T2`) y hora de llegada (`2:30 PM`), y pulsa **`Guardar y Sincronizar Vuelo`**.
 3. **`2. Confort, Aroma, Dieta y Alergias`**: Elige tipo de almohada, aroma de bienvenida, **`Horario de Limpieza`** (`Mañana (09:00 - 11:00)`), perfil alimenticio y alergias, y pulsa **`Guardar Preferencias`**.
 4. **`3. Pedir Bebidas y Minibar`**: Incrementa las cantidades de productos (`+`, por ejemplo `2`) y pulsa **`Confirmar Pedido`**. Verifica que todos los contadores (`- 0 +`) **vuelvan inmediatamente a `0`** para permitir nuevos pedidos en cualquier momento, mientras el banner superior muestra **`⏳ Pedido Enviado · Pendiente`** junto con el desglose de artículos (`2x ...`).
 
 ### Paso 3 — Recepción de Alertas en Vivo y Atención (Host Admin)
 
-1. Regresa a la Consola Host Admin (`http://localhost:3002` en Local o [https://kavacha-app-admin-dashboard.web.app](https://kavacha-app-admin-dashboard.web.app) en Cloud): escucha la **alerta sonora WebAudio de 10 segundos** y revisa las notificaciones en **`1. Resumen y Alertas en Vivo`**.
+1. Regresa a la Consola Host Admin (`http://localhost:3002` en Local o [https://kachava-lux-admin.web.app](https://kachava-lux-admin.web.app) en Cloud): escucha la **alerta sonora WebAudio de 10 segundos** y revisa las notificaciones en **`1. Resumen y Alertas en Vivo`**.
 2. En **`2. Villas, Huéspedes, Links y Traslados`**, inspecciona los datos completos del vuelo y el horario de limpieza del huésped; asigna el nombre del chofer y punto de encuentro en el aeropuerto y pulsa **`Guardar y Enviar al Huésped`** (se refleja en vivo en la opción `1` del huésped).
 3. En **`3. Minibar y Despensa Pre-Llegada`**, verifica la cantidad exacta (`Cantidad: 2x`), avanza el estado a **`En Preparación`** y luego a **`Entregado en Villa`** (el banner superior del huésped cambia en vivo a **`✅ Entregado en Villa`**).
 
@@ -244,7 +244,7 @@ cd kachava-e2e && npx playwright test
 
 ## Cloud Deployment (`./deploy/deploy-all.sh`)
 
-The production environment is hosted on Google Cloud Platform (`PROJECT_ID=kavacha-app`, region `us-central1`) and Firebase Hosting.
+The production environment is hosted on Google Cloud Platform (`PROJECT_ID=kachava-lux-guest-experience`, region `us-central1`) and Firebase Hosting.
 
 ```bash
 # Full-stack deployment (Cloud Run Backend + Both Firebase Hosting Portals)

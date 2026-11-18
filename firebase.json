@@ -104,7 +104,7 @@
     "indexes": "firestore.indexes.json"
   },
   "storage": {
-    "bucket": "kavacha-store",
+    "bucket": "kachava-lux-store",
     "rules": "storage.rules"
   },
   "emulators": {

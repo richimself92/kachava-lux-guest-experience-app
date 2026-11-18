@@ -3,7 +3,7 @@
 ## 1. Project overview and stack
 Monorepo for a boutique villa resort (Kachava Lux, 8 villas):
 - `kachava-backend/` — NestJS 10 REST API (`/api/v1`) on Cloud Run; Firestore named DB `kavacha-db` is the single
-  source of truth (ADR-008); Cloud Storage `kavacha-store` for signed uploads.
+  source of truth (ADR-008); Cloud Storage `kachava-lux-store` for signed uploads.
 - `kachava-web/` — Flutter Web guest portal (magic link `?guestId=<uuid>`, installable PWA).
 - `kachava-admin/` — Flutter Web staff "Command Center" (HOST_ADMIN / CONCIERGE_STAFF roles).
 - `kachava-e2e/` — Playwright suites against the local stack.

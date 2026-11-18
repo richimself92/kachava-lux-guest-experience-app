@@ -41,9 +41,9 @@ import {
 } from '../storage/object-url-signer';
 import { FirebaseStorageSignerAdapter } from '../storage/storage-signer.adapter';
 
-export const DEFAULT_GCP_PROJECT_ID = 'kavacha-app';
+export const DEFAULT_GCP_PROJECT_ID = 'kachava-lux-guest-experience';
 export const DEFAULT_FIRESTORE_DATABASE_ID = 'kavacha-db';
-export const DEFAULT_STORAGE_BUCKET = 'kavacha-store';
+export const DEFAULT_STORAGE_BUCKET = 'kachava-lux-store';
 
 /** Injection tokens for the two external handles; tests replace exactly these with fakes. */
 export const FIRESTORE_DB = Symbol('FIRESTORE_DB');

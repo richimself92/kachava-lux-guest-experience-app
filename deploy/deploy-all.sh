@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ID="${GCP_PROJECT_ID:-kavacha-app}"
+PROJECT_ID="${GCP_PROJECT_ID:-kachava-lux-guest-experience}"
 REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="${SERVICE_NAME:-kachava-backend}"
 
@@ -25,6 +25,6 @@ echo "=========================================================="
 echo "  Deployment Complete"
 echo "=========================================================="
 echo "  Backend API (Cloud Run): ${CLOUD_RUN_URL}"
-echo "  Guest Portal (Hosting):  https://kavacha-app-guest-portal.web.app"
-echo "  Admin Portal (Hosting):  https://kavacha-app-admin-dashboard.web.app"
+echo "  Guest Portal (Hosting):  https://kachava-lux-guest-experience.web.app"
+echo "  Admin Portal (Hosting):  https://kachava-lux-admin.web.app"
 echo "=========================================================="

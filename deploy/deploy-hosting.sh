@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ID="${GCP_PROJECT_ID:-kavacha-app}"
-GUEST_SITE="kavacha-app-guest-portal"
-ADMIN_SITE="kavacha-app-admin-dashboard"
+PROJECT_ID="${GCP_PROJECT_ID:-kachava-lux-guest-experience}"
+GUEST_SITE="kachava-lux-guest-experience"
+ADMIN_SITE="kachava-lux-admin"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"

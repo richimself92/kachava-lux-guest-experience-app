@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ID="${GCP_PROJECT_ID:-kavacha-app}"
+PROJECT_ID="${GCP_PROJECT_ID:-kachava-lux-guest-experience}"
 REGION="${GCP_REGION:-us-central1}"
 AR_REPO="${AR_REPO:-cloud-run-source-deploy}"
 SERVICE_NAME="${SERVICE_NAME:-kachava-backend}"
-GUEST_PORTAL_URL="${GUEST_PORTAL_URL:-https://kavacha-app-guest-portal.web.app}"
+GUEST_PORTAL_URL="${GUEST_PORTAL_URL:-https://kachava-lux-guest-experience.web.app}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
