@@ -42,3 +42,8 @@ This directory contains the production deployment configuration for the `kavacha
 ```bash
 ./deploy/deploy-hosting.sh
 ```
+
+## Storage CORS
+Admin photo uploads PUT directly to Cloud Storage with `Content-Type` and `x-goog-content-length-range`
+(signed size limit), so both headers must be allowed. Apply after creating a bucket:
+`gcloud storage buckets update gs://<bucket> --cors-file=deploy/storage-cors/<bucket>.json`
