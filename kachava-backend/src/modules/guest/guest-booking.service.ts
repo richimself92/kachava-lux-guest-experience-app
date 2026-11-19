@@ -6,6 +6,7 @@ import {
   ResolvedLine,
 } from '../../domain/catalog/catalog-rules';
 import { CatalogItem, CatalogService, ServiceSnapshot } from '../../domain/catalog/catalog.models';
+import { OrderConsent, OrderConsentAnswers, resolveOrderConsent } from '../../domain/catalog/order-consent';
 import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
 import { orderRefId } from '../../domain/stays/open-requests';
 import {
@@ -24,9 +25,11 @@ import {
 } from '../../domain/ports/repository.ports';
 import { CreateBookingDto, LarderCartLineDto } from './dto/guest.dto';
 
-type OrderLineRequest = Pick<LarderCartLineDto, 'itemId' | 'quantity'>;
+type OrderLineRequest = Pick<LarderCartLineDto, 'itemId' | 'quantity' | 'ozPerPortion'>;
 import { TaskAutomation } from '../tasks/task-automation.service';
 import { GuestAlertFolioHelper } from './guest-alert-folio.helper';
+
+const NOT_ASKED: OrderConsent = { substitutionsAllowed: null, termsAcceptedAt: null };
 
 /** Audit actor of guest-originated writes. */
 function guestActor(stay: StayAggregate): string {
@@ -60,6 +63,7 @@ export class GuestBookingService {
     stay: StayAggregate,
     serviceId: string,
     requestedLines: OrderLineRequest[],
+    answers: OrderConsentAnswers = {},
   ): Promise<{ orders: LarderOrderItem[]; folioSummary: FolioSummary }> {
     const { service, items } = await this.loadService(serviceId);
     if (service.usageType !== 'ORDER') {
@@ -67,8 +71,10 @@ export class GuestBookingService {
     }
     const requested = requestedLines.filter((line) => line.quantity > 0);
     const lines = resolveOrderLines(service, items, requested);
-    const snapshot = buildServiceSnapshot(service, lines, 1, new Date().toISOString());
-    const orders = this.toLarderLines(stay, service, lines, snapshot);
+    const now = new Date().toISOString();
+    const consent = requested.length > 0 ? resolveOrderConsent(service, answers, now) : NOT_ASKED;
+    const snapshot = buildServiceSnapshot(service, lines, 1, now);
+    const orders = this.toLarderLines(stay, service, lines, snapshot).map((order) => ({ ...order, ...consent }));
     const charge = { title: service.name.en, chargeToFolio: service.pricing.chargeToFolio };
     const result = await this.stayRepo.replaceServiceOrder(stay.stayId, service.serviceId, orders, charge, () => ({
       ...this.alerts.buildAlert(stay, {
@@ -166,6 +172,8 @@ export class GuestBookingService {
         unitPriceUSD: line.unitPriceUSD ?? 0,
         quantity: line.quantity,
         lineTotalUSD: line.lineTotalUSD ?? 0,
+        pricingUnit: line.pricingUnit ?? 'ITEM',
+        ozPerPortion: line.ozPerPortion ?? null,
         storageType: item?.storage ?? '',
         provisioningStatus: 'Pending',
         assignedStaffId: service.operation.responsibleStaffId,

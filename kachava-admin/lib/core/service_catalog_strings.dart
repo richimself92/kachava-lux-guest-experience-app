@@ -82,6 +82,12 @@ class ServiceCatalogStrings {
   String get location => t('Location', 'Lugar');
   String get restrictions => t('Restrictions', 'Restricciones');
   String get cancellation => t('Cancellation', 'Cancelación');
+  String get terms => t('Terms & conditions', 'Términos y condiciones');
+  String get termsTip => t(
+      'Shown to guests before they order; they must '
+          'accept it.',
+      'Se muestra al huésped antes de pedir; debe aceptarlo.');
+  String maxChars(int max) => t('Max $max characters', 'Máx. $max caracteres');
 
   // Operation.
   String get provider => t('Provider', 'Proveedor');
@@ -119,6 +125,23 @@ class ServiceCatalogStrings {
   String get passengers => t('Passengers', 'Pasajeros');
   String get luggage => t('Luggage', 'Maletas');
 
+  // Pre-stocking: admin-only sourcing and weight pricing.
+  String get sku => t('SKU', 'SKU');
+  String get skuTip =>
+      t('Unique code; admin only.', 'Código único; solo admin.');
+  String get netCost => t('Net cost (MXN)', 'Costo neto (MXN)');
+  String get sourceLink => t('Source link', 'Enlace de origen');
+  String get adminOnlyTip =>
+      t('Admin only; guests never see it.', 'Solo admin; el huésped no lo ve.');
+  String get byWeight => t('Priced by weight (oz)', 'Precio por peso (oz)');
+  String get byWeightTip => t('Guest picks portions × oz; price is per oz.',
+      'El huésped elige porciones × oz; el precio es por oz.');
+  String get pricePerOz => t('Price per oz (USD)', 'Precio por oz (USD)');
+  String get ozOptions => t('Oz per portion', 'Oz por porción');
+  String get ozOptionsTip => t('Whole oz 1–64, up to 10, comma separated.',
+      'Oz enteras 1–64, hasta 10, separadas por comas.');
+  String perOz(String money) => '$money / oz';
+
   // Status actions and toasts.
   String get activate => t('Activate', 'Activar');
   String get deactivate => t('Deactivate', 'Desactivar');
@@ -143,6 +166,9 @@ class ServiceCatalogStrings {
   String get endAfterStart => t('End after start', 'Fin después del inicio');
   String get dateFormat => t('Use YYYY-MM-DD', 'Usa AAAA-MM-DD');
   String get codesFormat => t('Invalid codes', 'Códigos inválidos');
+  String get invalidOz => t('Use 1–64, up to 10', 'Usa 1–64, hasta 10');
+  String get invalidUrl => t('Use an http(s) link', 'Usa un enlace http(s)');
+  String get priceRequired => t('Price required', 'Precio obligatorio');
 
   /// One 422 detail as a short label ("Cover required").
   String problem(String raw) {

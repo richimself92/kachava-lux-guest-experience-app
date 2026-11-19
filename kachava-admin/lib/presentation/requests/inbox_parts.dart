@@ -5,6 +5,7 @@ import '../../core/resort_time.dart';
 import '../../core/theme/kachava_tokens.dart';
 import '../../core/transport_strings.dart';
 import '../../domain/inbox_item.dart';
+import '../../domain/service_catalog_enums.dart';
 import '../../domain/service_request.dart';
 import '../components/components.dart';
 
@@ -56,9 +57,17 @@ String inboxTitle(InboxItem item, bool isEs) => switch (item) {
       TripInboxItem(:final trip) => TransportStrings(isEs).typeLabel(trip.type),
     };
 
-String _lines(ServiceRequest r, bool isEs) => [
-      for (final l in r.lines) '${l.quantity} × ${l.name.of(isEs: isEs)}'
-    ].join(', ');
+String _lines(ServiceRequest r, bool isEs) =>
+    [for (final l in r.lines) requestLineSummary(l, isEs)].join(', ');
+
+/// "2 × Mineral water"; an OZ line names its portion: "5 × 12 oz New York
+/// steak".
+String requestLineSummary(ServiceRequestLine l, bool isEs) {
+  final oz = l.pricingUnit == PricingUnit.oz && l.ozPerPortion != null
+      ? '${l.ozPerPortion} oz '
+      : '';
+  return '${l.quantity} × $oz${l.name.of(isEs: isEs)}';
+}
 
 /// One line of what was asked: "2 × Mineral water, 1 × Artisan bread",
 /// "Pillow menu: Goose down", "Arrival · Nov 6 · 14:10".

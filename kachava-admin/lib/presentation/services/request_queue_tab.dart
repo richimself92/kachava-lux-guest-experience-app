@@ -22,6 +22,7 @@ class RequestQueueTab extends StatefulWidget {
     required this.queries,
     required this.today,
     required this.isEs,
+    this.resortTime,
   });
 
   /// [ListQueryStore] key of the queue of [section].
@@ -40,6 +41,9 @@ class RequestQueueTab extends StatefulWidget {
   /// Resort day (`YYYY-MM-DD`) for the date presets; `null` without a zone.
   final String? today;
   final bool isEs;
+
+  /// Resort clock for the detail's terms acceptance time.
+  final ResortTime? resortTime;
 
   @override
   State<RequestQueueTab> createState() => _RequestQueueTabState();
@@ -106,6 +110,7 @@ class _RequestQueueTabState extends State<RequestQueueTab> {
               onClose: close,
               onChanged: _list.load,
               isEs: widget.isEs,
+              resortTime: widget.resortTime,
             ),
       isEs: widget.isEs,
     );

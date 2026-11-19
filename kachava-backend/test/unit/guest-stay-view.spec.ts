@@ -2,6 +2,7 @@ import {
   toGuestBookingView,
   toGuestConciergeRequestView,
   toGuestFolioView,
+  toGuestLarderOrderView,
   toGuestStayView,
 } from '../../src/domain/guest-stay-view';
 import { StayAggregate } from '../../src/domain/models/domain.models';
@@ -53,6 +54,9 @@ describe('toGuestStayView (ADR-007 allow-list)', () => {
     expect(view.personalization).toHaveProperty('housekeepingCadence');
     expect(view.larderOrders[0]).toHaveProperty('catalogItemId');
     expect(view.larderOrders[0]).toHaveProperty('provisioningStatus');
+    expect(view.larderOrders[0]).toMatchObject({
+      pricingUnit: 'ITEM', ozPerPortion: null, unitPriceUSD: 5, lineTotalUSD: 10, substitutionsAllowed: null, termsAcceptedAt: null,
+    });
     expect(view.experienceBookings[0]).toHaveProperty('serviceId');
     expect(view.experienceBookings[0].snapshot.totalUSD).toBe(20);
     expect(view.experienceBookings[0]).toHaveProperty('scheduledTimeSlot');
@@ -70,5 +74,15 @@ describe('toGuestStayView (ADR-007 allow-list)', () => {
     ];
 
     expect(forbiddenKeysIn(views)).toEqual([]);
+  });
+});
+
+describe('guest larder order lines: substitution answer and terms acceptance', () => {
+  it('test_everyLineOfTheOrder_carriesTheAnswers', () => {
+    const answers = { substitutionsAllowed: true, termsAcceptedAt: '2026-11-19T10:00:00.000Z' };
+    const [first] = populatedStayFixture().larderOrders;
+    const lines = [{ ...first, ...answers }, { ...first, orderItemId: 'larder-test-2', ...answers }];
+
+    expect(lines.map(toGuestLarderOrderView)).toEqual([expect.objectContaining(answers), expect.objectContaining(answers)]);
   });
 });

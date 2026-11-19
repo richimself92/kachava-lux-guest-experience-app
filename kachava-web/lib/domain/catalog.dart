@@ -161,6 +161,7 @@ class ServiceGuestInfo {
     this.location = LocalizedText.empty,
     this.restrictions = LocalizedText.empty,
     this.cancellationPolicy = LocalizedText.empty,
+    this.terms = LocalizedText.empty,
   });
 
   factory ServiceGuestInfo.fromJson(Object? json) {
@@ -171,6 +172,7 @@ class ServiceGuestInfo {
       location: LocalizedText.fromJson(map['location']),
       restrictions: LocalizedText.fromJson(map['restrictions']),
       cancellationPolicy: LocalizedText.fromJson(map['cancellationPolicy']),
+      terms: LocalizedText.fromJson(map['terms']),
     );
   }
 
@@ -179,6 +181,9 @@ class ServiceGuestInfo {
   final LocalizedText location;
   final LocalizedText restrictions;
   final LocalizedText cancellationPolicy;
+
+  /// Terms & conditions the guest accepts before ordering ("" = none).
+  final LocalizedText terms;
 }
 
 /// Which inputs the guest form asks for (admin "Guest form").
@@ -221,6 +226,15 @@ class VehicleCapacity {
   final int luggage;
 }
 
+/// How an item is priced: per unit, or per ounce (proteins).
+enum PricingUnit {
+  item,
+  oz;
+
+  static PricingUnit parse(Object? raw) =>
+      asString(raw).toUpperCase() == 'OZ' ? oz : item;
+}
+
 class CatalogItem {
   const CatalogItem({
     required this.id,
@@ -230,6 +244,8 @@ class CatalogItem {
     this.image,
     this.priceUSD,
     this.capacity,
+    this.pricingUnit = PricingUnit.item,
+    this.portionOzOptions = const [],
   });
 
   factory CatalogItem.fromJson(Json json) {
@@ -247,6 +263,13 @@ class CatalogItem {
           ? null
           : VehicleCapacity(asInt(capacity['passengers']) ?? 0,
               asInt(capacity['luggage']) ?? 0),
+      pricingUnit: PricingUnit.parse(json['pricingUnit']),
+      portionOzOptions: [
+        for (final v in json['portionOzOptions'] is List
+            ? json['portionOzOptions'] as List
+            : const [])
+          if (asInt(v) case final int oz when oz > 0) oz,
+      ],
     );
   }
 
@@ -257,6 +280,18 @@ class CatalogItem {
   final CatalogImage? image;
   final double? priceUSD;
   final VehicleCapacity? capacity;
+  final PricingUnit pricingUnit;
+
+  /// Oz per portion the guest may pick (OZ items only).
+  final List<int> portionOzOptions;
+
+  bool get byWeight => pricingUnit == PricingUnit.oz;
+
+  /// 8 oz when offered, else the middle option.
+  int get defaultOz {
+    if (portionOzOptions.isEmpty || portionOzOptions.contains(8)) return 8;
+    return portionOzOptions[portionOzOptions.length ~/ 2];
+  }
 }
 
 /// One ACTIVE service of the guest catalog (`GET /catalog/services`).
@@ -279,6 +314,7 @@ class CatalogService {
     this.guestForm = const ServiceGuestForm(),
     this.items = const [],
     this.ageConfirmationRequired = false,
+    this.askSubstitutions = false,
     this.multipleChoice = false,
     this.changeDeadlineHours,
     this.airportCodes = const [],
@@ -318,6 +354,7 @@ class CatalogService {
           .toList(),
       ageConfirmationRequired:
           asBool(asJson(json['bar'])['ageConfirmationRequired']),
+      askSubstitutions: asBool(asJson(json['stocking'])['askSubstitutions']),
       multipleChoice: asString(preference['selection']) == 'MULTIPLE',
       changeDeadlineHours: asInt(preference['changeDeadlineHours']),
       airportCodes: asStringList(transport['airportCodes']),
@@ -346,6 +383,9 @@ class CatalogService {
   final ServiceGuestForm guestForm;
   final List<CatalogItem> items;
   final bool ageConfirmationRequired;
+
+  /// VILLA_STOCKING: the guest must say whether substitutes are allowed.
+  final bool askSubstitutions;
   final bool multipleChoice;
   final int? changeDeadlineHours;
 

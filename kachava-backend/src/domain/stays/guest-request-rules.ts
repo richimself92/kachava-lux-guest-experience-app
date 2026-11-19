@@ -1,4 +1,5 @@
 import { ServiceSnapshot } from '../catalog/catalog.models';
+import { linePriceUSD, roundCents } from '../catalog/item-pricing';
 import { BusinessRuleError, EntityNotFoundError } from '../domain-errors';
 import {
   chargeServiceOrder,
@@ -27,10 +28,6 @@ export interface JourneyMarks {
   completedTaskIds: string[];
 }
 
-function roundCents(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 function editableBooking(stay: StayAggregate, bookingId: string): ExperienceBooking {
   const booking = stay.experienceBookings.find((b) => b.bookingId === bookingId);
   if (!booking) throw new EntityNotFoundError('Booking', bookingId);
@@ -53,7 +50,8 @@ export function resizeSnapshotParty(snapshot: ServiceSnapshot, partySize: number
   if (snapshot.pricingMode !== 'PER_PERSON') return structuredClone(snapshot);
   const lines = snapshot.lines.map((line) => ({
     ...structuredClone(line),
-    lineTotalUSD: line.unitPriceUSD === null ? null : roundCents(line.unitPriceUSD * line.quantity * partySize),
+    lineTotalUSD:
+      line.unitPriceUSD === null ? null : linePriceUSD(line.unitPriceUSD, line.quantity, line.ozPerPortion ?? null, partySize),
   }));
   const priced = lines.every((line) => line.lineTotalUSD !== null);
   const totalUSD = priced ? roundCents(lines.reduce((sum, line) => sum + (line.lineTotalUSD ?? 0), 0)) : null;

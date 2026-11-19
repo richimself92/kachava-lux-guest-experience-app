@@ -11,6 +11,7 @@ import '../components/components.dart';
 import 'catalog_image_fields.dart';
 import 'draft_list_fields.dart';
 import 'draft_text_fields.dart';
+import 'item_pricing_fields.dart';
 
 /// Nested form of one item (bar drink, dish, product, option, vehicle).
 /// Only the fields its service kind uses are shown.
@@ -137,12 +138,11 @@ class _ServiceItemEditorState extends State<ServiceItemEditor> {
         value: _draft.get('image') as Map<String, dynamic>?,
         onChanged: (v) => _draft.set('image', v),
       ),
-      DraftAmountField(
+      ItemPricingFields(
           draft: _draft,
-          path: 'priceUSD',
-          label: _s.itemPrice,
-          tip: _s.itemPriceTip,
-          isEs: isEs),
+          isEs: isEs,
+          sourcing: _uses(ItemField.sourcing),
+          weightPricing: _uses(ItemField.weightPricing)),
       if (_uses(ItemField.capacity)) _capacity(),
       if (_uses(ItemField.category))
         DraftTextField(

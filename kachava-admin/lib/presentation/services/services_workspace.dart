@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/list_query_store.dart';
 import '../../core/request_strings.dart';
+import '../../core/resort_time.dart';
 import '../../core/service_catalog_labels.dart';
 import '../../core/service_catalog_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
@@ -54,6 +55,7 @@ class ServiceSectionWorkspace extends StatelessWidget {
     this.queryStore,
     this.staff = const [],
     this.today,
+    this.resortTime,
     this.isEs = false,
   });
 
@@ -63,6 +65,9 @@ class ServiceSectionWorkspace extends StatelessWidget {
 
   /// Resort day for the queue's date presets (`null` without a zone).
   final String? today;
+
+  /// Resort clock for request times shown in the queue detail.
+  final ResortTime? resortTime;
   final bool isEs;
 
   @override
@@ -123,6 +128,7 @@ class ServiceSectionWorkspace extends StatelessWidget {
           repository: repository,
           queries: queryStore,
           today: today,
+          resortTime: resortTime,
           isEs: isEs,
         );
 }

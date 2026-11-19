@@ -60,6 +60,12 @@ enum ItemField {
   unit,
   storage,
   capacity,
+
+  /// Admin-only SKU, net cost (MXN) and source link.
+  sourcing,
+
+  /// The ITEM / OZ switch and the oz-per-portion options.
+  weightPricing,
 }
 
 /// The template of a service: decides its type-specific block
@@ -82,6 +88,8 @@ enum ServiceKind {
     ItemField.origin,
     ItemField.unit,
     ItemField.storage,
+    ItemField.sourcing,
+    ItemField.weightPricing,
   }),
   experience('EXPERIENCE', 'experience', ServiceSection.experiences,
       UsageType.booking, {ItemField.category}),
@@ -175,4 +183,17 @@ enum CatalogStatus {
 
   static CatalogStatus parse(Object? raw) =>
       _parseOrNull(values, (v) => v.wire, raw) ?? disabled;
+}
+
+/// How an item is priced: per unit, or per ounce (guest picks portions × oz).
+enum PricingUnit {
+  item('ITEM'),
+  oz('OZ');
+
+  const PricingUnit(this.wire);
+  final String wire;
+
+  /// Unknown or missing values are [item] (older payloads).
+  static PricingUnit parse(Object? raw) =>
+      _parseOrNull(values, (v) => v.wire, raw) ?? item;
 }

@@ -2,7 +2,7 @@ import type { CollectionReference, DocumentData, Firestore, Query, Transaction }
 import { normalizeSearchText, PaginatedResult } from '../../common/listing/list-query';
 import { StayAggregate } from '../../domain/models/domain.models';
 import { ServiceRequestPageQuery, ServiceRequestRepositoryPort } from '../../domain/ports/repository.ports';
-import { projectServiceRequests, ServiceRequestEntry } from '../../domain/requests/service-requests';
+import { projectServiceRequests, ServiceRequestEntry, withRequestEntryDefaults } from '../../domain/requests/service-requests';
 import { toFirestoreDocument } from './firestore-document.mapper';
 
 export const SERVICE_REQUESTS_COLLECTION = 'service_requests';
@@ -29,7 +29,7 @@ function requestKeywords(entry: ServiceRequestEntry): string[] {
 function toEntry(data: DocumentData | undefined): ServiceRequestEntry {
   const stored = { ...(data ?? {}) } as ServiceRequestEntry & Record<string, unknown>;
   delete stored[REQUEST_SEARCH_FIELD];
-  return stored;
+  return withRequestEntryDefaults(stored);
 }
 
 /** Resolves the configured resort zone (null when not set); orders need it for their time. */

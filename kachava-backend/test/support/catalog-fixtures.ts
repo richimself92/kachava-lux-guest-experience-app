@@ -43,6 +43,7 @@ export function serviceFixture(overrides: Partial<CatalogService> = {}): Catalog
       location: empty,
       restrictions: empty,
       cancellationPolicy: empty,
+      terms: empty,
     },
     guestForm: { date: true, time: true, guests: true, notes: true, dietary: false, health: false },
     operation: {
@@ -83,6 +84,11 @@ export function itemFixture(overrides: Partial<CatalogItem> = {}): CatalogItem {
     capacity: null,
     order: 1,
     status: 'ACTIVE',
+    sku: null,
+    netCostMXN: null,
+    sourceUrl: null,
+    pricingUnit: 'ITEM',
+    portionOzOptions: [],
     ...audit,
     ...overrides,
   };

@@ -37,7 +37,7 @@ export function seedGuestFixtures(fake: FakeFirestore): void {
   });
   const stocking = serviceFixture({
     serviceId: 'svc-stock', kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', experience: null,
-    stocking: { maxPerItem: 5, orderDeadlineHoursBeforeCheckIn: null },
+    stocking: { maxPerItem: 5, orderDeadlineHoursBeforeCheckIn: null, askSubstitutions: false },
     pricing: { mode: 'PER_UNIT', amount: null, currency: 'USD', chargeToFolio: true, note: { en: '', es: '' } },
   });
   for (const service of [serviceFixture(), stocking]) {

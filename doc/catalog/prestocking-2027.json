@@ -1,0 +1,2535 @@
+{
+ "source": [
+  "Kachava_Lux_2027_PreStocking_Catalog_MXN_USD.xlsx",
+  "Kachava_Lux_2027_Protein_Portion_Pricing.xlsx"
+ ],
+ "service": {
+  "terms": {
+   "en": "Product availability is subject to local grocery store inventory. If a selected item is unavailable, please indicate whether you authorize our team to purchase a comparable substitute.\n\nWhen shopping for our guests, we prioritize trusted brands and medium- to high-quality products to ensure a premium experience.\n\nPlease note: all pre-stocking orders require payment in advance. Once purchased, items are non-refundable and cannot be exchanged.",
+   "es": "La disponibilidad de los productos depende del inventario de los supermercados locales. Si algún artículo seleccionado no está disponible, indícanos si autorizas a nuestro equipo a comprar un sustituto comparable.\n\nAl hacer las compras para nuestros huéspedes, priorizamos marcas de confianza y productos de calidad media a alta para garantizar una experiencia premium.\n\nImportante: todos los pedidos de pre-stocking requieren pago por adelantado. Una vez comprados, los artículos no son reembolsables ni se pueden cambiar."
+  },
+  "askSubstitutions": true
+ },
+ "items": [
+  {
+   "sku": "PRE-001",
+   "category": "Snacks",
+   "name": {
+    "en": "Mixed nuts",
+    "es": "Nueces mixtas"
+   },
+   "priceUSD": 15.46,
+   "netCostMXN": 144.56,
+   "sourceUrl": "https://www.chedraui.com.mx/nueces-mixtas-sal-premier-vitrolero-de-800g-3651331/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 1
+  },
+  {
+   "sku": "PRE-002",
+   "category": "Snacks",
+   "name": {
+    "en": "Cashews",
+    "es": "Nuez de la India"
+   },
+   "priceUSD": 8.62,
+   "netCostMXN": 80.6,
+   "sourceUrl": "https://www.chedraui.com.mx/nuez-de-la-india-premier-bolsa-de-150g-3369918/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 2
+  },
+  {
+   "sku": "PRE-003",
+   "category": "Snacks",
+   "name": {
+    "en": "Almonds",
+    "es": "Almendras"
+   },
+   "priceUSD": 12.79,
+   "netCostMXN": 119.6,
+   "sourceUrl": "https://www.chedraui.com.mx/almendras-first-street-sin-sal-de-198g-3723494/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 3
+  },
+  {
+   "sku": "PRE-004",
+   "category": "Snacks",
+   "name": {
+    "en": "Peanuts",
+    "es": "Cacahuates"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/cacahuates-mafer-salado-240g-3881628/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 4
+  },
+  {
+   "sku": "PRE-005",
+   "category": "Snacks",
+   "name": {
+    "en": "Mazapán De la Rosa 50 g",
+    "es": "Mazapán De la Rosa 50 g"
+   },
+   "priceUSD": 1.5,
+   "netCostMXN": 14.04,
+   "sourceUrl": "https://www.chedraui.com.mx/mazapan-de-la-rosa-50g-3695561/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 5
+  },
+  {
+   "sku": "PRE-006",
+   "category": "Snacks",
+   "name": {
+    "en": "Oreo cookies",
+    "es": "Galletas Oreo"
+   },
+   "priceUSD": 5.01,
+   "netCostMXN": 46.8,
+   "sourceUrl": "https://www.chedraui.com.mx/galleta-oreo-2736g-4-paquetes-de-6-galletas-cu-3551094/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 6
+  },
+  {
+   "sku": "PRE-007",
+   "category": "Snacks",
+   "name": {
+    "en": "Chocolate chip cookies",
+    "es": "Galletas con chispas de chocolate"
+   },
+   "priceUSD": 3.67,
+   "netCostMXN": 34.32,
+   "sourceUrl": "https://www.chedraui.com.mx/galletas-gamesa-chokis-1805g-3868200/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 7
+  },
+  {
+   "sku": "PRE-008",
+   "category": "Snacks",
+   "name": {
+    "en": "Chocolate bar",
+    "es": "Barra de chocolate"
+   },
+   "priceUSD": 3.17,
+   "netCostMXN": 29.64,
+   "sourceUrl": "https://www.chedraui.com.mx/barra-de-chocolate-hersheys-milk-chocolate-40g-3089941/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 8
+  },
+  {
+   "sku": "PRE-009",
+   "category": "Snacks",
+   "name": {
+    "en": "Potato chips",
+    "es": "Papas fritas"
+   },
+   "priceUSD": 5.9,
+   "netCostMXN": 55.12,
+   "sourceUrl": "https://www.chedraui.com.mx/papas-clasicas-sabritas-original-105g-3104997/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 9
+  },
+  {
+   "sku": "PRE-010",
+   "category": "Snacks",
+   "name": {
+    "en": "Doritos Nacho 198.4 g",
+    "es": "Doritos Nacho 198.4 g"
+   },
+   "priceUSD": 7.12,
+   "netCostMXN": 66.56,
+   "sourceUrl": "https://www.chedraui.com.mx/doritos-nacho-1984g-3336462/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 10
+  },
+  {
+   "sku": "PRE-011",
+   "category": "Snacks",
+   "name": {
+    "en": "Tortilla chips",
+    "es": "Totopos"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/Totopos-Chilaquiles-Milpa-Real-500-g-3132333/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 11
+  },
+  {
+   "sku": "PRE-012",
+   "category": "Snacks",
+   "name": {
+    "en": "Ritz crackers",
+    "es": "Galletas Ritz"
+   },
+   "priceUSD": 1.95,
+   "netCostMXN": 18.2,
+   "sourceUrl": "https://www.chedraui.com.mx/Galleta-Ritz-89g-3506574/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 12
+  },
+  {
+   "sku": "PRE-013",
+   "category": "Snacks",
+   "name": {
+    "en": "Saltine crackers",
+    "es": "Galletas saladas"
+   },
+   "priceUSD": 2.88,
+   "netCostMXN": 26.94,
+   "sourceUrl": "https://www.chedraui.com.mx/galleta-gamesa-saladitas-140g-3846323/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 13
+  },
+  {
+   "sku": "PRE-014",
+   "category": "Snacks",
+   "name": {
+    "en": "Corn tostadas",
+    "es": "Tostadas de maíz"
+   },
+   "priceUSD": 5.01,
+   "netCostMXN": 46.8,
+   "sourceUrl": "https://www.chedraui.com.mx/Tostadas-Milpa-Real-Onduladas-324g-3687843/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 14
+  },
+  {
+   "sku": "PRE-015",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Donuts, mixed",
+    "es": "Donas surtidas"
+   },
+   "priceUSD": 3.22,
+   "netCostMXN": 30.06,
+   "sourceUrl": "https://www.chedraui.com.mx/pan-bimbo-donas-azucar-158g-3722050/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 15
+  },
+  {
+   "sku": "PRE-016",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Bagels, plain",
+    "es": "Bagels naturales"
+   },
+   "priceUSD": 8.23,
+   "netCostMXN": 76.96,
+   "sourceUrl": "https://www.chedraui.com.mx/Bagels-Thomas-Regular-567g-3334299/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 16
+  },
+  {
+   "sku": "PRE-017",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Bagels, onion",
+    "es": "Bagels de cebolla"
+   },
+   "priceUSD": 8.79,
+   "netCostMXN": 82.16,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 17
+  },
+  {
+   "sku": "PRE-018",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Bagels, sesame",
+    "es": "Bagels de ajonjolí"
+   },
+   "priceUSD": 8.79,
+   "netCostMXN": 82.16,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 18
+  },
+  {
+   "sku": "PRE-019",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Pastries, mixed",
+    "es": "Pan dulce surtido"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/Pan-Dulce-Cuernitos-Tia-Rosa-100g-3017977/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 19
+  },
+  {
+   "sku": "PRE-020",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Sourdough bread",
+    "es": "Pan de masa madre"
+   },
+   "priceUSD": 13.24,
+   "netCostMXN": 123.76,
+   "sourceUrl": "https://www.chedraui.com.mx/pan-con-masa-madre-oroweat-semillas-y-centeno-680g-3698158/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 20
+  },
+  {
+   "sku": "PRE-021",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Brown bread",
+    "es": "Pan integral oscuro"
+   },
+   "priceUSD": 8.34,
+   "netCostMXN": 78.0,
+   "sourceUrl": "https://www.chedraui.com.mx/pan-bimbo-integral-480g-3017922/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 21
+  },
+  {
+   "sku": "PRE-022",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Fresh baked rolls",
+    "es": "Bolillos recién horneados"
+   },
+   "priceUSD": 6.01,
+   "netCostMXN": 56.16,
+   "sourceUrl": "https://www.chedraui.com.mx/Bolillo-3248965/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 22
+  },
+  {
+   "sku": "PRE-023",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "White bread",
+    "es": "Pan blanco"
+   },
+   "priceUSD": 6.56,
+   "netCostMXN": 61.36,
+   "sourceUrl": "https://www.chedraui.com.mx/Pan-Blanco-Bimbo-460g-3017890/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 23
+  },
+  {
+   "sku": "PRE-024",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Whole grain bread",
+    "es": "Pan multigrano"
+   },
+   "priceUSD": 7.56,
+   "netCostMXN": 70.72,
+   "sourceUrl": "https://www.chedraui.com.mx/pan-bimbo-integral-480g-3017922/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 24
+  },
+  {
+   "sku": "PRE-025",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Mixed Mexican cookies",
+    "es": "Galletas mexicanas surtidas"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/galletas-taifelds-surtido-selecto-de-425g-3005662/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 25
+  },
+  {
+   "sku": "PRE-026",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Chocolate cake, whole",
+    "es": "Pastel de chocolate, entero"
+   },
+   "priceUSD": 36.6,
+   "netCostMXN": 342.16,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 26
+  },
+  {
+   "sku": "PRE-027",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Vanilla cake, whole",
+    "es": "Pastel de vainilla, entero"
+   },
+   "priceUSD": 35.49,
+   "netCostMXN": 331.76,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 27
+  },
+  {
+   "sku": "PRE-028",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Carrot cake, whole",
+    "es": "Pastel de zanahoria, entero"
+   },
+   "priceUSD": 38.82,
+   "netCostMXN": 362.96,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 28
+  },
+  {
+   "sku": "PRE-029",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Tres leches cake, whole",
+    "es": "Pastel de tres leches, entero"
+   },
+   "priceUSD": 43.27,
+   "netCostMXN": 404.56,
+   "sourceUrl": "https://www.chedraui.com.mx/pastel-de-3-leches-rompope-grande-3874788/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 29
+  },
+  {
+   "sku": "PRE-030",
+   "category": "Fresh baked goods",
+   "name": {
+    "en": "Cinnamon rolls",
+    "es": "Roles de canela"
+   },
+   "priceUSD": 5.66,
+   "netCostMXN": 52.94,
+   "sourceUrl": "https://www.chedraui.com.mx/Roles-Bimbo-Canela-365g-3018022/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 30
+  },
+  {
+   "sku": "PRE-031",
+   "category": "Granola",
+   "name": {
+    "en": "Granola, plain",
+    "es": "Granola natural"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/Granola-Natural-De-Miel-Y-Almendras-Quaker-360g-3045250/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 31
+  },
+  {
+   "sku": "PRE-032",
+   "category": "Granola",
+   "name": {
+    "en": "Granola, chocolate",
+    "es": "Granola de chocolate"
+   },
+   "priceUSD": 11.68,
+   "netCostMXN": 109.2,
+   "sourceUrl": "https://www.chedraui.com.mx/Dasavena-Gourmet-Granola-Chocolate-340g-3598594/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 32
+  },
+  {
+   "sku": "PRE-033",
+   "category": "Granola",
+   "name": {
+    "en": "Granola, coconut",
+    "es": "Granola de coco"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/Granola-De-Coco-Keto-BOWL-BAR-de-300g-3610917/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 33
+  },
+  {
+   "sku": "PRE-034",
+   "category": "Greek yogurt",
+   "name": {
+    "en": "Greek yogurt, plain",
+    "es": "Yogur griego natural"
+   },
+   "priceUSD": 9.12,
+   "netCostMXN": 85.28,
+   "sourceUrl": "https://www.chedraui.com.mx/yoghurt-chobani-batido-natural-5-grasa-907g-3774747/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 34
+  },
+  {
+   "sku": "PRE-035",
+   "category": "Greek yogurt",
+   "name": {
+    "en": "Greek yogurt, vanilla",
+    "es": "Yogur griego de vainilla"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/Yoghurt-Chobani-Batido-Griego-Vainilla-907g-3672410/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 35
+  },
+  {
+   "sku": "PRE-036",
+   "category": "Greek yogurt",
+   "name": {
+    "en": "Greek yogurt, nonfat",
+    "es": "Yogur griego sin grasa"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/Yogurt-FAGE-Natural-Griego-sin-Grasa-907g-3417557/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 36
+  },
+  {
+   "sku": "PRE-037",
+   "category": "Greek yogurt",
+   "name": {
+    "en": "Greek yogurt, lactose free",
+    "es": "Yogur griego deslactosado"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 37
+  },
+  {
+   "sku": "PRE-038",
+   "category": "Häagen-Dazs ice cream",
+   "name": {
+    "en": "Häagen-Dazs vanilla 473 ml",
+    "es": "Häagen-Dazs vainilla 473 ml"
+   },
+   "priceUSD": 19.91,
+   "netCostMXN": 186.16,
+   "sourceUrl": "https://www.chedraui.com.mx/helado-haagen-dazs-vainilla-473ml-3092817/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 38
+  },
+  {
+   "sku": "PRE-039",
+   "category": "Häagen-Dazs ice cream",
+   "name": {
+    "en": "Häagen-Dazs dulce de leche",
+    "es": "Häagen-Dazs dulce de leche"
+   },
+   "priceUSD": 19.91,
+   "netCostMXN": 186.16,
+   "sourceUrl": "https://www.chedraui.com.mx/helado-haagen-dasz-dulce-de-leche-473ml-3092816/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 39
+  },
+  {
+   "sku": "PRE-040",
+   "category": "Häagen-Dazs ice cream",
+   "name": {
+    "en": "Häagen-Dazs chocolate",
+    "es": "Häagen-Dazs chocolate"
+   },
+   "priceUSD": 19.91,
+   "netCostMXN": 186.16,
+   "sourceUrl": "https://www.chedraui.com.mx/helado-haagen-dazs-chocolate-belga-473ml-3621971/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 40
+  },
+  {
+   "sku": "PRE-041",
+   "category": "Fruit",
+   "name": {
+    "en": "Green apples",
+    "es": "Manzanas verdes"
+   },
+   "priceUSD": 7.68,
+   "netCostMXN": 71.76,
+   "sourceUrl": "https://www.chedraui.com.mx/manzana-granny-smith-por-kg-3102803/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 41
+  },
+  {
+   "sku": "PRE-042",
+   "category": "Fruit",
+   "name": {
+    "en": "Red apples",
+    "es": "Manzanas rojas"
+   },
+   "priceUSD": 7.78,
+   "netCostMXN": 72.7,
+   "sourceUrl": "https://www.chedraui.com.mx/manzana-royal-gala-por-kg-3102802/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 42
+  },
+  {
+   "sku": "PRE-043",
+   "category": "Fruit",
+   "name": {
+    "en": "Pears",
+    "es": "Peras"
+   },
+   "priceUSD": 7.78,
+   "netCostMXN": 72.7,
+   "sourceUrl": "https://www.chedraui.com.mx/pera-bartlett-kg-3102796/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 43
+  },
+  {
+   "sku": "PRE-044",
+   "category": "Fruit",
+   "name": {
+    "en": "Bananas, 1 kg",
+    "es": "Plátano Tabasco, 1 kg"
+   },
+   "priceUSD": 2.21,
+   "netCostMXN": 20.7,
+   "sourceUrl": "https://www.chedraui.com.mx/platano-chiapas-por-kg-3102828/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 44
+  },
+  {
+   "sku": "PRE-045",
+   "category": "Fruit",
+   "name": {
+    "en": "Avocado",
+    "es": "Aguacate"
+   },
+   "priceUSD": 6.66,
+   "netCostMXN": 62.3,
+   "sourceUrl": "https://www.chedraui.com.mx/aguacate-hass-por-kg-3102848/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 45
+  },
+  {
+   "sku": "PRE-046",
+   "category": "Fruit",
+   "name": {
+    "en": "Watermelon",
+    "es": "Sandía"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/Sandia-sin-Semilla-por-Kg-3102832/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 46
+  },
+  {
+   "sku": "PRE-047",
+   "category": "Fruit",
+   "name": {
+    "en": "Cantaloupe",
+    "es": "Melón"
+   },
+   "priceUSD": 2.77,
+   "netCostMXN": 25.9,
+   "sourceUrl": "https://www.chedraui.com.mx/melon-chino-por-kg-3102830/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 47
+  },
+  {
+   "sku": "PRE-048",
+   "category": "Fruit",
+   "name": {
+    "en": "Grapes",
+    "es": "Uvas"
+   },
+   "priceUSD": 13.24,
+   "netCostMXN": 123.76,
+   "sourceUrl": "https://www.chedraui.com.mx/uva-verde-por-kg-3102808/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 48
+  },
+  {
+   "sku": "PRE-049",
+   "category": "Fruit",
+   "name": {
+    "en": "Pineapple",
+    "es": "Piña"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/pina-gota-miel-por-kg-3102823/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 49
+  },
+  {
+   "sku": "PRE-050",
+   "category": "Fruit",
+   "name": {
+    "en": "Mango",
+    "es": "Mango"
+   },
+   "priceUSD": 6.56,
+   "netCostMXN": 61.36,
+   "sourceUrl": "https://www.chedraui.com.mx/Mango-Ataulfo-por-Kg-3102817/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 50
+  },
+  {
+   "sku": "PRE-051",
+   "category": "Fruit",
+   "name": {
+    "en": "Papaya",
+    "es": "Papaya"
+   },
+   "priceUSD": 4.11,
+   "netCostMXN": 38.38,
+   "sourceUrl": "https://www.chedraui.com.mx/papaya-maradol-por-kg-3102815/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 51
+  },
+  {
+   "sku": "PRE-052",
+   "category": "Fruit",
+   "name": {
+    "en": "Strawberries",
+    "es": "Fresas"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/fresa-domo-454g-3100900/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 52
+  },
+  {
+   "sku": "PRE-053",
+   "category": "Fruit",
+   "name": {
+    "en": "Blueberries",
+    "es": "Moras azules"
+   },
+   "priceUSD": 8.79,
+   "netCostMXN": 82.16,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 53
+  },
+  {
+   "sku": "PRE-054",
+   "category": "Fruit",
+   "name": {
+    "en": "Dragon fruit",
+    "es": "Pitaya"
+   },
+   "priceUSD": 8.89,
+   "netCostMXN": 83.1,
+   "sourceUrl": "https://www.chedraui.com.mx/Pitahaya-Granel-kg-3108764/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 54
+  },
+  {
+   "sku": "PRE-055",
+   "category": "Fruit",
+   "name": {
+    "en": "Tangerines",
+    "es": "Mandarinas"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/mandarina-por-kg-3102777/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 55
+  },
+  {
+   "sku": "PRE-056",
+   "category": "Vegetables",
+   "name": {
+    "en": "Tomatoes",
+    "es": "Jitomates"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/tomate-saladet-por-kg-3102861/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 56
+  },
+  {
+   "sku": "PRE-057",
+   "category": "Vegetables",
+   "name": {
+    "en": "Potatoes",
+    "es": "Papas"
+   },
+   "priceUSD": 4.44,
+   "netCostMXN": 41.5,
+   "sourceUrl": "https://www.chedraui.com.mx/papa-blanca-por-kg-3102855/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 57
+  },
+  {
+   "sku": "PRE-058",
+   "category": "Vegetables",
+   "name": {
+    "en": "Mint",
+    "es": "Hierbabuena"
+   },
+   "priceUSD": 2.78,
+   "netCostMXN": 26.0,
+   "sourceUrl": "https://www.chedraui.com.mx/menta-fresca-tiempo-de-cosecha-50g-3579215/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 58
+  },
+  {
+   "sku": "PRE-059",
+   "category": "Vegetables",
+   "name": {
+    "en": "Parsley",
+    "es": "Perejil"
+   },
+   "priceUSD": 2.45,
+   "netCostMXN": 22.88,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 59
+  },
+  {
+   "sku": "PRE-060",
+   "category": "Vegetables",
+   "name": {
+    "en": "Fresh garlic",
+    "es": "Ajo fresco"
+   },
+   "priceUSD": 21.03,
+   "netCostMXN": 196.56,
+   "sourceUrl": "https://www.chedraui.com.mx/ajo-por-kg-3102887/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 60
+  },
+  {
+   "sku": "PRE-061",
+   "category": "Vegetables",
+   "name": {
+    "en": "Beets",
+    "es": "Betabel"
+   },
+   "priceUSD": 4.44,
+   "netCostMXN": 41.5,
+   "sourceUrl": "https://www.chedraui.com.mx/betabel-por-kg-3102878/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 61
+  },
+  {
+   "sku": "PRE-062",
+   "category": "Vegetables",
+   "name": {
+    "en": "Broccoli",
+    "es": "Brócoli"
+   },
+   "priceUSD": 5.55,
+   "netCostMXN": 51.9,
+   "sourceUrl": "https://www.chedraui.com.mx/brocoli-por-kg-3102867/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 62
+  },
+  {
+   "sku": "PRE-063",
+   "category": "Vegetables",
+   "name": {
+    "en": "Shiitake mushrooms",
+    "es": "Hongos shiitake"
+   },
+   "priceUSD": 14.35,
+   "netCostMXN": 134.16,
+   "sourceUrl": "https://www.chedraui.com.mx/shiitake-monteblanco-seleccion-160g-3285993/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 63
+  },
+  {
+   "sku": "PRE-064",
+   "category": "Vegetables",
+   "name": {
+    "en": "Portobello mushrooms",
+    "es": "Hongos portobello"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/hongo-portobello-por-kg-3102902/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 64
+  },
+  {
+   "sku": "PRE-065",
+   "category": "Vegetables",
+   "name": {
+    "en": "Cilantro, 1 bunch",
+    "es": "Cilantro, 1 manojo"
+   },
+   "priceUSD": 1.32,
+   "netCostMXN": 12.38,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 65
+  },
+  {
+   "sku": "PRE-066",
+   "category": "Vegetables",
+   "name": {
+    "en": "Red onion",
+    "es": "Cebolla morada"
+   },
+   "priceUSD": 7.78,
+   "netCostMXN": 72.7,
+   "sourceUrl": "https://www.chedraui.com.mx/cebolla-morada-por-kg-3102852/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 66
+  },
+  {
+   "sku": "PRE-067",
+   "category": "Vegetables",
+   "name": {
+    "en": "White onion",
+    "es": "Cebolla blanca"
+   },
+   "priceUSD": 7.78,
+   "netCostMXN": 72.7,
+   "sourceUrl": "https://www.chedraui.com.mx/cebolla-blanca-por-kg-3102851/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 67
+  },
+  {
+   "sku": "PRE-068",
+   "category": "Vegetables",
+   "name": {
+    "en": "Cucumbers",
+    "es": "Pepinos"
+   },
+   "priceUSD": 2.21,
+   "netCostMXN": 20.7,
+   "sourceUrl": "https://www.chedraui.com.mx/pepino-verde-por-kg-3102874/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 68
+  },
+  {
+   "sku": "PRE-069",
+   "category": "Vegetables",
+   "name": {
+    "en": "Red bell peppers",
+    "es": "Pimientos rojos"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/pimiento-rojo-por-kg-3109741/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 69
+  },
+  {
+   "sku": "PRE-070",
+   "category": "Vegetables",
+   "name": {
+    "en": "Green bell peppers",
+    "es": "Pimientos verdes"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/pimiento-verde-por-kg-3109738/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 70
+  },
+  {
+   "sku": "PRE-071",
+   "category": "Vegetables",
+   "name": {
+    "en": "Jalapeño peppers",
+    "es": "Chiles jalapeños"
+   },
+   "priceUSD": 2.21,
+   "netCostMXN": 20.7,
+   "sourceUrl": "https://www.chedraui.com.mx/chile-jalapeno-por-kg-3109735/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 71
+  },
+  {
+   "sku": "PRE-072",
+   "category": "Vegetables",
+   "name": {
+    "en": "Habanero peppers",
+    "es": "Chiles habaneros"
+   },
+   "priceUSD": 22.14,
+   "netCostMXN": 206.96,
+   "sourceUrl": "https://www.chedraui.com.mx/chile-habanero-por-kg-3109734/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 72
+  },
+  {
+   "sku": "PRE-073",
+   "category": "Vegetables",
+   "name": {
+    "en": "Lettuce",
+    "es": "Lechuga"
+   },
+   "priceUSD": 4.34,
+   "netCostMXN": 40.56,
+   "sourceUrl": "https://www.chedraui.com.mx/corazon-de-lechuga-orejona-selecto-2-piezas-3867517/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 73
+  },
+  {
+   "sku": "PRE-074",
+   "category": "Vegetables",
+   "name": {
+    "en": "Romaine lettuce",
+    "es": "Lechuga romana"
+   },
+   "priceUSD": 2.21,
+   "netCostMXN": 20.7,
+   "sourceUrl": "https://www.chedraui.com.mx/lechuga-romana-pieza-3100940/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 74
+  },
+  {
+   "sku": "PRE-075",
+   "category": "Vegetables",
+   "name": {
+    "en": "Spinach",
+    "es": "Espinacas"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/espinaca-baby-vegetalistos-125g-3656711/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 75
+  },
+  {
+   "sku": "PRE-076",
+   "category": "Vegetables",
+   "name": {
+    "en": "Jícama",
+    "es": "Jícama"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/jicama-por-kg-3017707/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 76
+  },
+  {
+   "sku": "PRE-077",
+   "category": "Vegetables",
+   "name": {
+    "en": "Olives",
+    "es": "Aceitunas"
+   },
+   "priceUSD": 5.01,
+   "netCostMXN": 46.8,
+   "sourceUrl": "https://www.chedraui.com.mx/aceitunas-carbonell-verdes-sin-hueso-180g-3542144/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 77
+  },
+  {
+   "sku": "PRE-078",
+   "category": "Vegetables",
+   "name": {
+    "en": "Carrots",
+    "es": "Zanahorias"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/zanahoria-por-kg-3102876/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 78
+  },
+  {
+   "sku": "PRE-079",
+   "category": "Vegetables",
+   "name": {
+    "en": "Squash",
+    "es": "Calabacitas"
+   },
+   "priceUSD": 2.21,
+   "netCostMXN": 20.7,
+   "sourceUrl": "https://www.chedraui.com.mx/calabaza-italiana-por-kg-3102869/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 79
+  },
+  {
+   "sku": "PRE-080",
+   "category": "Vegetables",
+   "name": {
+    "en": "Corn",
+    "es": "Elote"
+   },
+   "priceUSD": 1.44,
+   "netCostMXN": 13.42,
+   "sourceUrl": "https://www.chedraui.com.mx/elote-por-pieza-3100916/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 80
+  },
+  {
+   "sku": "PRE-081",
+   "category": "Vegetables",
+   "name": {
+    "en": "Celery",
+    "es": "Apio"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/apio-por-kg-3102881/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 81
+  },
+  {
+   "sku": "PRE-082",
+   "category": "Vegetables",
+   "name": {
+    "en": "Lemons",
+    "es": "Limones amarillos"
+   },
+   "priceUSD": 7.68,
+   "netCostMXN": 71.76,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 82
+  },
+  {
+   "sku": "PRE-083",
+   "category": "Vegetables",
+   "name": {
+    "en": "Seedless limes, 1 kg",
+    "es": "Limones sin semilla, 1 kg"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/limon-sin-semilla-por-kg-3102776/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 83
+  },
+  {
+   "sku": "PRE-084",
+   "category": "Condiments",
+   "name": {
+    "en": "A.1. steak sauce",
+    "es": "Salsa para carne A.1."
+   },
+   "priceUSD": 21.03,
+   "netCostMXN": 196.56,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 84
+  },
+  {
+   "sku": "PRE-085",
+   "category": "Condiments",
+   "name": {
+    "en": "Barbecue sauce",
+    "es": "Salsa barbecue"
+   },
+   "priceUSD": 7.23,
+   "netCostMXN": 67.6,
+   "sourceUrl": "https://www.chedraui.com.mx/salsa-heinz-bbq-original-pet-390g-3362260/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 85
+  },
+  {
+   "sku": "PRE-086",
+   "category": "Condiments",
+   "name": {
+    "en": "Valentina hot sauce, yellow label 370 ml",
+    "es": "Salsa Valentina etiqueta amarilla 370 ml"
+   },
+   "priceUSD": 3.23,
+   "netCostMXN": 30.16,
+   "sourceUrl": "https://www.chedraui.com.mx/salsa-valentina-etiqueta-amarilla-picante-de-370ml-3042845/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 86
+  },
+  {
+   "sku": "PRE-087",
+   "category": "Condiments",
+   "name": {
+    "en": "Cholula hot sauce",
+    "es": "Salsa picante Cholula"
+   },
+   "priceUSD": 8.79,
+   "netCostMXN": 82.16,
+   "sourceUrl": "https://www.chedraui.com.mx/salsa-picante-cholula-original-150ml-3042865/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 87
+  },
+  {
+   "sku": "PRE-088",
+   "category": "Condiments",
+   "name": {
+    "en": "Tabasco hot sauce",
+    "es": "Salsa picante Tabasco"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/salsa-tabasco-roja-original-355ml-3842821/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 88
+  },
+  {
+   "sku": "PRE-089",
+   "category": "Condiments",
+   "name": {
+    "en": "Sweet pickles",
+    "es": "Pepinillos dulces"
+   },
+   "priceUSD": 9.01,
+   "netCostMXN": 84.24,
+   "sourceUrl": "https://www.chedraui.com.mx/pepinillos-heinz-dulces-pet-360ml-3043691/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 89
+  },
+  {
+   "sku": "PRE-090",
+   "category": "Condiments",
+   "name": {
+    "en": "Dill pickles",
+    "es": "Pepinillos al eneldo"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 90
+  },
+  {
+   "sku": "PRE-091",
+   "category": "Condiments",
+   "name": {
+    "en": "Ketchup",
+    "es": "Catsup"
+   },
+   "priceUSD": 3.1,
+   "netCostMXN": 29.02,
+   "sourceUrl": "https://www.chedraui.com.mx/ketchup-heinz-pet-397g-3042942/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 91
+  },
+  {
+   "sku": "PRE-092",
+   "category": "Condiments",
+   "name": {
+    "en": "Mustard",
+    "es": "Mostaza"
+   },
+   "priceUSD": 3.1,
+   "netCostMXN": 29.02,
+   "sourceUrl": "https://www.chedraui.com.mx/mostaza-mccormick-squeeze-220g-3043008/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 92
+  },
+  {
+   "sku": "PRE-093",
+   "category": "Condiments",
+   "name": {
+    "en": "Mayonnaise",
+    "es": "Mayonesa"
+   },
+   "priceUSD": 8.67,
+   "netCostMXN": 81.02,
+   "sourceUrl": "https://www.chedraui.com.mx/mayonesa-mccormick-con-limon-725g-3512848/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 93
+  },
+  {
+   "sku": "PRE-094",
+   "category": "Condiments",
+   "name": {
+    "en": "White vinegar",
+    "es": "Vinagre blanco"
+   },
+   "priceUSD": 3.23,
+   "netCostMXN": 30.16,
+   "sourceUrl": "https://www.chedraui.com.mx/vinagre-blanco-la-costena-de-alcohol-de-cana-1l-3043017/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 94
+  },
+  {
+   "sku": "PRE-095",
+   "category": "Condiments",
+   "name": {
+    "en": "Balsamic vinegar",
+    "es": "Vinagre balsámico"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/vinagre-borges-balsamico-250ml-3005865/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 95
+  },
+  {
+   "sku": "PRE-096",
+   "category": "Condiments",
+   "name": {
+    "en": "Olive oil",
+    "es": "Aceite de oliva"
+   },
+   "priceUSD": 23.58,
+   "netCostMXN": 220.48,
+   "sourceUrl": "https://www.chedraui.com.mx/aceite-de-oliva-carbonell-extra-virgen-750ml-3005321/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 96
+  },
+  {
+   "sku": "PRE-097",
+   "category": "Condiments",
+   "name": {
+    "en": "Butter",
+    "es": "Mantequilla"
+   },
+   "priceUSD": 6.56,
+   "netCostMXN": 61.36,
+   "sourceUrl": "https://www.chedraui.com.mx/mantequilla-lala-sin-sal-barra-225g-3717748/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 97
+  },
+  {
+   "sku": "PRE-098",
+   "category": "Condiments",
+   "name": {
+    "en": "Salt",
+    "es": "Sal"
+   },
+   "priceUSD": 2.45,
+   "netCostMXN": 22.88,
+   "sourceUrl": "https://www.chedraui.com.mx/sal-la-fina-yodada-bolsa-1kg-3090740/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 98
+  },
+  {
+   "sku": "PRE-099",
+   "category": "Condiments",
+   "name": {
+    "en": "Pepper",
+    "es": "Pimienta"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/pimienta-negra-masterchef-molida-60g-3852409/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 99
+  },
+  {
+   "sku": "PRE-100",
+   "category": "Condiments",
+   "name": {
+    "en": "Garlic salt",
+    "es": "Sal de ajo"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/sal-lawrys-con-ajo-frasco-170g-3122128/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 100
+  },
+  {
+   "sku": "PRE-101",
+   "category": "Condiments",
+   "name": {
+    "en": "Onion salt",
+    "es": "Sal de cebolla"
+   },
+   "priceUSD": 4.34,
+   "netCostMXN": 40.56,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 101
+  },
+  {
+   "sku": "PRE-102",
+   "category": "Condiments",
+   "name": {
+    "en": "Maraschino cherries",
+    "es": "Cerezas en almíbar"
+   },
+   "priceUSD": 7.23,
+   "netCostMXN": 67.6,
+   "sourceUrl": "https://www.chedraui.com.mx/cerezas-en-almibar-lol-tun-304g-3043850/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 102
+  },
+  {
+   "sku": "PRE-103",
+   "category": "Condiments",
+   "name": {
+    "en": "Whipped cream",
+    "es": "Crema batida"
+   },
+   "priceUSD": 9.46,
+   "netCostMXN": 88.4,
+   "sourceUrl": "https://www.chedraui.com.mx/crema-dream-whip-lyncott-184g-3013802/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 103
+  },
+  {
+   "sku": "PRE-104",
+   "category": "Protein",
+   "name": {
+    "en": "New York steak",
+    "es": "Corte New York"
+   },
+   "priceUSD": 3.3114,
+   "netCostMXN": 30.9577,
+   "sourceUrl": "https://www.chedraui.com.mx/new-york-prime-res-por-kg-3206406/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 104
+  },
+  {
+   "sku": "PRE-105",
+   "category": "Protein",
+   "name": {
+    "en": "Ribeye steak",
+    "es": "Corte Rib Eye"
+   },
+   "priceUSD": 1.5738,
+   "netCostMXN": 14.7134,
+   "sourceUrl": "https://www.chedraui.com.mx/rib-eye-de-res-sonora-kg-3301607/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 105
+  },
+  {
+   "sku": "PRE-106",
+   "category": "Protein",
+   "name": {
+    "en": "Filet mignon",
+    "es": "Filete mignon"
+   },
+   "priceUSD": 1.8892,
+   "netCostMXN": 17.6618,
+   "sourceUrl": null,
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 106
+  },
+  {
+   "sku": "PRE-107",
+   "category": "Protein",
+   "name": {
+    "en": "Sirloin steak",
+    "es": "Corte Sirloin"
+   },
+   "priceUSD": 1.0377,
+   "netCostMXN": 9.7012,
+   "sourceUrl": "https://www.chedraui.com.mx/sirloin-choice-res-por-kg-3640321/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 107
+  },
+  {
+   "sku": "PRE-108",
+   "category": "Protein",
+   "name": {
+    "en": "Hamburger",
+    "es": "Carne para hamburguesa"
+   },
+   "priceUSD": 0.8278,
+   "netCostMXN": 7.7394,
+   "sourceUrl": "https://www.chedraui.com.mx/carne-de-hamburguesa-sukarne-de-res-con-8-piezas-de-90g-3327625/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 108
+  },
+  {
+   "sku": "PRE-109",
+   "category": "Protein",
+   "name": {
+    "en": "Pork ribs, medium",
+    "es": "Costillas de cerdo, medianas"
+   },
+   "priceUSD": 0.5962,
+   "netCostMXN": 5.5735,
+   "sourceUrl": "https://www.chedraui.com.mx/costilla-de-cerdo-por-kg-3102736/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 109
+  },
+  {
+   "sku": "PRE-110",
+   "category": "Protein",
+   "name": {
+    "en": "Whole chicken",
+    "es": "Pollo entero"
+   },
+   "priceUSD": 0.5016,
+   "netCostMXN": 4.689,
+   "sourceUrl": "https://www.chedraui.com.mx/pollo-entero-por-kg-3099652/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 110
+  },
+  {
+   "sku": "PRE-111",
+   "category": "Protein",
+   "name": {
+    "en": "Chicken breast fillet",
+    "es": "Pechuga de pollo en filete"
+   },
+   "priceUSD": 0.6874,
+   "netCostMXN": 6.4268,
+   "sourceUrl": "https://www.chedraui.com.mx/pechuga-de-pollo-sin-hueso-congelado-por-kg-3109878/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 111
+  },
+  {
+   "sku": "PRE-112",
+   "category": "Protein",
+   "name": {
+    "en": "Tofu",
+    "es": "Tofu"
+   },
+   "priceUSD": 0.7884,
+   "netCostMXN": 7.3709,
+   "sourceUrl": "https://www.chedraui.com.mx/tofu-house-bran-regular-hinochi-396g-3099324/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 112
+  },
+  {
+   "sku": "PRE-113",
+   "category": "Protein",
+   "name": {
+    "en": "Salmon",
+    "es": "Salmón"
+   },
+   "priceUSD": 1.29,
+   "netCostMXN": 12.0599,
+   "sourceUrl": "https://www.chedraui.com.mx/filete-de-salmon-pacifico-kg-3157330/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 113
+  },
+  {
+   "sku": "PRE-114",
+   "category": "Protein",
+   "name": {
+    "en": "Tuna",
+    "es": "Atún"
+   },
+   "priceUSD": 1.1638,
+   "netCostMXN": 10.8805,
+   "sourceUrl": "https://www.chedraui.com.mx/atun-fresco-por-kg-3010275/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 114
+  },
+  {
+   "sku": "PRE-115",
+   "category": "Protein",
+   "name": {
+    "en": "Shrimp, small",
+    "es": "Camarón chico"
+   },
+   "priceUSD": 0.6277,
+   "netCostMXN": 5.8684,
+   "sourceUrl": "https://www.chedraui.com.mx/camaron-chico-sin-cabeza-kg-3010613/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 115
+  },
+  {
+   "sku": "PRE-116",
+   "category": "Protein",
+   "name": {
+    "en": "Shrimp, medium",
+    "es": "Camarón mediano"
+   },
+   "priceUSD": 0.9431,
+   "netCostMXN": 8.8167,
+   "sourceUrl": null,
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 116
+  },
+  {
+   "sku": "PRE-117",
+   "category": "Protein",
+   "name": {
+    "en": "Shrimp, large",
+    "es": "Camarón grande"
+   },
+   "priceUSD": 0.7854,
+   "netCostMXN": 7.3425,
+   "sourceUrl": "https://www.chedraui.com.mx/camaron-grande-sin-cabeza-kg-3010619/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 117
+  },
+  {
+   "sku": "PRE-118",
+   "category": "Protein",
+   "name": {
+    "en": "Scallops",
+    "es": "Callo de hacha"
+   },
+   "priceUSD": 1.8892,
+   "netCostMXN": 17.6618,
+   "sourceUrl": "https://www.chedraui.com.mx/callo-de-hacha-kg-3010775/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 118
+  },
+  {
+   "sku": "PRE-119",
+   "category": "Protein",
+   "name": {
+    "en": "Lobster tails, small",
+    "es": "Colas de langosta, chicas"
+   },
+   "priceUSD": 2.2046,
+   "netCostMXN": 20.6101,
+   "sourceUrl": "https://www.chedraui.com.mx/cola-de-langosta-crustaceo-kg-3010656/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 119
+  },
+  {
+   "sku": "PRE-120",
+   "category": "Protein",
+   "name": {
+    "en": "Lobster tails, medium",
+    "es": "Colas de langosta, medianas"
+   },
+   "priceUSD": 2.5199,
+   "netCostMXN": 23.5585,
+   "sourceUrl": "https://www.chedraui.com.mx/cola-de-langosta-crustaceo-kg-3010656/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 120
+  },
+  {
+   "sku": "PRE-121",
+   "category": "Protein",
+   "name": {
+    "en": "Squid",
+    "es": "Calamar"
+   },
+   "priceUSD": 0.7223,
+   "netCostMXN": 6.7529,
+   "sourceUrl": "https://www.chedraui.com.mx/calamar-loligo-california-kg-3010736/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 121
+  },
+  {
+   "sku": "PRE-122",
+   "category": "Protein",
+   "name": {
+    "en": "Octopus",
+    "es": "Pulpo"
+   },
+   "priceUSD": 0.7854,
+   "netCostMXN": 7.3425,
+   "sourceUrl": "https://www.chedraui.com.mx/pulpo-por-kg-3010751/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 122
+  },
+  {
+   "sku": "PRE-123",
+   "category": "Protein",
+   "name": {
+    "en": "White fish (robalo)",
+    "es": "Pescado blanco (robalo)"
+   },
+   "priceUSD": 1.2269,
+   "netCostMXN": 11.4702,
+   "sourceUrl": "https://www.chedraui.com.mx/filete-de-robalo-blanco-kg-3698737/p",
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 123
+  },
+  {
+   "sku": "PRE-124",
+   "category": "Protein",
+   "name": {
+    "en": "Sea bass",
+    "es": "Lubina"
+   },
+   "priceUSD": 1.3531,
+   "netCostMXN": 12.6496,
+   "sourceUrl": null,
+   "pricingUnit": "OZ",
+   "portionOzOptions": [
+    6,
+    8,
+    10,
+    12,
+    14
+   ],
+   "order": 124
+  },
+  {
+   "sku": "PRE-125",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Orange juice",
+    "es": "Jugo de naranja"
+   },
+   "priceUSD": 3.33,
+   "netCostMXN": 31.1,
+   "sourceUrl": "https://www.chedraui.com.mx/bebida-boing-tradicional-de-jugo-de-naranja-1l-3503435/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 125
+  },
+  {
+   "sku": "PRE-126",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Cranberry juice",
+    "es": "Jugo de arándano"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/jugo-de-arandano-y-blueberry-frutos-de-vida-1l-3268477/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 126
+  },
+  {
+   "sku": "PRE-127",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Apple juice",
+    "es": "Jugo de manzana"
+   },
+   "priceUSD": 6.56,
+   "netCostMXN": 61.36,
+   "sourceUrl": "https://www.chedraui.com.mx/jugo-martinellis-manzana-1l-3767678/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 127
+  },
+  {
+   "sku": "PRE-128",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Pineapple juice",
+    "es": "Jugo de piña"
+   },
+   "priceUSD": 7.68,
+   "netCostMXN": 71.76,
+   "sourceUrl": "https://www.chedraui.com.mx/jugo-del-valle-pina-1l-3329571/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 128
+  },
+  {
+   "sku": "PRE-129",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Sparkling water",
+    "es": "Agua mineral"
+   },
+   "priceUSD": 2.56,
+   "netCostMXN": 23.92,
+   "sourceUrl": "https://www.chedraui.com.mx/agua-mineral-topo-chico-600ml-3001984/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 129
+  },
+  {
+   "sku": "PRE-130",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Coconut water",
+    "es": "Agua de coco"
+   },
+   "priceUSD": 6.56,
+   "netCostMXN": 61.36,
+   "sourceUrl": "https://www.chedraui.com.mx/agua-de-coco-100-natural-a-de-coco-1l-3360475/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 130
+  },
+  {
+   "sku": "PRE-131",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Electrolyte drink, plain",
+    "es": "Suero electrolítico natural"
+   },
+   "priceUSD": 3.23,
+   "netCostMXN": 30.16,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 131
+  },
+  {
+   "sku": "PRE-132",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Electrolyte drink, grape",
+    "es": "Suero electrolítico de uva"
+   },
+   "priceUSD": 2.61,
+   "netCostMXN": 24.44,
+   "sourceUrl": "https://www.chedraui.com.mx/suero-rehidratante-oral-electrolit-sabor-uva-625ml-3347259/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 132
+  },
+  {
+   "sku": "PRE-133",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Electrolyte drink, strawberry",
+    "es": "Suero electrolítico de fresa"
+   },
+   "priceUSD": 3.23,
+   "netCostMXN": 30.16,
+   "sourceUrl": "https://www.chedraui.com.mx/suero-rehidratante-oral-electrolit-sabor-fresa-625ml-3091056/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 133
+  },
+  {
+   "sku": "PRE-134",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Electrolyte drink, coconut",
+    "es": "Suero electrolítico de coco"
+   },
+   "priceUSD": 2.0,
+   "netCostMXN": 18.72,
+   "sourceUrl": "https://www.chedraui.com.mx/suero-electrolit-coco-355ml-3821273/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 134
+  },
+  {
+   "sku": "PRE-135",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Nonfat milk",
+    "es": "Leche descremada"
+   },
+   "priceUSD": 4.12,
+   "netCostMXN": 38.48,
+   "sourceUrl": "https://www.chedraui.com.mx/leche-santa-clara-light-1l-3019255/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 135
+  },
+  {
+   "sku": "PRE-136",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Low fat milk",
+    "es": "Leche semidescremada"
+   },
+   "priceUSD": 4.12,
+   "netCostMXN": 38.48,
+   "sourceUrl": "https://www.chedraui.com.mx/leche-santa-clara-semidescremada-1l-3364660/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 136
+  },
+  {
+   "sku": "PRE-137",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Whole milk",
+    "es": "Leche entera"
+   },
+   "priceUSD": 3.34,
+   "netCostMXN": 31.2,
+   "sourceUrl": "https://www.chedraui.com.mx/leche-entera-lala-uht-carton-1l-3718256/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 137
+  },
+  {
+   "sku": "PRE-138",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Chocolate milk",
+    "es": "Leche con chocolate"
+   },
+   "priceUSD": 4.23,
+   "netCostMXN": 39.52,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 138
+  },
+  {
+   "sku": "PRE-139",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Sweet'N Low",
+    "es": "Sweet'N Low"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 139
+  },
+  {
+   "sku": "PRE-140",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Splenda",
+    "es": "Splenda"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/endulzante-splenda-original-bajo-en-calorias-200g-3005363/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 140
+  },
+  {
+   "sku": "PRE-141",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Vanilla coffee creamer",
+    "es": "Sustituto de crema para café, vainilla"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/cremador-para-cafe-coffee-mate-liquido-sabor-vainilla-680ml-3790281/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 141
+  },
+  {
+   "sku": "PRE-142",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Hazelnut coffee creamer",
+    "es": "Sustituto de crema para café, avellana"
+   },
+   "priceUSD": 11.01,
+   "netCostMXN": 102.96,
+   "sourceUrl": "https://www.chedraui.com.mx/cremador-para-cafe-coffee-mate-liquido-sabor-avellana-680ml-3807906/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 142
+  },
+  {
+   "sku": "PRE-143",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Cream",
+    "es": "Crema"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/crema-anchor-para-batir-1l-3759625/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 143
+  },
+  {
+   "sku": "PRE-144",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Coca-Cola",
+    "es": "Coca-Cola"
+   },
+   "priceUSD": 2.22,
+   "netCostMXN": 20.8,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-coca-cola-original-600ml-3001968/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 144
+  },
+  {
+   "sku": "PRE-145",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Coca-Cola Light 600 ml",
+    "es": "Coca-Cola Light 600 ml"
+   },
+   "priceUSD": 2.39,
+   "netCostMXN": 22.36,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-coca-cola-light-600ml-3061760/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 145
+  },
+  {
+   "sku": "PRE-146",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Pepsi",
+    "es": "Pepsi"
+   },
+   "priceUSD": 2.0,
+   "netCostMXN": 18.72,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-pepsi-600ml-3080138/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 146
+  },
+  {
+   "sku": "PRE-147",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Sprite",
+    "es": "Sprite"
+   },
+   "priceUSD": 1.67,
+   "netCostMXN": 15.6,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-sprite-lima-limon-600ml-3101721/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 147
+  },
+  {
+   "sku": "PRE-148",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "7 Up",
+    "es": "7 Up"
+   },
+   "priceUSD": 2.0,
+   "netCostMXN": 18.72,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-7-up-lima-limon-600ml-3672661/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 148
+  },
+  {
+   "sku": "PRE-149",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "7 Up Diet",
+    "es": "7 Up Diet"
+   },
+   "priceUSD": 2.78,
+   "netCostMXN": 26.0,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 149
+  },
+  {
+   "sku": "PRE-150",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Ginger ale",
+    "es": "Ginger ale"
+   },
+   "priceUSD": 3.89,
+   "netCostMXN": 36.4,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-ginger-ale-canada-dry-600ml-3061807/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 150
+  },
+  {
+   "sku": "PRE-151",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Orange soda",
+    "es": "Refresco de naranja"
+   },
+   "priceUSD": 2.34,
+   "netCostMXN": 21.84,
+   "sourceUrl": "https://www.chedraui.com.mx/naranjada-penafiel-naranja-600ml-3259583/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 151
+  },
+  {
+   "sku": "PRE-152",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Squirt",
+    "es": "Squirt"
+   },
+   "priceUSD": 2.78,
+   "netCostMXN": 26.0,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-squirt-600ml-3094263/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 152
+  },
+  {
+   "sku": "PRE-153",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Jarritos, mixed flavors",
+    "es": "Jarritos, sabores surtidos"
+   },
+   "priceUSD": 2.78,
+   "netCostMXN": 26.0,
+   "sourceUrl": "https://www.chedraui.com.mx/refresco-jarrito-tamarindo-600ml-3092146/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 153
+  },
+  {
+   "sku": "PRE-154",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Clamato",
+    "es": "Clamato"
+   },
+   "priceUSD": 5.84,
+   "netCostMXN": 54.6,
+   "sourceUrl": "https://www.chedraui.com.mx/jugo-clamato-946ml-3535363/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 154
+  },
+  {
+   "sku": "PRE-155",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Tomato juice",
+    "es": "Jugo de tomate"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": null,
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 155
+  },
+  {
+   "sku": "PRE-156",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "San Pellegrino mineral water 750 ml",
+    "es": "Agua mineral San Pellegrino 750 ml"
+   },
+   "priceUSD": 7.68,
+   "netCostMXN": 71.76,
+   "sourceUrl": "https://www.chedraui.com.mx/agua-mineral-san-pellegrino-750ml-3794787/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 156
+  },
+  {
+   "sku": "PRE-157",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "San Pellegrino Aranciata 330 ml",
+    "es": "San Pellegrino Aranciata 330 ml"
+   },
+   "priceUSD": 5.45,
+   "netCostMXN": 50.96,
+   "sourceUrl": "https://www.chedraui.com.mx/agua-mineral-san-pellegrino-naturali-aranciata-lata-330ml-3747094/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 157
+  },
+  {
+   "sku": "PRE-158",
+   "category": "Nonalcoholic beverages",
+   "name": {
+    "en": "Club soda",
+    "es": "Agua quina"
+   },
+   "priceUSD": 4.34,
+   "netCostMXN": 40.56,
+   "sourceUrl": "https://www.chedraui.com.mx/agua-mineral-canada-dry-club-soda-600ml-3061854/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 158
+  },
+  {
+   "sku": "PRE-159",
+   "category": "Health",
+   "name": {
+    "en": "OFF! bug repellent spray",
+    "es": "Repelente de insectos OFF! en aerosol"
+   },
+   "priceUSD": 11.68,
+   "netCostMXN": 109.2,
+   "sourceUrl": "https://www.chedraui.com.mx/repelente-de-insectos-en-aerosol-off-family-170g-3064481/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 159
+  },
+  {
+   "sku": "PRE-160",
+   "category": "Health",
+   "name": {
+    "en": "OFF! bug repellent cream",
+    "es": "Repelente de insectos OFF! en crema"
+   },
+   "priceUSD": 11.68,
+   "netCostMXN": 109.2,
+   "sourceUrl": "https://www.chedraui.com.mx/Repelente-de-Insectos-en-Crema-OFF-Family-200ml-3260188/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 160
+  },
+  {
+   "sku": "PRE-161",
+   "category": "Health",
+   "name": {
+    "en": "Sunscreen SPF 30",
+    "es": "Protector solar FPS 30"
+   },
+   "priceUSD": 27.81,
+   "netCostMXN": 260.0,
+   "sourceUrl": "https://www.chedraui.com.mx/protector-solar-corporal-nivea-sun-protect--moisture-fps30-200ml-3687136/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 161
+  },
+  {
+   "sku": "PRE-162",
+   "category": "Health",
+   "name": {
+    "en": "Sunscreen SPF 50",
+    "es": "Protector solar FPS 50"
+   },
+   "priceUSD": 27.81,
+   "netCostMXN": 260.0,
+   "sourceUrl": "https://www.chedraui.com.mx/Protector-Solar-Corporal-NIVEA-SUN-Protect--Moisture-FPS50-200ml-3377533/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 162
+  },
+  {
+   "sku": "PRE-163",
+   "category": "Health",
+   "name": {
+    "en": "Toothbrush and toothpaste",
+    "es": "Cepillo y pasta de dientes"
+   },
+   "priceUSD": 9.9,
+   "netCostMXN": 92.56,
+   "sourceUrl": "https://www.chedraui.com.mx/kit-de-higiene-bucal-colgate-pasta-dental-triple-accion-50ml--1-cepillo-dental-3551547/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 163
+  },
+  {
+   "sku": "PRE-164",
+   "category": "Health",
+   "name": {
+    "en": "Hair gel",
+    "es": "Gel para el cabello"
+   },
+   "priceUSD": 8.79,
+   "netCostMXN": 82.16,
+   "sourceUrl": "https://www.chedraui.com.mx/Gel-para-el-Cabello-Envisage-Hombre-250g-3877050/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 164
+  },
+  {
+   "sku": "PRE-165",
+   "category": "Health",
+   "name": {
+    "en": "Comb",
+    "es": "Peine"
+   },
+   "priceUSD": 5.01,
+   "netCostMXN": 46.8,
+   "sourceUrl": "https://www.chedraui.com.mx/peine-para-cabello-fanelle-3420469/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 165
+  },
+  {
+   "sku": "PRE-166",
+   "category": "Health",
+   "name": {
+    "en": "Aloe vera after-sun gel",
+    "es": "Gel de aloe vera para después del sol"
+   },
+   "priceUSD": 16.58,
+   "netCostMXN": 154.96,
+   "sourceUrl": "https://www.chedraui.com.mx/after-sun-en-gel-cerapil-aloe-vera-hidratante-200g-3637827/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 166
+  },
+  {
+   "sku": "PRE-167",
+   "category": "Health",
+   "name": {
+    "en": "Pepto-Bismol",
+    "es": "Pepto-Bismol"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/antiacidos-pepto-bismol-suspension-sabor-original-236ml-3037393/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 167
+  },
+  {
+   "sku": "PRE-168",
+   "category": "Health",
+   "name": {
+    "en": "Aspirin",
+    "es": "Aspirina"
+   },
+   "priceUSD": 6.67,
+   "netCostMXN": 62.4,
+   "sourceUrl": "https://www.chedraui.com.mx/aspirina-dolor-de-cabeza-y-fiebre-40-tabletas-500mg-3023895/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 168
+  },
+  {
+   "sku": "PRE-169",
+   "category": "Health",
+   "name": {
+    "en": "Tylenol",
+    "es": "Tylenol"
+   },
+   "priceUSD": 12.24,
+   "netCostMXN": 114.4,
+   "sourceUrl": "https://www.chedraui.com.mx/tabletas-tylenol-analgesico-500mg-con-20-tabletas-3040193/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 169
+  },
+  {
+   "sku": "PRE-170",
+   "category": "Health",
+   "name": {
+    "en": "Baking soda",
+    "es": "Bicarbonato de sodio"
+   },
+   "priceUSD": 3.23,
+   "netCostMXN": 30.16,
+   "sourceUrl": "https://www.chedraui.com.mx/Bicarbonato-de-Sodio-BCP-100g-3817443/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 170
+  },
+  {
+   "sku": "PRE-171",
+   "category": "Health",
+   "name": {
+    "en": "Dramamine",
+    "es": "Dramamine"
+   },
+   "priceUSD": 12.13,
+   "netCostMXN": 113.36,
+   "sourceUrl": "https://www.chedraui.com.mx/tabletas-dramamine-antimareo-50mg-caja-con-24-tabletas-3028945/p",
+   "pricingUnit": "ITEM",
+   "portionOzOptions": [],
+   "order": 171
+  }
+ ]
+}

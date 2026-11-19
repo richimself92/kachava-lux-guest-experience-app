@@ -38,10 +38,39 @@ abstract final class RequestStatusValues {
 
 /// One item of an order (or the booked option) with its quantity.
 class ServiceRequestLine {
-  const ServiceRequestLine({required this.name, required this.quantity});
+  const ServiceRequestLine({
+    required this.name,
+    required this.quantity,
+    this.pricingUnit = PricingUnit.item,
+    this.ozPerPortion,
+    this.unitPriceUSD,
+    this.lineTotalUSD,
+  });
+
+  factory ServiceRequestLine.fromJson(Map<String, dynamic> json) =>
+      ServiceRequestLine(
+        name: LocalizedText.fromJson(json['name']),
+        quantity: JsonRead.intOrNull(json, 'quantity') ?? 0,
+        pricingUnit: PricingUnit.parse(json['pricingUnit']),
+        ozPerPortion: JsonRead.intOrNull(json, 'ozPerPortion'),
+        unitPriceUSD: JsonRead.doubleOrNull(json, 'unitPriceUSD'),
+        lineTotalUSD: JsonRead.doubleOrNull(json, 'lineTotalUSD'),
+      );
 
   final LocalizedText name;
+
+  /// Units, or portions for an OZ line.
   final int quantity;
+  final PricingUnit pricingUnit;
+
+  /// Oz in each portion (OZ lines only).
+  final int? ozPerPortion;
+
+  /// USD per unit, or per oz for an OZ line.
+  final double? unitPriceUSD;
+
+  /// Server-computed line total.
+  final double? lineTotalUSD;
 }
 
 /// A guest booking or order in a section queue (`GET /admin/requests`).
@@ -63,6 +92,8 @@ class ServiceRequest {
     this.notes = '',
     this.createdAt,
     this.stayId = '',
+    this.substitutionsAllowed,
+    this.termsAcceptedAt,
   }) : usageType = usageType ?? (isOrder ? 'ORDER' : 'BOOKING');
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) => ServiceRequest(
@@ -76,9 +107,7 @@ class ServiceRequest {
         status: JsonRead.text(json, 'status'),
         lines: [
           for (final l in JsonRead.objects(json, 'lines'))
-            ServiceRequestLine(
-                name: LocalizedText.fromJson(l['name']),
-                quantity: JsonRead.intOrNull(l, 'quantity') ?? 0),
+            ServiceRequestLine.fromJson(l),
         ],
         totalUSD: JsonRead.doubleOrNull(json, 'totalUSD'),
         cancellationReason: JsonRead.textOrNull(json, 'cancellationReason'),
@@ -87,6 +116,11 @@ class ServiceRequest {
         notes: JsonRead.text(json, 'notes'),
         createdAt: DateTime.tryParse(JsonRead.text(json, 'createdAt'))?.toUtc(),
         stayId: JsonRead.text(json, 'stayId'),
+        substitutionsAllowed: json['substitutionsAllowed'] is bool
+            ? json['substitutionsAllowed'] as bool
+            : null,
+        termsAcceptedAt:
+            DateTime.tryParse(JsonRead.text(json, 'termsAcceptedAt'))?.toUtc(),
       );
 
   /// The same request in another [status] (a server-confirmed move).
@@ -108,6 +142,8 @@ class ServiceRequest {
         notes: notes,
         createdAt: createdAt,
         stayId: stayId,
+        substitutionsAllowed: substitutionsAllowed,
+        termsAcceptedAt: termsAcceptedAt,
       );
 
   final String id;
@@ -140,6 +176,12 @@ class ServiceRequest {
 
   /// The guest's stay (conversation, reservation).
   final String stayId;
+
+  /// The guest's substitution choice; `null` when the service did not ask.
+  final bool? substitutionsAllowed;
+
+  /// When the guest accepted the terms (UTC); `null` when none applied.
+  final DateTime? termsAcceptedAt;
 
   /// `YYYY-MM-DD` part of [at].
   String get day => at.length >= 10 ? at.substring(0, 10) : at;

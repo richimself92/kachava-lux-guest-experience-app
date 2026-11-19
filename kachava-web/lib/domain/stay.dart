@@ -35,6 +35,7 @@ class ServiceSnapshot {
                 name: LocalizedText.fromJson(l['name']),
                 quantity: asInt(l['quantity']) ?? 1,
                 lineTotalUSD: asDouble(l['lineTotalUSD']),
+                ozPerPortion: ozPerPortionOf(l),
               ))
           .toList(),
       totalUSD: asDouble(map['totalUSD']),
@@ -51,11 +52,23 @@ class ServiceSnapshot {
 
 class SnapshotLine {
   const SnapshotLine(
-      {required this.name, this.quantity = 1, this.lineTotalUSD});
+      {required this.name,
+      this.quantity = 1,
+      this.lineTotalUSD,
+      this.ozPerPortion});
   final LocalizedText name;
   final int quantity;
   final double? lineTotalUSD;
+
+  /// Set only for lines priced by weight ("5 × 12 oz").
+  final int? ozPerPortion;
 }
+
+/// The server's `ozPerPortion` when the stored line is priced per oz.
+int? ozPerPortionOf(Json line) =>
+    PricingUnit.parse(line['pricingUnit']) == PricingUnit.oz
+        ? asInt(line['ozPerPortion'])
+        : null;
 
 class LarderOrderLine {
   const LarderOrderLine({
@@ -66,6 +79,9 @@ class LarderOrderLine {
     required this.quantity,
     this.unitPriceUSD = 0,
     this.lineTotalUSD = 0,
+    this.pricingUnit = PricingUnit.item,
+    this.ozPerPortion,
+    this.substitutionsAllowed,
     this.status = '',
     this.createdAt,
     this.updatedAt,
@@ -82,6 +98,11 @@ class LarderOrderLine {
         quantity: asInt(json['quantity']) ?? 0,
         unitPriceUSD: asDouble(json['unitPriceUSD']) ?? 0,
         lineTotalUSD: asDouble(json['lineTotalUSD']) ?? 0,
+        pricingUnit: PricingUnit.parse(json['pricingUnit']),
+        ozPerPortion: ozPerPortionOf(json),
+        substitutionsAllowed: json['substitutionsAllowed'] is bool
+            ? json['substitutionsAllowed'] as bool
+            : null,
         status: asString(json['provisioningStatus']),
         createdAt: asDateTime(json['createdAt']),
         updatedAt: asDateTime(json['updatedAt']),
@@ -94,6 +115,11 @@ class LarderOrderLine {
   final int quantity;
   final double unitPriceUSD;
   final double lineTotalUSD;
+  final PricingUnit pricingUnit;
+  final int? ozPerPortion;
+
+  /// The guest's substitution choice stored with the order (null = not asked).
+  final bool? substitutionsAllowed;
   final String status;
 
   /// When the guest first ordered from this service (server time).

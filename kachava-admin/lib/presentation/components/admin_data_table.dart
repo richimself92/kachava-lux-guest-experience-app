@@ -82,8 +82,7 @@ class AdminDataTable<T> extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: KachavaTokens.space4),
               child: Row(children: [
-                for (final c in columns)
-                  Expanded(flex: c.flex, child: _cell(c, item)),
+                for (final c in columns) sizedColumn(c, _cell(c, item)),
               ]),
             ),
           ),
@@ -140,9 +139,9 @@ class _AdminTableHeader<T> extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: KachavaTokens.space4),
         child: Row(children: [
           for (final c in columns)
-            Expanded(
-              flex: c.flex,
-              child: Padding(
+            sizedColumn(
+              c,
+              Padding(
                 padding: const EdgeInsets.only(right: KachavaTokens.space4),
                 child: Align(
                   alignment:
@@ -244,3 +243,10 @@ class TruncatedText extends StatelessWidget {
     });
   }
 }
+
+/// [child] at the column's fixed width, or flexed by its share.
+Widget sizedColumn(AdminTableColumn<Object?> column, Widget child) =>
+    switch (column.width) {
+      final w? => SizedBox(width: w, child: child),
+      null => Expanded(flex: column.flex, child: child),
+    };

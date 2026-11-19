@@ -6,6 +6,7 @@ import {
   bookingRequestStatus,
   orderRequestStatus,
   projectServiceRequests,
+  withRequestEntryDefaults,
 } from '../../src/domain/requests/service-requests';
 import { resortWallTime } from '../../src/domain/time/zoned-time';
 import { phraseKeywords } from '../../src/infrastructure/repositories/firestore-service-request.repository';
@@ -58,10 +59,62 @@ describe('request queue projection', () => {
       serviceName: { en: 'Lux bar', es: 'Bar Lux' }, at: '2026-12-01T21:30', quantity: 5, totalUSD: 25,
       status: 'RECEIVED',
     });
+    const legacyLine = { pricingUnit: 'ITEM', ozPerPortion: null, unitPriceUSD: 5 };
     expect(order?.lines).toEqual([
-      { name: { en: 'Test item', es: 'Artículo de prueba' }, quantity: 2 },
-      { name: { en: 'Test item', es: 'Artículo de prueba' }, quantity: 3 },
+      { name: { en: 'Test item', es: 'Artículo de prueba' }, quantity: 2, ...legacyLine, lineTotalUSD: 10 },
+      { name: { en: 'Test item', es: 'Artículo de prueba' }, quantity: 3, ...legacyLine, lineTotalUSD: 15 },
     ]);
+  });
+
+  it('test_ozOrderLine_carriesPricingUnitOuncesAndPrices', () => {
+    const stay = barStay();
+    stay.larderOrders = [{
+      ...stay.larderOrders[0], pricingUnit: 'OZ', ozPerPortion: 12, unitPriceUSD: 3.3114, quantity: 5, lineTotalUSD: 198.68,
+    }];
+
+    const order = projectServiceRequests(stay, ZONE).find((e) => e.kind === 'ORDER');
+
+    expect(order?.lines[0]).toMatchObject({
+      pricingUnit: 'OZ', ozPerPortion: 12, unitPriceUSD: 3.3114, quantity: 5, lineTotalUSD: 198.68,
+    });
+    expect(order?.totalUSD).toBe(198.68);
+  });
+
+  it('test_orderEntry_carriesSubstitutionChoiceAndTermsAcceptance_bookingHasNulls', () => {
+    const stay = barStay();
+    stay.larderOrders = stay.larderOrders.map((l) => ({ ...l, substitutionsAllowed: false, termsAcceptedAt: AT }));
+
+    const entries = projectServiceRequests(stay, ZONE);
+
+    expect(entries.find((e) => e.kind === 'ORDER')).toMatchObject({ substitutionsAllowed: false, termsAcceptedAt: AT });
+    expect(entries.find((e) => e.kind === 'BOOKING')).toMatchObject({ substitutionsAllowed: null, termsAcceptedAt: null });
+    expect(projectServiceRequests(populatedStayFixture(), ZONE).find((e) => e.kind === 'ORDER')).toMatchObject({
+      substitutionsAllowed: null, termsAcceptedAt: null,
+    });
+  });
+
+  it('test_storedEntryWrittenBeforeTheNewFields_readsWithDefaults', () => {
+    const [entry] = projectServiceRequests(barStay(), ZONE).filter((e) => e.kind === 'ORDER');
+    const legacy = JSON.parse(JSON.stringify(entry));
+    delete legacy.substitutionsAllowed;
+    delete legacy.termsAcceptedAt;
+    legacy.lines = [{ name: { en: 'Old', es: 'Viejo' }, quantity: 2 }];
+
+    const read = withRequestEntryDefaults(legacy);
+
+    expect(read).toMatchObject({ substitutionsAllowed: null, termsAcceptedAt: null });
+    expect(read.lines).toEqual([{
+      name: { en: 'Old', es: 'Viejo' }, quantity: 2, pricingUnit: 'ITEM', ozPerPortion: null, unitPriceUSD: null, lineTotalUSD: null,
+    }]);
+  });
+
+  it('test_bookingLines_carryTheSnapshotPrices', () => {
+    const [entry] = projectServiceRequests(populatedStayFixture(), null);
+
+    expect(entry.lines).toEqual([{
+      name: { en: 'Test service', es: 'Servicio de prueba' }, quantity: 1,
+      pricingUnit: 'ITEM', ozPerPortion: null, unitPriceUSD: 10, lineTotalUSD: 20,
+    }]);
   });
 
   it('test_olderOrderLineWithoutSection_hasNoSection', () => {

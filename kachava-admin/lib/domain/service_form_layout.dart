@@ -114,6 +114,7 @@ ServiceFormLayout serviceFormLayout(ServiceKind kind) {
     ..._guestInfo,
     _cancel,
     'guestInfo.cancellationPolicy',
+    'guestInfo.terms',
     ..._generic,
   ];
   return ServiceFormLayout(main, [

@@ -47,7 +47,8 @@ class RequestDetails extends StatelessWidget {
           const Divider(height: 24),
           for (final line in r.lines)
             _row(
-                '${line.quantity} × ${l10n.text(line.name)}',
+                l10n.orderLine(line.quantity, l10n.text(line.name),
+                    oz: line.ozPerPortion),
                 line.lineTotalUSD == null
                     ? ''
                     : l10n.money(line.lineTotalUSD!)),
@@ -56,6 +57,12 @@ class RequestDetails extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: _row(l10n.total, l10n.money(r.totalUSD!), style: _bold),
+          ),
+        if (r.substitutionsAllowed != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(l10n.substitutionsChoice(r.substitutionsAllowed!),
+                style: _body),
           ),
         if (trip != null && showsDriver(r))
           _DriverBlock(l10n: l10n, trip: trip),

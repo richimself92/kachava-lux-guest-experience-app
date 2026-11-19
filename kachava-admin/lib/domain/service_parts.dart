@@ -123,6 +123,7 @@ class ServiceGuestInfo {
     this.location = const LocalizedText(),
     this.restrictions = const LocalizedText(),
     this.cancellationPolicy = const LocalizedText(),
+    this.terms = const LocalizedText(),
   });
 
   factory ServiceGuestInfo.fromJson(Map<String, dynamic> json) =>
@@ -133,7 +134,11 @@ class ServiceGuestInfo {
         location: LocalizedText.fromJson(json['location']),
         restrictions: LocalizedText.fromJson(json['restrictions']),
         cancellationPolicy: LocalizedText.fromJson(json['cancellationPolicy']),
+        terms: LocalizedText.fromJson(json['terms']),
       );
+
+  /// Backend limit per language for [terms].
+  static const int termsMaxLength = 3000;
 
   static const List<String> keys = [
     'includes',
@@ -142,6 +147,7 @@ class ServiceGuestInfo {
     'location',
     'restrictions',
     'cancellationPolicy',
+    'terms',
   ];
 
   final LocalizedText includes;
@@ -151,6 +157,9 @@ class ServiceGuestInfo {
   final LocalizedText restrictions;
   final LocalizedText cancellationPolicy;
 
+  /// Terms & conditions the guest must accept before ordering ("" = none).
+  final LocalizedText terms;
+
   Map<String, dynamic> toJson() => {
         'includes': includes.toJson(),
         'excludes': excludes.toJson(),
@@ -158,6 +167,7 @@ class ServiceGuestInfo {
         'location': location.toJson(),
         'restrictions': restrictions.toJson(),
         'cancellationPolicy': cancellationPolicy.toJson(),
+        'terms': terms.toJson(),
       };
 }
 

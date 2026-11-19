@@ -8,6 +8,7 @@ import {
   resolveOrderLines,
   toGuestCatalogService,
 } from '../../src/domain/catalog/catalog-rules';
+import { CatalogItem } from '../../src/domain/catalog/catalog.models';
 import { BusinessRuleError, EntityNotFoundError } from '../../src/domain/domain-errors';
 import { itemFixture, serviceFixture } from '../support/catalog-fixtures';
 
@@ -118,7 +119,7 @@ describe('resolveOrderLines', () => {
     const service = serviceFixture({
       kind: 'VILLA_STOCKING',
       experience: null,
-      stocking: { maxPerItem: 2, orderDeadlineHoursBeforeCheckIn: null },
+      stocking: { maxPerItem: 2, orderDeadlineHoursBeforeCheckIn: null, askSubstitutions: false },
     });
 
     expect(() =>
@@ -191,5 +192,72 @@ describe('toGuestCatalogService', () => {
       alt: { en: 'Cover', es: 'Portada' },
       usageRightsConfirmed: true,
     });
+  });
+});
+
+describe('weight-priced (OZ) order lines', () => {
+  const steak = itemFixture({ pricingUnit: 'OZ', priceUSD: 3.3114, portionOzOptions: [6, 8, 10, 12, 14] });
+  const perUnit = serviceFixture({ pricing: { ...serviceFixture().pricing, mode: 'PER_UNIT', amount: null } });
+
+  it('test_resolveOrderLines_ozItemWithoutOunces_isRejected', () => {
+    expect(() => resolveOrderLines(perUnit, [steak], [{ itemId: 'item-1', quantity: 5 }])).toThrow(BusinessRuleError);
+  });
+
+  it('test_resolveOrderLines_ozNotOffered_isRejected', () => {
+    expect(() =>
+      resolveOrderLines(perUnit, [steak], [{ itemId: 'item-1', quantity: 5, ozPerPortion: 9 }]),
+    ).toThrow(BusinessRuleError);
+  });
+
+  it('test_resolveOrderLines_itemWithOunces_isRejected', () => {
+    expect(() =>
+      resolveOrderLines(perUnit, [itemFixture()], [{ itemId: 'item-1', quantity: 1, ozPerPortion: 6 }]),
+    ).toThrow(BusinessRuleError);
+  });
+
+  it('test_resolveOrderLines_legacyItemWithoutPricingUnit_readsAsItem', () => {
+    const legacy = itemFixture() as Partial<CatalogItem>;
+    delete legacy.pricingUnit;
+    delete legacy.portionOzOptions;
+
+    const [line] = resolveOrderLines(perUnit, [legacy as CatalogItem], [{ itemId: 'item-1', quantity: 2 }]);
+
+    expect(line.ozPerPortion).toBeNull();
+    expect(line.item?.pricingUnit).toBe('ITEM');
+  });
+
+  it('test_snapshot_ozLine_isPortionsTimesOuncesTimesPricePerOunce', () => {
+    const lines = resolveOrderLines(perUnit, [steak], [{ itemId: 'item-1', quantity: 5, ozPerPortion: 12 }]);
+
+    const snapshot = buildServiceSnapshot(perUnit, lines, 1, NOW);
+
+    expect(snapshot.lines[0]).toEqual(expect.objectContaining({
+      pricingUnit: 'OZ', ozPerPortion: 12, unitPriceUSD: 3.3114, quantity: 5, lineTotalUSD: 198.68,
+    }));
+    expect(snapshot.totalUSD).toBe(198.68);
+  });
+
+  it('test_snapshot_itemLine_carriesItemUnitAndNoOunces', () => {
+    const lines = resolveOrderLines(perUnit, [itemFixture({ priceUSD: 4 })], [{ itemId: 'item-1', quantity: 3 }]);
+
+    expect(buildServiceSnapshot(perUnit, lines, 1, NOW).lines[0]).toMatchObject({
+      pricingUnit: 'ITEM', ozPerPortion: null, lineTotalUSD: 12,
+    });
+  });
+});
+
+describe('guest item projection', () => {
+  it('test_guestItem_hasPricingUnitAndPortions_butNeverAdminOnlyFields', () => {
+    const item = itemFixture({
+      sku: 'PRE-104', netCostMXN: 30.9577, sourceUrl: 'https://supplier.example/steak',
+      pricingUnit: 'OZ', priceUSD: 3.3114, portionOzOptions: [6, 8],
+    });
+
+    const [guestItem] = toGuestCatalogService(serviceFixture(), [item], (path) => path).items;
+
+    expect(guestItem).toMatchObject({ pricingUnit: 'OZ', portionOzOptions: [6, 8], priceUSD: 3.3114 });
+    expect(guestItem).not.toHaveProperty('sku');
+    expect(guestItem).not.toHaveProperty('netCostMXN');
+    expect(guestItem).not.toHaveProperty('sourceUrl');
   });
 });

@@ -286,6 +286,27 @@ void main() {
     expect(stay.chatMessages.single.hasPhoto, isTrue);
   });
 
+  test('saveOrder forwards the consent fields next to items', () async {
+    String? body;
+    final api = HttpGuestApi(
+      baseUrl: _base,
+      client: MockClient((r) async {
+        body = r.body;
+        return _json({'data': const {}});
+      }),
+    );
+    await api.saveOrder(guestUuid, {
+      'serviceId': 'stock',
+      'items': [
+        {'itemId': 'i1', 'quantity': 1}
+      ],
+      'substitutionsAllowed': false,
+      'termsAccepted': true,
+    });
+    expect(body,
+        '{"items":[{"itemId":"i1","quantity":1}],"substitutionsAllowed":false,"termsAccepted":true}');
+  });
+
   test('guest self-service routes', () async {
     final calls = <String>[];
     final api = HttpGuestApi(

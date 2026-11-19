@@ -1,4 +1,4 @@
-import { LocalizedText, ServiceSection } from '../catalog/catalog.models';
+import { LocalizedText, PricingUnit, ServiceSection, ServiceSnapshot } from '../catalog/catalog.models';
 import { ExperienceBooking, LarderOrderItem, StayAggregate } from '../models/domain.models';
 import { orderRefId } from '../stays/open-requests';
 import { resortWallTime } from '../time/zoned-time';
@@ -34,6 +34,33 @@ function noteOf(metadata: Record<string, unknown> | undefined): string {
 export interface ServiceRequestLine {
   name: LocalizedText;
   quantity: number;
+  /** OZ lines: `quantity` portions of `ozPerPortion` ounces, `unitPriceUSD` per ounce. */
+  pricingUnit: PricingUnit;
+  ozPerPortion: number | null;
+  unitPriceUSD: number | null;
+  lineTotalUSD: number | null;
+}
+
+function snapshotRequestLine(line: ServiceSnapshot['lines'][number]): ServiceRequestLine {
+  return {
+    name: structuredClone(line.name),
+    quantity: line.quantity,
+    pricingUnit: line.pricingUnit ?? 'ITEM',
+    ozPerPortion: line.ozPerPortion ?? null,
+    unitPriceUSD: line.unitPriceUSD,
+    lineTotalUSD: line.lineTotalUSD,
+  };
+}
+
+function orderRequestLine(line: LarderOrderItem): ServiceRequestLine {
+  return {
+    name: structuredClone(line.itemName ?? { en: line.name, es: line.name }),
+    quantity: line.quantity,
+    pricingUnit: line.pricingUnit ?? 'ITEM',
+    ozPerPortion: line.ozPerPortion ?? null,
+    unitPriceUSD: line.unitPriceUSD,
+    lineTotalUSD: line.lineTotalUSD,
+  };
 }
 
 export interface ServiceRequestEntry {
@@ -61,6 +88,9 @@ export interface ServiceRequestEntry {
   notes: string;
   lines: ServiceRequestLine[];
   totalUSD: number | null;
+  /** Orders only: the guest's substitution answer and when the terms were accepted (null = not asked). */
+  substitutionsAllowed: boolean | null;
+  termsAcceptedAt: string | null;
   cancellationReason: string | null;
   createdAt: string;
   updatedAt: string;
@@ -121,8 +151,10 @@ function bookingEntry(stay: StayAggregate, b: ExperienceBooking): ServiceRequest
     open: isOpenRequestStatus(status),
     rank: requestRank(status),
     notes: noteOf(b.metadata),
-    lines: (b.snapshot?.lines ?? []).map((l) => ({ name: structuredClone(l.name), quantity: l.quantity })),
+    lines: (b.snapshot?.lines ?? []).map(snapshotRequestLine),
     totalUSD: b.snapshot?.totalUSD ?? b.priceChargedUSD,
+    substitutionsAllowed: null,
+    termsAcceptedAt: null,
     cancellationReason: status === 'CANCELLED' ? b.cancellationReason || null : null,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt ?? b.createdAt,
@@ -153,11 +185,31 @@ function orderEntry(stay: StayAggregate, lines: LarderOrderItem[], timeZone: str
     open: isOpenRequestStatus(status),
     rank: requestRank(status),
     notes: '',
-    lines: lines.map((l) => ({ name: structuredClone(l.itemName ?? { en: l.name, es: l.name }), quantity: l.quantity })),
+    lines: lines.map(orderRequestLine),
     totalUSD: Math.round(lines.reduce((sum, l) => sum + l.lineTotalUSD, 0) * 100) / 100,
+    substitutionsAllowed: first.substitutionsAllowed ?? null,
+    termsAcceptedAt: first.termsAcceptedAt ?? null,
     cancellationReason: status === 'CANCELLED' ? first.cancellationReason || null : null,
     createdAt: placedAt,
     updatedAt,
+  };
+}
+
+type StoredRequestLine = Pick<ServiceRequestLine, 'name' | 'quantity'> & Partial<ServiceRequestLine>;
+
+/** Index entries written before weight pricing and order consent read with neutral defaults. */
+export function withRequestEntryDefaults(stored: ServiceRequestEntry): ServiceRequestEntry {
+  return {
+    ...stored,
+    lines: (stored.lines ?? []).map((line: StoredRequestLine) => ({
+      ...line,
+      pricingUnit: line.pricingUnit ?? 'ITEM',
+      ozPerPortion: line.ozPerPortion ?? null,
+      unitPriceUSD: line.unitPriceUSD ?? null,
+      lineTotalUSD: line.lineTotalUSD ?? null,
+    })),
+    substitutionsAllowed: stored.substitutionsAllowed ?? null,
+    termsAcceptedAt: stored.termsAcceptedAt ?? null,
   };
 }
 

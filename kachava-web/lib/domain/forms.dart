@@ -4,6 +4,8 @@ import 'resort_clock.dart';
 import 'stay.dart';
 import 'trip.dart';
 
+export 'order_cart.dart';
+
 /// Inline validation problems; the UI turns each into <= 5 words.
 enum FormIssue {
   required,
@@ -18,6 +20,8 @@ enum FormIssue {
   tooManyGuests,
   ageRequired,
   emptyCart,
+  substitutionRequired,
+  termsRequired,
 }
 
 final RegExp _hhmm = RegExp(r'^([01]\d|2[0-3]):[0-5]\d$');
@@ -336,58 +340,4 @@ Json bookingPayload(BookingDraft d, CatalogService s, {String? itemId}) {
     if (d.guests > 0) 'partySize': d.guests,
     if (metadata.isNotEmpty) 'metadata': metadata,
   };
-}
-
-// ---------------------------------------------------------------- ORDER
-
-/// Max quantity per line accepted by `PUT /larder`.
-const int orderLineMax = 20;
-
-class OrderCart {
-  OrderCart(this.service, [Map<String, int>? initial])
-      : quantities = {...?initial};
-
-  final CatalogService service;
-  final Map<String, int> quantities;
-
-  int quantityOf(String itemId) => quantities[itemId] ?? 0;
-
-  void set(String itemId, int quantity) {
-    final q = quantity.clamp(0, orderLineMax);
-    if (q == 0) {
-      quantities.remove(itemId);
-    } else {
-      quantities[itemId] = q;
-    }
-  }
-
-  double? unitPrice(CatalogItem item) =>
-      item.priceUSD ?? service.pricing.amount;
-
-  int get count => quantities.values.fold(0, (a, b) => a + b);
-
-  double get total => service.items.fold(0.0, (sum, item) {
-        final price = unitPrice(item) ?? 0;
-        return sum + price * quantityOf(item.id);
-      });
-
-  bool get isEmpty => count == 0;
-
-  /// Items grouped by item category, in catalog order.
-  Map<String, List<CatalogItem>> get groups {
-    final out = <String, List<CatalogItem>>{};
-    for (final item in service.items) {
-      out.putIfAbsent(item.category ?? '', () => []).add(item);
-    }
-    return out;
-  }
-
-  Json toPayload() => {
-        'serviceId': service.id,
-        'items': [
-          for (final item in service.items)
-            if (quantityOf(item.id) > 0)
-              {'itemId': item.id, 'quantity': quantityOf(item.id)},
-        ],
-      };
 }

@@ -132,5 +132,38 @@ void main() {
       expect(server.last.method, 'PATCH');
       expect(server.last.url.path, '/api/v1/admin/services/s1/items/i1');
     });
+
+    test('items: q + category filters and the item-categories call', () async {
+      final server = _Server((r) => r.url.path.endsWith('/item-categories')
+          ? {
+              'categories': ['Proteins', 'Pantry']
+            }
+          : _page([
+              {
+                'id': 'i1',
+                'name': {'en': 'New York steak'},
+                'sku': 'PRE-104',
+                'priceUSD': 3.3114,
+                'pricingUnit': 'OZ',
+                'portionOzOptions': [6, 8],
+              }
+            ]));
+      final repo =
+          HttpServiceCatalogRepository(signedInApiClient(server.client));
+      final page = await repo.listItems(
+          's1',
+          const ListQuery()
+              .withSearch('steak')
+              .withFilter('category', 'Proteins'));
+      expect(server.last.url.queryParameters['q'], 'steak');
+      expect(server.last.url.queryParameters['category'], 'Proteins');
+      expect(page.items.single.sku, 'PRE-104');
+      expect(page.items.single.pricingUnit, PricingUnit.oz);
+
+      final categories = await repo.listItemCategories('s 1');
+      expect(
+          server.last.url.path, '/api/v1/admin/services/s%201/item-categories');
+      expect(categories, ['Proteins', 'Pantry']);
+    });
   });
 }

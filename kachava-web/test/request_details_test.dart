@@ -77,6 +77,52 @@ void main() {
     await unmount(tester);
   });
 
+  testWidgets('a by-weight line reads "5 × 12 oz" on card and detail',
+      (tester) async {
+    await _requests(
+        tester,
+        FakeGuestApi(
+          stay: stayJson(larder: [
+            {
+              ..._line('l1', 'New York steak', 5, 198.68),
+              'pricingUnit': 'OZ',
+              'ozPerPortion': 12,
+              'unitPriceUSD': 3.3114,
+            },
+            _line('l2', 'Mineral water', 2, 6),
+          ]),
+          catalog: fullCatalog(),
+        ));
+    expect(
+        _inCard('order:stock',
+            find.text('5 × 12 oz New York steak, 2 × Mineral water')),
+        findsOneWidget);
+    await _open(tester, 'order:stock');
+    expect(_inSheet('order:stock', find.text('5 × 12 oz New York steak')),
+        findsOneWidget);
+    expect(_inSheet('order:stock', find.text('\$198.68 USD')), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets('an order shows the substitution choice in detail',
+      (tester) async {
+    await _requests(
+        tester,
+        FakeGuestApi(
+          stay: stayJson(larder: [
+            {
+              ..._line('l1', 'Mineral water', 2, 6),
+              'substitutionsAllowed': false
+            },
+          ]),
+          catalog: fullCatalog(),
+        ));
+    await _open(tester, 'order:stock');
+    expect(_inSheet('order:stock', find.text('Substitutions: not allowed')),
+        findsOneWidget);
+    await unmount(tester);
+  });
+
   testWidgets('a preference shows the option chosen', (tester) async {
     await _requests(
         tester,

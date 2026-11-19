@@ -292,6 +292,7 @@ class AdminWorkspaceSwitcher extends StatelessWidget {
         queryStore: controller.listQueries,
         staff: controller.staffDirectory,
         today: _resortTime.dayOf(DateTime.now().toUtc()),
+        resortTime: _resortTime,
         isEs: _isEs,
       );
 }

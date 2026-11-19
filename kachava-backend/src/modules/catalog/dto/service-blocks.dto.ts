@@ -122,6 +122,14 @@ export class AvailabilityDto {
   offeredWhen?: OfferedWhen | null;
 }
 
+export const TERMS_TEXT_MAX = 3000;
+
+/** Multiline terms & conditions; "" in both languages means the service has none. */
+export class TermsTextDto {
+  @IsOptional() @IsString() @MaxLength(TERMS_TEXT_MAX) en?: string;
+  @IsOptional() @IsString() @MaxLength(TERMS_TEXT_MAX) es?: string;
+}
+
 export class GuestInfoDto {
   @IsOptional() @ValidateNested() @Type(() => LongTextDto) includes?: LongTextDto;
   @IsOptional() @ValidateNested() @Type(() => LongTextDto) excludes?: LongTextDto;
@@ -129,6 +137,7 @@ export class GuestInfoDto {
   @IsOptional() @ValidateNested() @Type(() => LongTextDto) location?: LongTextDto;
   @IsOptional() @ValidateNested() @Type(() => LongTextDto) restrictions?: LongTextDto;
   @IsOptional() @ValidateNested() @Type(() => LongTextDto) cancellationPolicy?: LongTextDto;
+  @IsOptional() @ValidateNested() @Type(() => TermsTextDto) terms?: TermsTextDto;
 }
 
 export class GuestFormDto {
@@ -172,6 +181,9 @@ export class StockingDetailsDto {
 
   @IsOptional() @ValidateIf(notNull) @IsInt() @Min(0) @Max(MAX_HOURS)
   orderDeadlineHoursBeforeCheckIn?: number | null;
+
+  @IsOptional() @IsBoolean()
+  askSubstitutions?: boolean;
 }
 
 export class ItineraryStepDto {
