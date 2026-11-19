@@ -258,6 +258,7 @@ class _ServiceDetailState extends State<ServiceDetail> {
       (l10n.bring, l10n.text(info.whatToBring)),
       (l10n.meetingPoint, meeting),
       (l10n.rules, rules),
+      (l10n.termsTitle, l10n.text(info.terms)),
     ].where((e) => e.$2.isNotEmpty);
     return [
       for (final (title, body) in sections)

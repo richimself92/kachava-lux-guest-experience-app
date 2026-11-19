@@ -1,5 +1,6 @@
 import '../domain/admin_catalog_repositories.dart';
 import '../domain/admin_service.dart';
+import '../domain/json_read.dart';
 import '../domain/list_query.dart';
 import '../domain/paged_result.dart';
 import 'admin_api_client.dart';
@@ -40,6 +41,13 @@ class HttpServiceCatalogRepository implements ServiceCatalogRepository {
   Future<PagedResult<ServiceItem>> listItems(
           String serviceId, ListQuery query) =>
       _items(serviceId).list(query);
+
+  @override
+  Future<List<String>> listItemCategories(String serviceId) async {
+    final raw = await _client
+        .getJson('/services/${Uri.encodeComponent(serviceId)}/item-categories');
+    return JsonRead.strings(unwrapRecord(raw), 'categories');
+  }
 
   @override
   Future<ServiceItem> createItem(String serviceId, ServiceItem item) =>

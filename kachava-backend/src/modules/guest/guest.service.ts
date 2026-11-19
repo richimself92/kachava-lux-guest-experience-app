@@ -92,7 +92,9 @@ export class GuestService {
   }
 
   updateServiceOrder(stay: StayAggregate, serviceId: string, dto: UpdateServiceOrderDto) {
-    return this.bookingService.updateServiceOrder(stay, serviceId, dto.items);
+    return this.bookingService.updateServiceOrder(stay, serviceId, dto.items, {
+      substitutionsAllowed: dto.substitutionsAllowed, termsAccepted: dto.termsAccepted,
+    });
   }
 
   createBooking(stay: StayAggregate, dto: CreateBookingDto) {

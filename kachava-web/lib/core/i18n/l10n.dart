@@ -180,6 +180,38 @@ class L10n {
   String get ageConfirm => _t('I am 18 or older', 'Tengo 18 años o más');
   String itemsTotal(int count, String total) =>
       _t('$count items · $total', '$count artículos · $total');
+  String get termsTitle => _t('Terms & conditions', 'Términos y condiciones');
+  String get substitutions => _t('Substitutions', 'Sustituciones');
+  String get substitutionsYes => _t('Yes, I authorize comparable substitutions',
+      'Sí, autorizo sustitutos comparables');
+  String get substitutionsNo => _t(
+      'No, please do not substitute unavailable items',
+      'No, por favor no sustituir artículos no disponibles');
+  String get acceptTerms => _t(
+      'I accept the terms & conditions', 'Acepto los términos y condiciones');
+  String substitutionsChoice(bool allowed) => allowed
+      ? _t('Substitutions: allowed', 'Sustituciones: permitidas')
+      : _t('Substitutions: not allowed', 'Sustituciones: no permitidas');
+  String get searchItems => _t('Search products', 'Buscar productos');
+  String get portions => _t('Portions', 'Porciones');
+  String get ozPerPortion => _t('Oz per portion', 'Oz por porción');
+  String ozOption(int oz) => '$oz oz';
+  String get estimateNote => _t('Estimated — final cut weight may vary',
+      'Estimado — el peso final del corte puede variar');
+
+  /// "$3.31 / oz": per-oz price shown to cents.
+  String perOz(double usd) => '\$${usd.toStringAsFixed(2)} / oz';
+
+  /// "Estimated total · 5 × 12 oz = 60 oz · $198.68".
+  String estimate(int portions, int oz, double total) {
+    final cents = ((total * 100).roundToDouble() / 100).toStringAsFixed(2);
+    final math = '$portions × $oz oz = ${portions * oz} oz · \$$cents';
+    return _t('Estimated total · $math', 'Total estimado · $math');
+  }
+
+  /// "2 × Water"; by-weight lines read "5 × 12 oz Steak".
+  String orderLine(int quantity, String name, {int? oz}) =>
+      oz == null ? '$quantity × $name' : '$quantity × $oz oz $name';
   String changeUntil(String when) =>
       _t('Change until $when', 'Cambia hasta $when');
   String get airport => _t('Airport', 'Aeropuerto');
@@ -220,6 +252,10 @@ class L10n {
         FormIssue.tooManyGuests => _t('Too many people', 'Demasiadas personas'),
         FormIssue.ageRequired => _t('Confirm your age', 'Confirma tu edad'),
         FormIssue.emptyCart => _t('Add an item', 'Agrega un artículo'),
+        FormIssue.substitutionRequired =>
+          _t('Choose an option', 'Elige una opción'),
+        FormIssue.termsRequired =>
+          _t('Accept the terms', 'Acepta los términos'),
       };
 
   // Results

@@ -192,8 +192,19 @@ class ServiceFormFields {
       'location' => s.location,
       'whatToBring' => s.whatToBring,
       'restrictions' => s.restrictions,
+      'terms' => s.terms,
       _ => s.cancellation,
     };
+    if (key == 'terms') {
+      return DraftLocalizedField(
+          draft: draft,
+          path: 'guestInfo.terms',
+          label: s.terms,
+          tip: s.termsTip,
+          isEs: isEs,
+          maxLines: 6,
+          maxLength: ServiceGuestInfo.termsMaxLength);
+    }
     return _localized('guestInfo.$key', label, lines: 2);
   }
 

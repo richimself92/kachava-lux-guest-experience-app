@@ -107,6 +107,7 @@ class GuestRequest {
     this.trip,
     this.booking,
     this.reason = '',
+    this.substitutionsAllowed,
   });
 
   final String id;
@@ -130,6 +131,9 @@ class GuestRequest {
   final double? totalUSD;
   final GuestTrip? trip;
   final GuestBooking? booking;
+
+  /// Orders: whether the guest allowed substitutes (null = not asked).
+  final bool? substitutionsAllowed;
 
   /// Cancellation reason from the server ('' when none).
   final String reason;
@@ -194,10 +198,17 @@ Iterable<GuestRequest> _larderRequests(
       lines: [
         for (final l in group)
           SnapshotLine(
-              name: l.name, quantity: l.quantity, lineTotalUSD: l.lineTotalUSD),
+              name: l.name,
+              quantity: l.quantity,
+              lineTotalUSD: l.lineTotalUSD,
+              ozPerPortion: l.ozPerPortion),
       ],
       totalUSD: group.fold<double>(0, (sum, l) => sum + l.lineTotalUSD),
       sortAt: created,
+      substitutionsAllowed: group
+          .map((l) => l.substitutionsAllowed)
+          .whereType<bool>()
+          .firstOrNull,
     );
   }
 }

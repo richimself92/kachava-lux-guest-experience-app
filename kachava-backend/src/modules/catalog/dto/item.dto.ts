@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayUnique,
   IsArray,
   IsDefined,
   IsIn,
@@ -8,6 +9,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   MaxLength,
   Min,
@@ -16,8 +18,14 @@ import {
 } from 'class-validator';
 import { ListQueryDto } from '../../../common/listing/list-query';
 import { SHORT_TEXT_MAX } from '../../../common/validation/field-limits';
-import { CATALOG_STATUSES, CatalogStatus } from '../../../domain/catalog/catalog.models';
+import { CATALOG_STATUSES, CatalogStatus, PRICING_UNITS, PricingUnit } from '../../../domain/catalog/catalog.models';
+import { PORTION_OPTIONS_MAX, PORTION_OZ_MAX, PORTION_OZ_MIN } from '../../../domain/catalog/item-rules';
 import { CatalogImageDto, LongTextDto, notNull, ShortTextDto, TAGS_MAX } from './catalog-common.dto';
+
+export const SKU_MAX = 40;
+export const SOURCE_URL_MAX = 500;
+/** Per-ounce (OZ) prices and costs use 4 decimals; ITEM items are limited to cents by the domain rules. */
+const PRICE_DECIMALS = { maxDecimalPlaces: 4 };
 
 export class VehicleCapacityDto {
   @IsInt() @Min(1) @Max(60)
@@ -37,8 +45,25 @@ class ItemFieldsDto {
   @IsOptional() @ValidateIf(notNull) @ValidateNested() @Type(() => CatalogImageDto)
   image?: CatalogImageDto | null;
 
-  @IsOptional() @ValidateIf(notNull) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(1_000_000)
+  @IsOptional() @ValidateIf(notNull) @IsNumber(PRICE_DECIMALS) @Min(0) @Max(1_000_000)
   priceUSD?: number | null;
+
+  @IsOptional() @ValidateIf(notNull) @IsString() @MaxLength(SKU_MAX)
+  sku?: string | null;
+
+  @IsOptional() @ValidateIf(notNull) @IsNumber(PRICE_DECIMALS) @Min(0) @Max(1_000_000)
+  netCostMXN?: number | null;
+
+  @IsOptional() @ValidateIf(notNull) @IsUrl({ protocols: ['http', 'https'], require_protocol: true }) @MaxLength(SOURCE_URL_MAX)
+  sourceUrl?: string | null;
+
+  @IsOptional() @IsIn(PRICING_UNITS)
+  pricingUnit?: PricingUnit;
+
+  /** Empty or absent with OZ means the default portions. */
+  @IsOptional() @IsArray() @ArrayMaxSize(PORTION_OPTIONS_MAX) @ArrayUnique()
+  @IsInt({ each: true }) @Min(PORTION_OZ_MIN, { each: true }) @Max(PORTION_OZ_MAX, { each: true })
+  portionOzOptions?: number[];
 
   @IsOptional() @IsArray() @ArrayMaxSize(TAGS_MAX) @IsString({ each: true }) @MaxLength(SHORT_TEXT_MAX, { each: true })
   tags?: string[];

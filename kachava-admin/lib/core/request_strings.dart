@@ -36,6 +36,10 @@ class RequestStrings {
   String get last7Days => t('Last 7 days', 'Últimos 7 días');
   String get order => t('Order', 'Pedido');
   String get booking => t('Booking', 'Reserva');
+  String get substitutions => t('Substitutions', 'Sustituciones');
+  String substitutionsChoice(bool allowed) =>
+      allowed ? t('Allowed', 'Permitidas') : t('Not allowed', 'No permitidas');
+  String get termsAccepted => t('Terms accepted', 'Términos aceptados');
 
   // Actions.
   String action(RequestAction a) => switch (a) {

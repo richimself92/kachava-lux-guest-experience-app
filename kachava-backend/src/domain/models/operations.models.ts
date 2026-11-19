@@ -1,5 +1,6 @@
 import {
   LocalizedText,
+  PricingUnit,
   ServiceSection,
   ServiceSnapshot,
   UsageType,
@@ -27,6 +28,12 @@ export interface LarderOrderItem {
   unitPriceUSD: number;
   quantity: number;
   lineTotalUSD: number;
+  /** OZ: `quantity` portions of `ozPerPortion` ounces at `unitPriceUSD` per ounce (absent on older lines = ITEM). */
+  pricingUnit?: PricingUnit;
+  ozPerPortion?: number | null;
+  /** Order-level answers, copied on every line of the order (absent on older lines = not asked). */
+  substitutionsAllowed?: boolean | null;
+  termsAcceptedAt?: string | null;
   storageType: string;
   provisioningStatus: string;
   assignedStaffId: string | null;

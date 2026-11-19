@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsObject,
+  IsBoolean,
   IsOptional,
   IsString,
   Matches,
@@ -25,6 +26,7 @@ import {
   TIME_OF_DAY_PATTERN,
   URL_MAX,
 } from '../../../common/validation/field-limits';
+import { PORTION_OZ_MAX, PORTION_OZ_MIN } from '../../../domain/catalog/item-rules';
 
 export class UpdatePersonalizationDto {
   @IsOptional()
@@ -112,6 +114,13 @@ export class LarderCartLineDto {
   @Min(0)
   @Max(20)
   quantity!: number;
+
+  /** Ounces per portion; required for OZ items, absent for ITEM items (checked against the item). */
+  @IsOptional()
+  @IsInt()
+  @Min(PORTION_OZ_MIN)
+  @Max(PORTION_OZ_MAX)
+  ozPerPortion?: number;
 }
 
 /** `PUT /stays/:guestUuid/orders/:serviceId`: the guest's whole order for that ORDER service. */
@@ -121,6 +130,16 @@ export class UpdateServiceOrderDto {
   @Type(() => LarderCartLineDto)
   @ArrayMaxSize(LARDER_LINES_MAX)
   items!: LarderCartLineDto[];
+
+  /** Required (true/false) when the service asks about substitutions; ignored otherwise. */
+  @IsOptional()
+  @IsBoolean()
+  substitutionsAllowed?: boolean;
+
+  /** Must be true when the service has terms & conditions; ignored otherwise. */
+  @IsOptional()
+  @IsBoolean()
+  termsAccepted?: boolean;
 }
 
 /** Journey task ids such as `1:core:flight` or `2:section:DINING`. */

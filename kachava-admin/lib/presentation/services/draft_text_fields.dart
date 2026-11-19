@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/service_catalog_strings.dart';
 import '../../core/theme/kachava_tokens.dart';
+import '../../domain/item_pricing_rules.dart';
 import '../../domain/json_draft.dart';
 import '../components/components.dart';
 
@@ -76,6 +77,7 @@ class DraftTextField extends StatelessWidget {
     this.tip,
     this.maxLines = 1,
     this.nullIfBlank = false,
+    this.validator,
   });
 
   final JsonDraft draft;
@@ -84,6 +86,7 @@ class DraftTextField extends StatelessWidget {
   final String? tip;
   final int maxLines;
   final bool nullIfBlank;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) => DraftLabelled(
@@ -91,6 +94,7 @@ class DraftTextField extends StatelessWidget {
         tip: tip,
         child: draftInput(draft, path,
             maxLines: maxLines,
+            validator: validator,
             onChanged: (v) =>
                 draft.set(path, nullIfBlank && v.trim().isEmpty ? null : v)),
       );
@@ -108,6 +112,7 @@ class DraftLocalizedField extends StatelessWidget {
     this.tip,
     this.maxLines = 1,
     this.requireOne = false,
+    this.maxLength,
   });
 
   final JsonDraft draft;
@@ -118,11 +123,21 @@ class DraftLocalizedField extends StatelessWidget {
   final int maxLines;
   final bool requireOne;
 
+  /// Characters allowed per language; `null` = no admin-side limit.
+  final int? maxLength;
+
   String? _validate(String? _) {
     final blank = draft.text('$path.en').trim().isEmpty &&
         draft.text('$path.es').trim().isEmpty;
     return requireOne && blank
         ? ServiceCatalogStrings(isEs).nameRequired
+        : null;
+  }
+
+  String? _length(String? raw) {
+    final max = maxLength;
+    return max != null && (raw ?? '').length > max
+        ? ServiceCatalogStrings(isEs).maxChars(max)
         : null;
   }
 
@@ -134,12 +149,14 @@ class DraftLocalizedField extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
             child: draftInput(draft, '$path.en',
-                hint: 'EN', maxLines: maxLines, validator: _validate),
+                hint: 'EN',
+                maxLines: maxLines,
+                validator: (v) => _validate(v) ?? _length(v)),
           ),
           const SizedBox(width: KachavaTokens.space2),
           Expanded(
-            child:
-                draftInput(draft, '$path.es', hint: 'ES', maxLines: maxLines),
+            child: draftInput(draft, '$path.es',
+                hint: 'ES', maxLines: maxLines, validator: _length),
           ),
         ]),
       );
@@ -186,7 +203,8 @@ class DraftIntField extends StatelessWidget {
       );
 }
 
-/// USD amount, 0..1,000,000 with at most 2 decimals; blank stores `null`.
+/// Amount, 0..1,000,000 with at most [decimals] decimals; blank stores
+/// `null` (an error when [isRequired]; then it must also be above 0).
 class DraftAmountField extends StatelessWidget {
   const DraftAmountField({
     super.key,
@@ -195,6 +213,8 @@ class DraftAmountField extends StatelessWidget {
     required this.label,
     required this.isEs,
     this.tip,
+    this.decimals = 2,
+    this.isRequired = false,
   });
 
   final JsonDraft draft;
@@ -202,14 +222,17 @@ class DraftAmountField extends StatelessWidget {
   final String label;
   final bool isEs;
   final String? tip;
-
-  static final RegExp _amount = RegExp(r'^\d{1,7}(\.\d{1,2})?$');
+  final int decimals;
+  final bool isRequired;
 
   String? _validate(String? raw) {
     final text = (raw ?? '').trim();
-    if (text.isEmpty) return null;
-    final ok = _amount.hasMatch(text) && double.parse(text) <= 1000000;
-    return ok ? null : ServiceCatalogStrings(isEs).invalidAmount;
+    final s = ServiceCatalogStrings(isEs);
+    if (text.isEmpty) return isRequired ? s.priceRequired : null;
+    if (!ItemPricingRules.amountOk(text, decimals: decimals)) {
+      return s.invalidAmount;
+    }
+    return isRequired && double.parse(text) <= 0 ? s.priceRequired : null;
   }
 
   @override
@@ -218,14 +241,22 @@ class DraftAmountField extends StatelessWidget {
     return DraftLabelled(
       label: label,
       tip: tip,
+      isRequired: isRequired,
       child: draftInput(draft, path,
-          initial: value == null ? '' : _plain(value),
+          initial: value == null ? '' : plainAmount(value),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: _validate,
           onChanged: (v) => draft.set(path, double.tryParse(v.trim()))),
     );
   }
+}
 
-  static String _plain(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+/// `12`, `12.50` or `3.3114` (up to 4 decimals, at least 2 when fractional).
+String plainAmount(double v) {
+  if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+  var text = v.toStringAsFixed(4);
+  while (text.endsWith('0') && text.indexOf('.') < text.length - 3) {
+    text = text.substring(0, text.length - 1);
+  }
+  return text;
 }

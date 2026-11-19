@@ -92,6 +92,13 @@ describe('resizeSnapshotParty', () => {
     expect(resizeSnapshotParty(perPerson, 4).totalUSD).toBe(40);
     expect(resizeSnapshotParty(fixed, 4)).toEqual(fixed);
   });
+
+  it('test_perPerson_ozLine_keepsOuncesPerPortionInTheTotal', () => {
+    const perPerson = structuredClone(populatedStayFixture().experienceBookings[0].snapshot);
+    perPerson.lines = [{ ...perPerson.lines[0], unitPriceUSD: 3.3114, quantity: 5, pricingUnit: 'OZ', ozPerPortion: 12 }];
+
+    expect(resizeSnapshotParty(perPerson, 2).lines[0].lineTotalUSD).toBe(397.37);
+  });
 });
 
 describe('replaceServiceOrder (one ORDER service never erases another)', () => {

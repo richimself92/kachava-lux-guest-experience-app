@@ -56,8 +56,11 @@ void main() {
       expect(kindFields(ServiceKind.breakfast), isEmpty);
       expect(
           kindFields(ServiceKind.specialMenu).single.key, 'pairingAvailable');
-      expect(kindFields(ServiceKind.villaStocking).map((f) => f.key),
-          ['maxPerItem', 'orderDeadlineHoursBeforeCheckIn']);
+      expect(kindFields(ServiceKind.villaStocking).map((f) => f.key), [
+        'maxPerItem',
+        'orderDeadlineHoursBeforeCheckIn',
+        'askSubstitutions'
+      ]);
       expect(kindFields(ServiceKind.experience).map((f) => f.type), [
         KindFieldType.itinerary,
         KindFieldType.localized,

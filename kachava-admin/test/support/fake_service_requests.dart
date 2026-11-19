@@ -15,6 +15,7 @@ ServiceRequest testRequest(int n,
         String? section,
         String notes = '',
         DateTime? createdAt,
+        DateTime? termsAcceptedAt,
         List<ServiceRequestLine>? lines}) =>
     ServiceRequest(
       id: 'req_$n',
@@ -35,6 +36,7 @@ ServiceRequest testRequest(int n,
       section: section,
       notes: notes,
       createdAt: createdAt,
+      termsAcceptedAt: termsAcceptedAt,
     );
 
 /// Test-only queue applying the backend rules: `status` (or OPEN), search on

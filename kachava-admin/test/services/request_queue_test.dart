@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kachava_admin_dashboard/application/list_query_store.dart';
 import 'package:kachava_admin_dashboard/application/service_catalog_deps.dart';
 import 'package:kachava_admin_dashboard/core/admin_theme.dart';
+import 'package:kachava_admin_dashboard/core/resort_time.dart';
 import 'package:kachava_admin_dashboard/domain/list_query.dart';
 import 'package:kachava_admin_dashboard/domain/service_catalog_enums.dart';
 import 'package:kachava_admin_dashboard/domain/service_request.dart';
@@ -28,7 +29,9 @@ void main() {
   });
 
   Future<void> pumpQueue(WidgetTester tester,
-      {Size size = const Size(1440, 900), bool isEs = false}) async {
+      {Size size = const Size(1440, 900),
+      bool isEs = false,
+      ResortTime? resortTime}) async {
     await _size(tester, size);
     final catalog = fakeCatalogDeps(FakeServiceCatalogRepository());
     await tester.pumpWidget(MaterialApp(
@@ -47,6 +50,7 @@ void main() {
             section: ServiceSection.experiences,
             queryStore: store,
             today: '2026-11-03',
+            resortTime: resortTime,
             isEs: isEs,
           ),
         ),
@@ -93,6 +97,21 @@ void main() {
     expect(find.byKey(const Key('filter-requests-experiences-range')),
         findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('detail: terms acceptance in resort time, never UTC',
+      (tester) async {
+    requests.requests.add(testRequest(1,
+        isOrder: true, termsAcceptedAt: DateTime.utc(2026, 11, 19, 15, 30)));
+    await pumpQueue(tester,
+        resortTime: const ResortTime(
+            timeZone: 'America/Cancun',
+            resolver: FixedOffsetResolver(Duration(hours: -5))));
+    await openRow(tester, 'req_1');
+
+    expect(find.text('Terms accepted'), findsOneWidget);
+    expect(find.text('Nov 19 · 10:30'), findsOneWidget);
+    expect(find.textContaining('UTC'), findsNothing);
   });
 
   testWidgets('search by guest or service reaches the query', (tester) async {

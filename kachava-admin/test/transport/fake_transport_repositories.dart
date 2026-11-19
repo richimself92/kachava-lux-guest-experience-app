@@ -270,6 +270,9 @@ class FakeTransportCatalog implements ServiceCatalogRepository {
   }
 
   @override
+  Future<List<String>> listItemCategories(String serviceId) async => const [];
+
+  @override
   Future<AdminService> get(String id) => throw UnimplementedError();
   @override
   Future<AdminService> create(AdminService service) =>

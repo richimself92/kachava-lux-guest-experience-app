@@ -10,11 +10,8 @@ import {
   DeepPartial,
 } from '../../domain/catalog/catalog-assembly';
 import {
-  assertCatalogImages,
-  assertItemCanBeActive,
   assertKindDetailsMatch,
-  assertServiceCanBeActive,
-  assertServiceConsistent,
+  assertValidService,
   ResolvedImage,
   withImageUrl,
 } from '../../domain/catalog/catalog-rules';
@@ -24,6 +21,8 @@ import {
   CatalogService,
   KindDetailField,
 } from '../../domain/catalog/catalog.models';
+import { withServiceDefaults } from '../../domain/catalog/service-defaults';
+import { assertSkuAvailable, assertValidItem, distinctCategories, withItemDefaults } from '../../domain/catalog/item-rules';
 import { BusinessRuleError, EntityNotFoundError } from '../../domain/domain-errors';
 import {
   CATALOG_IMAGE_STORAGE_PORT,
@@ -93,7 +92,7 @@ export class CatalogAdminService {
     assertKindDetailsMatch(dto.kind, kindBlocksOf(dto));
     await this.assertReferencesExist(dto);
     const service = assembleNewService(dto as DeepPartial<CatalogService> & CreateServiceDto, crypto.randomUUID(), creationAudit(actor));
-    this.assertValidService(service);
+    assertValidService(service);
     return this.serviceView(await this.services.create(service));
   }
 
@@ -103,7 +102,7 @@ export class CatalogAdminService {
       if (dto.kind && dto.kind !== current.kind) throw new BusinessRuleError('The kind of a service cannot be changed');
       assertKindDetailsMatch(current.kind, kindBlocksOf(dto));
       const next = assembleUpdatedService(current, dto as DeepPartial<CatalogService>, updateAudit(actor));
-      this.assertValidService(next);
+      assertValidService(next);
       return next;
     });
     return this.serviceView(updated);
@@ -114,24 +113,33 @@ export class CatalogAdminService {
     const query = toListQuery(dto, ITEM_LIST_SPEC);
     const items = await this.items.list({ serviceId, status: dto.status, category: dto.category });
     const page = paginateInMemory(items, query, {
-      searchText: (i) => `${i.name.en} ${i.name.es} ${i.category ?? ''} ${i.tags.join(' ')}`,
+      searchText: (i) => `${i.name.en} ${i.name.es} ${i.sku ?? ''}`,
       sortValue: (i, field) => (field === 'name' ? displayName(i) : field === 'priceUSD' ? i.priceUSD : i.order),
     });
     return new PaginatedResult(page.data.map((i) => this.itemView(i)), page.meta);
+  }
+
+  /** Distinct categories of the service's items, in catalog order. */
+  async listItemCategories(serviceId: string): Promise<{ categories: string[] }> {
+    await this.requireService(serviceId);
+    return { categories: distinctCategories(await this.items.list({ serviceId })) };
   }
 
   async createItem(serviceId: string, dto: CreateItemDto, actor: string): Promise<AdminItemView> {
     await this.requireService(serviceId);
     const item = assembleNewItem(dto as DeepPartial<CatalogItem>, serviceId, crypto.randomUUID(), creationAudit(actor));
     assertValidItem(item);
+    assertSkuAvailable(await this.items.list({ serviceId }), item);
     return this.itemView(await this.items.create(item));
   }
 
   async updateItem(serviceId: string, itemId: string, dto: UpdateItemDto, actor: string): Promise<AdminItemView> {
     await this.requireItem(serviceId, itemId);
+    const serviceItems = await this.items.list({ serviceId });
     const updated = await this.items.update(itemId, (current) => {
       const next = assembleUpdatedItem(current, dto as DeepPartial<CatalogItem>, updateAudit(actor));
       assertValidItem(next);
+      assertSkuAvailable(serviceItems, next);
       return next;
     });
     return this.itemView(updated);
@@ -150,12 +158,6 @@ export class CatalogAdminService {
     return item;
   }
 
-  private assertValidService(service: CatalogService): void {
-    assertServiceConsistent(service);
-    assertCatalogImages([...(service.cover ? [service.cover] : []), ...service.gallery]);
-    assertServiceCanBeActive(service);
-  }
-
   /** Provider and airports referenced by the request must already exist. */
   private async assertReferencesExist(dto: UpdateServiceDto | CreateServiceDto): Promise<void> {
     const providerId = dto.operation?.providerId;
@@ -171,7 +173,8 @@ export class CatalogAdminService {
     }
   }
 
-  serviceView(service: CatalogService): AdminServiceView {
+  serviceView(stored: CatalogService): AdminServiceView {
+    const service = withServiceDefaults(stored);
     const urlOf = (path: string) => this.images.publicUrl(path);
     return {
       id: service.serviceId,
@@ -181,17 +184,12 @@ export class CatalogAdminService {
     };
   }
 
-  private itemView(item: CatalogItem): AdminItemView {
+  private itemView(stored: CatalogItem): AdminItemView {
+    const item = withItemDefaults(stored);
     return { id: item.itemId, ...item, image: withImageUrl(item.image, (path) => this.images.publicUrl(path)) };
   }
 }
 
 function kindBlocksOf(dto: Partial<Record<KindDetailField, unknown>>): Partial<Record<KindDetailField, unknown>> {
   return Object.fromEntries(KIND_FIELDS.map((field) => [field, dto[field]]));
-}
-
-function assertValidItem(item: CatalogItem): void {
-  if (!displayName(item)) throw new BusinessRuleError('Invalid item', ['name needs English or Spanish text']);
-  if (item.image) assertCatalogImages([item.image]);
-  assertItemCanBeActive(item);
 }

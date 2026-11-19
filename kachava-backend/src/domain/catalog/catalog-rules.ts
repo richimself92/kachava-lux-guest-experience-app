@@ -10,6 +10,9 @@ import {
   ServiceKindDetails,
   ServiceSnapshot,
 } from './catalog.models';
+import { assertPortionFits, linePriceUSD, roundCents } from './item-pricing';
+import { withItemDefaults } from './item-rules';
+import { withServiceDefaults } from './service-defaults';
 
 const CATALOG_PATH_PREFIX = 'catalog/';
 const SAFE_PATH_SEGMENT = /^[A-Za-z0-9._-]+$/;
@@ -75,6 +78,13 @@ export function assertServiceConsistent(service: CatalogService): void {
   if (problems.length > 0) throw new BusinessRuleError('Invalid service', problems);
 }
 
+/** Every rule a saved service must satisfy (admin updates and scripts alike). */
+export function assertValidService(service: CatalogService): void {
+  assertServiceConsistent(service);
+  assertCatalogImages([...(service.cover ? [service.cover] : []), ...service.gallery]);
+  assertServiceCanBeActive(service);
+}
+
 /** Only the block matching the service kind may be provided. */
 export function assertKindDetailsMatch(
   kind: ServiceKind,
@@ -124,11 +134,27 @@ export function assertCatalogImages(images: CatalogImage[]): void {
 export interface RequestedLine {
   itemId: string;
   quantity: number;
+  /** Required for OZ items (one of their portion sizes); absent for ITEM items. */
+  ozPerPortion?: number;
 }
 
 export interface ResolvedLine {
   item: CatalogItem | null;
   quantity: number;
+  /** Ounces per portion of an OZ item; null/absent otherwise. */
+  ozPerPortion?: number | null;
+}
+
+function resolveLine(items: CatalogItem[], line: RequestedLine, maxPerItem: number | null): ResolvedLine {
+  const found = items.find((candidate) => candidate.itemId === line.itemId);
+  if (!found) throw new EntityNotFoundError('Item', line.itemId);
+  const item = withItemDefaults(found);
+  if (item.status !== 'ACTIVE') throw new BusinessRuleError(`Item ${line.itemId} is not available`);
+  if (maxPerItem !== null && line.quantity > maxPerItem) {
+    throw new BusinessRuleError(`At most ${maxPerItem} units per item can be ordered`);
+  }
+  assertPortionFits(item, line.ozPerPortion);
+  return { item, quantity: line.quantity, ozPerPortion: line.ozPerPortion ?? null };
 }
 
 /** Validates that the guest can order/book: active service, known and active items, limits. */
@@ -141,15 +167,7 @@ export function resolveOrderLines(
     throw new BusinessRuleError(`Service ${service.serviceId} is not available`);
   }
   const maxPerItem = service.stocking?.maxPerItem ?? null;
-  return requested.map((line) => {
-    const item = items.find((candidate) => candidate.itemId === line.itemId);
-    if (!item) throw new EntityNotFoundError('Item', line.itemId);
-    if (item.status !== 'ACTIVE') throw new BusinessRuleError(`Item ${line.itemId} is not available`);
-    if (maxPerItem !== null && line.quantity > maxPerItem) {
-      throw new BusinessRuleError(`At most ${maxPerItem} units per item can be ordered`);
-    }
-    return { item, quantity: line.quantity };
-  });
+  return requested.map((line) => resolveLine(items, line, maxPerItem));
 }
 
 function unitPriceOf(service: CatalogService, item: CatalogItem | null): number | null {
@@ -171,10 +189,6 @@ function multiplierOf(service: CatalogService, partySize: number): number {
   return minutes / MINUTES_PER_HOUR;
 }
 
-function roundCents(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 /** Copies name and price at order time so later catalog edits never change past orders. */
 export function buildServiceSnapshot(
   service: CatalogService,
@@ -183,14 +197,17 @@ export function buildServiceSnapshot(
   capturedAt: string,
 ): ServiceSnapshot {
   const multiplier = multiplierOf(service, partySize);
-  const snapshotLines = lines.map(({ item, quantity }) => {
+  const snapshotLines = lines.map(({ item, quantity, ozPerPortion }) => {
     const unitPriceUSD = unitPriceOf(service, item);
+    const oz = ozPerPortion ?? null;
     return {
       itemId: item?.itemId ?? null,
       name: structuredClone(item?.name ?? service.name),
       unitPriceUSD,
       quantity,
-      lineTotalUSD: unitPriceUSD === null ? null : roundCents(unitPriceUSD * quantity * multiplier),
+      lineTotalUSD: unitPriceUSD === null ? null : linePriceUSD(unitPriceUSD, quantity, oz, multiplier),
+      pricingUnit: item?.pricingUnit ?? 'ITEM',
+      ozPerPortion: oz,
     };
   });
   const priced = snapshotLines.every((line) => line.lineTotalUSD !== null);
@@ -234,6 +251,8 @@ export interface GuestCatalogItem {
   storage: string | null;
   capacity: CatalogItem['capacity'];
   order: number;
+  pricingUnit: CatalogItem['pricingUnit'];
+  portionOzOptions: number[];
 }
 
 export type GuestCatalogService = Pick<
@@ -248,7 +267,8 @@ export type GuestCatalogService = Pick<
   items: GuestCatalogItem[];
 };
 
-export function toGuestCatalogItem(item: CatalogItem, urlOf: ImageUrlResolver): GuestCatalogItem {
+export function toGuestCatalogItem(stored: CatalogItem, urlOf: ImageUrlResolver): GuestCatalogItem {
+  const item = withItemDefaults(stored);
   return structuredClone({
     id: item.itemId,
     itemId: item.itemId,
@@ -265,6 +285,8 @@ export function toGuestCatalogItem(item: CatalogItem, urlOf: ImageUrlResolver): 
     storage: item.storage,
     capacity: item.capacity,
     order: item.order,
+    pricingUnit: item.pricingUnit,
+    portionOzOptions: item.portionOzOptions,
   });
 }
 
@@ -274,7 +296,7 @@ export function toGuestCatalogService(
   activeItems: CatalogItem[],
   urlOf: ImageUrlResolver,
 ): GuestCatalogService {
-  const s = structuredClone(service);
+  const s = withServiceDefaults(structuredClone(service));
   return {
     id: s.serviceId,
     serviceId: s.serviceId,

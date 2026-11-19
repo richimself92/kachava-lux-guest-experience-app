@@ -26,6 +26,10 @@ export type UsageType = (typeof USAGE_TYPES)[number];
 export const PRICING_MODES = ['INCLUDED', 'FIXED', 'PER_PERSON', 'PER_UNIT', 'PER_HOUR', 'ON_REQUEST'] as const;
 export type PricingMode = (typeof PRICING_MODES)[number];
 
+/** How an item is priced: per unit (ITEM) or per ounce of each portion (OZ, proteins). */
+export const PRICING_UNITS = ['ITEM', 'OZ'] as const;
+export type PricingUnit = (typeof PRICING_UNITS)[number];
+
 export const CATALOG_STATUSES = ['ACTIVE', 'DISABLED'] as const;
 export type CatalogStatus = (typeof CATALOG_STATUSES)[number];
 
@@ -88,6 +92,8 @@ export interface ServiceGuestInfo {
   location: LocalizedText;
   restrictions: LocalizedText;
   cancellationPolicy: LocalizedText;
+  /** Terms & conditions the guest must accept before ordering ("" in both languages = none). */
+  terms: LocalizedText;
 }
 
 /** Which inputs the guest form asks for. */
@@ -120,6 +126,8 @@ export interface DiningDetails {
 export interface StockingDetails {
   maxPerItem: number | null;
   orderDeadlineHoursBeforeCheckIn: number | null;
+  /** The guest must say whether comparable substitutes may be bought. */
+  askSubstitutions: boolean;
 }
 
 export interface ItineraryStep {
@@ -230,6 +238,15 @@ export interface CatalogItem extends AuditTrail {
   capacity: VehicleCapacity | null;
   order: number;
   status: CatalogStatus;
+  /** Admin-only supplier code, unique within the service. */
+  sku: string | null;
+  /** Admin-only net cost in MXN (per oz when pricingUnit is OZ). */
+  netCostMXN: number | null;
+  /** Admin-only supplier product page. */
+  sourceUrl: string | null;
+  /** With OZ, `priceUSD` is USD per ounce and guests pick portions of `portionOzOptions` ounces. */
+  pricingUnit: PricingUnit;
+  portionOzOptions: number[];
 }
 
 /** What an order/booking stores about the service at the moment the guest asked for it. */
@@ -247,6 +264,9 @@ export interface ServiceSnapshot {
     unitPriceUSD: number | null;
     quantity: number;
     lineTotalUSD: number | null;
+    /** Absent on snapshots captured before weight pricing (read as ITEM / null). */
+    pricingUnit?: PricingUnit;
+    ozPerPortion?: number | null;
   }>;
   totalUSD: number | null;
   capturedAt: string;

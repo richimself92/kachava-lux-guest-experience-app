@@ -88,6 +88,8 @@ class ServiceCatalogLabels {
         'pairingAvailable' => _t('Pairing', 'Maridaje'),
         'maxPerItem' => _t('Max per item', 'Máx. por ítem'),
         'orderDeadlineHoursBeforeCheckIn' => _t('Deadline (h)', 'Límite (h)'),
+        'askSubstitutions' => _t('Ask guest about substitutions',
+            'Preguntar al huésped por sustituciones'),
         'itinerary' => _t('Itinerary', 'Itinerario'),
         'meetingPoint' => _t('Meeting point', 'Punto de encuentro'),
         'languages' => _t('Languages', 'Idiomas'),
@@ -109,6 +111,10 @@ class ServiceCatalogLabels {
             'El huésped confirma su mayoría de edad.'),
         'orderDeadlineHoursBeforeCheckIn' =>
           _t('Hours before check-in.', 'Horas antes del check-in.'),
+        'askSubstitutions' => _t(
+            'Guest says if a similar product may replace a missing one.',
+            'El huésped indica si un producto similar puede reemplazar uno '
+                'faltante.'),
         'languages' =>
           _t('ISO codes, e.g. en, es.', 'Códigos ISO, p. ej. en, es.'),
         'changeDeadlineHours' =>
@@ -130,8 +136,11 @@ class ServiceCatalogLabels {
       };
 
   /// `$1,234.50 USD`; `—` when unknown.
-  String money(double? amount) {
-    if (amount == null) return '—';
+  String money(double? amount) =>
+      amount == null ? '—' : '${dollars(amount)} USD';
+
+  /// `$1,234.50` (rounded to cents, no currency suffix).
+  String dollars(double amount) {
     final fixed = amount.toStringAsFixed(2);
     final dot = fixed.indexOf('.');
     final whole = fixed.substring(0, dot);
@@ -140,7 +149,7 @@ class ServiceCatalogLabels {
       if (i > 0 && (whole.length - i) % 3 == 0) grouped.write(',');
       grouped.write(whole[i]);
     }
-    return '\$$grouped${fixed.substring(dot)} USD';
+    return '\$$grouped${fixed.substring(dot)}';
   }
 
   /// Price column: "Included", "$40.00 USD / person", "Per item"...

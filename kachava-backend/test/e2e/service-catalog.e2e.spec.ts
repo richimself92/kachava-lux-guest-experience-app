@@ -364,6 +364,88 @@ describe('Service catalog admin API', () => {
     });
   });
 
+  describe('pre-stocking items (sku, cost, source, weight pricing)', () => {
+    let base: string;
+    const steak = {
+      name: { en: 'New York steak', es: 'Corte New York' }, sku: 'PRE-104', priceUSD: 3.3114, netCostMXN: 30.9577,
+      sourceUrl: 'https://supplier.example/steak', pricingUnit: 'OZ', category: 'Proteins', status: 'ACTIVE', order: 2,
+    };
+    const milk = { name: { en: 'Whole milk', es: 'Leche entera' }, sku: 'PRE-001', priceUSD: 2.5, category: 'Dairy', status: 'ACTIVE', order: 1 };
+    const post = (body: Record<string, unknown>) => request(t.server()).post(base).set(admin).send(body);
+
+    beforeEach(async () => {
+      const service = await createService({ kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', pricing: { mode: 'PER_UNIT' } });
+      base = `${API}/services/${service.serviceId}/items`;
+    });
+
+    it('test_create_persistsNewFields_withDefaults', async () => {
+      const created = await post(steak);
+      const plain = await post({ name: { en: 'Bread', es: 'Pan' } });
+      const listed = await request(t.server()).get(base).set(admin);
+
+      expect(created.status).toBe(201);
+      expect(created.body.data).toMatchObject({ ...steak, portionOzOptions: [6, 8, 10, 12, 14] });
+      expect(plain.body.data).toMatchObject({ sku: null, netCostMXN: null, sourceUrl: null, pricingUnit: 'ITEM', portionOzOptions: [] });
+      expect(listed.body.data.find((i: { sku: string }) => i.sku === 'PRE-104')).toMatchObject({ netCostMXN: 30.9577 });
+    });
+
+    it('test_duplicateSku_onCreateOrPatch_is409', async () => {
+      await post(milk);
+      const other = await post({ ...steak, sku: 'PRE-105' });
+
+      const dupCreate = await post({ ...steak, sku: 'PRE-001' });
+      const dupPatch = await request(t.server()).patch(`${base}/${other.body.data.id}`).set(admin).send({ sku: 'PRE-001' });
+      const samePatch = await request(t.server()).patch(`${base}/${other.body.data.id}`).set(admin).send({ sku: 'PRE-105', order: 3 });
+
+      expect([dupCreate.status, dupPatch.status, samePatch.status]).toEqual([409, 409, 200]);
+    });
+
+    it('test_pricingRules_areValidated', async () => {
+      const statuses = [
+        (await post({ ...steak, priceUSD: 0 })).status,
+        (await post({ ...steak, sku: 'X1', pricingUnit: 'ITEM' })).status,
+        (await post({ ...steak, sku: 'X2', portionOzOptions: [0] })).status,
+        (await post({ ...steak, sku: 'X3', priceUSD: 3.31141 })).status,
+        (await post({ ...steak, sku: 'X4', sourceUrl: 'ftp://x' })).status,
+        (await post({ ...steak, sku: 'X'.repeat(41) })).status,
+        (await post({ ...steak, sku: 'X5', portionOzOptions: [12, 6] })).status,
+      ];
+
+      expect(statuses).toEqual([422, 422, 400, 400, 400, 400, 201]);
+    });
+
+    it('test_list_searchesNameAndSku_filtersCategory_andListsCategoriesInCatalogOrder', async () => {
+      await post(steak);
+      await post(milk);
+      await post({ name: { en: 'Yogurt', es: 'Yogur' }, sku: 'PRE-002', category: 'Dairy', order: 3 });
+
+      const bySku = await request(t.server()).get(`${base}?q=pre-104`).set(admin);
+      const bySpanish = await request(t.server()).get(`${base}?q=leche`).set(admin);
+      const dairy = await request(t.server()).get(`${base}?category=Dairy`).set(admin);
+      const categories = await request(t.server()).get(`${base.replace(/items$/, 'item-categories')}`).set(admin);
+
+      expect(bySku.body.data.map((i: { sku: string }) => i.sku)).toEqual(['PRE-104']);
+      expect(bySpanish.body.data.map((i: { sku: string }) => i.sku)).toEqual(['PRE-001']);
+      expect(dairy.body.meta.total).toBe(2);
+      expect(categories.status).toBe(200);
+      expect(categories.body.data).toEqual({ categories: ['Dairy', 'Proteins'] });
+    });
+
+    it('test_storedItemWithoutNewFields_readsAsItemWithNulls', async () => {
+      const created = await post({ name: { en: 'Old', es: 'Viejo' } });
+      const stored = t.fake.store('catalog_items').get(created.body.data.id) as Record<string, unknown>;
+      for (const key of ['sku', 'netCostMXN', 'sourceUrl', 'pricingUnit', 'portionOzOptions']) delete stored[key];
+
+      const listed = await request(t.server()).get(base).set(admin);
+
+      expect(listed.body.data[0]).toMatchObject({ sku: null, netCostMXN: null, sourceUrl: null, pricingUnit: 'ITEM', portionOzOptions: [] });
+    });
+
+    it('test_itemCategories_unknownService_is404', async () => {
+      expect((await request(t.server()).get(`${API}/services/missing/item-categories`).set(admin)).status).toBe(404);
+    });
+  });
+
   describe('roles', () => {
     it('test_catalogWrites_nonAdmin_are403_readsAllowed', async () => {
       const service = await createService();
@@ -471,6 +553,24 @@ describe('Service catalog admin API', () => {
       expect(service.id).toBe(active.serviceId);
       expect(service.cover.url).toBe(`https://public.test/catalog/services/${active.serviceId}.jpg`);
       expect(JSON.stringify(res.body)).not.toContain('staff secret');
+    });
+
+    it('test_guestCatalog_itemHasPricingUnitAndPortions_neverSkuCostOrSource', async () => {
+      const active = await createService({ kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', pricing: { mode: 'PER_UNIT' } });
+      await activate(active.serviceId);
+      await request(t.server()).post(`${API}/services/${active.serviceId}/items`).set(admin).send({
+        name: { en: 'Steak', es: 'Corte' }, sku: 'PRE-104', priceUSD: 3.3114, netCostMXN: 30.9577,
+        sourceUrl: 'https://supplier.example/steak', pricingUnit: 'OZ', portionOzOptions: [8, 12], status: 'ACTIVE',
+      });
+
+      const res = await request(t.server()).get('/api/v1/catalog/services');
+
+      const [item] = res.body.data[0].items;
+      expect(item).toMatchObject({ pricingUnit: 'OZ', portionOzOptions: [8, 12], priceUSD: 3.3114 });
+      expect(item).not.toHaveProperty('sku');
+      expect(item).not.toHaveProperty('netCostMXN');
+      expect(item).not.toHaveProperty('sourceUrl');
+      expect(JSON.stringify(res.body)).not.toContain('PRE-104');
     });
 
     it('test_guestCatalog_filtersBySection', async () => {

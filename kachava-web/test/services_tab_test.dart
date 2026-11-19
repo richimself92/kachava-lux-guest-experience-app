@@ -78,6 +78,23 @@ void main() {
     await unmount(tester);
   });
 
+  testWidgets('detail sheet shows Terms & conditions with paragraphs',
+      (tester) async {
+    await pumpPortal(tester,
+        api: FakeGuestApi(catalog: [
+          serviceJson(id: 'tour', section: 'EXPERIENCES', guestInfo: const {
+            'terms': {'en': 'First.\n\nSecond.', 'es': 'Primero.'},
+          }),
+        ]));
+    await _openServices(tester);
+    await tester.tap(find.byKey(const Key('service-card-tour')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terms & conditions'));
+    await tester.pumpAndSettle();
+    expect(find.text('First.\n\nSecond.'), findsOneWidget);
+    await unmount(tester);
+  });
+
   testWidgets('empty catalog: Nothing yet + Ask Host', (tester) async {
     await pumpPortal(tester);
     await _openServices(tester);

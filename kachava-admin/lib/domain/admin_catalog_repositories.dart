@@ -65,7 +65,13 @@ abstract interface class ServiceCatalogRepository {
   Future<AdminService> get(String id);
   Future<AdminService> create(AdminService service);
   Future<AdminService> update(AdminService service);
+
+  /// Items; filters `q` (name EN/ES or SKU) and `category` (exact).
   Future<PagedResult<ServiceItem>> listItems(String serviceId, ListQuery query);
+
+  /// Distinct item categories of a service, in catalog order
+  /// (`GET /admin/services/:id/item-categories`).
+  Future<List<String>> listItemCategories(String serviceId);
   Future<ServiceItem> createItem(String serviceId, ServiceItem item);
   Future<ServiceItem> updateItem(String serviceId, ServiceItem item);
 }

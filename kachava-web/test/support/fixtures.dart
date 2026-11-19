@@ -52,17 +52,25 @@ Json serviceJson({
     };
 
 Json itemJson(String id,
-        {String? nameEn, double? price, String? category, Json? capacity}) =>
+        {String? nameEn,
+        String? nameEs,
+        double? price,
+        String? category,
+        Json? capacity,
+        String? pricingUnit,
+        List<int>? portionOzOptions}) =>
     {
       'id': id,
       'itemId': id,
-      'name': {'en': nameEn ?? 'Item $id', 'es': 'Artículo $id'},
+      'name': {'en': nameEn ?? 'Item $id', 'es': nameEs ?? 'Artículo $id'},
       'description': const {'en': '', 'es': ''},
       'category': category,
       'image': null,
       'priceUSD': price,
       'capacity': capacity,
       'order': 0,
+      if (pricingUnit != null) 'pricingUnit': pricingUnit,
+      if (portionOzOptions != null) 'portionOzOptions': portionOzOptions,
     };
 
 CatalogService service({

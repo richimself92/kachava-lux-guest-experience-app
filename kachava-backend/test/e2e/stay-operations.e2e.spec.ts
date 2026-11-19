@@ -155,6 +155,117 @@ describe('Stays, guest orders/bookings and admin operations', () => {
       expect(res.body.data.folioSummary.incidentalsSubtotalUSD).toBe(7);
     });
 
+    async function createSteak(): Promise<string> {
+      const res = await request(t.server()).post(`${ADMIN}/services/${orderServiceId}/items`).set(admin).send({
+        name: { en: 'New York steak', es: 'Corte New York' }, sku: 'PRE-104', priceUSD: 3.3114, netCostMXN: 30.9577,
+        pricingUnit: 'OZ', status: 'ACTIVE', category: 'Proteins',
+      });
+      expect(res.status).toBe(201);
+      expect(res.body.data).toMatchObject({ pricingUnit: 'OZ', portionOzOptions: [6, 8, 10, 12, 14] });
+      return res.body.data.id;
+    }
+
+    it('test_order_ozLine_isPortionsTimesOuncesTimesPricePerOunce_inOrderAndRequestViews', async () => {
+      const steakId = await createSteak();
+
+      const res = await request(t.server()).put(`${stayPath}/orders/${orderServiceId}`)
+        .send({ items: [{ itemId: steakId, quantity: 4, ozPerPortion: 12 }, { itemId: orderItemId, quantity: 2 }] });
+      const guest = await request(t.server()).get(stayPath);
+      const queue = await request(t.server()).get(`${ADMIN}/requests?usageType=ORDER`).set(admin);
+
+      expect(res.status).toBe(200);
+      // 4 portions (the service allows at most 4 per item) x 12 oz x 3.3114 = 158.9472
+      const steakLine = { pricingUnit: 'OZ', ozPerPortion: 12, unitPriceUSD: 3.3114, quantity: 4, lineTotalUSD: 158.95 };
+      expect(res.body.data.orders).toEqual(expect.arrayContaining([
+        expect.objectContaining({ catalogItemId: steakId, ...steakLine }),
+        expect.objectContaining({ catalogItemId: orderItemId, pricingUnit: 'ITEM', ozPerPortion: null, lineTotalUSD: 7 }),
+      ]));
+      expect(res.body.data.folioSummary.incidentalsSubtotalUSD).toBe(165.95);
+      expect(guest.body.data.larderOrders).toEqual(expect.arrayContaining([expect.objectContaining(steakLine)]));
+      expect(queue.body.data[0].lines).toEqual(expect.arrayContaining([expect.objectContaining(steakLine)]));
+      expect(queue.body.data[0].totalUSD).toBe(165.95);
+    });
+
+    describe('terms & conditions and substitutions', () => {
+      const TERMS = { en: 'Paid in advance.\nNon-refundable.', es: 'Pago por adelantado.\nSin reembolso.' };
+      const put = (body: Record<string, unknown>) => request(t.server()).put(`${stayPath}/orders/${orderServiceId}`)
+        .send({ items: [{ itemId: orderItemId, quantity: 1 }], ...body });
+
+      beforeEach(async () => {
+        await request(t.server()).patch(`${ADMIN}/services/${orderServiceId}`).set(admin)
+          .send({ guestInfo: { terms: TERMS }, stocking: { askSubstitutions: true } }).expect(200);
+      });
+
+      it('test_serviceTerms_areInTheGuestCatalogAndAdminView', async () => {
+        const guest = await request(t.server()).get('/api/v1/catalog/services');
+        const adminView = await request(t.server()).get(`${ADMIN}/services/${orderServiceId}`).set(admin);
+
+        const stocking = guest.body.data.find((s: { serviceId: string }) => s.serviceId === orderServiceId);
+        expect(stocking.guestInfo.terms).toEqual(TERMS);
+        expect(stocking.stocking.askSubstitutions).toBe(true);
+        expect(adminView.body.data.guestInfo.terms).toEqual(TERMS);
+      });
+
+      it('test_order_missingAnswers_are422', async () => {
+        const statuses = [
+          (await put({})).status,
+          (await put({ substitutionsAllowed: true })).status,
+          (await put({ substitutionsAllowed: true, termsAccepted: false })).status,
+          (await put({ termsAccepted: true })).status,
+          (await put({ substitutionsAllowed: 'yes', termsAccepted: true })).status,
+        ];
+
+        expect(statuses).toEqual([422, 422, 422, 422, 400]);
+      });
+
+      it('test_order_storesAnswers_andExposesThemOnAdminAndGuestViews', async () => {
+        const lime = await request(t.server()).post(`${ADMIN}/services/${orderServiceId}/items`).set(admin)
+          .send({ name: { en: 'Lime', es: 'Limón' }, priceUSD: 1, status: 'ACTIVE' });
+        const res = await put({
+          items: [{ itemId: orderItemId, quantity: 1 }, { itemId: lime.body.data.id, quantity: 2 }],
+          substitutionsAllowed: false, termsAccepted: true,
+        });
+        const queue = await request(t.server()).get(`${ADMIN}/requests?usageType=ORDER`).set(admin);
+        const detail = await request(t.server()).get(`${ADMIN}/requests/${queue.body.data[0].id}`).set(admin);
+        const guest = await request(t.server()).get(stayPath);
+
+        expect(res.status).toBe(200);
+        const answers = { substitutionsAllowed: false, termsAcceptedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) };
+        expect(res.body.data.orders[0]).toMatchObject(answers);
+        expect(queue.body.data[0]).toMatchObject(answers);
+        expect(detail.body.data).toMatchObject(answers);
+        expect(guest.body.data.larderOrders).toHaveLength(2);
+        guest.body.data.larderOrders.forEach((line: object) => expect(line).toMatchObject(answers));
+        expect(new Set(res.body.data.orders.map((o: { termsAcceptedAt: string }) => o.termsAcceptedAt)).size).toBe(1);
+      });
+
+      it('test_clearingTheOrder_needsNoAnswers', async () => {
+        expect((await request(t.server()).put(`${stayPath}/orders/${orderServiceId}`).send({ items: [] })).status).toBe(200);
+      });
+
+      it('test_termsLongerThan3000_is400', async () => {
+        const res = await request(t.server()).patch(`${ADMIN}/services/${orderServiceId}`).set(admin)
+          .send({ guestInfo: { terms: { en: 'x'.repeat(3001) } } });
+
+        expect(res.status).toBe(400);
+      });
+    });
+
+    it('test_order_ozLineRules_are422', async () => {
+      const steakId = await createSteak();
+      const put = (line: Record<string, unknown>) =>
+        request(t.server()).put(`${stayPath}/orders/${orderServiceId}`).send({ items: [line] });
+
+      const statuses = [
+        (await put({ itemId: steakId, quantity: 1 })).status,
+        (await put({ itemId: steakId, quantity: 1, ozPerPortion: 9 })).status,
+        (await put({ itemId: orderItemId, quantity: 1, ozPerPortion: 6 })).status,
+        (await put({ itemId: steakId, quantity: 1, ozPerPortion: 6.5 })).status,
+      ];
+
+      expect(statuses).toEqual([422, 422, 422, 400]);
+    });
+
     it.each([
       [{ items: [{ itemId: 'missing', quantity: 1 }] }, 404],
       [{ items: [{ itemId: 'ITEM', quantity: 5 }] }, 422],

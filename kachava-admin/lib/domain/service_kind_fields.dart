@@ -64,6 +64,7 @@ List<KindFieldSpec> kindFields(ServiceKind kind) => switch (kind) {
           KindFieldSpec('maxPerItem', KindFieldType.count, min: 1, max: 100),
           KindFieldSpec('orderDeadlineHoursBeforeCheckIn', KindFieldType.count,
               max: _hours),
+          KindFieldSpec('askSubstitutions', KindFieldType.flag),
         ],
       ServiceKind.experience => const [
           KindFieldSpec('itinerary', KindFieldType.itinerary),

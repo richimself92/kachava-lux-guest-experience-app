@@ -7,12 +7,15 @@ import '../../core/theme/kachava_tokens.dart';
 import '../../domain/admin_trip.dart';
 import '../../domain/inbox_item.dart';
 import '../../domain/list_query.dart';
+import '../../domain/service_catalog_enums.dart';
 import '../../domain/service_request.dart';
 import '../../domain/transport_provider.dart';
 import '../components/components.dart';
 import '../operations/ops_fields.dart';
+import '../services/request_detail_panel.dart' show requestLineLabel;
 import '../workspaces/transportation/trip_status_dialogs.dart';
 import 'inbox_parts.dart';
+import 'order_consent_facts.dart';
 import 'request_inbox_scope.dart';
 
 /// One guest request in plain words: who, when, exactly what was asked,
@@ -208,13 +211,17 @@ class _InboxDetailPanelState extends State<InboxDetailPanel> {
     final s = _s;
     final isEs = widget.isEs;
     final lines = [
-      for (final l in r.lines) '${l.quantity} × ${l.name.of(isEs: isEs)}'
+      for (final l in r.lines)
+        l.pricingUnit == PricingUnit.oz
+            ? requestLineLabel(l, isEs)
+            : requestLineSummary(l, isEs)
     ].join('\n');
     final money = ServiceCatalogLabels(isEs).money;
     return switch (_item.type) {
       InboxType.order => [
           FactRow(label: s.items, value: lines),
           FactRow(label: s.total, value: money(r.totalUSD)),
+          ...orderConsentFacts(r, isEs: isEs, resortTime: widget.resortTime),
         ],
       InboxType.preference => [
           FactRow(

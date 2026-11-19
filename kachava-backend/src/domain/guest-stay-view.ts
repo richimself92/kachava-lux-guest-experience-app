@@ -42,7 +42,7 @@ const PERSONALIZATION_KEYS = [
 ] as const satisfies ReadonlyArray<keyof Personalization>;
 const LARDER_KEYS = [
   'orderItemId', 'serviceId', 'catalogItemId', 'name', 'itemName', 'category', 'unitPriceUSD', 'quantity', 'lineTotalUSD',
-  'provisioningStatus', 'createdAt', 'updatedAt',
+  'pricingUnit', 'ozPerPortion', 'substitutionsAllowed', 'termsAcceptedAt', 'provisioningStatus', 'createdAt', 'updatedAt',
 ] as const satisfies ReadonlyArray<keyof LarderOrderItem>;
 const BOOKING_KEYS = [
   'bookingId', 'serviceId', 'itemId', 'section', 'usageType', 'category', 'snapshot', 'title', 'scheduledDate',
@@ -103,8 +103,9 @@ export function toGuestBookingView(booking: ExperienceBooking): GuestBookingView
   return pick(booking, BOOKING_KEYS);
 }
 
+/** Lines stored before weight pricing read as ITEM without ounces. */
 export function toGuestLarderOrderView(order: LarderOrderItem): GuestLarderOrderView {
-  return pick(order, LARDER_KEYS);
+  return { pricingUnit: 'ITEM', ozPerPortion: null, substitutionsAllowed: null, termsAcceptedAt: null, ...pick(order, LARDER_KEYS) };
 }
 
 /** Messages carry `photoUrl` (never the storage path) so the guest sees photos in the thread. */

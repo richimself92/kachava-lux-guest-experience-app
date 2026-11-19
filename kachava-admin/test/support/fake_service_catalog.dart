@@ -95,14 +95,36 @@ class FakeServiceCatalogRepository implements ServiceCatalogRepository {
     }
   }
 
+  final List<ListQuery> itemQueries = [];
+  Object? failCategoriesWith;
+
   @override
   Future<PagedResult<ServiceItem>> listItems(
-          String serviceId, ListQuery query) async =>
-      InMemoryPagedSource<ServiceItem>(
-        items: items[serviceId] ?? const [],
-        searchText: (i) => [i.name.en],
-        sortValue: (i, field) => field == 'name' ? i.name.en : i.order,
-      ).page(query);
+      String serviceId, ListQuery query) async {
+    itemQueries.add(query);
+    return InMemoryPagedSource<ServiceItem>(
+      items: items[serviceId] ?? const [],
+      searchText: (i) => [i.name.en, i.name.es, i.sku ?? ''],
+      sortValue: (i, field) => switch (field) {
+        'name' => i.name.en,
+        'sku' => i.sku ?? '',
+        'priceUSD' => i.priceUSD ?? 0,
+        _ => i.order,
+      },
+      filterValue: (i, key) => key == 'category' ? i.category : null,
+    ).page(query);
+  }
+
+  @override
+  Future<List<String>> listItemCategories(String serviceId) async {
+    if (failCategoriesWith != null) throw failCategoriesWith!;
+    return [
+      ...{
+        for (final i in items[serviceId] ?? const <ServiceItem>[])
+          if (i.category != null) i.category!
+      }
+    ];
+  }
 
   @override
   Future<ServiceItem> createItem(String serviceId, ServiceItem item) async =>

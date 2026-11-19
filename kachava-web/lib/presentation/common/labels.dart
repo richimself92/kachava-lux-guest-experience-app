@@ -83,7 +83,10 @@ String requestWhat(L10n l10n, GuestRequest r) {
   final trip = r.trip;
   if (trip != null) return tripWhat(l10n, trip);
   if (r.kind != RequestKind.order) return '';
-  return r.lines.map((l) => '${l.quantity} × ${l10n.text(l.name)}').join(', ');
+  return r.lines
+      .map((l) =>
+          l10n.orderLine(l.quantity, l10n.text(l.name), oz: l.ozPerPortion))
+      .join(', ');
 }
 
 /// "Flight AA 1482 · CUN" for airport trips, "Origin → Destination" otherwise.

@@ -4,9 +4,11 @@ import '../../core/request_strings.dart';
 import '../../core/resort_time.dart';
 import '../../core/service_catalog_labels.dart';
 import '../../core/theme/kachava_tokens.dart';
+import '../../domain/service_catalog_enums.dart';
 import '../../domain/service_request.dart';
 import '../components/components.dart';
 import '../operations/ops_fields.dart';
+import '../requests/order_consent_facts.dart';
 
 /// One guest request: status, facts and one button per allowed action
 /// (Confirm, Start, Complete, Cancel request). Cancel asks for a reason.
@@ -18,6 +20,7 @@ class RequestDetailPanel extends StatefulWidget {
     required this.onClose,
     required this.onChanged,
     required this.isEs,
+    this.resortTime,
   });
 
   final ServiceRequest request;
@@ -27,6 +30,9 @@ class RequestDetailPanel extends StatefulWidget {
   /// Runs after a server-confirmed move (reload the list).
   final VoidCallback onChanged;
   final bool isEs;
+
+  /// Resort clock for the terms acceptance time (UTC when absent).
+  final ResortTime? resortTime;
 
   @override
   State<RequestDetailPanel> createState() => _RequestDetailPanelState();
@@ -141,10 +147,12 @@ class _RequestDetailPanelState extends State<RequestDetailPanel> {
             FactRow(
                 label: _s.items,
                 value: [
-                  for (final l in _r.lines)
-                    '${l.name.of(isEs: widget.isEs)} × ${l.quantity}'
+                  for (final l in _r.lines) requestLineLabel(l, widget.isEs)
                 ].join('\n')),
           FactRow(label: _s.total, value: money(_r.totalUSD)),
+          if (_r.isOrder)
+            ...orderConsentFacts(_r,
+                isEs: widget.isEs, resortTime: widget.resortTime),
           if (_r.cancellationReason case final reason?)
             FactRow(label: _s.reason, value: reason),
         ],
@@ -190,4 +198,20 @@ class _RequestDetailPanelState extends State<RequestDetailPanel> {
 String requestWhen(ServiceRequest r, bool isEs) {
   final day = ResortTime.dayLabel(r.day, isEs: isEs);
   return r.time.isEmpty ? day : '$day · ${r.time}';
+}
+
+/// "New York steak — 5 × 12 oz = 60 oz · $198.68" for an OZ line;
+/// "Water × 2" (+ " · $4.00" when the server sent the total) otherwise.
+/// Totals always come from the server's `lineTotalUSD`.
+String requestLineLabel(ServiceRequestLine line, bool isEs) {
+  final name = line.name.of(isEs: isEs);
+  final dollars = ServiceCatalogLabels(isEs).dollars;
+  final total =
+      line.lineTotalUSD == null ? '' : ' · ${dollars(line.lineTotalUSD!)}';
+  if (line.pricingUnit == PricingUnit.oz && line.ozPerPortion != null) {
+    final oz = line.ozPerPortion!;
+    return '$name — ${line.quantity} × $oz oz = '
+        '${line.quantity * oz} oz$total';
+  }
+  return '$name × ${line.quantity}$total';
 }

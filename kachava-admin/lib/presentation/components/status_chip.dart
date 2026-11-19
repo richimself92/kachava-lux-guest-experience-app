@@ -34,6 +34,8 @@ class StatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        softWrap: false,
+        maxLines: 1,
         style: Theme.of(context)
             .textTheme
             .labelMedium

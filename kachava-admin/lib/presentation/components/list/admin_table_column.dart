@@ -10,6 +10,7 @@ class AdminTableColumn<T> {
     this.sortField,
     this.numeric = false,
     this.flex = 2,
+    this.width,
   }) : assert(text != null || cell != null, 'Provide text or cell');
 
   final String label;
@@ -24,6 +25,10 @@ class AdminTableColumn<T> {
   /// Right-aligned numeric column.
   final bool numeric;
   final int flex;
+
+  /// Fixed width (e.g. a status badge that must not wrap); the flexible
+  /// columns truncate instead. `null` = share the row by [flex].
+  final double? width;
 
   bool get sortable => sortField != null;
 }

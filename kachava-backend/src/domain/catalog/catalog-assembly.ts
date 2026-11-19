@@ -1,5 +1,7 @@
 import { AuditTrail, CatalogImage, CatalogItem, CatalogService, KIND_DETAIL_FIELD, LocalizedText, ServiceKind, ServiceKindDetails } from './catalog.models';
 import { emptyKindDetails } from './catalog-rules';
+import { withItemDefaults } from './item-rules';
+import { withServiceDefaults } from './service-defaults';
 
 /**
  * Builds catalog entities from validated input. New entities start from an EMPTY template
@@ -34,7 +36,7 @@ export function mergeDefined<T>(current: T, patch: unknown): T {
 const KIND_TEMPLATES: { [F in keyof ServiceKindDetails]: () => NonNullable<ServiceKindDetails[F]> } = {
   bar: () => ({ ageConfirmationRequired: false }),
   dining: () => ({ pairingAvailable: false }),
-  stocking: () => ({ maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null }),
+  stocking: () => ({ maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null, askSubstitutions: false }),
   experience: () => ({ itinerary: [], meetingPoint: empty(), languages: [], minAge: null }),
   wellness: () => ({ location: null, healthQuestions: [], contraindications: empty() }),
   preference: () => ({ selection: 'SINGLE', changeDeadlineHours: null }),
@@ -65,7 +67,7 @@ function emptyService(kind: ServiceKind): Omit<CatalogService, 'serviceId' | 'se
     },
     guestInfo: {
       includes: empty(), excludes: empty(), whatToBring: empty(), location: empty(),
-      restrictions: empty(), cancellationPolicy: empty(),
+      restrictions: empty(), cancellationPolicy: empty(), terms: empty(),
     },
     guestForm: { date: false, time: false, guests: false, notes: false, dietary: false, health: false },
     operation: {
@@ -90,7 +92,8 @@ function trimText(text: LocalizedText): LocalizedText {
   return { en: text.en.trim(), es: text.es.trim() };
 }
 
-function normalizeService(service: CatalogService): CatalogService {
+function normalizeService(stored: CatalogService): CatalogService {
+  const service = withServiceDefaults(stored);
   return {
     ...service,
     name: trimText(service.name),
@@ -120,12 +123,13 @@ function emptyItem(serviceId: string, itemId: string): Omit<CatalogItem, keyof A
   return {
     itemId, serviceId, name: empty(), description: empty(), category: null, image: null, priceUSD: null,
     tags: [], dietaryTags: [], allergens: [], origin: null, unit: null, storage: null, capacity: null,
-    order: 0, status: 'DISABLED',
+    order: 0, status: 'DISABLED', sku: null, netCostMXN: null, sourceUrl: null, pricingUnit: 'ITEM', portionOzOptions: [],
   };
 }
 
 function normalizeItem(item: CatalogItem): CatalogItem {
-  return { ...item, name: trimText(item.name), image: normalizeImage(item.image) };
+  const sku = item.sku?.trim() || null;
+  return withItemDefaults({ ...item, sku, name: trimText(item.name), image: normalizeImage(item.image) });
 }
 
 export function assembleNewItem(

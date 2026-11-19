@@ -50,6 +50,12 @@ export class AdminServicesController {
     return this.catalog.listItems(serviceId, query);
   }
 
+  @Get(':serviceId/item-categories')
+  @Roles(...ANY_STAFF_ROLE)
+  listItemCategories(@Param('serviceId') serviceId: string) {
+    return this.catalog.listItemCategories(serviceId);
+  }
+
   @Post(':serviceId/items')
   @Roles('HOST_ADMIN')
   createItem(@Param('serviceId') serviceId: string, @Body() dto: CreateItemDto, @CurrentStaff() staff: StaffMember) {

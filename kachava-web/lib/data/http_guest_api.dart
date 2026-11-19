@@ -144,7 +144,12 @@ class HttpGuestApi implements GuestApi {
   Future<ApiResult<void>> saveOrder(String guestUuid, Json payload) {
     final serviceId = Uri.encodeComponent(asString(payload['serviceId']));
     return _command('PUT', 'stays/$guestUuid/orders/$serviceId',
-        guestUuid: guestUuid, body: {'items': payload['items'] ?? const []});
+        guestUuid: guestUuid,
+        body: {
+          'items': payload['items'] ?? const [],
+          for (final key in const ['substitutionsAllowed', 'termsAccepted'])
+            if (payload[key] is bool) key: payload[key],
+        });
   }
 
   @override

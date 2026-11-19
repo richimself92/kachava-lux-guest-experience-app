@@ -17,7 +17,7 @@ import { populatedStayFixture } from '../support/stay-fixtures';
 const PARALLEL = 20;
 const STOCKING_SERVICE = serviceFixture({
   serviceId: 'svc-stock', kind: 'VILLA_STOCKING', section: 'IN_VILLA', usageType: 'ORDER', experience: null,
-  stocking: { maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null },
+  stocking: { maxPerItem: null, orderDeadlineHoursBeforeCheckIn: null, askSubstitutions: false },
   pricing: { mode: 'PER_UNIT', amount: null, currency: 'USD', chargeToFolio: true, note: { en: '', es: '' } },
 });
 
